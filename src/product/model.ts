@@ -2,7 +2,7 @@ import productInterface from './interface';
 import { response } from '@/lib/types';
 import { createProduct, updateProduct } from "@/product/repository";
 
-class Product implements productInterface {
+export default class Product implements productInterface {
   id?: string;
   name: string;
   price: number;
