@@ -38,3 +38,53 @@ export default class Product implements productInterface {
     return updateProduct(this)
   }
 }
+
+export class ProductApi implements productInterface {
+  id?: string;
+  name: string;
+  price: number;
+  sku: string;
+  stock: number;
+  updatedAt?: Date;
+  createdAt?: Date;
+
+  constructor(name: string, price: number, sku: string, stock: number) {
+    this.name = name;
+    this.price = price;
+    this.sku = sku;
+    this.stock = stock;
+  }
+
+  async save():Promise<response> {
+    return this.isPersisted() ? await this.update() : await this.create();
+  }
+
+  private isPersisted(): boolean {
+    return !!this.id
+  }
+
+  private async create():Promise<response> {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      body: this.toJson(),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    const responseData = await res.json()
+    if (responseData.success) {
+      this.id = responseData.data.id
+    }
+
+    return { success: true } as response
+  }
+
+  private async update():Promise<response> {
+    return updateProduct(this)
+  }
+
+  private toJson() {
+    return JSON.stringify(this)
+  }
+}
