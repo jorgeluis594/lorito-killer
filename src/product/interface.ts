@@ -1,3 +1,5 @@
+import {response} from "@/lib/types";
+
 export default interface Interface {
     id?: string
     name: string
@@ -6,4 +8,7 @@ export default interface Interface {
     stock: number
     createdAt?: Date
     updatedAt?: Date
+
+    save(): Promise<response>
+
 }
