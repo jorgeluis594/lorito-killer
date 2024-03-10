@@ -1,16 +1,14 @@
 "use client";
 import * as z from "zod";
-import { useState } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,24 +16,22 @@ import {
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Heading } from "@/components/ui/heading";
-import {
+/*import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "../ui/use-toast";
-export const IMG_MAX_LIMIT = 3;
+} from "@/components/ui/select";*/
+
+// export const IMG_MAX_LIMIT = 3;
 const formSchema = z.object({
   name: z
     .string()
-    .min(3, { message: "Product Name must be at least 3 characters" }),
-  description: z
-    .string()
-    .min(3, { message: "Product description must be at least 3 characters" }),
+    .min(3, { message: "El nombre del producto debe tener al menos 3 caracteres" }),
   price: z.coerce.number(),
-  category: z.string().min(1, { message: "Please select a category" }),
+  sku: z.string().min(3, { message: "El sku debe tener al menos 3 caracteres" }),
+  stock: z.coerce.number(),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -51,14 +47,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                                                         }) => {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [imgLoading, setImgLoading] = useState(false);
-  const title = initialData ? "Edit product" : "Registrar producto";
-  const description = initialData ? "Edit a product." : "Registra un nuevo producto";
+  // const { toast } = useToast();
+/*  const [loading, setLoading] = useState(false);
+  const [imgLoading, setImgLoading] = useState(false);*/
+  const title = initialData ? "Editar producto" : "Registrar producto";
+  const description = initialData ? "Editar producto." : "Registra un nuevo producto";
   const toastMessage = initialData ? "Product updated." : "Producto registrado.";
-  const action = initialData ? "Save changes" : "Registrar";
+  const action = initialData ? "Guardar cambios" : "Registrar";
 
   const defaultValues = initialData
     ? initialData
@@ -78,7 +73,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     console.log({data})
   };
 
-  const onDelete = async () => {
+/*  const onDelete = async () => {
     try {
       setLoading(true);
       //   await axios.delete(`/api/${params.storeId}/products/${params.productId}`);
@@ -89,28 +84,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setLoading(false);
       setOpen(false);
     }
-  };
+  };*/
 
   return (
     <>
-      {/* <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onDelete}
-        loading={loading}
-      /> */}
       <div className="flex items-center justify-between">
         <Heading title={title} description={description} />
-        {initialData && (
-          <Button
-            disabled={loading}
-            variant="destructive"
-            size="sm"
-            onClick={() => setOpen(true)}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        )}
       </div>
       <Separator />
       <Form {...form}>
@@ -127,25 +106,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormLabel>Nombre</FormLabel>
                   <FormControl>
                     <Input
-                      disabled={loading}
                       placeholder="Nombre del producto"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descripción</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={loading}
-                      placeholder="Descripción del producto"
                       {...field}
                     />
                   </FormControl>
@@ -160,20 +121,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <FormItem>
                   <FormLabel>Precio</FormLabel>
                   <FormControl>
-                    <Input type="number" disabled={loading} {...field} />
+                    <Input type="number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
+            {/*<FormField
               control={form.control}
               name="category"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Categoría</FormLabel>
                   <Select
-                    disabled={loading}
                     onValueChange={field.onChange}
                     value={field.value}
                     defaultValue={field.value}
@@ -187,7 +147,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {/* @ts-ignore  */}
+                       @ts-ignore
                       {categories.map((category) => (
                         <SelectItem key={category._id} value={category._id}>
                           {category.name}
@@ -198,9 +158,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            />*/}
           </div>
-          <Button disabled={loading} className="ml-auto" type="submit">
+          <Button className="ml-auto" type="submit">
             {action}
           </Button>
         </form>

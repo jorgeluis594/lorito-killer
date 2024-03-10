@@ -5,8 +5,8 @@ import React from "react";
 
 export default function Page() {
   const breadcrumbItems = [
-    { title: "Pollo", link: "/dashboard/productos" },
-    { title: "Gay", link: "/dashboard/productos/registro" },
+    { title: "Productos", link: "/dashboard/products" },
+    { title: "Registro", link: "/dashboard/products/new" },
   ];
   return (
     <ScrollArea className="h-full">
@@ -18,7 +18,6 @@ export default function Page() {
             { _id: "pants", name: "pantalones" },
           ]}
           initialData={null}
-          key={null}
         />
       </div>
     </ScrollArea>
