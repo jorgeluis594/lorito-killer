@@ -31,7 +31,12 @@ export default class Product implements productInterface {
   }
 
   private async create():Promise<response> {
-    return createProduct(this)
+    const response = await createProduct(this)
+    if (response.success) {
+      this.id = response.data.id
+    }
+
+    return response
   }
 
   private async update():Promise<response> {
@@ -48,7 +53,8 @@ export class ProductApi implements productInterface {
   updatedAt?: Date;
   createdAt?: Date;
 
-  constructor(name: string, price: number, sku: string, stock: number) {
+  constructor(name: string, price: number, sku: string, stock: number, id?: string) {
+    this.id = id;
     this.name = name;
     this.price = price;
     this.sku = sku;
@@ -75,9 +81,10 @@ export class ProductApi implements productInterface {
     const responseData = await res.json()
     if (responseData.success) {
       this.id = responseData.data.id
+      return { success: true } as response
+    } else {
+      return { success: false, message: responseData.message } as response
     }
-
-    return { success: true } as response
   }
 
   private async update():Promise<response> {

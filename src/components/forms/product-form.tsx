@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ProductApi } from "@/product/model";
 import {
   Form,
   FormControl,
@@ -45,14 +46,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                                                           initialData,
                                                           categories,
                                                         }) => {
-  const params = useParams();
-  const router = useRouter();
-  // const { toast } = useToast();
-/*  const [loading, setLoading] = useState(false);
-  const [imgLoading, setImgLoading] = useState(false);*/
   const title = initialData ? "Editar producto" : "Registrar producto";
   const description = initialData ? "Editar producto." : "Registra un nuevo producto";
-  const toastMessage = initialData ? "Product updated." : "Producto registrado.";
   const action = initialData ? "Guardar cambios" : "Registrar";
 
   const defaultValues = initialData
@@ -62,6 +57,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       description: "",
       price: 0,
       category: "",
+      sku: "",
+      stock: 0
     };
 
   const form = useForm<ProductFormValues>({
@@ -70,7 +67,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    console.log({data})
+    const product = new ProductApi(
+      data.name,
+      data.price,
+      data.sku,
+      data.stock
+    );
+    const response = await product.save();
+    console.log(response);
+    console.log(product)
   };
 
 /*  const onDelete = async () => {
@@ -107,6 +112,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormControl>
                     <Input
                       placeholder="Nombre del producto"
+                      autoComplete={"off"}
                       {...field}
                     />
                   </FormControl>
@@ -120,6 +126,32 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Precio</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="sku"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>SKU</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stock</FormLabel>
                   <FormControl>
                     <Input type="number" {...field} />
                   </FormControl>
@@ -160,7 +192,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />*/}
           </div>
-          <Button className="ml-auto" type="submit">
+          <Button className="ml-auto btn-success" type="submit">
             {action}
           </Button>
         </form>

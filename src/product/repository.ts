@@ -4,8 +4,8 @@ import { response } from "@/lib/types"
 
 export const createProduct = async (product: productInterface):Promise<response> => {
   try {
-    await prisma.product.create({ data: product })
-    return { success: true } as response
+    const createdProduct = await prisma.product.create({ data: product })
+    return { success: true, data: { id: createdProduct.id } } as response
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
