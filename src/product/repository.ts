@@ -19,3 +19,16 @@ export const updateProduct = async(product: productInterface):Promise<response> 
     return { success: false, message: error.message } as response
   }
 }
+
+export const findProducts = async ():Promise<response> => {
+  try {
+    const products = await prisma.product.findMany()
+    products.forEach((product: any) => {
+      product.price = product.price.toNumber();
+    })
+
+    return { success: true, data: products } as response
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
