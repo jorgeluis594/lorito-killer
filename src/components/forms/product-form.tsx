@@ -3,7 +3,7 @@ import * as z from "zod";
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useParams, useRouter } from "next/navigation";
+import ProductInterface from "@/product/interface";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProductApi } from "@/product/model";
@@ -38,7 +38,7 @@ const formSchema = z.object({
 type ProductFormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
-  initialData: any | null;
+  initialData: ProductInterface | null | undefined;
   categories: any;
 }
 
@@ -53,6 +53,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const defaultValues = initialData
     ? initialData
     : {
+      id: null,
       name: "",
       description: "",
       price: 0,
@@ -71,11 +72,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       data.name,
       data.price,
       data.sku,
-      data.stock
+      data.stock,
+      initialData?.id
     );
     const response = await product.save();
-    console.log(response);
-    console.log(product)
+    console.log({response})
   };
 
 /*  const onDelete = async () => {
