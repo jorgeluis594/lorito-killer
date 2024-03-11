@@ -42,7 +42,8 @@ export default class Product implements productInterface {
     }
   }
 
-  constructor(name: string, price: number, sku: string, stock: number) {
+  constructor(name: string, price: number, sku: string, stock: number, id?: string) {
+    this.id = id
     this.name = name;
     this.price = price;
     this.sku = sku;
@@ -119,7 +120,15 @@ export class ProductApi implements productInterface {
   }
 
   private async update():Promise<response> {
-    return updateProduct(this)
+    const res = await fetch(`/api/products/${this.id}`, {
+      method: 'PUT',
+      body: this.toJson(),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    return await res.json()
   }
 
   private toJson() {

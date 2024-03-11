@@ -6,7 +6,6 @@ export async function POST(req: Request) {
   const product = new Product(data.name, data.price, data.sku, data.stock)
   const response = await product.save()
 
-  console.log({response, product})
   if (response.success) {
     return NextResponse.json({ success: true, data: { ...product } }, { status: 201 })
   } else {
