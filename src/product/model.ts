@@ -1,10 +1,15 @@
 import productInterface from './interface';
 import { response } from '@/lib/types';
-import { createProduct, updateProduct, findProducts } from "@/product/repository";
+import { createProduct, updateProduct, findProducts, findProduct } from "@/product/repository";
 
 type productListResponse = {
   success: boolean
   data?: productInterface[]
+}
+
+type productResponse = {
+  success: boolean
+  data?: productInterface
 }
 
 export default class Product implements productInterface {
@@ -23,6 +28,17 @@ export default class Product implements productInterface {
       return { success: true, data: response.data as Product[] } as productListResponse
     } else {
       return { success: false, data: [] } as productListResponse
+    }
+  }
+
+  static async find(id: string):Promise<productResponse> {
+    const response = await findProduct(id)
+
+    if (response.success) {
+      return { success: true, data: response.data as Product } as productResponse
+    } else {
+      console.log({res: response})
+      return { success: false } as productResponse
     }
   }
 

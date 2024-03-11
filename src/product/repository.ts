@@ -32,3 +32,18 @@ export const findProducts = async ():Promise<response> => {
     return { success: false, message: error.message } as response
   }
 }
+
+export const findProduct = async (id: string):Promise<response> => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id } })
+
+    if (product) {
+      (product.price as unknown) = product.price.toNumber();
+      return { success: true, data: product } as response
+    } else {
+      return { success: false } as response
+    }
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
