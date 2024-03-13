@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import ProductInterface from "@/product/interface";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import FileUpload from "@/components/file-upload";
 import { ProductApi } from "@/product/model";
 import {
   Form,
@@ -25,7 +26,18 @@ import { Heading } from "@/components/ui/heading";
   SelectValue,
 } from "@/components/ui/select";*/
 
-// export const IMG_MAX_LIMIT = 3;
+export const IMG_MAX_LIMIT = 5;
+const ImgSchema = z.object({
+  fileName: z.string(),
+  name: z.string(),
+  fileSize: z.number(),
+  size: z.number(),
+  fileKey: z.string(),
+  key: z.string(),
+  fileUrl: z.string(),
+  url: z.string(),
+});
+
 const formSchema = z.object({
   name: z
     .string()
@@ -33,6 +45,10 @@ const formSchema = z.object({
   price: z.coerce.number(),
   sku: z.string().min(3, { message: "El sku debe tener al menos 3 caracteres" }),
   stock: z.coerce.number(),
+  imgUrl: z
+    .array(ImgSchema)
+    .max(IMG_MAX_LIMIT, { message: "You can only add up to 3 images" })
+    .min(1, { message: "At least one image must be added." }),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -59,7 +75,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       price: 0,
       category: "",
       sku: "",
-      stock: 0
+      stock: 0,
+      imgUrl: []
     };
 
   const form = useForm<ProductFormValues>({
@@ -103,6 +120,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 w-full"
         >
+          <FormField
+            control={form.control}
+            name="imgUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Images</FormLabel>
+                <FormControl>
+                  <FileUpload
+                    onChange={field.onChange}
+                    value={field.value}
+                    onRemove={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <div className="md:grid md:grid-cols-3 gap-8">
             <FormField
               control={form.control}
