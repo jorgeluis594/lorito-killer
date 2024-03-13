@@ -19,8 +19,8 @@ export default function ProductsClient({ data }: ProductsClientProps) {
     <>
       <div className="flex items-start justify-between">
         <Heading
-          title={`Users (${data.length})`}
-          description="Manage users (Client side table functionalities.)"
+          title={`Productos (${data.length})`}
+          description="Gestiona tus productos!"
         />
         <Button
           className="text-xs md:text-sm"

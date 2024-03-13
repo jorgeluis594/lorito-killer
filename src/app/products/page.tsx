@@ -2,7 +2,7 @@ import BreadCrumb from "@/components/breadcrumb";
 import ProductsClient from "@/components/tables/products/client";
 import Product from "@/product/model";
 
-const breadcrumbItems = [{ title: "User", link: "/dashboard/user" }];
+const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 export default async function Page() {
   const response = await Product.list()
 
