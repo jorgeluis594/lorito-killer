@@ -10,5 +10,6 @@ export default interface Interface {
     updatedAt?: Date
 
     save(): Promise<response>
-
+    storePhotos(): Promise<response>
+    removePhoto(photoId: string): Promise<response>
 }

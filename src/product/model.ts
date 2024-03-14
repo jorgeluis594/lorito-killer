@@ -1,4 +1,5 @@
 import productInterface from './interface';
+import { Photo as PhotoType } from '@/lib/types';
 import { response } from '@/lib/types';
 import * as repository from "@/product/repository";
 
@@ -18,6 +19,7 @@ export default class Product implements productInterface {
   price: number;
   sku: string;
   stock: number;
+  photos: PhotoType[];
   updatedAt?: Date;
   createdAt?: Date;
 
@@ -32,22 +34,23 @@ export default class Product implements productInterface {
   }
 
   static async find(id: string):Promise<productResponse> {
-    const response = await findProduct(id)
-
-    if (response.success) {
-      return { success: true, data: response.data as Product } as productResponse
-    } else {
-      console.log({res: response})
-      return { success: false } as productResponse
+    const response = await repository.findProduct(id)
+    if (!response.success) return { success: false } as productResponse
+    const photosResponse = await repository.getPhotos(id)
+    if (photosResponse.success) {
+      response.data.photos = photosResponse.data as PhotoType[]
     }
+
+    return { success: true, data: response.data as Product } as productResponse
   }
 
-  constructor(name: string, price: number, sku: string, stock: number, id?: string) {
+  constructor(name: string, price: number, sku: string, stock: number, photos: PhotoType[], id?: string) {
     this.id = id
     this.name = name;
     this.price = price;
     this.sku = sku;
     this.stock = stock;
+    this.photos = photos;
   }
 
   async save():Promise<response> {
@@ -56,6 +59,19 @@ export default class Product implements productInterface {
     } else {
       return this.create()
     }
+  }
+
+  async storePhotos():Promise<response> {
+    if (!this.id) return { success: false, message: 'Product must be persisted' }
+
+    return repository.storePhotos(this.id, this.photos)
+  }
+
+  async removePhoto(photoId: string):Promise<response> {
+    if (!this.id) return { success: false, message: 'Product must be persisted' }
+    if (!this.photos.find(photo => photo.id === photoId)) return { success: false, message: 'Photo not found' }
+
+    return repository.removePhoto(photoId)
   }
 
   private isPersisted(): boolean {
@@ -95,6 +111,14 @@ export class ProductApi implements productInterface {
 
   async save():Promise<response> {
     return this.isPersisted() ? await this.update() : await this.create();
+  }
+
+  async storePhotos():Promise<response> {
+    return { success: true }
+  }
+
+  async removePhoto(photoId: string):Promise<response> {
+    return { success: true }
   }
 
   private isPersisted(): boolean {

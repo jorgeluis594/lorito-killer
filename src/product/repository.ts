@@ -51,7 +51,7 @@ export const findProduct = async (id: string):Promise<response> => {
 export const getPhotos = async (productId: string):Promise<response> => {
   try {
     const photos = await prisma.photo.findMany({ where: { productId } })
-    return { success: true, data: photos } as response
+    return { success: true, data: photos } as response<Photo[]>
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
@@ -59,10 +59,19 @@ export const getPhotos = async (productId: string):Promise<response> => {
 
 export const storePhotos = async (productId: string, photos: Photo[]):Promise<response> => {
   try {
-    const createdPhotos = await prisma.photo.createMany({
+    await prisma.photo.createMany({
       data: photos.map(photo => ({ ...photo, productId }))
     })
-    return { success: true, data: createdPhotos } as response
+    return { success: true, data: photos } as response<Photo[]>
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
+
+export const removePhoto = async (photoId: string):Promise<response> => {
+  try {
+    await prisma.photo.delete({ where: { id: photoId } })
+    return { success: true } as response
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
