@@ -1,11 +1,11 @@
 "use client";
 
-import { UploadDropzone } from "@/components/uploadthing";
-import { Trash } from "lucide-react";
+import {UploadDropzone} from "@/components/uploadthing";
+import {Trash} from "lucide-react";
 import Image from "next/image";
-import { IMG_MAX_LIMIT } from "./forms/product-form";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+import {IMG_MAX_LIMIT} from "./forms/product-form";
+import {Button} from "./ui/button";
+import {useToast} from "./ui/use-toast";
 
 interface ImageUploadProps {
   onChange?: any;
@@ -18,13 +18,11 @@ export default function FileUpload({
                                      onRemove,
                                      value,
                                    }: ImageUploadProps) {
-  const { toast } = useToast();
-  const onDeleteFile = (key: string) => {
-    const files = value;
-    console.log({files})
-    let filteredFiles = files.filter((item) => item.key !== key);
+  const { toast } = useToast();  const onDeleteFile = (key: string) => {
+    let filteredFiles = value.filter((item) => item.key !== key);
     onRemove(filteredFiles);
   };
+
   const onUpdateFile = (newFiles: any[]) => {
     onChange([...value, ...newFiles]);
   };
@@ -66,14 +64,7 @@ export default function FileUpload({
             config={{ mode: "auto" }}
             content={{
               allowedContent({ isUploading }) {
-                if (isUploading)
-                  return (
-                    <>
-                      <p className="mt-2 text-sm text-slate-400 animate-pulse">
-                        Subiendo imagen
-                      </p>
-                    </>
-                  );
+                return isUploading ? "Subiendo imagen" : "Máximo imagenes de 4mb"
               },
               label() {
                 return "Arrastra y suelta o haz clic para subir";

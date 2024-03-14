@@ -28,13 +28,9 @@ import { Heading } from "@/components/ui/heading";
 
 export const IMG_MAX_LIMIT = 5;
 const ImgSchema = z.object({
-  fileName: z.string(),
   name: z.string(),
-  fileSize: z.number(),
   size: z.number(),
-  fileKey: z.string(),
   key: z.string(),
-  fileUrl: z.string(),
   url: z.string(),
 });
 
@@ -45,7 +41,7 @@ const formSchema = z.object({
   price: z.coerce.number(),
   sku: z.string().min(3, { message: "El sku debe tener al menos 3 caracteres" }),
   stock: z.coerce.number(),
-  imgUrl: z
+  images: z
     .array(ImgSchema)
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
     .min(1, { message: "At least one image must be added." }),
@@ -76,7 +72,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       category: "",
       sku: "",
       stock: 0,
-      imgUrl: []
+      images: []
     };
 
   const form = useForm<ProductFormValues>({
@@ -85,6 +81,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   });
 
   const onSubmit = async (data: ProductFormValues) => {
+    console.log({data})
     const product = new ProductApi(
       data.name,
       data.price,
@@ -122,7 +119,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         >
           <FormField
             control={form.control}
-            name="imgUrl"
+            name="images"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Imagenes</FormLabel>
