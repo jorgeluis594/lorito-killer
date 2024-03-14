@@ -1,12 +1,14 @@
-export type response = {
+export type response<DataType = any> = {
     success: boolean
     message?: string
-    data?: any
+    data?: DataType
 }
 
 export type Photo = {
+    id?: string
     name: string
     size: number
     key: string
     url: string
+    createdAt: Date
 }
