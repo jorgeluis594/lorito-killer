@@ -65,17 +65,34 @@ export default function FileUpload({
             className="dark:bg-zinc-800 py-2 ut-label:text-sm ut-allowed-content:ut-uploading:text-red-300"
             endpoint="imageUploader"
             config={{ mode: "auto" }}
-            onClientUploadComplete={(res: UploadFileResponse) => {
-              // Do something with the response
-              console.log("Files: ", res);
-              alert("Upload Completed");
+            content={{
+              allowedContent({ isUploading }) {
+                if (isUploading)
+                  return (
+                    <>
+                      <p className="mt-2 text-sm text-slate-400 animate-pulse">
+                        Subiendo imagen
+                      </p>
+                    </>
+                  );
+              },
+              label() {
+                return "Arrastra y suelta o haz clic para subir";
+              }
+            }}
+            onClientUploadComplete={(res: UploadFileResponse[] | undefined) => {
+              if (res) {
+                onUpdateFile(res);
+              }
             }}
             onUploadError={(error: Error) => {
-              alert(`ERROR! ${error.message}`);
+              toast({
+                title: "Error",
+                variant: "destructive",
+                description: error.message,
+              });
             }}
             onUploadBegin={(name: string) => {
-              // Do something once upload begins
-              console.log("Uploading: ", name);
             }}
           />
         )}

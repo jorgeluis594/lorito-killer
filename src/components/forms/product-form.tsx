@@ -47,7 +47,7 @@ const formSchema = z.object({
   stock: z.coerce.number(),
   imgUrl: z
     .array(ImgSchema)
-    .max(IMG_MAX_LIMIT, { message: "You can only add up to 3 images" })
+    .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
     .min(1, { message: "At least one image must be added." }),
 });
 
@@ -93,7 +93,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       initialData?.id
     );
     const response = await product.save();
-    console.log({response})
+    console.log({response}) // TODO: Handle response
   };
 
 /*  const onDelete = async () => {
@@ -125,7 +125,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             name="imgUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Images</FormLabel>
+                <FormLabel>Imagenes</FormLabel>
                 <FormControl>
                   <FileUpload
                     onChange={field.onChange}
