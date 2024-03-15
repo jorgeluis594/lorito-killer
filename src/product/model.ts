@@ -41,7 +41,14 @@ export default class Product implements productInterface {
       response.data.photos = photosResponse.data as PhotoType[]
     }
 
-    return { success: true, data: response.data as Product } as productResponse
+    return { success: true, data: new Product(
+        response.data.name,
+        response.data.price,
+        response.data.sku,
+        response.data.stock,
+        response.data.photos,
+        response.data.id
+      ) } as productResponse
   }
 
   constructor(name: string, price: number, sku: string, stock: number, photos: PhotoType[], id?: string) {
