@@ -41,7 +41,7 @@ const formSchema = z.object({
   price: z.coerce.number(),
   sku: z.string().min(3, { message: "El sku debe tener al menos 3 caracteres" }),
   stock: z.coerce.number(),
-  images: z
+  photos: z
     .array(ImgSchema)
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
     .min(1, { message: "At least one image must be added." }),
@@ -72,7 +72,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       category: "",
       sku: "",
       stock: 0,
-      images: []
+      photos: []
     };
 
   const form = useForm<ProductFormValues>({
@@ -87,6 +87,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       data.price,
       data.sku,
       data.stock,
+      data.photos,
       initialData?.id
     );
     const response = await product.save();
@@ -119,7 +120,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         >
           <FormField
             control={form.control}
-            name="images"
+            name="photos"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Imagenes</FormLabel>

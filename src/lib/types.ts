@@ -10,5 +10,5 @@ export type Photo = {
     size: number
     key: string
     url: string
-    createdAt: Date
+    createdAt?: Date
 }

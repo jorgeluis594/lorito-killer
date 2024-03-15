@@ -51,7 +51,7 @@ export default class Product implements productInterface {
       ) } as productResponse
   }
 
-  constructor(name: string, price: number, sku: string, stock: number, photos: PhotoType[], id?: string) {
+  constructor(name: string, price: number, sku: string, stock: number, photos: PhotoType[] = [], id?: string) {
     this.id = id
     this.name = name;
     this.price = price;
@@ -68,10 +68,13 @@ export default class Product implements productInterface {
     }
   }
 
-  async storePhotos():Promise<response> {
+  async storePhotos(photos: PhotoType[]):Promise<response> {
     if (!this.id) return { success: false, message: 'Product must be persisted' }
+    if (!this.photos.length) return { success: false, message: 'No photos to store' }
 
-    return repository.storePhotos(this.id, this.photos)
+    const response = await repository.storePhotos(this.id, this.photos)
+    if (response.success) this.photos.push(...photos)
+    return response
   }
 
   async removePhoto(photoId: string):Promise<response> {
@@ -105,15 +108,17 @@ export class ProductApi implements productInterface {
   price: number;
   sku: string;
   stock: number;
+  photos: PhotoType[];
   updatedAt?: Date;
   createdAt?: Date;
 
-  constructor(name: string, price: number, sku: string, stock: number, id?: string) {
+  constructor(name: string, price: number, sku: string, stock: number, photos: PhotoType[], id?: string) {
     this.id = id;
     this.name = name;
     this.price = price;
     this.sku = sku;
     this.stock = stock;
+    this.photos = photos;
   }
 
   async save():Promise<response> {
