@@ -125,8 +125,23 @@ export class ProductApi implements productInterface {
     return this.isPersisted() ? await this.update() : await this.create();
   }
 
-  async storePhotos():Promise<response> {
-    return { success: true }
+  async storePhotos(photos: PhotoType[]):Promise<response> {
+    const currentPhotos = new Set(photos)
+    const photosToStore = photos.filter(photo => !currentPhotos.has(photo))
+    const res = await fetch(`/api/products/${this.id}/photos`, {
+      method: 'POST',
+      body: JSON.stringify(photosToStore),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    const responseData = await res.json()
+    if (responseData.success) {
+      this.photos.push(...photosToStore)
+    }
+
+    return responseData
   }
 
   async removePhoto(photoId: string):Promise<response> {

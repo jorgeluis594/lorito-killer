@@ -90,8 +90,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       data.photos,
       initialData?.id
     );
-    const response = await product.save();
-    console.log({response}) // TODO: Handle response
+    const { success: isProductSaved, message } = await product.save();
+    if (!isProductSaved) {
+      console.error(message);
+      return;
+    }
+
+    const { success: isPhotosStored, message: photosError } = await product.storePhotos(data.photos)
+    if (!isPhotosStored) {
+      console.error(photosError);
+      return;
+    }
   };
 
 /*  const onDelete = async () => {
