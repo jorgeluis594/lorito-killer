@@ -1,0 +1,51 @@
+import { Product, Photo } from "./types";
+import {response} from "@/lib/types";
+
+export const create = async (product: Product):Promise<response<Product>> => {
+  const res = await fetch('/api/products', {
+    method: 'POST',
+    body: JSON.stringify(product),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+
+  return (await res.json() as response<Product>)
+}
+
+// Updates the product without the photos
+export const update = async(product: Product):Promise<response<Product>> => {
+  if (!product.id) return { success: false, message: 'Product id is required' }
+  const { photos, id, ...productData } = product
+
+  const res = await fetch(`/api/products/${product.id}`, {
+    method: 'PUT',
+    body: JSON.stringify(productData),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+
+  return (await res.json() as response<Product>)
+}
+
+// store photos
+export const storePhotos = async (productId: string, photos: Photo[]):Promise<response<Photo[]>> => {
+  const res = await fetch(`/api/products/${productId}/photos`, {
+    method: 'POST',
+    body: JSON.stringify(photos),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+
+  return (await res.json() as response<Photo[]>)
+}
+
+export const removePhoto = async (productId: string, photoId: string):Promise<response<Photo>> => {
+  const res = await fetch(`/api/products/${productId}/photos/${photoId}`, {
+    method: 'DELETE'
+  })
+
+  return (await res.json() as response<Photo>)
+}
