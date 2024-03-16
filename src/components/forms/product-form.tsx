@@ -3,11 +3,11 @@ import * as z from "zod";
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import ProductInterface, {productType} from "@/product/interface";
+import { productType } from "@/product/interface";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import FileUpload from "@/components/file-upload";
-import { ProductApi } from "@/product/model";
+import Product from "@/product/api-model";
 import {
   Form,
   FormControl,
@@ -81,12 +81,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    const product = new ProductApi(
+    const product = new Product(
       data.name,
       data.price,
       data.sku,
       data.stock,
-      [],
+      initialData?.photos || [],
       initialData?.id
     );
     const { success: isProductSaved, message } = await product.save();
