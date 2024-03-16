@@ -102,6 +102,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  const handlePhotoRemove = async (currentPhotos: any) => {
+    form.setValue("photos", currentPhotos);
+    if (!initialData) return;
+
+    const product = new Product(
+      initialData?.name || "",
+      initialData?.price || 0,
+      initialData?.sku || "",
+      initialData?.stock || 0,
+      initialData?.photos || [],
+      initialData?.id
+    );
+    const photosToRemove = initialData.photos.filter(photo => !currentPhotos.find((p: any) => p.key === photo.key));
+    if (!photosToRemove.length) return;
+    const { success, message } = await product.removePhoto(photosToRemove[0].id as string);
+    if (!success) {
+      console.error({message});
+      return;
+    }
+  }
+
 /*  const onDelete = async () => {
     try {
       setLoading(true);
@@ -136,7 +157,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FileUpload
                     onChange={field.onChange}
                     value={field.value}
-                    onRemove={field.onChange}
+                    onRemove={handlePhotoRemove}
                   />
                 </FormControl>
                 <FormMessage />

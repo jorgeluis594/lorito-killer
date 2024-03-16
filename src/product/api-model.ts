@@ -44,7 +44,16 @@ export default class ProductApi implements productInterface {
   }
 
   async removePhoto(photoId: string):Promise<response> {
-    return { success: true }
+    const res = await fetch(`/api/products/${this.id}/photos/${photoId}`, {
+      method: 'DELETE'
+    })
+
+    const responseData = await res.json()
+    if (responseData.success) {
+      this.photos = this.photos.filter(photo => photo.id !== photoId)
+    }
+
+    return responseData
   }
 
   values(): productType {
