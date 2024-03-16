@@ -1,4 +1,4 @@
-import productInterface from './interface';
+import productInterface, {productType} from './interface';
 import { Photo as PhotoType } from '@/lib/types';
 import { response } from '@/lib/types';
 import * as repository from "@/product/repository";
@@ -37,6 +37,7 @@ export default class Product implements productInterface {
     const response = await repository.findProduct(id)
     if (!response.success) return { success: false } as productResponse
     const photosResponse = await repository.getPhotos(id)
+    console.log({ photosResponse })
     if (photosResponse.success) {
       response.data.photos = photosResponse.data as PhotoType[]
     }
@@ -47,7 +48,7 @@ export default class Product implements productInterface {
         response.data.sku,
         response.data.stock,
         response.data.photos,
-        response.data.id
+        response.data.id,
       ) } as productResponse
   }
 
@@ -70,9 +71,9 @@ export default class Product implements productInterface {
 
   async storePhotos(photos: PhotoType[]):Promise<response> {
     if (!this.id) return { success: false, message: 'Product must be persisted' }
-    if (!this.photos.length) return { success: false, message: 'No photos to store' }
+    if (!photos.length) return { success: false, message: 'No photos to store' }
 
-    const response = await repository.storePhotos(this.id, this.photos)
+    const response = await repository.storePhotos(this.id, photos)
     if (response.success) this.photos.push(...photos)
     return response
   }
@@ -82,6 +83,19 @@ export default class Product implements productInterface {
     if (!this.photos.find(photo => photo.id === photoId)) return { success: false, message: 'Photo not found' }
 
     return repository.removePhoto(photoId)
+  }
+
+  values(): productType {
+    return {
+      id: this.id,
+      name: this.name,
+      price: this.price,
+      sku: this.sku,
+      stock: this.stock,
+      photos: this.photos,
+      updatedAt: this.updatedAt,
+      createdAt: this.createdAt
+    }
   }
 
   private isPersisted(): boolean {
@@ -112,7 +126,7 @@ export class ProductApi implements productInterface {
   updatedAt?: Date;
   createdAt?: Date;
 
-  constructor(name: string, price: number, sku: string, stock: number, photos: PhotoType[], id?: string) {
+  constructor(name: string, price: number, sku: string, stock: number, photos: PhotoType[] = [], id?: string) {
     this.id = id;
     this.name = name;
     this.price = price;
@@ -126,11 +140,11 @@ export class ProductApi implements productInterface {
   }
 
   async storePhotos(photos: PhotoType[]):Promise<response> {
-    const currentPhotos = new Set(photos)
+    const currentPhotos = new Set(this.photos)
     const photosToStore = photos.filter(photo => !currentPhotos.has(photo))
     const res = await fetch(`/api/products/${this.id}/photos`, {
       method: 'POST',
-      body: JSON.stringify(photosToStore),
+      body: JSON.stringify({photos: photosToStore}),
       headers: {
         'Content-Type': 'application/json'
       }
@@ -146,6 +160,19 @@ export class ProductApi implements productInterface {
 
   async removePhoto(photoId: string):Promise<response> {
     return { success: true }
+  }
+
+  values(): productType {
+    return {
+      id: this.id,
+      name: this.name,
+      price: this.price,
+      sku: this.sku,
+      stock: this.stock,
+      photos: this.photos,
+      updatedAt: this.updatedAt,
+      createdAt: this.createdAt
+    }
   }
 
   private isPersisted(): boolean {

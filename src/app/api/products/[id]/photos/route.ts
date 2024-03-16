@@ -1,9 +1,9 @@
 import Product from '@/product/model'
 import {NextResponse} from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: Request, { params }: { params: { id: string }}) {
   const reqData = await req.json()
-  const { success: isProductFound, data: product} = await Product.find(reqData.id)
+  const { success: isProductFound, data: product} = await Product.find(params.id)
   if (!isProductFound) {
     return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 })
   }

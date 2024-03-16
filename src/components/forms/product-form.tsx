@@ -3,7 +3,7 @@ import * as z from "zod";
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import ProductInterface from "@/product/interface";
+import ProductInterface, {productType} from "@/product/interface";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import FileUpload from "@/components/file-upload";
@@ -50,7 +50,7 @@ const formSchema = z.object({
 type ProductFormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
-  initialData: ProductInterface | null | undefined;
+  initialData: productType | null | undefined;
   categories: any;
 }
 
@@ -81,24 +81,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    console.log({data})
     const product = new ProductApi(
       data.name,
       data.price,
       data.sku,
       data.stock,
-      data.photos,
+      [],
       initialData?.id
     );
     const { success: isProductSaved, message } = await product.save();
     if (!isProductSaved) {
-      console.error(message);
+      console.error({product: message});
       return;
     }
 
     const { success: isPhotosStored, message: photosError } = await product.storePhotos(data.photos)
     if (!isPhotosStored) {
-      console.error(photosError);
+      console.error({photos: photosError});
       return;
     }
   };

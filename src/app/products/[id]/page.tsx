@@ -3,6 +3,7 @@ import { ProductForm } from "@/components/forms/product-form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React from "react";
 import Product from "@/product/model";
+import ProductInterface from "@/product/interface";
 import { notFound, useParams } from 'next/navigation'
 
 export default async function Page({params}: { params: {id: string} }) {
@@ -27,7 +28,7 @@ export default async function Page({params}: { params: {id: string} }) {
             { _id: "shirts", name: "polos" },
             { _id: "pants", name: "pantalones" },
           ]}
-          initialData={response.data}
+          initialData={(response.data as ProductInterface).values()}
         />
       </div>
     </ScrollArea>
