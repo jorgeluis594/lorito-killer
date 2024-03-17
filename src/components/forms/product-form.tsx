@@ -3,7 +3,7 @@ import * as z from "zod";
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Product } from "@/product/types";
+import { Product, Photo } from "@/product/types";
 import * as repository from "@/product/api_repository";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import { Heading } from "@/components/ui/heading";
 } from "@/components/ui/select";*/
 
 export const IMG_MAX_LIMIT = 5;
-const ImgSchema = z.object({
+const PhotoSchema = z.object({
   name: z.string(),
   size: z.number(),
   key: z.string(),
@@ -42,7 +42,7 @@ const formSchema = z.object({
   sku: z.string().min(3, { message: "El sku debe tener al menos 3 caracteres" }),
   stock: z.coerce.number(),
   photos: z
-    .array(ImgSchema)
+    .array(PhotoSchema)
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
     .min(1, { message: "At least one image must be added." }),
 });
@@ -97,21 +97,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handlePhotoRemove = async (currentPhotos: any) => {
-    form.setValue("photos", currentPhotos);
-    if (!initialData) return;
+  const handlePhotoRemove = async (key: string) => {
+    const currentPhotos = form.getValues('photos');
+    form.setValue("photos", currentPhotos.filter((photo: Photo) => photo.key !== key));
+    if (!initialProduct || !initialProduct.id) return;
 
-    const product = new Product(
-      initialData?.name || "",
-      initialData?.price || 0,
-      initialData?.sku || "",
-      initialData?.stock || 0,
-      initialData?.photos || [],
-      initialData?.id
-    );
-    const photosToRemove = initialData.photos.filter(photo => !currentPhotos.find((p: any) => p.key === photo.key));
-    if (!photosToRemove.length) return;
-    const { success, message } = await product.removePhoto(photosToRemove[0].id as string);
+    const photoToRemove = currentPhotos.find((photo: Photo) => photo.key === key);
+    if (!photoToRemove) return;
+
+    const { success, message } = await repository.removePhoto(initialProduct.id, key);
     if (!success) {
       console.error({message});
       return;
