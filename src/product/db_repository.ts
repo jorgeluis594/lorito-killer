@@ -52,7 +52,7 @@ export const find = async (id: string):Promise<response> => {
   }
 }
 
-export const getPhotos = async (productId: string):Promise<response> => {
+export const getPhotos = async (productId: string):Promise<response<Photo[]>> => {
   try {
     const photos = await prisma.photo.findMany({ where: { productId } })
     return { success: true, data: photos } as response<Photo[]>
@@ -61,10 +61,21 @@ export const getPhotos = async (productId: string):Promise<response> => {
   }
 }
 
-export const storePhotos = async (productId: string, photos: Photo[]):Promise<response> => {
+export const getPhoto = async (productId: string, photoId: string):Promise<response<Photo>> => {
+  try {
+    const photo = await prisma.photo.findUnique({ where: { id: photoId, productId } })
+    return { success: true, data: photo } as response<Photo>
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
+
+export const storePhotos = async (productId: string, photos: Photo[]):Promise<response<Photo[]>> => {
+  const productPhotos = await getPhotos(productId)
+  const photosToStore = photos.filter(photo => !(productPhotos?.data || []).find(p => p.key === photo.key))
   try {
     await prisma.photo.createMany({
-      data: photos.map(photo => ({ ...photo, productId }))
+      data: photosToStore.map(photo => ({ ...photo, productId }))
     })
     return { success: true, data: photos } as response<Photo[]>
   } catch (error: any) {
@@ -72,19 +83,13 @@ export const storePhotos = async (productId: string, photos: Photo[]):Promise<re
   }
 }
 
-export const removePhoto = async (productId: string, photoId: string):Promise<response> => {
+export const removePhoto = async (productId: string, photoId: string):Promise<response<Photo>> => {
+  const photoResponse = await getPhoto(productId, photoId)
+  if (!photoResponse.success) return photoResponse
+
   try {
     await prisma.photo.delete({ where: { id: photoId, productId: productId } })
-    return { success: true } as response
-  } catch (error: any) {
-    return { success: false, message: error.message } as response
-  }
-}
-
-export const removePhotos = async (photoIds: string[]):Promise<response> => {
-  try {
-    await prisma.photo.deleteMany({ where: { id: { in: photoIds } } })
-    return { success: true } as response
+    return { success: true, data: photoResponse } as response
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
