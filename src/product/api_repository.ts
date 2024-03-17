@@ -13,14 +13,12 @@ export const create = async (product: Product):Promise<response<Product>> => {
   return (await res.json() as response<Product>)
 }
 
-// Updates the product without the photos
 export const update = async(product: Product):Promise<response<Product>> => {
   if (!product.id) return { success: false, message: 'Product id is required' }
-  const { photos, id, ...productData } = product
 
   const res = await fetch(`/api/products/${product.id}`, {
     method: 'PUT',
-    body: JSON.stringify(productData),
+    body: JSON.stringify(product),
     headers: {
       'Content-Type': 'application/json'
     }

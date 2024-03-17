@@ -1,8 +1,8 @@
 export type Photo = {
   id?: string
   name: string
-  size?: number
-  key?: string
+  size: number
+  key: string
   url: string
   createdAt?: Date
 }

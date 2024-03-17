@@ -1,42 +1,45 @@
 import prisma from "@/lib/prisma";
-import productInterface from "./interface";
-import { response, Photo } from "@/lib/types"
+import { Product, Photo } from "./types";
+import { response } from "@/lib/types"
 
-export const createProduct = async (product: productInterface):Promise<response> => {
+export const create = async (product: Product):Promise<response<Product>> => {
   try {
     const { photos, ...productData } = product
     const createdProduct = await prisma.product.create({ data: productData })
-    return { success: true, data: { id: createdProduct.id } } as response
+    const price = createdProduct.price.toNumber();
+    return { success: true, data: { ...createdProduct, price } } as response<Product>
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
 }
 
-export const updateProduct = async(product: productInterface):Promise<response> => {
+export const update = async(product: Product):Promise<response<Product>> => {
+  const { photos, ...productData } = product
   try {
-    await prisma.product.update({ where: { id: product.id }, data: product })
-    return { success: true } as response
+    await prisma.product.update({ where: { id: product.id }, data: productData })
+    return { success: true, data: product } as response<Product>
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
 }
 
-export const findProducts = async ():Promise<response> => {
+export const getMany = async ():Promise<response<Product[]>> => {
   try {
-    const products = await prisma.product.findMany()
-    products.forEach((product: any) => {
-      product.price = product.price.toNumber();
+    const result = await prisma.product.findMany({include: { photos: true }})
+    const products = result.map(p => {
+      const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
+      return { ...p, price }
     })
 
-    return { success: true, data: products } as response
+    return { success: true, data: products } as response<Product[]>
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
 }
 
-export const findProduct = async (id: string):Promise<response> => {
+export const find = async (id: string):Promise<response> => {
   try {
-    const product = await prisma.product.findUnique({ where: { id } })
+    const product = await prisma.product.findUnique({ where: { id }, include: { photos: true } })
 
     if (product) {
       (product.price as unknown) = product.price.toNumber();
@@ -69,9 +72,9 @@ export const storePhotos = async (productId: string, photos: Photo[]):Promise<re
   }
 }
 
-export const removePhoto = async (photoId: string):Promise<response> => {
+export const removePhoto = async (productId: string, photoId: string):Promise<response> => {
   try {
-    await prisma.photo.delete({ where: { id: photoId } })
+    await prisma.photo.delete({ where: { id: photoId, productId: productId } })
     return { success: true } as response
   } catch (error: any) {
     return { success: false, message: error.message } as response

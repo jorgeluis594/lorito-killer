@@ -21,7 +21,7 @@ model Product {
   stock     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Photo     Photo[]
+  photos    Photo[]
 }
 
 model Photo {

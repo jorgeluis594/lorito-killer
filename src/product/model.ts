@@ -1,7 +1,7 @@
 import productInterface, {productType} from './interface';
 import { Photo as PhotoType } from '@/lib/types';
 import { response } from '@/lib/types';
-import * as repository from "@/product/repository";
+import * as repository from "@/product/db_repository";
 
 type productListResponse = {
   success: boolean
