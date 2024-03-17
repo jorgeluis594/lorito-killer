@@ -1,13 +1,13 @@
-import Product from '@/product/model'
+import { find as findProduct, update as UpdateProduct } from "@/product/db_repository";
+import { Product } from "@/product/types";
 import {NextResponse} from "next/server";
-export async function PUT(req: Request) {
-  const reqData = await req.json()
-  const {success} = await Product.find(reqData.id)
+export async function PUT(req: Request, params: { id: string}) {
+  const productData = await req.json() as Product
+  const {success} = await findProduct(params.id)
   if (!success) {
     return NextResponse.json({ success: false, message: "Product not found" }, { status: 404 })
   }
 
-  const product = new Product(reqData.name, reqData.price, reqData.sku, reqData.stock, reqData.id)
-  const response = await product.save()
+  const response = await UpdateProduct(productData)
   return NextResponse.json(response, { status: response.success ? 200 : 400 })
 }
