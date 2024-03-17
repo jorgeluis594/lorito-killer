@@ -2,14 +2,13 @@ import BreadCrumb from "@/components/breadcrumb";
 import { ProductForm } from "@/components/forms/product-form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React from "react";
-import Product from "@/product/model";
-import ProductInterface from "@/product/interface";
-import { notFound, useParams } from 'next/navigation'
+import { find as findProduct } from "@/product/db_repository";
+import { notFound } from 'next/navigation'
 
 export default async function Page({params}: { params: {id: string} }) {
   const { id } = params;
 
-  const response = await Product.find(id)
+  const response = await findProduct(id)
   if (!response.success) {
     return notFound();
   }
@@ -28,7 +27,7 @@ export default async function Page({params}: { params: {id: string} }) {
             { _id: "shirts", name: "polos" },
             { _id: "pants", name: "pantalones" },
           ]}
-          initialData={(response.data as ProductInterface).values()}
+          initialProduct={response.data}
         />
       </div>
     </ScrollArea>

@@ -1,14 +1,10 @@
-import Product from '@/product/model'
+import { create as createProduct } from "@/product/db_repository"
+import { Product } from "@/product/types"
 import {NextResponse} from "next/server";
 
 export async function POST(req: Request) {
-  const data = await req.json()
-  const product = new Product(data.name, data.price, data.sku, data.stock)
-  const response = await product.save()
+  const data = await req.json() as Product
+  const response = await createProduct(data)
 
-  if (response.success) {
-    return NextResponse.json({ success: true, data: { ...product } }, { status: 201 })
-  } else {
-    return NextResponse.json(response, { status: 400 })
-  }
+  return NextResponse.json(response, { status: response.success ? 201 : 400 })
 }

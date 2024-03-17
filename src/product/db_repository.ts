@@ -5,7 +5,10 @@ import { response } from "@/lib/types"
 export const create = async (product: Product):Promise<response<Product>> => {
   try {
     const { photos, ...productData } = product
-    const createdProduct = await prisma.product.create({ data: productData })
+    const data: any = { ...productData }
+    if (photos) data.photos = { create: photos }
+
+    const createdProduct = await prisma.product.create({ data: data })
     const price = createdProduct.price.toNumber();
     return { success: true, data: { ...createdProduct, price } } as response<Product>
   } catch (error: any) {
@@ -37,7 +40,7 @@ export const getMany = async ():Promise<response<Product[]>> => {
   }
 }
 
-export const find = async (id: string):Promise<response> => {
+export const find = async (id: string):Promise<response<Product>> => {
   try {
     const product = await prisma.product.findUnique({ where: { id }, include: { photos: true } })
 
