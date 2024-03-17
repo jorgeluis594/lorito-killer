@@ -1,10 +1,10 @@
 import BreadCrumb from "@/components/breadcrumb";
 import ProductsClient from "@/components/tables/products/client";
-import Product from "@/product/model";
+import { getMany as getManyProducts } from "@/product/db_repository";
 
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 export default async function Page() {
-  const response = await Product.list()
+  const response = await getManyProducts();
 
   return (
     <>

@@ -1,6 +1,6 @@
 "use client";
 import * as z from "zod";
-import React, { useState } from "react";
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Product, Photo } from "@/product/types";
@@ -50,7 +50,7 @@ const formSchema = z.object({
 type ProductFormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
-  initialProduct: Product | undefined;
+  initialProduct?: Product | null;
   categories: any;
 }
 
@@ -65,8 +65,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
 };
 
 export const ProductForm: React.FC<ProductFormProps> = ({
-                                                          initialProduct,
-                                                          categories,
+                                                          initialProduct = null,
                                                         }) => {
   const title = initialProduct ? "Editar producto" : "Registrar producto";
   const description = initialProduct ? "Editar producto." : "Registra un nuevo producto";
@@ -100,6 +99,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const handlePhotoRemove = async (key: string) => {
     const currentPhotos = form.getValues('photos');
     form.setValue("photos", currentPhotos.filter((photo: Photo) => photo.key !== key));
+    // If the product is new, there is no need to remove the photo from the server
     if (!initialProduct || !initialProduct.id) return;
 
     const photoToRemove = currentPhotos.find((photo: Photo) => photo.key === key);

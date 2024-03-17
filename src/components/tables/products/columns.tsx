@@ -1,10 +1,9 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { Checkbox } from "@/components/ui/checkbox";
-import productInterface from "@/product/interface";
+import { Product } from "@/product/types";
 
-export const columns: ColumnDef<productInterface>[] = [
+export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "name",
     header: "NOMBRE",

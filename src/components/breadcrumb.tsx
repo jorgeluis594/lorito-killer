@@ -15,12 +15,7 @@ type BreadCrumbPropsType = {
 export default function BreadCrumb({ items }: BreadCrumbPropsType) {
   return (
     <div className="mb-4 flex items-center space-x-1 text-sm text-muted-foreground">
-      <Link
-        href={"/dashboard"}
-        className="overflow-hidden text-ellipsis whitespace-nowrap"
-      >
-        Dashboard
-      </Link>
+      <span className="overflow-hidden text-ellipsis whitespace-nowrap">Dashboard</span>
       {items?.map((item: BreadCrumbType, index: number) => (
         <React.Fragment key={item.title}>
           <ChevronRightIcon className="h-4 w-4" />

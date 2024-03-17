@@ -1,19 +1,19 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { columns } from "./columns";
-import productInterface from "@/product/interface";
+import { Product } from "@/product/types";
+import { buttonVariants } from "@/components/ui/button";
+import Link from "next/link";
 
 interface ProductsClientProps {
-  data: productInterface[];
+  data: Product[];
 }
 
 export default function ProductsClient({ data }: ProductsClientProps) {
-  const router = useRouter();
 
   return (
     <>
@@ -22,12 +22,9 @@ export default function ProductsClient({ data }: ProductsClientProps) {
           title={`Productos (${data.length})`}
           description="Gestiona tus productos!"
         />
-        <Button
-          className="text-xs md:text-sm"
-          onClick={() => router.push(`/dashboard/user/new`)}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Add New
-        </Button>
+        <Link href="/products/new" className={`${buttonVariants({ variant: "outline" })} text-xs md:text-sm`}>
+          <Plus className="mr-2 h-4 w-4" /> Agregar producto
+        </Link>
       </div>
       <Separator />
       <DataTable searchKey="name" columns={columns} data={data} />
