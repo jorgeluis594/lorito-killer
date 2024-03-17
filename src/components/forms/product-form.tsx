@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Heading } from "@/components/ui/heading";
+import { ProductSchema } from "@/product/schema";
 /*import {
   Select,
   SelectContent,
@@ -26,28 +27,7 @@ import { Heading } from "@/components/ui/heading";
   SelectValue,
 } from "@/components/ui/select";*/
 
-export const IMG_MAX_LIMIT = 5;
-const PhotoSchema = z.object({
-  name: z.string(),
-  size: z.number(),
-  key: z.string(),
-  url: z.string(),
-});
-
-const formSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "El nombre del producto debe tener al menos 3 caracteres" }),
-  price: z.coerce.number(),
-  sku: z.string().min(3, { message: "El sku debe tener al menos 3 caracteres" }),
-  stock: z.coerce.number(),
-  photos: z
-    .array(PhotoSchema)
-    .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
-    .min(1, { message: "At least one image must be added." }),
-});
-
-type ProductFormValues = z.infer<typeof formSchema>;
+type ProductFormValues = z.infer<typeof ProductSchema>;
 
 interface ProductFormProps {
   initialProduct?: Product | null;
@@ -84,7 +64,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     } as Product;
 
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(ProductSchema),
     defaultValues: product,
   });
 
@@ -97,7 +77,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   const handlePhotoRemove = async (key: string) => {
-    const currentPhotos = form.getValues('photos');
+    const currentPhotos = form.getValues('photos') || [];
     form.setValue("photos", currentPhotos.filter((photo: Photo) => photo.key !== key));
     // If the product is new, there is no need to remove the photo from the server
     if (!initialProduct || !initialProduct.id) return;
@@ -145,7 +125,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <FormControl>
                   <FileUpload
                     onChange={field.onChange}
-                    value={field.value}
+                    value={field.value || []}
                     onRemove={handlePhotoRemove}
                   />
                 </FormControl>

@@ -1,0 +1,1 @@
+export const IMG_MAX_LIMIT = 5;
