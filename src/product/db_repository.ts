@@ -66,7 +66,8 @@ export const getPhotos = async (productId: string):Promise<response<Photo[]>> =>
 
 export const getPhoto = async (productId: string, photoId: string):Promise<response<Photo>> => {
   try {
-    const photo = await prisma.photo.findUnique({ where: { id: photoId, productId } })
+    const photo = await prisma.photo.findUnique({ where: { id: photoId } })
+    if (!photo) return { success: false, message: 'Photo not found' } as response
     return { success: true, data: photo } as response<Photo>
   } catch (error: any) {
     return { success: false, message: error.message } as response
@@ -91,8 +92,9 @@ export const removePhoto = async (productId: string, photoId: string):Promise<re
   if (!photoResponse.success) return photoResponse
 
   try {
-    await prisma.photo.delete({ where: { id: photoId, productId: productId } })
-    return { success: true, data: photoResponse } as response
+    await prisma.photo.delete({
+      where: { id: photoId, productId: productId } })
+    return { success: true, data: photoResponse.data } as response
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }

@@ -85,7 +85,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     const photoToRemove = currentPhotos.find((photo: Photo) => photo.key === key);
     if (!photoToRemove) return;
 
-    const { success, message } = await repository.removePhoto(initialProduct.id, key);
+    const { success, message } = await repository.removePhoto(initialProduct.id, photoToRemove.id as string);
     if (!success) {
       console.error({message});
       return;
