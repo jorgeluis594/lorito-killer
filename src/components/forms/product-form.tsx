@@ -3,11 +3,11 @@ import * as z from "zod";
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { productType } from "@/product/interface";
+import { Product } from "@/product/types";
+import * as repository from "@/product/api_repository";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import FileUpload from "@/components/file-upload";
-import Product from "@/product/api-model";
 import {
   Form,
   FormControl,
@@ -50,22 +50,31 @@ const formSchema = z.object({
 type ProductFormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
-  initialData: productType | null | undefined;
+  initialProduct: Product | undefined;
   categories: any;
 }
 
+const transformToProduct = (data: ProductFormValues): Product => {
+  return {
+    name: data.name,
+    price: data.price,
+    sku: data.sku,
+    stock: data.stock,
+    photos: data.photos
+  };
+};
+
 export const ProductForm: React.FC<ProductFormProps> = ({
-                                                          initialData,
+                                                          initialProduct,
                                                           categories,
                                                         }) => {
-  const title = initialData ? "Editar producto" : "Registrar producto";
-  const description = initialData ? "Editar producto." : "Registra un nuevo producto";
-  const action = initialData ? "Guardar cambios" : "Registrar";
+  const title = initialProduct ? "Editar producto" : "Registrar producto";
+  const description = initialProduct ? "Editar producto." : "Registra un nuevo producto";
+  const action = initialProduct ? "Guardar cambios" : "Registrar";
 
-  const defaultValues = initialData
-    ? initialData
+  const product = initialProduct
+    ? initialProduct
     : {
-      id: null,
       name: "",
       description: "",
       price: 0,
@@ -73,32 +82,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       sku: "",
       stock: 0,
       photos: []
-    };
+    } as Product;
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: product,
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    const product = new Product(
-      data.name,
-      data.price,
-      data.sku,
-      data.stock,
-      initialData?.photos || [],
-      initialData?.id
-    );
-    const { success: isProductSaved, message } = await product.save();
-    if (!isProductSaved) {
-      console.error({product: message});
-      return;
-    }
-
-    const { success: isPhotosStored, message: photosError } = await product.storePhotos(data.photos)
-    if (!isPhotosStored) {
-      console.error({photos: photosError});
-      return;
+    if (initialProduct) {
+      await repository.update({ id: product.id, ...transformToProduct(data)});
+    } else {
+      await repository.create(transformToProduct(data));
     }
   };
 
