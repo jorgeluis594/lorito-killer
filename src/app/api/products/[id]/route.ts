@@ -1,7 +1,7 @@
 import { find as findProduct, update as UpdateProduct } from "@/product/db_repository";
 import { Product } from "@/product/types";
 import {NextResponse} from "next/server";
-export async function PUT(req: Request, params: { id: string}) {
+export async function PUT(req: Request, { params }: { params: {id: string} }) {
   const productData = await req.json() as Product
   const {success} = await findProduct(params.id)
   if (!success) {

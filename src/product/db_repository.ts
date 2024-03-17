@@ -48,7 +48,7 @@ export const find = async (id: string):Promise<response<Product>> => {
       (product.price as unknown) = product.price.toNumber();
       return { success: true, data: product } as response
     } else {
-      return { success: false } as response
+      return { success: false, message: "Product not found" } as response
     }
   } catch (error: any) {
     return { success: false, message: error.message } as response
