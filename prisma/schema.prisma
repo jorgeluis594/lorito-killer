@@ -22,6 +22,7 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   photos    Photo[]
+  categories CategoriesOnProduct[]
 }
 
 model Photo {
@@ -33,4 +34,21 @@ model Photo {
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  products  CategoriesOnProduct[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CategoriesOnProduct {
+  id         String   @id @default(uuid())
+  productId  String
+  categoryId String
+  product    Product  @relation(fields: [productId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
 }
