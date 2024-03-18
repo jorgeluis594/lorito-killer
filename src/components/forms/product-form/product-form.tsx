@@ -4,6 +4,7 @@ import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Product, Photo } from "@/product/types";
+import { EMPTY_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,16 +56,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const product = initialProduct
     ? initialProduct
-    : {
-      name: "",
-      description: "",
-      price: 0,
-      category: "",
-      sku: "",
-      stock: 0,
-      photos: [],
-      categories: []
-    } as Product;
+    : EMPTY_PRODUCT;
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
