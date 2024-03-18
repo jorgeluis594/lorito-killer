@@ -2,6 +2,7 @@ export type Photo = {
   id?: string
   name: string
   size: number
+  type: string
   key: string
   url: string
   createdAt?: Date

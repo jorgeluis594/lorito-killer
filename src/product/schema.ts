@@ -7,6 +7,7 @@ export const PhotoSchema = z.object({
   name: z.string(),
   size: z.number(),
   key: z.string(),
+  type: z.string(),
   url: z.string(),
   createdAt: z.date().optional(),
 });
@@ -29,7 +30,6 @@ export const ProductSchema = z.object({
   photos: z
     .array(PhotoSchema)
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
-    .min(1, { message: "At least one image must be added." })
     .optional(),
   categories: z.array(CategorySchema),
   updatedAt: z.date().optional(),
