@@ -19,6 +19,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Heading } from "@/components/ui/heading";
 import { ProductSchema } from "@/product/schema";
+import CategoriesSelector from "./categories-selector";
 /*import {
   Select,
   SelectContent,
@@ -94,19 +95,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   }
 
-/*  const onDelete = async () => {
-    try {
-      setLoading(true);
-      //   await axios.delete(`/api/${params.storeId}/products/${params.productId}`);
-      router.refresh();
-      router.push(`/${params.storeId}/products`);
-    } catch (error: any) {
-    } finally {
-      setLoading(false);
-      setOpen(false);
-    }
-  };*/
-
   return (
     <>
       <div className="flex items-center justify-between">
@@ -118,100 +106,73 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 w-full"
         >
-          <div className="md:grid md:grid-cols-3 gap-8">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Nombre del producto"
-                      autoComplete={"off"}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Precio</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="sku"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>SKU</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="stock"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/*<FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoría</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          defaultValue={field.value}
-                          placeholder="Seleccionar categoría"
+          <div className="md:grid md:grid-cols-4 gap-4">
+            <div className="col-span-2 md:grid md:grid-cols-3 gap-4">
+              <div className="col-span-3">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({field}) => (
+                    <FormItem>
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Nombre del producto"
+                          autoComplete={"off"}
+                          {...field}
                         />
-                      </SelectTrigger>
+                      </FormControl>
+                      <FormMessage/>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="price"
+                render={({field}) => (
+                  <FormItem>
+                    <FormLabel>Precio</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
                     </FormControl>
-                    <SelectContent>
-                       @ts-ignore
-                      {categories.map((category) => (
-                        <SelectItem key={category._id} value={category._id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />*/}
+                    <FormMessage/>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sku"
+                render={({field}) => (
+                  <FormItem>
+                    <FormLabel>SKU</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage/>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stock"
+                render={({field}) => (
+                  <FormItem>
+                    <FormLabel>Stock</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage/>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <CategoriesSelector product={product} availableCategories={[{id: 'asdas', name: 'Hola bru'}]} />
           </div>
           <FormField
             control={form.control}
             name="photos"
-            render={({ field }) => (
+            render={({field}) => (
               <FormItem>
                 <FormLabel>Imagenes</FormLabel>
                 <FormControl>
@@ -221,7 +182,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     onRemove={handlePhotoRemove}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage/>
               </FormItem>
             )}
           />

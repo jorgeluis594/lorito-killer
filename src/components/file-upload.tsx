@@ -61,7 +61,7 @@ export default function FileUpload({
           value?.map((item) => (
             <div
               key={item.key}
-              className="relative w-[200px] h-[200px] rounded-md overflow-hidden"
+              className="relative w-[100px] h-[100px] rounded-md overflow-hidden"
             >
               <div className="z-10 absolute top-2 right-2">
                 <Button
