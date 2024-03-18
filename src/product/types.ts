@@ -14,6 +14,14 @@ export type Product = {
   sku: string;
   stock: number;
   photos?: Photo[];
+  categories: Category[];
+  updatedAt?: Date;
+  createdAt?: Date;
+}
+
+export type Category = {
+  id?: string;
+  name: string;
   updatedAt?: Date;
   createdAt?: Date;
 }

@@ -37,7 +37,6 @@ export const deleteProduct = async(product: Product):Promise<response<Product>> 
   return (await res.json() as response<Product>)
 }
 
-// store photos
 export const storePhotos = async (productId: string, photos: Photo[]):Promise<response<Photo[]>> => {
   const res = await fetch(`/api/products/${productId}/photos`, {
     method: 'POST',
