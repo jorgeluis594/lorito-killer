@@ -21,13 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Heading } from "@/components/ui/heading";
 import { ProductSchema } from "@/product/schema";
 import CategoriesSelector from "./categories-selector";
-/*import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";*/
+import { useToast } from "@/components/ui/use-toast";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -53,6 +47,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const title = initialProduct ? "Editar producto" : "Registrar producto";
   const description = initialProduct ? "Editar producto." : "Registra un nuevo producto";
   const action = initialProduct ? "Guardar cambios" : "Registrar";
+  const {toast} = useToast();
 
   const product = initialProduct
     ? initialProduct
@@ -71,19 +66,42 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handlePhotoRemove = async (key: string) => {
+  const handlePhotosUpdated = async (newPhotos: Photo[]) => {
     const currentPhotos = form.getValues('photos') || [];
-    form.setValue("photos", currentPhotos.filter((photo: Photo) => photo.key !== key));
+
     // If the product is new, there is no need to remove the photo from the server
     if (!initialProduct || !initialProduct.id) return;
 
-    const photoToRemove = currentPhotos.find((photo: Photo) => photo.key === key);
-    if (!photoToRemove) return;
+    const photosToRemove = currentPhotos.filter((photo: Photo) => !newPhotos.find((newPhoto: Photo) => newPhoto.key === photo.key));
+    const photosToAppend = newPhotos.filter((photo: Photo) => !currentPhotos.find((currentPhoto: Photo) => currentPhoto.key === photo.key));
 
-    const { success, message } = await repository.removePhoto(initialProduct.id, photoToRemove.id as string);
-    if (!success) {
-      console.error({message});
-      return;
+    if (photosToRemove.length) {
+      form.setValue("photos", newPhotos);
+      for (const photo of photosToRemove) {
+        const { success, message } = await repository.removePhoto(initialProduct.id as string, photo.id as string);
+        if (!success) {
+          // TODO: toast is not working, fix it
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: message,
+          });
+        }
+      }
+    }
+
+    if (photosToAppend.length) {
+      const { success, message, data } = await repository.storePhotos(initialProduct.id as string, photosToAppend);
+      if (success) {
+        debugger
+        form.setValue("photos", [...currentPhotos, ...data as Photo[]])
+      } else {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: message,
+        });
+      }
     }
   }
 
@@ -183,9 +201,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <FormLabel>Imagenes</FormLabel>
                 <FormControl>
                   <FileUpload
-                    onChange={field.onChange}
+                    onChange={handlePhotosUpdated}
                     value={field.value || []}
-                    onRemove={handlePhotoRemove}
                   />
                 </FormControl>
                 <FormMessage/>

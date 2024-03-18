@@ -89,10 +89,8 @@ export const storePhotos = async (productId: string, photos: Photo[]):Promise<re
   const productPhotos = await getPhotos(productId)
   const photosToStore = photos.filter(photo => !(productPhotos?.data || []).find(p => p.key === photo.key))
   try {
-    await prisma.photo.createMany({
-      data: photosToStore.map(photo => ({ ...photo, productId }))
-    })
-    return { success: true, data: photos } as response<Photo[]>
+    const createdPhotos = await Promise.all(photosToStore.map(photo => prisma.photo.create({ data: { ...photo, productId } }) ))
+    return { success: true, data: createdPhotos } as response<Photo[]>
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
