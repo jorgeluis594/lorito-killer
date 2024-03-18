@@ -6,23 +6,28 @@ import Image from "next/image";
 import {IMG_MAX_LIMIT} from "@/product/constants";
 import {Button} from "./ui/button";
 import {useToast} from "./ui/use-toast";
+import {Photo} from "@/product/types";
 
 interface ImageUploadProps {
-  onChange?: any;
-  onRemove: (key: string) => void;
-  value: any[];
+  onChange: (value: Photo[]) => void;
+  value: Photo[];
 }
 
 export default function FileUpload({
                                      onChange,
-                                     onRemove,
                                      value,
                                    }: ImageUploadProps) {
   const { toast } = useToast();
 
-  const onUpdateFile = (newFiles: any[]) => {
+  const onDeleteFile = (key: string) => {
+    let filteredFiles = value.filter((item) => item.key !== key);
+    onChange(filteredFiles);
+  };
+
+  const onUpdateFile = (newFiles: Photo[]) => {
     onChange([...value, ...newFiles]);
   };
+
   return (
     <div>
       <div>
@@ -41,7 +46,10 @@ export default function FileUpload({
             }}
             onClientUploadComplete={(res: any[] | undefined) => {
               if (res) {
-                onUpdateFile(res);
+                onUpdateFile(res.map((item) => {
+                  const { serverData, customId, ...photo } = item
+                  return photo
+                }));
               }
             }}
             onUploadError={(error: Error) => {
@@ -66,7 +74,7 @@ export default function FileUpload({
               <div className="z-10 absolute top-2 right-2">
                 <Button
                   type="button"
-                  onClick={() => onRemove(item.key)}
+                  onClick={() => onDeleteFile(item.key)}
                   variant="destructive"
                   size="sm"
                 >
