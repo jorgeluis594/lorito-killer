@@ -27,6 +27,16 @@ export const update = async(product: Product):Promise<response<Product>> => {
   return (await res.json() as response<Product>)
 }
 
+export const deleteProduct = async(product: Product):Promise<response<Product>> => {
+  if (!product.id) return { success: false, message: 'Product id is required' }
+
+  const res = await fetch(`/api/products/${product.id}`, {
+    method: 'DELETE'
+  })
+
+  return (await res.json() as response<Product>)
+}
+
 // store photos
 export const storePhotos = async (productId: string, photos: Photo[]):Promise<response<Photo[]>> => {
   const res = await fetch(`/api/products/${productId}/photos`, {

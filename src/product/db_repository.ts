@@ -55,6 +55,15 @@ export const find = async (id: string):Promise<response<Product>> => {
   }
 }
 
+export const deleteProduct = async (product: Product):Promise<response<Product>> => {
+  try {
+    const deletedProduct = await prisma.product.delete({ where: { id: product.id } })
+    return { success: true, data: deletedProduct } as response
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
+
 export const getPhotos = async (productId: string):Promise<response<Photo[]>> => {
   try {
     const photos = await prisma.photo.findMany({ where: { productId } })
