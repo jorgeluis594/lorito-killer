@@ -4,9 +4,10 @@ import { response } from "@/lib/types"
 
 export const create = async (product: Product):Promise<response<Product>> => {
   try {
-    const { photos, ...productData } = product
+    const { photos, categories, ...productData } = product
     const data: any = { ...productData }
     if (photos) data.photos = { create: photos }
+    if (categories && categories.length) data.categories = { connect: categories.map(c => ({ id: c.id })) }
 
     const createdProduct = await prisma.product.create({ data: data })
     const price = createdProduct.price.toNumber();
@@ -17,7 +18,8 @@ export const create = async (product: Product):Promise<response<Product>> => {
 }
 
 export const update = async(product: Product):Promise<response<Product>> => {
-  const { photos, ...productData } = product
+  const { photos, categories, ...productData } = product
+
   try {
     await prisma.product.update({ where: { id: product.id }, data: productData })
     return { success: true, data: product } as response<Product>
@@ -28,7 +30,7 @@ export const update = async(product: Product):Promise<response<Product>> => {
 
 export const getMany = async ():Promise<response<Product[]>> => {
   try {
-    const result = await prisma.product.findMany({include: { photos: true }})
+    const result = await prisma.product.findMany({include: { photos: true, categories: true }})
     const products = result.map(p => {
       const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
       return { ...p, price }
