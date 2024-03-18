@@ -40,7 +40,8 @@ const transformToProduct = (data: ProductFormValues): Product => {
     price: data.price,
     sku: data.sku,
     stock: data.stock,
-    photos: data.photos
+    photos: data.photos,
+    categories: data.categories || [],
   };
 };
 
@@ -60,7 +61,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       category: "",
       sku: "",
       stock: 0,
-      photos: []
+      photos: [],
+      categories: []
     } as Product;
 
   const form = useForm<ProductFormValues>({
@@ -116,23 +118,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 w-full"
         >
-          <FormField
-            control={form.control}
-            name="photos"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Imagenes</FormLabel>
-                <FormControl>
-                  <FileUpload
-                    onChange={field.onChange}
-                    value={field.value || []}
-                    onRemove={handlePhotoRemove}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <div className="md:grid md:grid-cols-3 gap-8">
             <FormField
               control={form.control}
@@ -223,6 +208,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               )}
             />*/}
           </div>
+          <FormField
+            control={form.control}
+            name="photos"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Imagenes</FormLabel>
+                <FormControl>
+                  <FileUpload
+                    onChange={field.onChange}
+                    value={field.value || []}
+                    onRemove={handlePhotoRemove}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <Button className="ml-auto btn-success" type="submit">
             {action}
           </Button>
