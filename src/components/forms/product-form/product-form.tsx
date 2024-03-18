@@ -107,7 +107,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           className="space-y-8 w-full"
         >
           <div className="md:grid md:grid-cols-4 gap-4">
-            <div className="col-span-2 md:grid md:grid-cols-3 gap-4">
+            <div className="col-span-2 md:grid md:grid-cols-3 gap-4 h-fit">
               <div className="col-span-3">
                 <FormField
                   control={form.control}
@@ -167,7 +167,21 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 )}
               />
             </div>
-            <CategoriesSelector product={product} availableCategories={[{id: 'asdas', name: 'Hola bru'}]} />
+            <FormField
+              control={form.control}
+              name="categories"
+              render={({field}) => (
+                <FormItem>
+                  <FormLabel>Categorías</FormLabel>
+                    <CategoriesSelector
+                      availableCategories={[{ id: 'asdjas', name: 'Categoría 1'}, { id: 'asdjas 2', name: 'Categoría 2'}, { id: 'asdjas 3', name: 'Categoría 3'}]}
+                      value={field.value || []}
+                      onChange={field.onChange}
+                    />
+                  <FormMessage/>
+                </FormItem>
+              )}
+            />
           </div>
           <FormField
             control={form.control}
