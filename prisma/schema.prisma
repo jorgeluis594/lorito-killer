@@ -30,6 +30,7 @@ model Photo {
   url       String
   name      String
   key       String
+  type      String
   size      Int
   productId String
   product   Product  @relation(fields: [productId], references: [id])
