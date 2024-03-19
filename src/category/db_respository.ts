@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import { Category } from "./types";
+import { Product } from "@/product/types";
 import { response } from "@/lib/types"
+import {find as findProduct} from "@/product/db_repository";
 
 export const create = async (category: Category):Promise<response<Category>> => {
   try {
@@ -20,6 +22,36 @@ export const getMany = async ():Promise<response<Category[]>> => {
   try {
     const categories = await prisma.category.findMany()
     return { success: true, data: categories } as response<Category[]>
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
+
+export const find = async (id: string):Promise<response<Category>> => {
+  try {
+    const category = await prisma.category.findUnique({ where: { id } })
+
+    if (category) {
+      return { success: true, data: category } as response<Category>
+    } else {
+      return { success: false, message: "Category not found" } as response
+    }
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
+
+export const addCategoryToProduct = async (product: Product, category: Category):Promise<response<Category>> => {
+  try {
+    await prisma.product.update({
+      where: { id: product.id as string },
+      data: {
+        categories: {
+          connect: { id: category.id as string }
+        }
+      }
+    })
+    return { success: true, data: category } as response<Category>
   } catch (error: any) {
     return { success: false, message: error.message } as response
   }
