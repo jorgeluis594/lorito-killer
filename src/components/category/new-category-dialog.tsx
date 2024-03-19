@@ -47,6 +47,7 @@ export default function NewCategoryDialog({ addCategory }: NewSectionDialogProps
 
     if (createdCategory.success) {
       addCategory(createdCategory.data as Category);
+      form.setValue('name', '');
       setOpen(false);
     } else {
       alert(createdCategory.message)
@@ -56,52 +57,50 @@ export default function NewCategoryDialog({ addCategory }: NewSectionDialogProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
+        <Button variant="outline" size="icon">
           ＋
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Agregar categoría</DialogTitle>
-          <DialogDescription>
-            Categoriza tus productos para una mejor organización.
-          </DialogDescription>
-        </DialogHeader>
         <Form {...form}>
           <form
             id="gategory-form"
-            className="grid gap-4 py-4"
             onSubmit={form.handleSubmit(onSubmit)}
           >
-            <div className="grid grid-cols-4 items-center gap-4">
+            <DialogHeader>
+              <DialogTitle>Agregar categoría</DialogTitle>
+              <DialogDescription>
+                Categoriza tus productos para una mejor organización.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre</FormLabel>
                     <FormControl>
-                      <Input
-                        id="category"
-                        name="name"
-                        placeholder="Nombre de categoría..."
-                        className="col-span-4"
-                      />
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Input
+                          id="category"
+                          placeholder="Nombre de categoría..."
+                          className="col-span-4"
+                          {...field}
+                        />
+                        <FormMessage className="col-span-4"/>
+                      </div>
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+            <DialogFooter>
+              <Button type="submit" size="sm">
+                Agregar categoría
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-        <DialogFooter>
-          <DialogTrigger asChild>
-            <Button type="submit" size="sm" form="todo-form">
-              Agregar categoría
-            </Button>
-          </DialogTrigger>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

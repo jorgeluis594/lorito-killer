@@ -23,10 +23,7 @@ export default async function Page({params}: { params: {id: string} }) {
       <div className="flex-1 space-y-4 p-5">
         <BreadCrumb items={breadcrumbItems} />
         <ProductForm
-          categories={[
-            { _id: "shirts", name: "polos" },
-            { _id: "pants", name: "pantalones" },
-          ]}
+          categories={[]}
           initialProduct={response.data}
         />
       </div>

@@ -3,6 +3,7 @@ import * as z from "zod";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { Product, Photo } from "@/product/types";
 import { EMPTY_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
@@ -22,12 +23,14 @@ import { Heading } from "@/components/ui/heading";
 import { ProductSchema } from "@/product/schema";
 import CategoriesSelector from "./categories-selector";
 import { useToast } from "@/components/ui/use-toast";
+import NewCategoryDialog from "@/components/category/new-category-dialog";
+import {Category} from "@/category/types";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
 interface ProductFormProps {
   initialProduct?: Product | null;
-  categories: any;
+  categories: Category[];
 }
 
 const transformToProduct = (data: ProductFormValues): Product => {
@@ -43,11 +46,14 @@ const transformToProduct = (data: ProductFormValues): Product => {
 
 export const ProductForm: React.FC<ProductFormProps> = ({
                                                           initialProduct = null,
+                                                          categories,
                                                         }) => {
   const title = initialProduct ? "Editar producto" : "Registrar producto";
   const description = initialProduct ? "Editar producto." : "Registra un nuevo producto";
   const action = initialProduct ? "Guardar cambios" : "Registrar";
+
   const {toast} = useToast();
+  const [availableCategories, setAvailableCategories] = useState<Category[]>(categories);
 
   const product = initialProduct
     ? initialProduct
@@ -65,6 +71,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       await repository.create(transformToProduct(data));
     }
   };
+
+  const addCategoryToProduct = (category: Category) => {
+    const productCategories = form.getValues('categories') || [];
+
+    if (productCategories.find((c) => c.id === category.id)) return;
+
+    form.setValue('categories', [...productCategories, category]);
+  }
+
+  const onCategoryAdded = (category: Category) => {
+    const categoryFound = availableCategories.find((c) => c.id === category.id);
+    if (!categoryFound) {
+      setAvailableCategories([...availableCategories, category]);
+    }
+
+    addCategoryToProduct(category);
+  }
 
   const handlePhotosUpdated = async (newPhotos: Photo[]) => {
     const currentPhotos = form.getValues('photos') || [];
@@ -182,12 +205,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               name="categories"
               render={({field}) => (
                 <FormItem>
-                  <FormLabel>Categorías</FormLabel>
-                    <CategoriesSelector
-                      availableCategories={[{ id: 'asdjas', name: 'Categoría 1'}, { id: 'asdjas 2', name: 'Categoría 2'}, { id: 'asdjas 3', name: 'Categoría 3'}]}
-                      value={field.value || []}
-                      onChange={field.onChange}
-                    />
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Categorías</FormLabel>
+                    <NewCategoryDialog addCategory={onCategoryAdded} />
+                  </div>
+                  <CategoriesSelector
+                    availableCategories={availableCategories}
+                    value={field.value || []}
+                    onChange={field.onChange}
+                  />
                   <FormMessage/>
                 </FormItem>
               )}

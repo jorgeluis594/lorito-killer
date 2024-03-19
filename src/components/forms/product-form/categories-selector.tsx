@@ -2,8 +2,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { useState} from "react"
-import { Category, Product } from "@/product/types"
+import { Category } from "@/category/types"
 import { Checkbox } from "@/components/ui/checkbox"
 
 import React from "react";
