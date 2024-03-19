@@ -1,23 +1,35 @@
 import prisma from "@/lib/prisma";
-import { Product, Photo } from "./types";
+import { Product, Photo, ProductSearchParams } from "./types";
+import { Category } from "@/category/types";
+import { addCategoryToProduct } from "@/category/db_respository";
 import { response } from "@/lib/types";
 
 export const create = async (product: Product): Promise<response<Product>> => {
   try {
     const { photos, categories, ...productData } = product;
-    const data: any = { ...productData };
-    if (photos) data.photos = { create: photos };
-    if (categories && categories.length)
-      data.categories = { connect: categories.map((c) => ({ id: c.id })) };
+    const data: any = {
+      ...productData,
+      photos: photos ? { create: photos } : undefined,
+    };
 
-    const createdProduct = await prisma.product.create({ data: data });
-    const price = createdProduct.price.toNumber();
-    return {
-      success: true,
-      data: { ...createdProduct, price },
-    } as response<Product>;
+    const createdResponse = await prisma.product.create({ data });
+    const price = createdResponse.price.toNumber();
+    const createdProduct: Product = {
+      ...createdResponse,
+      price,
+      categories: [],
+    };
+
+    const categoriesResponse = await Promise.all(
+      categories.map((c) => addCategoryToProduct(createdProduct, c)),
+    );
+    createdProduct.categories = categoriesResponse
+      .filter((c) => c.success)
+      .map((c) => c.data as Category);
+
+    return { success: true, data: { ...createdProduct, price } };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
