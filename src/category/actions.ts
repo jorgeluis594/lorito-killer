@@ -1,7 +1,12 @@
 "use server"
 
 import { Category } from "./types"
-import {create, find, find as findCategory, addCategoryToProduct as assignCategoryToProduct} from "./db_respository"
+import {
+  create,
+  find as findCategory,
+  addCategoryToProduct as attachCategoryToProduct,
+  removeCategoryFromProduct as detachCategoryFromProduct
+} from "./db_respository"
 import { find as findProduct } from "@/product/db_repository"
 import { response } from "@/lib/types";
 import {Product} from "@/product/types";
@@ -17,5 +22,17 @@ export const addCategoryToProduct = async (productId: string, categoryId: string
   if (!productResponse.success) return productResponse
   if (!categoryResponse.success) return categoryResponse
 
-  return await assignCategoryToProduct(productResponse.data as Product, categoryResponse.data as Category)
+  return await attachCategoryToProduct(productResponse.data as Product, categoryResponse.data as Category)
+}
+
+export const removeCategoryFromProduct = async (productId: string, categoryId: string):Promise<response<Category>> => {
+  const [productResponse, categoryResponse] = await Promise.all([
+    findProduct(productId),
+    findCategory(categoryId)
+  ]);
+
+  if (!productResponse.success) return productResponse
+  if (!categoryResponse.success) return categoryResponse
+
+  return await detachCategoryFromProduct(productResponse.data as Product, categoryResponse.data as Category)
 }

@@ -44,10 +44,11 @@ export const getMany = async ():Promise<response<Product[]>> => {
 
 export const find = async (id: string):Promise<response<Product>> => {
   try {
-    const product = await prisma.product.findUnique({ where: { id }, include: { photos: true } })
+    const product = await prisma.product.findUnique({ where: { id }, include: { photos: true, categories: true } })
 
     if (product) {
       (product.price as unknown) = product.price.toNumber();
+      (product.categories as unknown[]) = await prisma.category.findMany({ where: { id: { in: product.categories.map(c => c.categoryId) } }})
       return { success: true, data: product } as response
     } else {
       return { success: false, message: "Product not found" } as response

@@ -25,6 +25,7 @@ import CategoriesSelector from "./categories-selector";
 import { useToast } from "@/components/ui/use-toast";
 import NewCategoryDialog from "@/components/category/new-category-dialog";
 import {Category} from "@/category/types";
+import { addCategoryToProduct as attachCategoryToProduct, removeCategoryFromProduct } from "@/category/actions"
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -93,7 +94,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     const currentPhotos = form.getValues('photos') || [];
 
     // If the product is new, there is no need to remove the photo from the server
-    if (!initialProduct || !initialProduct.id) return;
+    if (!initialProduct || !initialProduct.id) return form.setValue("photos", newPhotos);
 
     const photosToRemove = currentPhotos.filter((photo: Photo) => !newPhotos.find((newPhoto: Photo) => newPhoto.key === photo.key));
     const photosToAppend = newPhotos.filter((photo: Photo) => !currentPhotos.find((currentPhoto: Photo) => currentPhoto.key === photo.key));
@@ -116,7 +117,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     if (photosToAppend.length) {
       const { success, message, data } = await repository.storePhotos(initialProduct.id as string, photosToAppend);
       if (success) {
-        debugger
         form.setValue("photos", [...currentPhotos, ...data as Photo[]])
       } else {
         toast({
@@ -124,6 +124,45 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           variant: "destructive",
           description: message,
         });
+      }
+    }
+  }
+
+  const handleCategoriesUpdated = async (categories: Category[]) => {
+    const currentCategories = form.getValues('categories') || [];
+    // If the product is new, there is no need to remove the category from the server
+    if (!initialProduct || !initialProduct.id) return;
+
+    const categoriesToRemove = currentCategories.filter((category: Category) => !categories.find((newCategory: Category) => newCategory.id === category.id));
+    const categoriesToAppend = categories.filter((category: Category) => !currentCategories.find((currentCategory: Category) => currentCategory.id === category.id));
+
+    if (categoriesToRemove.length) {
+      form.setValue("categories", categories)
+      for (const category of categoriesToRemove) {
+        const { success, message } = await removeCategoryFromProduct(initialProduct.id, category.id as string);
+        if (!success) {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: message,
+          });
+        }
+      }
+    }
+
+    if (categoriesToAppend.length) {
+      for (const category of categoriesToAppend) {
+        const { success, message, data: createdCategory } = await attachCategoryToProduct(initialProduct.id, category.id as string);
+        if (success) {
+          form.setValue("categories", [...currentCategories as Category[], createdCategory as Category])
+        } else {
+          console.log(message)
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: message,
+          });
+        }
       }
     }
   }
@@ -212,7 +251,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <CategoriesSelector
                     availableCategories={availableCategories}
                     value={field.value || []}
-                    onChange={field.onChange}
+                    onChange={handleCategoriesUpdated}
                   />
                   <FormMessage/>
                 </FormItem>

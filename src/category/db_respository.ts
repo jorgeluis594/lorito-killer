@@ -43,14 +43,27 @@ export const find = async (id: string):Promise<response<Category>> => {
 
 export const addCategoryToProduct = async (product: Product, category: Category):Promise<response<Category>> => {
   try {
-    await prisma.product.update({
-      where: { id: product.id as string },
+    await prisma.categoriesOnProduct.create({
       data: {
-        categories: {
-          connect: { id: category.id as string }
-        }
+        categoryId: category.id as string,
+        productId: product.id as string
       }
     })
+
+    return { success: true, data: category } as response<Category>
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
+
+export const removeCategoryFromProduct = async (product: Product, category: Category):Promise<response<Category>> => {
+  try {
+    const categoryOnProduct = await prisma.categoriesOnProduct.findFirst({
+      where: { productId: product.id, categoryId: category.id }
+    })
+    if (!categoryOnProduct) return { success: false, message: "Category not found on product" } as response
+
+    await prisma.categoriesOnProduct.delete({ where: { id: categoryOnProduct.id } })
     return { success: true, data: category } as response<Category>
   } catch (error: any) {
     return { success: false, message: error.message } as response
