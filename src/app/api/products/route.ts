@@ -1,10 +1,14 @@
-import { create as createProduct } from "@/product/db_repository"
-import { Product } from "@/product/types"
-import {NextResponse} from "next/server";
+import { create, findBy } from "@/product/db_repository";
+import productCreator from "@/product/use-cases/product-creator";
+import { Product } from "@/product/types";
+import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
-  const data = await req.json() as Product
-  const response = await createProduct(data)
+  const data = (await req.json()) as Product;
 
-  return NextResponse.json(response, { status: response.success ? 201 : 400 })
+  const response = await productCreator({ create, findBy }, data);
+  revalidatePath("/products");
+
+  return NextResponse.json(response, { status: response.success ? 201 : 400 });
 }
