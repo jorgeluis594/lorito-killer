@@ -81,6 +81,19 @@ export const find = async (id: string): Promise<response<Product>> => {
   }
 };
 
+export const findBy = async (
+  params: ProductSearchParams,
+): Promise<response<Product>> => {
+  try {
+    const product = await prisma.product.findFirst({ where: params });
+    if (!product) return { success: false, message: "Product not found" };
+
+    return { success: true, data: product } as response;
+  } catch (error: any) {
+    return { success: false, message: error.message } as response;
+  }
+};
+
 export const deleteProduct = async (
   product: Product,
 ): Promise<response<Product>> => {
