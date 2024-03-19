@@ -2,8 +2,10 @@ import BreadCrumb from "@/components/breadcrumb";
 import { ProductForm } from "@/components/forms/product-form/product-form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import React from "react";
+import {getMany} from "@/category/db_respository";
+import {Category} from "@/category/types";
 
-export default function Page() {
+export default async function Page() {
   const breadcrumbItems = [
     { title: "Productos", link: "/products" },
     { title: "Registro", link: "/products/new" },
@@ -13,10 +15,7 @@ export default function Page() {
       <div className="flex-1 space-y-4 p-5">
         <BreadCrumb items={breadcrumbItems} />
         <ProductForm
-          categories={[
-            { _id: "shirts", name: "polos" },
-            { _id: "pants", name: "pantalones" },
-          ]}
+          categories={(await getMany()).data as Category[]}
         />
       </div>
     </ScrollArea>

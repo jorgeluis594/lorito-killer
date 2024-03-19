@@ -16,6 +16,15 @@ export const create = async (category: Category):Promise<response<Category>> => 
   }
 }
 
+export const getMany = async ():Promise<response<Category[]>> => {
+  try {
+    const categories = await prisma.category.findMany()
+    return { success: true, data: categories } as response<Category[]>
+  } catch (error: any) {
+    return { success: false, message: error.message } as response
+  }
+}
+
 const findByName = async (name: string):Promise<response<Category>> => {
   try {
     const category = await prisma.category.findMany({

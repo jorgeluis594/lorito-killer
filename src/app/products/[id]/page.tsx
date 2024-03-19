@@ -4,6 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import React from "react";
 import { find as findProduct } from "@/product/db_repository";
 import { notFound } from 'next/navigation'
+import {getMany} from "@/category/db_respository";
+import {Category} from "@/category/types";
 
 export default async function Page({params}: { params: {id: string} }) {
   const { id } = params;
@@ -23,7 +25,7 @@ export default async function Page({params}: { params: {id: string} }) {
       <div className="flex-1 space-y-4 p-5">
         <BreadCrumb items={breadcrumbItems} />
         <ProductForm
-          categories={[]}
+          categories={(await getMany()).data as Category[]}
           initialProduct={response.data}
         />
       </div>
