@@ -31,10 +31,13 @@ export const update = async(product: Product):Promise<response<Product>> => {
 export const getMany = async ():Promise<response<Product[]>> => {
   try {
     const result = await prisma.product.findMany({include: { photos: true, categories: true }})
-    const products = result.map(p => {
+    const products = await Promise.all(result.map(async p => {
       const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-      return { ...p, price }
-    })
+
+      // we restore the categories from the product
+      const categories = await Promise.all(p.categories.map(c => prisma.category.findUnique({ where: { id: c.categoryId } })))
+      return { ...p, price, categories }
+    }))
 
     return { success: true, data: products } as response<Product[]>
   } catch (error: any) {
