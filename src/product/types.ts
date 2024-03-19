@@ -1,3 +1,5 @@
+import { Category } from '@/category/types'
+
 export type Photo = {
   id?: string
   name: string
@@ -16,13 +18,6 @@ export type Product = {
   stock: number;
   photos?: Photo[];
   categories: Category[];
-  updatedAt?: Date;
-  createdAt?: Date;
-}
-
-export type Category = {
-  id?: string;
-  name: string;
   updatedAt?: Date;
   createdAt?: Date;
 }

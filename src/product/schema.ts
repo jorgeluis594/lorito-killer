@@ -1,6 +1,7 @@
 import { Product, Photo } from "./types";
 import * as z from "zod";
 import {IMG_MAX_LIMIT} from "@/product/constants";
+import { CategorySchema } from "@/category/schema";
 
 export const PhotoSchema = z.object({
   id: z.string().optional(),
@@ -9,13 +10,6 @@ export const PhotoSchema = z.object({
   key: z.string(),
   type: z.string(),
   url: z.string(),
-  createdAt: z.date().optional(),
-});
-
-export const CategorySchema = z.object({
-  id: z.string().optional(),
-  name: z.string(),
-  updatedAt: z.date().optional(),
   createdAt: z.date().optional(),
 });
 
