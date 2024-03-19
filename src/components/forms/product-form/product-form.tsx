@@ -24,8 +24,11 @@ import { ProductSchema } from "@/product/schema";
 import CategoriesSelector from "./categories-selector";
 import { useToast } from "@/components/ui/use-toast";
 import NewCategoryDialog from "@/components/category/new-category-dialog";
-import {Category} from "@/category/types";
-import { addCategoryToProduct as attachCategoryToProduct, removeCategoryFromProduct } from "@/category/actions"
+import { Category } from "@/category/types";
+import {
+  addCategoryToProduct as attachCategoryToProduct,
+  removeCategoryFromProduct,
+} from "@/category/actions";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -46,19 +49,20 @@ const transformToProduct = (data: ProductFormValues): Product => {
 };
 
 export const ProductForm: React.FC<ProductFormProps> = ({
-                                                          initialProduct = null,
-                                                          categories,
-                                                        }) => {
+  initialProduct = null,
+  categories,
+}) => {
   const title = initialProduct ? "Editar producto" : "Registrar producto";
-  const description = initialProduct ? "Editar producto." : "Registra un nuevo producto";
+  const description = initialProduct
+    ? "Editar producto."
+    : "Registra un nuevo producto";
   const action = initialProduct ? "Guardar cambios" : "Registrar";
 
-  const {toast} = useToast();
-  const [availableCategories, setAvailableCategories] = useState<Category[]>(categories);
+  const { toast } = useToast();
+  const [availableCategories, setAvailableCategories] =
+    useState<Category[]>(categories);
 
-  const product = initialProduct
-    ? initialProduct
-    : EMPTY_PRODUCT;
+  const product = initialProduct ? initialProduct : EMPTY_PRODUCT;
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
@@ -67,19 +71,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const onSubmit = async (data: ProductFormValues) => {
     if (initialProduct) {
-      await repository.update({ id: product.id, ...transformToProduct(data)});
+      await repository.update({ id: product.id, ...transformToProduct(data) });
     } else {
       await repository.create(transformToProduct(data));
     }
   };
 
-  const addCategoryToProduct = (category: Category) => {
-    const productCategories = form.getValues('categories') || [];
-
+  const addCategoryToProduct = async (category: Category) => {
+    const productCategories = form.getValues("categories") || [];
+    if (!initialProduct) return;
     if (productCategories.find((c) => c.id === category.id)) return;
 
-    form.setValue('categories', [...productCategories, category]);
-  }
+    handleCategoriesUpdated([...productCategories, category]);
+  };
 
   const onCategoryAdded = (category: Category) => {
     const categoryFound = availableCategories.find((c) => c.id === category.id);
@@ -88,21 +92,33 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
 
     addCategoryToProduct(category);
-  }
+  };
 
   const handlePhotosUpdated = async (newPhotos: Photo[]) => {
-    const currentPhotos = form.getValues('photos') || [];
+    const currentPhotos = form.getValues("photos") || [];
 
     // If the product is new, there is no need to remove the photo from the server
-    if (!initialProduct || !initialProduct.id) return form.setValue("photos", newPhotos);
+    if (!initialProduct || !initialProduct.id)
+      return form.setValue("photos", newPhotos);
 
-    const photosToRemove = currentPhotos.filter((photo: Photo) => !newPhotos.find((newPhoto: Photo) => newPhoto.key === photo.key));
-    const photosToAppend = newPhotos.filter((photo: Photo) => !currentPhotos.find((currentPhoto: Photo) => currentPhoto.key === photo.key));
+    const photosToRemove = currentPhotos.filter(
+      (photo: Photo) =>
+        !newPhotos.find((newPhoto: Photo) => newPhoto.key === photo.key),
+    );
+    const photosToAppend = newPhotos.filter(
+      (photo: Photo) =>
+        !currentPhotos.find(
+          (currentPhoto: Photo) => currentPhoto.key === photo.key,
+        ),
+    );
 
     if (photosToRemove.length) {
       form.setValue("photos", newPhotos);
       for (const photo of photosToRemove) {
-        const { success, message } = await repository.removePhoto(initialProduct.id as string, photo.id as string);
+        const { success, message } = await repository.removePhoto(
+          initialProduct.id as string,
+          photo.id as string,
+        );
         if (!success) {
           // TODO: toast is not working, fix it
           toast({
@@ -115,9 +131,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
 
     if (photosToAppend.length) {
-      const { success, message, data } = await repository.storePhotos(initialProduct.id as string, photosToAppend);
+      const { success, message, data } = await repository.storePhotos(
+        initialProduct.id as string,
+        photosToAppend,
+      );
       if (success) {
-        form.setValue("photos", [...currentPhotos, ...data as Photo[]])
+        form.setValue("photos", [...currentPhotos, ...(data as Photo[])]);
       } else {
         toast({
           title: "Error",
@@ -126,20 +145,33 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         });
       }
     }
-  }
+  };
 
   const handleCategoriesUpdated = async (categories: Category[]) => {
-    const currentCategories = form.getValues('categories') || [];
+    const currentCategories = form.getValues("categories") || [];
     // If the product is new, there is no need to remove the category from the server
     if (!initialProduct || !initialProduct.id) return;
 
-    const categoriesToRemove = currentCategories.filter((category: Category) => !categories.find((newCategory: Category) => newCategory.id === category.id));
-    const categoriesToAppend = categories.filter((category: Category) => !currentCategories.find((currentCategory: Category) => currentCategory.id === category.id));
+    const categoriesToRemove = currentCategories.filter(
+      (category: Category) =>
+        !categories.find(
+          (newCategory: Category) => newCategory.id === category.id,
+        ),
+    );
+    const categoriesToAppend = categories.filter(
+      (category: Category) =>
+        !currentCategories.find(
+          (currentCategory: Category) => currentCategory.id === category.id,
+        ),
+    );
 
     if (categoriesToRemove.length) {
-      form.setValue("categories", categories)
+      form.setValue("categories", categories);
       for (const category of categoriesToRemove) {
-        const { success, message } = await removeCategoryFromProduct(initialProduct.id, category.id as string);
+        const { success, message } = await removeCategoryFromProduct(
+          initialProduct.id,
+          category.id as string,
+        );
         if (!success) {
           toast({
             title: "Error",
@@ -152,11 +184,21 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
     if (categoriesToAppend.length) {
       for (const category of categoriesToAppend) {
-        const { success, message, data: createdCategory } = await attachCategoryToProduct(initialProduct.id, category.id as string);
+        const {
+          success,
+          message,
+          data: createdCategory,
+        } = await attachCategoryToProduct(
+          initialProduct.id,
+          category.id as string,
+        );
         if (success) {
-          form.setValue("categories", [...currentCategories as Category[], createdCategory as Category])
+          form.setValue("categories", [
+            ...(currentCategories as Category[]),
+            createdCategory as Category,
+          ]);
         } else {
-          console.log(message)
+          console.log(message);
           toast({
             title: "Error",
             variant: "destructive",
@@ -165,7 +207,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         }
       }
     }
-  }
+  };
 
   return (
     <>
@@ -184,7 +226,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <FormField
                   control={form.control}
                   name="name"
-                  render={({field}) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nombre</FormLabel>
                       <FormControl>
@@ -194,7 +236,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage/>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -202,39 +244,39 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               <FormField
                 control={form.control}
                 name="price"
-                render={({field}) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Precio</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
-                    <FormMessage/>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
                 name="sku"
-                render={({field}) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>SKU</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormMessage/>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
                 name="stock"
-                render={({field}) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Stock</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
-                    <FormMessage/>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -242,7 +284,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <FormField
               control={form.control}
               name="categories"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
                     <FormLabel>Categorías</FormLabel>
@@ -253,7 +295,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     value={field.value || []}
                     onChange={handleCategoriesUpdated}
                   />
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -261,7 +303,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <FormField
             control={form.control}
             name="photos"
-            render={({field}) => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>Imagenes</FormLabel>
                 <FormControl>
@@ -270,7 +312,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     value={field.value || []}
                   />
                 </FormControl>
-                <FormMessage/>
+                <FormMessage />
               </FormItem>
             )}
           />

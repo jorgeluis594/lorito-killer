@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Category } from "@/category/types";
 import { createCategory } from "@/category/actions";
-import {CategorySchema} from "@/category/schema";
+import { CategorySchema } from "@/category/schema";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -33,26 +33,27 @@ interface NewSectionDialogProps {
   addCategory: (category: Category) => void;
 }
 
-export default function NewCategoryDialog({ addCategory }: NewSectionDialogProps) {
+export default function NewCategoryDialog({
+  addCategory,
+}: NewSectionDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(CategorySchema),
-    defaultValues: { name: '' } as Category,
+    defaultValues: { name: "" } as Category,
   });
-
 
   const onSubmit = async (data: CategoryFormValues) => {
     const createdCategory = await createCategory(data);
 
     if (createdCategory.success) {
       addCategory(createdCategory.data as Category);
-      form.setValue('name', '');
+      form.setValue("name", "");
       setOpen(false);
     } else {
-      alert(createdCategory.message)
+      alert(createdCategory.message);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -63,10 +64,7 @@ export default function NewCategoryDialog({ addCategory }: NewSectionDialogProps
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
-          <form
-            id="gategory-form"
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
+          <form id="gategory-form" onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>Agregar categoría</DialogTitle>
               <DialogDescription>
@@ -87,7 +85,7 @@ export default function NewCategoryDialog({ addCategory }: NewSectionDialogProps
                           className="col-span-4"
                           {...field}
                         />
-                        <FormMessage className="col-span-4"/>
+                        <FormMessage className="col-span-4" />
                       </div>
                     </FormControl>
                   </FormItem>

@@ -3,4 +3,4 @@ export type Category = {
   name: string;
   updatedAt?: Date;
   createdAt?: Date;
-}
+};
