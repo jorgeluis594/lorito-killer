@@ -20,9 +20,8 @@ export async function PUT(
   }
 
   const response = await UpdateProduct(productData);
-  if (response.success) {
-    revalidatePath("/products");
-  }
+  revalidatePath("/products");
+  revalidatePath("/products/" + params.id);
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }
 

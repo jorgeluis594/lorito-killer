@@ -16,7 +16,8 @@ export const createCategory = async (
   category: Category,
 ): Promise<response<Category>> => {
   const res = await create(category);
-  if (res.success) revalidatePath("/products/new");
+  revalidatePath("/products/new");
+  revalidatePath("/products/[id]");
 
   return res;
 };
@@ -32,7 +33,7 @@ export const addCategoryToProduct = async (
 
   if (!productResponse.success) return productResponse;
   if (!categoryResponse.success) return categoryResponse;
-
+  revalidatePath(`/products/${productId}`);
   return await attachCategoryToProduct(
     productResponse.data as Product,
     categoryResponse.data as Category,
@@ -51,6 +52,7 @@ export const removeCategoryFromProduct = async (
   if (!productResponse.success) return productResponse;
   if (!categoryResponse.success) return categoryResponse;
 
+  revalidatePath(`/products/${productId}`);
   return await detachCategoryFromProduct(
     productResponse.data as Product,
     categoryResponse.data as Category,
