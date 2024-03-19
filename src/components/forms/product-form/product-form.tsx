@@ -71,9 +71,22 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const onSubmit = async (data: ProductFormValues) => {
     if (initialProduct) {
-      await repository.update({ id: product.id, ...transformToProduct(data) });
+      const res = await repository.update({
+        id: product.id,
+        ...transformToProduct(data),
+      });
+      if (res.success) {
+        alert("Producto actualizado con exito");
+      } else {
+        alert("Error al actualizar el producto, " + res.message);
+      }
     } else {
-      await repository.create(transformToProduct(data));
+      const res = await repository.create(transformToProduct(data));
+      if (res.success) {
+        alert("Producto creado con exito");
+      } else {
+        alert("Error al crear el producto, " + res.message);
+      }
     }
   };
 
@@ -150,7 +163,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const handleCategoriesUpdated = async (categories: Category[]) => {
     const currentCategories = form.getValues("categories") || [];
     // If the product is new, there is no need to remove the category from the server
-    if (!initialProduct || !initialProduct.id) return;
+    if (!initialProduct || !initialProduct.id)
+      return form.setValue("categories", categories);
 
     const categoriesToRemove = currentCategories.filter(
       (category: Category) =>
