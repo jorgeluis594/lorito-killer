@@ -6,8 +6,8 @@ export const CategorySchema = z.object({
   name: z.string().min(4, {
     message: "El nombre de la categoría debe tener al menos 4 caracteres",
   }),
-  updatedAt: z.date().optional(),
-  createdAt: z.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  createdAt: z.coerce.date().optional(),
 });
 
 // Ensure that the schema and the type are identical

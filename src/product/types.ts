@@ -1,14 +1,14 @@
-import { Category } from '@/category/types'
+import { Category } from "@/category/types";
 
 export type Photo = {
-  id?: string
-  name: string
-  size: number
-  type: string
-  key: string
-  url: string
-  createdAt?: Date
-}
+  id?: string;
+  name: string;
+  size: number;
+  type: string;
+  key: string;
+  url: string;
+  createdAt?: Date;
+};
 
 export type Product = {
   id?: string;
@@ -20,4 +20,8 @@ export type Product = {
   categories: Category[];
   updatedAt?: Date;
   createdAt?: Date;
-}
+};
+
+export type ProductSearchParams = {
+  sku?: string;
+};
