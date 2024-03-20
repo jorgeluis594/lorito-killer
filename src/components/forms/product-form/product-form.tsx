@@ -76,16 +76,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         ...transformToProduct(data),
       });
       if (res.success) {
-        alert("Producto actualizado con exito");
+        toast({
+          description: "Producto actualizado con exito",
+        });
       } else {
-        alert("Error al actualizar el producto, " + res.message);
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: "Error al actualizar el producto, " + res.message,
+        });
       }
     } else {
       const res = await repository.create(transformToProduct(data));
       if (res.success) {
-        alert("Producto creado con exito");
+        toast({
+          description: "Producto creado con exito",
+        });
       } else {
-        alert("Error al crear el producto, " + res.message);
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: "Error al registrar el producto, " + res.message,
+        });
       }
     }
   };
@@ -95,16 +107,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     if (!initialProduct) return;
     if (productCategories.find((c) => c.id === category.id)) return;
 
-    handleCategoriesUpdated([...productCategories, category]);
+    await handleCategoriesUpdated([...productCategories, category]);
   };
 
-  const onCategoryAdded = (category: Category) => {
+  const onCategoryAdded = async (category: Category) => {
     const categoryFound = availableCategories.find((c) => c.id === category.id);
     if (!categoryFound) {
       setAvailableCategories([...availableCategories, category]);
     }
 
-    addCategoryToProduct(category);
+    await addCategoryToProduct(category);
   };
 
   const handlePhotosUpdated = async (newPhotos: Photo[]) => {
@@ -132,8 +144,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           initialProduct.id as string,
           photo.id as string,
         );
-        if (!success) {
-          // TODO: toast is not working, fix it
+        if (success) {
+          toast({
+            description: "Photo eliminada con exito",
+          });
+        } else {
           toast({
             title: "Error",
             variant: "destructive",
@@ -150,6 +165,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       );
       if (success) {
         form.setValue("photos", [...currentPhotos, ...(data as Photo[])]);
+        toast({
+          description: "Photos subidas con exito",
+        });
       } else {
         toast({
           title: "Error",
@@ -186,17 +204,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           initialProduct.id,
           category.id as string,
         );
-        if (!success) {
+        if (success) {
+          toast({
+            description: `Categoria ${category.name} eliminada del producto con exito`,
+          });
+        } else {
           toast({
             title: "Error",
             variant: "destructive",
-            description: message,
+            description: `Error al eliminar la categoria ${category.name}`,
           });
         }
       }
     }
 
     if (categoriesToAppend.length) {
+      form.setValue("categories", [
+        ...currentCategories,
+        ...categoriesToAppend,
+      ]);
       for (const category of categoriesToAppend) {
         const {
           success,
@@ -207,16 +233,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           category.id as string,
         );
         if (success) {
-          form.setValue("categories", [
-            ...(currentCategories as Category[]),
-            createdCategory as Category,
-          ]);
+          toast({
+            description: `Categoria ${category.name} agregada con exito`,
+          });
         } else {
-          console.log(message);
           toast({
             title: "Error",
             variant: "destructive",
-            description: message,
+            description: `Error al agregar la categoria ${category.name}`,
           });
         }
       }
