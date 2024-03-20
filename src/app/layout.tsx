@@ -4,10 +4,15 @@ import { ourFileRouter } from "@/app/api/uploadthing/core";
 import type { Metadata } from "next";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { Inter } from "next/font/google";
 import "./globals.css";
+import { Inter as FontSans } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"] });
+import { cn } from "@/lib/utils";
+
+const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "Tu aplicación de tiendas",
@@ -21,7 +26,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable,
+        )}
+      >
         <Header />
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
