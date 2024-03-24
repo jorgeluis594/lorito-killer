@@ -269,8 +269,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                       <FormLabel>Nombre</FormLabel>
                       <FormControl>
                         <Input
+                          autoComplete="off"
                           placeholder="Nombre del producto"
-                          autoComplete={"off"}
                           {...field}
                         />
                       </FormControl>
@@ -286,7 +286,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>Precio</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input autoComplete="off" type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -299,7 +299,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>SKU</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input autoComplete="off" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -312,7 +312,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>Stock</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input autoComplete="off" type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
