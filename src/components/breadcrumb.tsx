@@ -23,7 +23,6 @@ export default function BreadCrumb({ items }: BreadCrumbPropsType) {
           <ChevronRightIcon className="h-4 w-4" />
           <Link
             href={item.link}
-            prefetch={false}
             className={cn(
               "font-medium",
               index === items.length - 1
