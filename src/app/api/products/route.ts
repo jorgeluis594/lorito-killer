@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   return NextResponse.json(response, { status: response.success ? 201 : 400 });
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   const response = await getMany();
 
   return NextResponse.json(response, { status: response.success ? 200 : 404 });
