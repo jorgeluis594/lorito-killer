@@ -2,16 +2,35 @@
 
 import { getMany as getManyProducts } from "@/product/api_repository";
 import ProductsClient from "@/components/tables/products/client";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { Product } from "@/product/types";
 
-const Products = async () => {
-  const response = await getManyProducts();
+const Products = () => {
+  const [products, setProducts] = useState<null | Product[]>(null);
+  const [error, setError] = useState<null | string>();
 
-  if (!response.success) {
-    return <div>Error: {response.message}</div>;
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const response = await getManyProducts();
+      if (!response.success) {
+        setError(response.message);
+      } else {
+        setProducts(response.data);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (error) {
+    return <div>Error: {error}</div>;
   }
 
-  return <ProductsClient data={response.data} />;
+  if (!products) {
+    return <div>Loading...</div>;
+  }
+
+  return <ProductsClient data={products} />;
 };
 
 export default function ListProducts() {

@@ -66,6 +66,13 @@ export const removePhoto = async (
 };
 
 export const getMany = async (): Promise<response<Product[]>> => {
-  const res = await fetch("/api/products");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/products`, {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    return { success: false, message: "Error fetching products" };
+  }
+
   return await res.json();
 };
