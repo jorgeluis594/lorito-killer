@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { Product, Photo, ProductSearchParams } from "./types";
 import { Category } from "@/category/types";
 import { addCategoryToProduct } from "@/category/db_respository";
-import { response } from "@/lib/types";
+import { response, successResponse } from "@/lib/types";
 
 export const create = async (product: Product): Promise<response<Product>> => {
   try {
@@ -24,8 +24,8 @@ export const create = async (product: Product): Promise<response<Product>> => {
       categories.map((c) => addCategoryToProduct(createdProduct, c)),
     );
     createdProduct.categories = categoriesResponse
-      .filter((c) => c.success)
-      .map((c) => c.data as Category);
+      .filter((c): c is successResponse<Category> => c.success)
+      .map((c) => c.data);
 
     return { success: true, data: { ...createdProduct, price } };
   } catch (error: any) {
@@ -41,9 +41,9 @@ export const update = async (product: Product): Promise<response<Product>> => {
       where: { id: product.id },
       data: productData,
     });
-    return { success: true, data: product } as response<Product>;
+    return { success: true, data: product };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -62,11 +62,11 @@ export const getMany = async (): Promise<response<Product[]>> => {
             prisma.category.findUnique({ where: { id: c.categoryId } }),
           ),
         );
-        return { ...p, price, categories };
+        return { ...p, price, categories } as Product;
       }),
     );
 
-    return { success: true, data: products } as response<Product[]>;
+    return { success: true, data: products };
   } catch (error: any) {
     return { success: false, message: error.message } as response;
   }
@@ -148,9 +148,14 @@ export const storePhotos = async (
   productId: string,
   photos: Photo[],
 ): Promise<response<Photo[]>> => {
-  const productPhotos = await getPhotos(productId);
+  const productPhotosResponse = await getPhotos(productId);
+
+  if (!productPhotosResponse.success)
+    return { success: false, message: productPhotosResponse.message };
+
   const photosToStore = photos.filter(
-    (photo) => !(productPhotos?.data || []).find((p) => p.key === photo.key),
+    (photo) =>
+      !(productPhotosResponse.data || []).find((p) => p.key === photo.key),
   );
   try {
     const createdPhotos = await Promise.all(

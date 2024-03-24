@@ -55,9 +55,9 @@ export const addCategoryToProduct = async (
       },
     });
 
-    return { success: true, data: category } as response<Category>;
+    return { success: true, data: category };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
