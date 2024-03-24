@@ -140,11 +140,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     if (photosToRemove.length) {
       form.setValue("photos", newPhotos);
       for (const photo of photosToRemove) {
-        const { success, message } = await repository.removePhoto(
+        const removePhotoResponse = await repository.removePhoto(
           initialProduct.id as string,
           photo.id as string,
         );
-        if (success) {
+        if (removePhotoResponse.success) {
           toast({
             description: "Photo eliminada con exito",
           });
@@ -152,19 +152,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           toast({
             title: "Error",
             variant: "destructive",
-            description: message,
+            description: removePhotoResponse.message,
           });
         }
       }
     }
 
     if (photosToAppend.length) {
-      const { success, message, data } = await repository.storePhotos(
+      const storePhotoResponse = await repository.storePhotos(
         initialProduct.id as string,
         photosToAppend,
       );
-      if (success) {
-        form.setValue("photos", [...currentPhotos, ...(data as Photo[])]);
+      if (storePhotoResponse.success) {
+        form.setValue("photos", [...currentPhotos, ...storePhotoResponse.data]);
         toast({
           description: "Photos subidas con exito",
         });
@@ -172,7 +172,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         toast({
           title: "Error",
           variant: "destructive",
-          description: message,
+          description: storePhotoResponse.message,
         });
       }
     }
@@ -200,11 +200,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     if (categoriesToRemove.length) {
       form.setValue("categories", categories);
       for (const category of categoriesToRemove) {
-        const { success, message } = await removeCategoryFromProduct(
+        const removeCategoryReponse = await removeCategoryFromProduct(
           initialProduct.id,
           category.id as string,
         );
-        if (success) {
+        if (removeCategoryReponse.success) {
           toast({
             description: `Categoria ${category.name} eliminada del producto con exito`,
           });
@@ -224,15 +224,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         ...categoriesToAppend,
       ]);
       for (const category of categoriesToAppend) {
-        const {
-          success,
-          message,
-          data: createdCategory,
-        } = await attachCategoryToProduct(
+        const attachCategoryResponse = await attachCategoryToProduct(
           initialProduct.id,
           category.id as string,
         );
-        if (success) {
+        if (attachCategoryResponse.success) {
           toast({
             description: `Categoria ${category.name} agregada con exito`,
           });

@@ -10,7 +10,6 @@ export type errorResponse = {
   message: string;
 };
 
-export type response<DataType = any> = (
+export type response<DataType = any> =
   | successResponse<DataType>
-  | errorResponse
-) & { success: boolean };
+  | errorResponse;
