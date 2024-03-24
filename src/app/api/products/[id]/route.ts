@@ -29,18 +29,14 @@ export async function DELETE(
   _req: Request,
   { params }: { params: { id: string } },
 ) {
-  const { success, data: product } = await findProduct(params.id);
-  if (!success || !product) {
+  const findProductResponse = await findProduct(params.id);
+  if (!findProductResponse.success) {
     return NextResponse.json(
       { success: false, message: "Product not found" },
       { status: 404 },
     );
   }
 
-  const response = await deleteProduct(product);
-  if (response.success) {
-    revalidatePath("/products");
-  }
-
+  const response = await deleteProduct(findProductResponse.data);
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }
