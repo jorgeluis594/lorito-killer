@@ -36,6 +36,8 @@ export async function DELETE(
     );
   }
 
+  revalidatePath("/api/products");
+
   const response = await deleteProduct(findProductResponse.data);
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }

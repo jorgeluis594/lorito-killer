@@ -8,6 +8,10 @@ export async function POST(req: Request) {
   const data = (await req.json()) as Product;
 
   const response = await productCreator({ create, findBy }, data);
+  if (response.success) {
+    revalidatePath("/api/products");
+  }
+
   return NextResponse.json(response, { status: response.success ? 201 : 400 });
 }
 
