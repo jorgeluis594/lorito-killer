@@ -64,3 +64,8 @@ export const removePhoto = async (
 
   return await res.json();
 };
+
+export const getMany = async (): Promise<response<Product[]>> => {
+  const res = await fetch("/api/products");
+  return await res.json();
+};
