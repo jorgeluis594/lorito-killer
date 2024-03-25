@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product } from "@/product/types";
 import { deleteProduct } from "@/product/api_repository";
+import { useToast } from "@/components/ui/use-toast";
 
 interface CellActionProps {
   product: Product;
@@ -22,12 +23,25 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const onConfirm = async () => {
     setLoading(true);
-    await deleteProduct(product); // TODO: Handle response
+    const deleteResponse = await deleteProduct(product);
     setLoading(false);
+    if (!deleteResponse.success) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: deleteResponse.message,
+      });
+      return;
+    }
+
     setOpen(false);
+    toast({
+      title: "Producto eliminado",
+    });
     router.refresh();
   };
 
