@@ -30,6 +30,7 @@ import {
   UserX2Icon,
   X,
   Blocks,
+  Settings2,
 } from "lucide-react";
 
 export type Icon = LucideIcon;
@@ -81,4 +82,5 @@ export const Icons = {
   ),
   twitter: Twitter,
   check: Check,
+  settings2: Settings2,
 };
