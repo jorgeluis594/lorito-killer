@@ -8,6 +8,7 @@ import { Product } from "@/product/types";
 import { response } from "@/lib/types";
 import { search as searchProducts, getMany } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
+import ProductList from "@/components/forms/order-form/product-list";
 
 export default function ProductsSearcher() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -49,6 +50,8 @@ export default function ProductsSearcher() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
+
+      <ProductList products={products} />
     </div>
   );
 }
