@@ -9,6 +9,7 @@ import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 
 import { cn } from "@/lib/utils";
+import { OrderFormProvider } from "@/components/forms/order-form/order-form-provider";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -33,15 +34,19 @@ export default function RootLayout({
           fontSans.variable,
         )}
       >
-        <Header />
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="w-full pt-16">
-            <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
-            {children}
-          </main>
-        </div>
-        <Toaster />
+        <OrderFormProvider>
+          <Header />
+          <div className="flex h-screen overflow-hidden">
+            <Sidebar />
+            <main className="w-full pt-16">
+              <NextSSRPlugin
+                routerConfig={extractRouterConfig(ourFileRouter)}
+              />
+              {children}
+            </main>
+          </div>
+          <Toaster />
+        </OrderFormProvider>
       </body>
     </html>
   );
