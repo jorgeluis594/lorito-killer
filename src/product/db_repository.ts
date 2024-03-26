@@ -190,3 +190,29 @@ export const removePhoto = async (
     return { success: false, message: error.message } as response;
   }
 };
+
+export const search = async (q: string): Promise<response<Product[]>> => {
+  try {
+    const result = await prisma.product.findMany({
+      where: { name: { contains: q, mode: "insensitive" } },
+      include: { photos: true, categories: true },
+    });
+    const products = await Promise.all(
+      result.map(async (p) => {
+        const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
+
+        // we restore the categories from the product
+        const categories = await Promise.all(
+          p.categories.map((c) =>
+            prisma.category.findUnique({ where: { id: c.categoryId } }),
+          ),
+        );
+        return { ...p, price, categories } as Product;
+      }),
+    );
+
+    return { success: true, data: products };
+  } catch (error: any) {
+    return { success: false, message: error.message } as response;
+  }
+};
