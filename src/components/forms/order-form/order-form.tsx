@@ -6,8 +6,8 @@ import Cart from "@/components/forms/order-form/cart";
 export default function OrderForm() {
   return (
     <div className="h-[calc(100vh-theme(space.14))]">
-      <div className="flex-1 space-y-4">
-        <div className="grid grid-cols-[1fr_550px]">
+      <div className="flex-1 space-y-4 h-full">
+        <div className="grid grid-cols-[1fr_550px] h-full">
           <ProductsSearcher />
           <Cart />
         </div>

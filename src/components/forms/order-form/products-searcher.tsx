@@ -40,7 +40,7 @@ export default function ProductsSearcher() {
   }, []);
 
   return (
-    <div className="h-100 w-100 p-5">
+    <div className="h-full w-100 p-5">
       <div className="flex w-100 items-center space-x-2">
         <Button type="submit">
           <Search className="h-4 w-5" />

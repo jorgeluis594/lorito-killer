@@ -38,7 +38,7 @@ export default function RootLayout({
           <Header />
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <main className="w-full pt-16">
+            <main className="w-full pt-14">
               <NextSSRPlugin
                 routerConfig={extractRouterConfig(ourFileRouter)}
               />
