@@ -4,6 +4,7 @@ export type OrderItem = {
   id?: string;
   product: Product;
   quantity: number;
+  total: number;
   createdAt?: Date;
   updatedAt?: Date;
 };

@@ -39,6 +39,7 @@ export const createOrderFormStore = (initState: Order = defaultInitState) => {
             product,
             id: crypto.randomUUID(),
             quantity: 1,
+            total: product.price,
           });
         }
         state.total += product.price;

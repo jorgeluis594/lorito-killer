@@ -11,7 +11,7 @@ export default function Cart() {
       <div className="p-5 border-b">
         <h2 className="text-xl font-semibold tracking-tight">Pedido</h2>
       </div>
-      <div className="p-5 border-b">
+      <div className="py-3 border-b">
         {orderItems.map((item) => (
           <CartItem
             key={item.product.id}
