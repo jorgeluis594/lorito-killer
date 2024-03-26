@@ -26,7 +26,26 @@ export const initOrderFormStore = (): Order => {
 export const createOrderFormStore = (initState: Order = defaultInitState) => {
   return createStore<OrderFormStore>()((set) => ({
     ...initState,
-    addProduct: (product: Product) => {},
+    addProduct: (product: Product) => {
+      set((state) => {
+        const orderItem = state.orderItems.find(
+          (item) => item.product.id === product.id,
+        );
+
+        if (orderItem) {
+          orderItem.quantity += 1;
+        } else {
+          state.orderItems.push({
+            product,
+            id: crypto.randomUUID(),
+            quantity: 1,
+          });
+        }
+        state.total += product.price;
+
+        return { ...state, orderItems: [...state.orderItems] };
+      });
+    },
     increaseQuantity: (productId: string) => {},
     decreaseQuantity: (productId: string) => {},
   }));
