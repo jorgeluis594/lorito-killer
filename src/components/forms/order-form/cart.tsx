@@ -2,9 +2,8 @@ import CartItem from "@/components/forms/order-form/cart-item";
 import { useOrderFormStore } from "@/components/forms/order-form/order-form-provider";
 
 export default function Cart() {
-  const { orderItems, increaseQuantity, decreaseQuantity } = useOrderFormStore(
-    (state) => state,
-  );
+  const { total, orderItems, increaseQuantity, decreaseQuantity } =
+    useOrderFormStore((state) => state);
 
   return (
     <div className="h-full border-l grid grid-rows-[auto,1fr,auto]">
@@ -21,7 +20,9 @@ export default function Cart() {
           />
         ))}
       </div>
-      <div className="p-5">Footer</div>
+      <div className="p-5">
+        <p className="text-end text-xl font-bold">Total: s/{total}</p>
+      </div>
     </div>
   );
 }
