@@ -31,6 +31,7 @@ import {
   X,
   Blocks,
   Settings2,
+  ShoppingCart,
 } from "lucide-react";
 
 export type Icon = LucideIcon;
@@ -83,4 +84,5 @@ export const Icons = {
   twitter: Twitter,
   check: Check,
   settings2: Settings2,
+  shoppingCart: ShoppingCart,
 };

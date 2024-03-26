@@ -7,4 +7,10 @@ export const navItems: NavItem[] = [
     icon: "blocks",
     label: "productos",
   },
+  {
+    title: "Crear pedido",
+    href: "/orders/new",
+    icon: "shoppingCart",
+    label: "nuevo pedido",
+  },
 ];
