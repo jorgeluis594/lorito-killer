@@ -3,7 +3,11 @@
 import { type ReactNode, createContext, useRef, useContext } from "react";
 import { type StoreApi, useStore } from "zustand";
 
-import { type OrderFormStore, createOrderFormStore } from "./store";
+import {
+  type OrderFormStore,
+  createOrderFormStore,
+  initOrderFormStore,
+} from "./store";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -16,7 +20,7 @@ interface OrderFormProviderProps {
 export const OrderFormProvider = ({ children }: OrderFormProviderProps) => {
   const storeRef = useRef<StoreApi<OrderFormStore>>();
   if (!storeRef.current) {
-    storeRef.current = createOrderFormStore();
+    storeRef.current = createOrderFormStore(initOrderFormStore());
   }
 
   return (

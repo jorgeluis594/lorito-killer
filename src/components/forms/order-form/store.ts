@@ -16,6 +16,13 @@ const defaultInitState: Order = {
   total: 0,
 };
 
+export const initOrderFormStore = (): Order => {
+  return {
+    orderItems: [],
+    total: 0,
+  };
+};
+
 export const createOrderFormStore = (initState: Order = defaultInitState) => {
   return createStore<OrderFormStore>()((set) => ({
     ...initState,
