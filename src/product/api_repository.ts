@@ -76,3 +76,19 @@ export const getMany = async (): Promise<response<Product[]>> => {
 
   return await res.json();
 };
+
+export const search = async (q: string): Promise<response<Product[]>> => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_URL}/api/products/search`,
+    {
+      method: "GET",
+      body: JSON.stringify({ q }),
+    },
+  );
+
+  if (!res.ok) {
+    return { success: false, message: "Error fetching products" };
+  }
+
+  return await res.json();
+};
