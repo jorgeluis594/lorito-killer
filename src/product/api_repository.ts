@@ -79,10 +79,9 @@ export const getMany = async (): Promise<response<Product[]>> => {
 
 export const search = async (q: string): Promise<response<Product[]>> => {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_URL}/api/products/search`,
+    `${process.env.NEXT_PUBLIC_URL}/api/products/search?param=${encodeURIComponent(q)}`,
     {
       method: "GET",
-      body: JSON.stringify({ q }),
     },
   );
 
