@@ -13,12 +13,14 @@ export type OrderFormStore = Order & Actions;
 
 const defaultInitState: Order = {
   orderItems: [],
+  status: "pending",
   total: 0,
 };
 
 export const initOrderFormStore = (): Order => {
   return {
     orderItems: [],
+    status: "pending",
     total: 0,
   };
 };

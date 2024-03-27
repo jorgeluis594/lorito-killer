@@ -13,6 +13,7 @@ export type Order = {
   id?: string;
   orderItems: OrderItem[];
   total: number;
+  status: "pending" | "completed" | "cancelled";
   createdAt?: Date;
   updatedAt?: Date;
 };
