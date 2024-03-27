@@ -23,6 +23,7 @@ model Product {
   updatedAt DateTime @updatedAt
   photos    Photo[]
   categories CategoriesOnProduct[]
+  orderItems OrderItem[]
 }
 
 model Photo {
@@ -52,4 +53,25 @@ model CategoriesOnProduct {
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt  DateTime @default(now())
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  total     Decimal
+  productId String
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id        String    @id @default(uuid())
+  total     Decimal
+  status    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orderItems     OrderItem[]
 }
