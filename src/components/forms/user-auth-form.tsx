@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signInWithEmail } from "@/user/actions";
+import { createUser, signInWithEmail } from "@/user/actions";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,8 +25,11 @@ const formSchema = z.object({
 });
 
 type UserFormValue = z.infer<typeof formSchema>;
+interface UserAuthFormProps {
+  action: "login" | "signup";
+}
 
-export default function UserAuthForm() {
+export default function UserAuthForm({ action }: UserAuthFormProps) {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,11 @@ export default function UserAuthForm() {
   });
 
   const onSubmit = async (data: UserFormValue) => {
-    signInWithEmail(data.email, data.password, callbackUrl || "/");
+    if (action === "signup") {
+      console.log(await createUser(data.email, data.password));
+    } else {
+      signInWithEmail(data.email, data.password, callbackUrl || "/");
+    }
   };
 
   return (
@@ -84,7 +91,7 @@ export default function UserAuthForm() {
             className="ml-auto w-full mt-6"
             type="submit"
           >
-            Ingresar
+            {action === "login" ? "Iniciar sesión" : "Registrarse"}
           </Button>
         </form>
       </Form>

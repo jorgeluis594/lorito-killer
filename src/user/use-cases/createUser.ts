@@ -1,15 +1,15 @@
-import { type User } from "@/user/types";
+import type { CreateUserParams, User } from "@/user/types";
 import { type response } from "@/lib/types";
 import CreateUserSchema from "@/user/schemas/create-user-schema";
 
 interface UserRepository {
-  createUser: (user: User) => Promise<response<User>>;
+  createUser: (user: CreateUserParams) => Promise<response<User>>;
   getUserByEmail: (email: string) => Promise<response<User>>;
 }
 
 export default async function createUser(
   repository: UserRepository,
-  user: User,
+  user: CreateUserParams,
 ): Promise<response<User>> {
   const parsedUser = CreateUserSchema.safeParse(user);
   if (!parsedUser.success) {
