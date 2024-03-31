@@ -34,19 +34,8 @@ export default function RootLayout({
           fontSans.variable,
         )}
       >
-        <OrderFormProvider>
-          <Header />
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <main className="w-full pt-14">
-              <NextSSRPlugin
-                routerConfig={extractRouterConfig(ourFileRouter)}
-              />
-              {children}
-            </main>
-          </div>
-          <Toaster />
-        </OrderFormProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );
