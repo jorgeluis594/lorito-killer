@@ -18,7 +18,7 @@ export default function CartItem({
   const onDecreaseIncreaseQuantity = () => decreaseQuantity(item.id!);
 
   return (
-    <div className="py-2 border-b grid grid-cols-[270px,1fr,140px]">
+    <div className="py-2 border-b grid grid-cols-[270px,1fr,140px] transition animate-move-from-left-to-right">
       <div className="pl-4 ">
         <p className="text-sm">{item.product.name}</p>
         <p className="text-sm text-muted-foreground">

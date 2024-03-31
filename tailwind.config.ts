@@ -64,10 +64,16 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "move-from-left-to-right": {
+          "0%": { transform: "translateX(-20%)" },
+          "100%": { transform: "translateX(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "move-from-left-to-right":
+          "move-from-left-to-right .2s ease-out forwards",
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
