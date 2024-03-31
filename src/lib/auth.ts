@@ -2,18 +2,15 @@ import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth-config";
 import Credentials from "next-auth/providers/credentials";
 import { getUserByEmail } from "@/user/db_repository";
+import CreateUserSchema from "@/user/schemas/create-user-schema";
 import bcrypt from "bcrypt";
-import { z } from "zod";
-
 export const { auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
     Credentials({
       async authorize(credentials) {
-        const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
-          .safeParse(credentials);
-        debugger;
+        const parsedCredentials = CreateUserSchema.safeParse(credentials);
+
         if (!parsedCredentials.success) {
           return null;
         }
@@ -23,7 +20,7 @@ export const { auth, signIn, signOut } = NextAuth({
         if (!userResponse.success) return null;
         const isValidPassword = await bcrypt.compare(
           password,
-          userResponse.data.password!,
+          userResponse.data.password,
         );
         if (!isValidPassword) return null;
 
