@@ -1,5 +1,7 @@
 import { OrderItem } from "@/order/types";
 import { Plus, Minus } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface CartItemProps {
   item: OrderItem;
@@ -19,21 +21,23 @@ export default function CartItem({
     <div className="py-2 border-b grid grid-cols-[270px,1fr,140px]">
       <div className="pl-4 ">
         <p className="text-sm">{item.product.name}</p>
-        <p className="text-sm text-muted-foreground">s/{item.product.price}</p>
+        <p className="text-sm text-muted-foreground">
+          {formatPrice(item.product.price)}
+        </p>
       </div>
       <div className="flex justify-around items-center">
-        <Minus
-          className="h-2 w-2 cursor-pointer"
-          onClick={onDecreaseIncreaseQuantity}
-        />
+        <Button variant="secondary" onClick={onDecreaseIncreaseQuantity}>
+          <Minus className="h-2 w-2 cursor-pointer" />
+        </Button>
         <p className="text-small">{item.quantity}</p>
-        <Plus
-          className="h-2 w-2 cursor-pointer"
-          onClick={onIncreaseIncreaseQuantity}
-        />
+        <Button variant="secondary" onClick={onIncreaseIncreaseQuantity}>
+          <Plus className="h-2 w-2 cursor-pointer" />
+        </Button>
       </div>
       <div>
-        <p className="text-end text-xl font-bold">S/{item.total}</p>
+        <p className="text-end text-xl font-medium">
+          {formatPrice(item.total)}
+        </p>
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ export const initOrderFormStore = (): Order => {
   return { ...defaultInitState };
 };
 
+// The actions are set on the context provider
 export const createOrderFormStore = (initState: Order = defaultInitState) => {
   return createStore<OrderFormStore>()(() => ({
     ...initState,

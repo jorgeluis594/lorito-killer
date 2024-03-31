@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { create } from "@/order/actions";
 import { useToast } from "@/components/ui/use-toast";
+import { formatPrice } from "@/lib/utils";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state);
@@ -44,7 +45,9 @@ export default function Cart() {
         <Button className="w-full" onClick={handleOrderCreation}>
           <div className="flex justify-between w-full">
             <p className="text-end text-xl font-bold">Vender!</p>
-            <p className="text-end text-xl font-bold">Total: s/{order.total}</p>
+            <p className="text-end text-xl font-bold">
+              Total: {formatPrice(order.total)}
+            </p>
           </div>
         </Button>
       </div>
