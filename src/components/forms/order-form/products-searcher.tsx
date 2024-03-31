@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -9,6 +9,7 @@ import { response } from "@/lib/types";
 import { search as searchProducts, getMany } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
+import { debounce } from "@/lib/utils";
 
 export default function ProductsSearcher() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -35,6 +36,15 @@ export default function ProductsSearcher() {
     }
   }
 
+  const onSearchChange = debounce(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearch(value);
+      await onSearchSubmit();
+    },
+    100,
+  );
+
   useEffect(() => {
     onSearchSubmit();
   }, []);
@@ -45,10 +55,7 @@ export default function ProductsSearcher() {
         <Button type="button" onClick={onSearchSubmit}>
           <Search className="h-4 w-5" />
         </Button>
-        <Input
-          placeholder="Nombre del producto"
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <Input placeholder="Nombre del producto" onChange={onSearchChange} />
       </div>
 
       <ProductList products={products} />
