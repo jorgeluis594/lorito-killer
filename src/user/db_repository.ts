@@ -14,3 +14,15 @@ export const getUserByEmail = async (
     return { success: false, message: error.message };
   }
 };
+
+export const createUser = async (user: User): Promise<response<User>> => {
+  try {
+    const persistedUser = await prisma.user.create({
+      data: { ...user, password: user.password! },
+    });
+
+    return { success: true, data: persistedUser };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
