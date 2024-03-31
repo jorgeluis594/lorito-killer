@@ -1,10 +1,10 @@
 import prisma from "@/lib/prisma";
-import { User } from "./types";
+import { CreateUserParams, User } from "./types";
 import { response } from "@/lib/types";
 
 export const getUserByEmail = async (
   email: string,
-): Promise<response<User>> => {
+): Promise<response<CreateUserParams>> => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return { success: false, message: "User not found" };
@@ -15,10 +15,12 @@ export const getUserByEmail = async (
   }
 };
 
-export const createUser = async (user: User): Promise<response<User>> => {
+export const createUser = async (
+  user: CreateUserParams,
+): Promise<response<User>> => {
   try {
-    const persistedUser = await prisma.user.create({
-      data: { ...user, password: user.password! },
+    const { password, ...persistedUser } = await prisma.user.create({
+      data: { ...user, password: user.password },
     });
 
     return { success: true, data: persistedUser };
