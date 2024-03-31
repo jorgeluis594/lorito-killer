@@ -3,11 +3,11 @@
 import { Product } from "@/product/types";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
-import { useOrderFormStore } from "@/components/forms/order-form/order-form-provider";
+import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
 
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
-  const { addProduct } = useOrderFormStore((state) => state);
+  const { addProduct } = useOrderFormActions();
 
   const onAddProductToCart = () => {
     addProduct(product);

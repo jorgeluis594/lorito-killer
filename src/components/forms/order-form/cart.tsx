@@ -1,9 +1,29 @@
+"use client";
+
 import CartItem from "@/components/forms/order-form/cart-item";
-import { useOrderFormStore } from "@/components/forms/order-form/order-form-provider";
+import {
+  useOrderFormActions,
+  useOrderFormStore,
+} from "@/components/forms/order-form/order-form-provider";
+import { Button } from "@/components/ui/button";
+import { create } from "@/order/actions";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Cart() {
-  const { total, orderItems, increaseQuantity, decreaseQuantity } =
-    useOrderFormStore((state) => state);
+  const order = useOrderFormStore((state) => state);
+  const { increaseQuantity, decreaseQuantity, reset } = useOrderFormActions();
+
+  const { toast } = useToast();
+
+  const handleOrderCreation = async () => {
+    const response = await create(order);
+    if (response.success) {
+      reset();
+      toast({ description: "Venta realizada con éxito" });
+    } else {
+      toast({ description: "Error al realizar la venta" });
+    }
+  };
 
   return (
     <div className="h-full border-l grid grid-rows-[auto,1fr,auto]">
@@ -11,7 +31,7 @@ export default function Cart() {
         <h2 className="text-xl font-semibold tracking-tight">Pedido</h2>
       </div>
       <div className="py-3 border-b">
-        {orderItems.map((item) => (
+        {order.orderItems.map((item) => (
           <CartItem
             key={item.product.id}
             item={item}
@@ -21,7 +41,12 @@ export default function Cart() {
         ))}
       </div>
       <div className="p-5">
-        <p className="text-end text-xl font-bold">Total: s/{total}</p>
+        <Button className="w-full" onClick={handleOrderCreation}>
+          <div className="flex justify-between w-full">
+            <p className="text-end text-xl font-bold">Vender!</p>
+            <p className="text-end text-xl font-bold">Total: s/{order.total}</p>
+          </div>
+        </Button>
       </div>
     </div>
   );
