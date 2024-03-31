@@ -32,6 +32,6 @@ export const createUser = async (
   }
 
   const user = createdUserResponse.data;
-  signInWithEmail(user.email, password);
+  // signInWithEmail(user.email, password);
   return createdUserResponse;
 };

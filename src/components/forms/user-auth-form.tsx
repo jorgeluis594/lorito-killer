@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,6 +15,7 @@ import { createUser, signInWithEmail } from "@/user/actions";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import * as z from "zod";
 // import GoogleSignInButton from "../github-auth-button";
 
@@ -38,10 +40,19 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+  const router = useRouter();
 
   const onSubmit = async (data: UserFormValue) => {
     if (action === "signup") {
-      console.log(await createUser(data.email, data.password));
+      const createUserResponse = await createUser(data.email, data.password);
+      if (!createUserResponse.success) {
+        form.setError("email", {
+          type: "manual",
+          message: createUserResponse.message,
+        });
+      } else {
+        router.push(callbackUrl || "/");
+      }
     } else {
       signInWithEmail(data.email, data.password, callbackUrl || "/");
     }
