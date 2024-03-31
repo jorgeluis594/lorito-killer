@@ -1,6 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import bcrypt from "bcrypt";
 
 const formater = new Intl.NumberFormat("es-PE", {
   style: "currency",
@@ -28,8 +27,4 @@ export const debounce = <F extends (...args: any[]) => any>(
         resolve(func(...args));
       }, waitFor);
     });
-};
-
-export const comparePassword = (password: string, hash: string) => {
-  return bcrypt.compare(password, hash);
 };
