@@ -6,6 +6,7 @@ import OrderItem from "./order-item";
 
 export default function OrderList() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     getOrders().then((response) => {
@@ -17,6 +18,10 @@ export default function OrderList() {
     });
   }, []);
 
+  const onSelectOrder = (order: Order) => {
+    setSelectedOrder(order);
+  };
+
   return (
     <>
       <div className="h-full border-r">
@@ -24,7 +29,8 @@ export default function OrderList() {
           <OrderItem
             key={order.id}
             order={order}
-            onSelect={(order: Order) => console.log(order)}
+            isCurrent={selectedOrder?.id === order.id}
+            onSelect={onSelectOrder}
           />
         ))}
       </div>

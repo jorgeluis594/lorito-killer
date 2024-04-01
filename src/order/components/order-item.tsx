@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/utils";
 
 interface OrderItemProps {
   order: Order;
+  isCurrent: boolean;
   onSelect: (order: Order) => void;
 }
 
@@ -18,10 +19,14 @@ function localizeDate(data: Date) {
   });
 }
 
-export default function OrderItem({ order, onSelect }: OrderItemProps) {
+export default function OrderItem({
+  order,
+  onSelect,
+  isCurrent,
+}: OrderItemProps) {
   return (
     <div
-      className="flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100 transition-colors"
+      className={`flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100 transition-colors ${isCurrent ? "bg-gray-100" : ""}`}
       onClick={() => onSelect(order)}
     >
       <div>
