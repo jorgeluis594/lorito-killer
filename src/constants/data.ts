@@ -13,4 +13,10 @@ export const navItems: NavItem[] = [
     icon: "shoppingCart",
     label: "nuevo pedido",
   },
+  {
+    title: "Pedidos",
+    href: "/dashboard/orders",
+    icon: "shoppingCart",
+    label: "pedidos",
+  },
 ];
