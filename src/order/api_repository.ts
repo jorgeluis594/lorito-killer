@@ -1,16 +1,22 @@
-import type { Order, OrderItem } from "@/order/types";
-import { response, successResponse } from "@/lib/types";
+import type { Order } from "@/order/types";
+import { response } from "@/lib/types";
 
-async function getOrders(): Promise<response<Order[]>> {
+export const getOrders = async (): Promise<response<Order[]>> => {
   const response = await fetch("/api/orders");
   if (!response.ok) {
     return { success: false, message: "No se pudo conectact con el servidor" };
   }
 
-  const ordersResponse: response<Order[]> = await response.json();
+  const ordersResponse = await response.json();
   if (!ordersResponse.success) {
     return { success: false, message: ordersResponse.message };
   }
 
-  return ordersResponse;
-}
+  const order = ordersResponse.data.map((order: any) => ({
+    ...order,
+    createdAt: new Date(order.createdAt),
+    updatedAt: new Date(order.updatedAt),
+  }));
+
+  return { success: true, data: order };
+};
