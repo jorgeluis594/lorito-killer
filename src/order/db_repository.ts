@@ -1,6 +1,7 @@
 import type { Order, OrderItem } from "@/order/types";
 import { response, successResponse } from "@/lib/types";
 import prisma from "@/lib/prisma";
+import { Product } from "@/product/types";
 
 async function addOrderItem(
   order: Order,
@@ -51,3 +52,38 @@ export const create = async (order: Order): Promise<response<Order>> => {
     return { success: false, message: e.message };
   }
 };
+
+export const getOrders = async (): Promise<response<Order[]>> => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        orderItems: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      data: orders.map(transformOrderData),
+    };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
+function transformOrderData(prismaOrders: any): Order {
+  const { orderItems, ...orderData } = prismaOrders;
+  const parsedOrderItems = orderItems.map((oi: any) => {
+    const product: Product = {
+      ...oi.product,
+      price: oi.product.price.toNumber(),
+      categories: [],
+    };
+    return { ...oi, product };
+  });
+
+  return { ...orderData, orderItems: parsedOrderItems };
+}
