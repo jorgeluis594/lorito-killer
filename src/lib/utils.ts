@@ -28,3 +28,12 @@ export const debounce = <F extends (...args: any[]) => any>(
       }, waitFor);
     });
 };
+
+export const localizeDate = (data: Date) =>
+  data.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });

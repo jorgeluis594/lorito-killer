@@ -1,22 +1,12 @@
 "use client";
 
 import { Order } from "@/order/types";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, localizeDate } from "@/lib/utils";
 
 interface OrderItemProps {
   order: Order;
   isCurrent: boolean;
   onSelect: (order: Order) => void;
-}
-
-function localizeDate(data: Date) {
-  return data.toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 export default function OrderItem({
