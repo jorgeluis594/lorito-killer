@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { Product } from "@/product/types";
 
 async function addOrderItem(
-  order: Order,
+  orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
   const { product, ...orderItemData } = orderItem;
@@ -12,12 +12,12 @@ async function addOrderItem(
     const persistedOrderItem = await prisma.orderItem.create({
       data: {
         ...orderItemData,
-        orderId: order.id!,
+        orderId: orderId,
         productId: orderItem.product.id!,
       },
     });
 
-    return { success: true, data: { ...orderItem } };
+    return { success: true, data: { ...persistedOrderItem, ...orderItem } };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
@@ -32,9 +32,8 @@ export const create = async (order: Order): Promise<response<Order>> => {
         ...orderData,
       },
     });
-
     const createdOrderItemsResponses = await Promise.all(
-      orderItems.map((oi) => addOrderItem(order, oi)),
+      orderItems.map((oi) => addOrderItem(createdOrderResponse.id, oi)),
     );
 
     const createdOrder: Order = {
@@ -43,6 +42,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       status: order.status,
       orderItems: [],
     };
+
     createdOrder.orderItems = createdOrderItemsResponses
       .filter((oi): oi is successResponse<OrderItem> => oi.success)
       .map((oi) => oi.data);
