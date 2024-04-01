@@ -64,7 +64,7 @@ export default function NewCategoryDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
-          <form id="gategory-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <form id="gategory-form">
             <DialogHeader>
               <DialogTitle>Agregar categoría</DialogTitle>
               <DialogDescription>
@@ -93,7 +93,14 @@ export default function NewCategoryDialog({
               />
             </div>
             <DialogFooter>
-              <Button type="submit" size="sm">
+              {
+                // button submit form
+              }
+              <Button
+                type="button"
+                size="sm"
+                onClick={form.handleSubmit(onSubmit)}
+              >
                 Agregar categoría
               </Button>
             </DialogFooter>
