@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getOrders } from "@/order/api_repository";
 import { Order } from "@/order/types";
 import OrderItem from "./order-item";
+import OrderData from "./order-data";
 
 export default function OrderList() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -34,7 +35,7 @@ export default function OrderList() {
           />
         ))}
       </div>
-      <div>Wey</div>
+      {selectedOrder && <OrderData order={selectedOrder} />}
     </>
   );
 }
