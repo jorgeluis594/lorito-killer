@@ -66,7 +66,7 @@ export const removePhoto = async (
 };
 
 export const getMany = async (): Promise<response<Product[]>> => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/products`, {
+  const res = await fetch(`/api/products`, {
     method: "GET",
   });
 
@@ -79,7 +79,7 @@ export const getMany = async (): Promise<response<Product[]>> => {
 
 export const search = async (q: string): Promise<response<Product[]>> => {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_URL}/api/products/search?param=${encodeURIComponent(q)}`,
+    `/api/products/search?param=${encodeURIComponent(q)}`,
     {
       method: "GET",
     },
