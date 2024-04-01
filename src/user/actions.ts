@@ -1,22 +1,9 @@
 "use server";
 
-import { signIn } from "@/lib/auth";
 import registerUser from "@/user/use-cases/createUser";
 import * as repository from "@/user/db_repository";
 import { response } from "@/lib/types";
 import { User } from "@/user/types";
-
-export const signInWithEmail = (
-  email: string,
-  password: string,
-  redirection = "/",
-) => {
-  signIn("credentials", {
-    email,
-    password,
-    callbackUrl: redirection,
-  });
-};
 
 export const createUser = async (
   email: string,
