@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createUser, signInWithEmail } from "@/user/actions";
+import { createUser } from "@/user/actions";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import * as z from "zod";
 // import GoogleSignInButton from "../github-auth-button";
 
@@ -50,11 +51,21 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
           type: "manual",
           message: createUserResponse.message,
         });
-      } else {
-        router.push(callbackUrl || "/");
       }
+
+      const signInResponse = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        callbackUrl: callbackUrl || "/",
+      });
+
+      console.log({ signInResponse });
     } else {
-      signInWithEmail(data.email, data.password, callbackUrl || "/");
+      await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        callbackUrl: callbackUrl || "/",
+      });
     }
   };
 

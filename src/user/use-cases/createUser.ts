@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 
 interface UserRepository {
   createUser: (user: CreateUserParams) => Promise<response<User>>;
-  getUserByEmail: (email: string) => Promise<response<User>>;
+  getUserByEmail: (email: string) => Promise<response<CreateUserParams>>;
 }
 
 export default async function createUser(
