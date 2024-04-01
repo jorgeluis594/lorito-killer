@@ -6,7 +6,7 @@ export default function OrderData({ order }: { order: Order }) {
   console.log({ order });
 
   return (
-    <div className="h-full items-center flex justify-center">
+    <div className="h-full mt-8 flex justify-center">
       <Card className={"w-11/12"}>
         <CardHeader>
           <CardTitle>Pedido {order.id}</CardTitle>
@@ -67,6 +67,12 @@ export default function OrderData({ order }: { order: Order }) {
               ))}
             </tbody>
           </table>
+          <div className="w-full flex justify-end mt-8">
+            <div className="w-56 flex justify-between">
+              <p className="font-bold text-xl">Total</p>
+              <p className="font-bold text-xl">{formatPrice(order.total)}</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
