@@ -13,7 +13,6 @@ interface ProductsClientProps {
 }
 
 export default function ProductsClient({ data }: ProductsClientProps) {
-
   return (
     <>
       <div className="flex items-start justify-between">
@@ -21,7 +20,10 @@ export default function ProductsClient({ data }: ProductsClientProps) {
           title={`Productos (${data.length})`}
           description="Gestiona tus productos!"
         />
-        <Link href="/products/new" className={`${buttonVariants({ variant: "outline" })} text-xs md:text-sm`}>
+        <Link
+          href="/dashboard/products/new"
+          className={`${buttonVariants({ variant: "outline" })} text-xs md:text-sm`}
+        >
           <Plus className="mr-2 h-4 w-4" /> Agregar producto
         </Link>
       </div>

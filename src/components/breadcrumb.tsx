@@ -22,7 +22,7 @@ export default function BreadCrumb({ items }: BreadCrumbPropsType) {
         <React.Fragment key={item.title}>
           <ChevronRightIcon className="h-4 w-4" />
           <Link
-            href={item.link}
+            href={`/dashboard${item.link}`}
             className={cn(
               "font-medium",
               index === items.length - 1
