@@ -40,7 +40,7 @@ export default function AuthenticationPage() {
               Ingresa tu email y contraseña para iniciar sesión
             </p>
           </div>
-          <UserAuthForm />
+          <UserAuthForm action={"login"} />
           {/*<p className="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{" "}
             <Link
