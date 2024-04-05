@@ -16,10 +16,10 @@ export default function ProductsSearcher() {
   const [search, setSearch] = useState<string>("");
   const { toast } = useToast();
 
-  async function onSearchSubmit() {
+  const searchProduct = async () => {
     let response: response<Product[]>;
 
-    if (search.length) {
+    if (search.length || search !== "") {
       response = await searchProducts(search);
     } else {
       response = await getMany();
@@ -34,19 +34,20 @@ export default function ProductsSearcher() {
         description: response.message,
       });
     }
-  }
+  };
 
-  const onSearchChange = debounce(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setSearch(value);
-      await onSearchSubmit();
-    },
-    100,
-  );
+  const onSearchSubmit = debounce(searchProduct, 200);
+
+  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
 
   useEffect(() => {
     onSearchSubmit();
+  }, [search]);
+
+  useEffect(() => {
+    searchProduct();
   }, []);
 
   return (
