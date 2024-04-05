@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { create } from "@/order/actions";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/utils";
+import { useEffect } from "react";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state);
@@ -25,6 +26,10 @@ export default function Cart() {
       toast({ description: "Error al realizar la venta" });
     }
   };
+
+  useEffect(() => {
+    reset();
+  }, []);
 
   return (
     <div className="h-full border-l grid grid-rows-[auto,1fr,auto]">

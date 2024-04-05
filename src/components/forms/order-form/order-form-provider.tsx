@@ -78,10 +78,6 @@ export const useOrderFormActions = (): Actions => {
     },
     reset: () => {
       const order = initOrderFormStore();
-      console.log({ order });
-      console.log({ order });
-      console.log({ order });
-      console.log({ order });
       orderFormStoreContext.setState({
         ...initOrderFormStore(),
         orderItems: [],
