@@ -63,6 +63,8 @@ export const useOrderFormActions = (): Actions => {
 
         if (orderItem) {
           orderItem.quantity += 1;
+          orderItem.total = orderItem.product.price * orderItem.quantity;
+          state.total += orderItem.product.price;
         } else {
           state.orderItems.push({
             product,
