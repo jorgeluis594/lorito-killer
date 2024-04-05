@@ -10,6 +10,7 @@ import { search as searchProducts, getMany } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
 import { debounce } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function ProductsSearcher() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -51,7 +52,10 @@ export default function ProductsSearcher() {
   }, []);
 
   return (
-    <div className="h-full w-100 p-5">
+    <div
+      className="h-full w-100 p-5 pb-0 grid grid-rows-[70px_1fr]"
+      /*style={{ gridTemplateRows: "70px 1fr" }}*/
+    >
       <div className="flex w-100 items-center space-x-2">
         <Button type="button" onClick={onSearchSubmit}>
           <Search className="h-4 w-5" />
@@ -59,7 +63,9 @@ export default function ProductsSearcher() {
         <Input placeholder="Nombre del producto" onChange={onSearchChange} />
       </div>
 
-      <ProductList products={products} />
+      <ScrollArea>
+        <ProductList products={products} />
+      </ScrollArea>
     </div>
   );
 }
