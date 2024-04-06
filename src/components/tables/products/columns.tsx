@@ -22,6 +22,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     cell: ({ row }) => <CellAction product={row.original} />,
   },
 ];
