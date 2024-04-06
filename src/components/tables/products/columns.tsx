@@ -9,6 +9,12 @@ export const columns: ColumnDef<Product>[] = [
     header: "NOMBRE",
   },
   {
+    accessorKey: "categories",
+    header: "CATEGORÍAS",
+    cell: ({ row }) =>
+      row.original.categories.map((category) => category.name).join(", "),
+  },
+  {
     accessorKey: "sku",
     header: "CÓDIGO",
   },
