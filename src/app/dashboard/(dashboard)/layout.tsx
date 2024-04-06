@@ -5,8 +5,9 @@ import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
 import { OrderFormProvider } from "@/components/forms/order-form/order-form-provider";
 import { CategoryStoreProvider } from "@/category/components/category-store-provider";
+import CategoriesLoader from "@/category/components/categories-loader";
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ export default async function DashboardLayout({
   return (
     <>
       <OrderFormProvider>
-        <CategoryStoreProvider>
+        <CategoryStoreProvider initialCategories={[]}>
           <Header />
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
@@ -22,7 +23,7 @@ export default async function DashboardLayout({
               <NextSSRPlugin
                 routerConfig={extractRouterConfig(ourFileRouter)}
               />
-              {children}
+              <CategoriesLoader>{children}</CategoriesLoader>
             </main>
           </div>
         </CategoryStoreProvider>
