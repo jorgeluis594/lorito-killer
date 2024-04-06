@@ -16,8 +16,7 @@ export const createCategory = async (
   category: Category,
 ): Promise<response<Category>> => {
   const res = await create(category);
-  revalidatePath("/products/new");
-  revalidatePath("/products/[id]");
+  revalidatePath("/api/categories");
 
   return res;
 };
@@ -33,7 +32,7 @@ export const addCategoryToProduct = async (
 
   if (!productResponse.success) return productResponse;
   if (!categoryResponse.success) return categoryResponse;
-  revalidatePath(`/products/${productId}`);
+
   return await attachCategoryToProduct(
     productResponse.data as Product,
     categoryResponse.data as Category,
