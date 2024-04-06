@@ -8,18 +8,36 @@ import { Checkbox } from "@/components/ui/checkbox";
 import React from "react";
 import { FormControl, FormLabel } from "@/components/ui/form";
 import { useCategoryStore } from "@/category/components/category-store-provider";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SelectCategoriesProps {
   value: Category[];
   onChange: (categories: Category[]) => void;
 }
 
-const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
+const CategoriesSkeleton = () => {
+  return (
+    <>
+      {Array(7)
+        .fill(0)
+        .map((_, index) => (
+          <Skeleton key={index} className="w-full h-[1.4rem] my-3" />
+        ))}
+    </>
+  );
+};
+
+interface CategoryListProps {
+  categories: Category[];
+  value: Category[];
+  onChange: (categories: Category[]) => void;
+}
+
+const CategoryList: React.FC<CategoryListProps> = ({
+  categories,
   value,
   onChange,
 }) => {
-  const { categories } = useCategoryStore((store) => store);
-
   const createHandleCheckboxChange =
     (category: Category) => (checked: boolean) => {
       if (checked) {
@@ -30,25 +48,46 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
     };
 
   return (
+    <>
+      {categories.map((category) => (
+        <div key={category.id}>
+          <div className="flex flex-row items-start space-x-3 space-y-0">
+            <FormControl>
+              <Checkbox
+                checked={value.some((item) => item.id === category.id)}
+                onCheckedChange={createHandleCheckboxChange(category)}
+              />
+            </FormControl>
+            <FormLabel className="text-sm font-normal">
+              {category.name}
+            </FormLabel>
+          </div>
+          <Separator className="my-2" />
+        </div>
+      ))}
+    </>
+  );
+};
+
+const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
+  value,
+  onChange,
+}) => {
+  const { categories, isLoading } = useCategoryStore((store) => store);
+
+  return (
     <div>
       <ScrollArea className="h-72 w-100 rounded-md border">
         <div className="p-4">
-          {categories.map((category) => (
-            <div key={category.id}>
-              <div className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={value.some((item) => item.id === category.id)}
-                    onCheckedChange={createHandleCheckboxChange(category)}
-                  />
-                </FormControl>
-                <FormLabel className="text-sm font-normal">
-                  {category.name}
-                </FormLabel>
-              </div>
-              <Separator className="my-2" />
-            </div>
-          ))}
+          {isLoading ? (
+            <CategoriesSkeleton />
+          ) : (
+            <CategoryList
+              categories={categories}
+              value={value}
+              onChange={onChange}
+            />
+          )}
         </div>
       </ScrollArea>
     </div>
