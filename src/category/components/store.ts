@@ -9,6 +9,7 @@ export type CategoryState = {
 
 export type CategoryActions = {
   setCategories: (categories: Category[]) => void;
+  setIsLoading: (isLoading: boolean) => void;
 };
 
 export type CategoryStore = CategoryState & CategoryActions;
@@ -39,5 +40,6 @@ export const createCategoryStore = (
     categories: sortCategories(initState.categories),
     setCategories: (categories: Category[]) =>
       set({ categories: [...sortCategories(categories)] }),
+    setIsLoading: (isLoading: boolean) => set({ isLoading }),
   }));
 };
