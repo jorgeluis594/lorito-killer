@@ -4,6 +4,7 @@ import { Category } from "@/category/types";
 
 export type CategoryState = {
   categories: Category[];
+  isLoading: boolean;
 };
 
 export type CategoryActions = {
@@ -14,6 +15,7 @@ export type CategoryStore = CategoryState & CategoryActions;
 
 export const defaultInitState: CategoryState = {
   categories: [],
+  isLoading: false,
 };
 
 function sortCategories(categories: Category[]) {
@@ -23,6 +25,11 @@ function sortCategories(categories: Category[]) {
     return 0;
   });
 }
+
+export const iniCategoriesParams = (): CategoryState => ({
+  categories: [],
+  isLoading: false,
+});
 
 export const createCategoryStore = (
   initState: CategoryState = defaultInitState,

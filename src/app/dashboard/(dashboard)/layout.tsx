@@ -15,7 +15,7 @@ export default function DashboardLayout({
   return (
     <>
       <OrderFormProvider>
-        <CategoryStoreProvider initialCategories={[]}>
+        <CategoryStoreProvider>
           <Header />
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
