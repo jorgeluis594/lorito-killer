@@ -10,12 +10,15 @@ export default function CategoriesLoader({
 }: {
   children: React.ReactNode;
 }) {
-  const { setCategories } = useCategoryStore((store) => store);
+  const { setCategories, setIsLoading } = useCategoryStore((store) => store);
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsLoading(true);
+
     async function fetchCategories() {
       const categoriesResponse = await getManyCategories();
+      setIsLoading(false);
       if (!categoriesResponse.success) {
         toast({
           title: "Error",
