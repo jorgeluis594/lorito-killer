@@ -9,15 +9,19 @@ import { buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
 
 interface ProductsClientProps {
-  data: Product[];
+  data: Product[] | null;
+  isLoading: boolean;
 }
 
-export default function ProductsClient({ data }: ProductsClientProps) {
+export default function ProductsClient({
+  data,
+  isLoading,
+}: ProductsClientProps) {
   return (
     <>
       <div className="flex items-start justify-between">
         <Heading
-          title={`Productos (${data.length})`}
+          title={data ? `Productos (${data.length})` : ""}
           description="Gestiona tus productos!"
         />
         <Link
@@ -28,7 +32,12 @@ export default function ProductsClient({ data }: ProductsClientProps) {
         </Link>
       </div>
       <Separator />
-      <DataTable searchKey="name" columns={columns} data={data} />
+      <DataTable
+        searchKey="name"
+        columns={columns}
+        data={data ?? []}
+        isLoading={isLoading}
+      />
     </>
   );
 }
