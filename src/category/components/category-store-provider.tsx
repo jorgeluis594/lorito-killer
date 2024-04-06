@@ -7,20 +7,23 @@ import {
   type CategoryStore,
   createCategoryStore,
 } from "@/category/components/store";
+import { type Category } from "@/category/types";
 
 export const CategoryStoreContext =
   createContext<StoreApi<CategoryStore> | null>(null);
 
 export interface CounterStoreProviderProps {
   children: ReactNode;
+  initialCategories: Category[];
 }
 
-export const CounterStoreProvider = ({
+export const CategoryStoreProvider = ({
   children,
+  initialCategories,
 }: CounterStoreProviderProps) => {
   const storeRef = useRef<StoreApi<CategoryStore>>();
   if (!storeRef.current) {
-    storeRef.current = createCategoryStore();
+    storeRef.current = createCategoryStore({ categories: initialCategories });
   }
 
   return (
