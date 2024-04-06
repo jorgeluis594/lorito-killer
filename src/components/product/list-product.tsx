@@ -8,10 +8,13 @@ import { Product } from "@/product/types";
 const Products = () => {
   const [products, setProducts] = useState<null | Product[]>(null);
   const [error, setError] = useState<null | string>();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       const response = await getManyProducts();
+      setIsLoading(false);
+
       if (!response.success) {
         setError(response.message);
       } else {
@@ -26,11 +29,7 @@ const Products = () => {
     return <div>Error: {error}</div>;
   }
 
-  if (!products) {
-    return <div>Loading...</div>;
-  }
-
-  return <ProductsClient data={products} />;
+  return <ProductsClient data={products} isLoading={isLoading} />;
 };
 
 export default function ListProducts() {
