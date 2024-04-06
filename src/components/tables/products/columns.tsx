@@ -10,11 +10,11 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: "sku",
-    header: "SKU",
+    header: "CÓDIGO",
   },
   {
     accessorKey: "stock",
-    header: "STOCK",
+    header: "CANTIDAD",
   },
   {
     accessorKey: "price",
