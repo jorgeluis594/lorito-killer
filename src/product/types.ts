@@ -25,3 +25,7 @@ export type Product = {
 export type ProductSearchParams = {
   sku?: string;
 };
+
+export type ProductSortParams = {
+  [P in keyof Omit<Product, "id" | "photos" | "categories">]?: "asc" | "desc";
+};
