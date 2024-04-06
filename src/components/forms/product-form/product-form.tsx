@@ -29,12 +29,12 @@ import {
   addCategoryToProduct as attachCategoryToProduct,
   removeCategoryFromProduct,
 } from "@/category/actions";
+import { useCategoryStore } from "@/category/components/category-store-provider";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
 interface ProductFormProps {
   initialProduct?: Product | null;
-  categories: Category[];
 }
 
 const transformToProduct = (data: ProductFormValues): Product => {
@@ -50,13 +50,14 @@ const transformToProduct = (data: ProductFormValues): Product => {
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   initialProduct = null,
-  categories,
 }) => {
   const title = initialProduct ? "Editar producto" : "Registrar producto";
   const description = initialProduct
     ? "Editar producto."
     : "Registra un nuevo producto";
   const action = initialProduct ? "Guardar cambios" : "Registrar";
+
+  const { categories } = useCategoryStore((store) => store);
 
   const { toast } = useToast();
   const [availableCategories, setAvailableCategories] =
