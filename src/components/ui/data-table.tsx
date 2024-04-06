@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 import {
   ColumnDef,
@@ -30,11 +30,12 @@ import { Input } from "./input";
 import { Button } from "./button";
 import { ScrollArea, ScrollBar } from "./scroll-area";
 import { Icons } from "@/components/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  isLoading: boolean;
+  isLoading?: boolean;
   searchKey: string;
 }
 
@@ -56,6 +57,20 @@ export function DataTable<TData, TValue>({
       columnVisibility,
     },
   });
+
+  const DataTableSkeleton = () => (
+    <>
+      <TableRow>
+        <TableCell colSpan={columns.length}>
+          {Array(9)
+            .fill(0)
+            .map((_, index) => (
+              <Skeleton key={index} className="w-full h-[1.5rem] my-5" />
+            ))}
+        </TableCell>
+      </TableRow>
+    </>
+  );
 
   const ProductRows = () => (
     <>
@@ -144,7 +159,7 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            <ProductRows />
+            {isLoading ? <DataTableSkeleton /> : <ProductRows />}
           </TableBody>
         </Table>
         <ScrollBar orientation="horizontal" />
