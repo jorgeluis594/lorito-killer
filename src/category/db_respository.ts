@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 import { Category } from "./types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
-import { find as findProduct } from "@/product/db_repository";
 
 export const create = async (
   category: Category,
