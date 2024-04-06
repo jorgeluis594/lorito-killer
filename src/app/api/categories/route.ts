@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getMany } from "@/category/db_respository";
 
+export const revalidate = 0;
+
 export async function GET() {
   const response = await getMany();
 

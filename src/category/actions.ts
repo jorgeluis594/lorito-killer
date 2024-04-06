@@ -15,10 +15,7 @@ import { revalidatePath } from "next/cache";
 export const createCategory = async (
   category: Category,
 ): Promise<response<Category>> => {
-  const res = await create(category);
-  revalidatePath("/api/categories");
-
-  return res;
+  return await create(category);
 };
 
 export const addCategoryToProduct = async (
@@ -32,6 +29,8 @@ export const addCategoryToProduct = async (
 
   if (!productResponse.success) return productResponse;
   if (!categoryResponse.success) return categoryResponse;
+
+  revalidatePath(`/dashboard/products/${productId}`);
 
   return await attachCategoryToProduct(
     productResponse.data as Product,
