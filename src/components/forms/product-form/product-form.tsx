@@ -3,7 +3,6 @@ import * as z from "zod";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { Product, Photo } from "@/product/types";
 import { EMPTY_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
@@ -57,11 +56,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     : "Registra un nuevo producto";
   const action = initialProduct ? "Guardar cambios" : "Registrar";
 
-  const { categories } = useCategoryStore((store) => store);
+  const { categories, setCategories } = useCategoryStore((store) => store);
 
   const { toast } = useToast();
-  const [availableCategories, setAvailableCategories] =
-    useState<Category[]>(categories);
 
   const product = initialProduct ? initialProduct : EMPTY_PRODUCT;
 
@@ -112,9 +109,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   const onCategoryAdded = async (category: Category) => {
-    const categoryFound = availableCategories.find((c) => c.id === category.id);
+    const categoryFound = categories.find((c) => c.id === category.id);
     if (!categoryFound) {
-      setAvailableCategories([...availableCategories, category]);
+      setCategories([...categories, category]);
     }
 
     await addCategoryToProduct(category);
@@ -326,7 +323,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <NewCategoryDialog addCategory={onCategoryAdded} />
                   </div>
                   <CategoriesSelector
-                    availableCategories={availableCategories}
                     value={field.value || []}
                     onChange={handleCategoriesUpdated}
                   />

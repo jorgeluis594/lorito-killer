@@ -28,10 +28,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     <ScrollArea className="h-full">
       <div className="flex-1 space-y-4 p-5">
         <BreadCrumb items={breadcrumbItems} />
-        <ProductForm
-          categories={categoriesResponse.data}
-          initialProduct={response.data}
-        />
+        <ProductForm initialProduct={response.data} />
       </div>
     </ScrollArea>
   );
