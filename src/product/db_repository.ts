@@ -1,5 +1,10 @@
 import prisma from "@/lib/prisma";
-import { Product, Photo, ProductSearchParams } from "./types";
+import type {
+  Product,
+  Photo,
+  ProductSearchParams,
+  ProductSortParams,
+} from "./types";
 import { Category } from "@/category/types";
 import { addCategoryToProduct } from "@/category/db_respository";
 import { response, successResponse } from "@/lib/types";
@@ -47,9 +52,14 @@ export const update = async (product: Product): Promise<response<Product>> => {
   }
 };
 
-export const getMany = async (): Promise<response<Product[]>> => {
+export const getMany = async ({
+  sortBy,
+}: {
+  sortBy?: ProductSortParams;
+}): Promise<response<Product[]>> => {
   try {
     const result = await prisma.product.findMany({
+      orderBy: sortBy,
       include: { photos: true, categories: true },
     });
     const products = await Promise.all(

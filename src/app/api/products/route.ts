@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const response = await getMany();
+  const response = await getMany({ sortBy: { createdAt: "desc" } });
 
   return NextResponse.json(response, { status: response.success ? 200 : 404 });
 }
