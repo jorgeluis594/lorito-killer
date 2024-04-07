@@ -72,12 +72,23 @@ export const useOrderFormActions = (): Actions => {
         total: product.price,
       });
 
-      orderFormStoreContext.setState((state) => {
+      orderFormStoreContext.setState(() => {
         return {
           orderItems: [...order.orderItems],
         };
       });
     }
+  };
+
+  const removeOrderItem = (orderItemId: string) => {
+    const order = orderFormStoreContext.getState();
+    order.orderItems = order.orderItems.filter(
+      (item) => item.id !== orderItemId,
+    );
+
+    orderFormStoreContext.setState(() => {
+      return { orderItems: [...order.orderItems] };
+    });
   };
 
   const increaseQuantity = (orderItemId: string) => {
@@ -131,22 +142,7 @@ export const useOrderFormActions = (): Actions => {
 
   return {
     addProduct,
-    removeOrderItem: (orderItemId: string) => {
-      orderFormStoreContext.setState((state) => {
-        const orderItem = state.orderItems.find(
-          (item) => item.id === orderItemId,
-        );
-
-        if (orderItem) {
-          state.total -= orderItem.total;
-          state.orderItems = state.orderItems.filter(
-            (item) => item.id !== orderItemId,
-          );
-        }
-
-        return { ...state, orderItems: [...state.orderItems] };
-      });
-    },
+    removeOrderItem,
     reset: () => {
       const order = initOrderFormStore();
       orderFormStoreContext.setState({
