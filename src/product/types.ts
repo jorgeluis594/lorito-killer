@@ -24,6 +24,7 @@ export type Product = {
 
 export type ProductSearchParams = {
   sku?: string;
+  categories?: { id?: string };
 };
 
 export type ProductSortParams = {

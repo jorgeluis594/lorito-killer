@@ -107,7 +107,13 @@ export const findBy = async (
   params: ProductSearchParams,
 ): Promise<response<Product>> => {
   try {
-    const product = await prisma.product.findFirst({ where: params });
+    const { categories, ...rest } = params;
+    const searchParams: any = { ...rest };
+    if (categories) {
+      searchParams.categories = { categories: { id: categories.id } };
+    }
+
+    const product = await prisma.product.findFirst({ where: searchParams });
     if (!product) return { success: false, message: "Product not found" };
 
     return { success: true, data: product } as response;
