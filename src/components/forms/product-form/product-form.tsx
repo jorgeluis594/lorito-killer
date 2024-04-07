@@ -309,12 +309,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>Precio de venta</FormLabel>
                     <FormControl>
-                      <Input
-                        autoComplete="off"
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
+                      <Input autoComplete="off" type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
