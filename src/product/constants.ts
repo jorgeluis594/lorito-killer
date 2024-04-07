@@ -1,4 +1,4 @@
-import { Product } from "@/product/types"
+import { Product, SortOptions } from "@/product/types";
 
 export const IMG_MAX_LIMIT = 5;
 
@@ -8,5 +8,13 @@ export const EMPTY_PRODUCT: Product = {
   sku: "",
   stock: 0,
   photos: [],
-  categories: []
-}
+  categories: [],
+};
+
+export const sortOptions: SortOptions = {
+  name_asc: { name: "Alfabéticamente", value: { name: "asc" } },
+  last_units_available: {
+    name: "Últimas unidades disponibles",
+    value: { stock: "asc" },
+  },
+};

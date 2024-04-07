@@ -1,4 +1,4 @@
-import { Photo, Product } from "./types";
+import type { Photo, Product, SortKey } from "./types";
 import { response } from "@/lib/types";
 
 export const create = async (product: Product): Promise<response<Product>> => {
@@ -68,6 +68,7 @@ export const removePhoto = async (
 export type GetManyParams = {
   q?: string | null;
   categoryId?: string | null;
+  sortBy?: SortKey;
 };
 
 export const getMany = async (
@@ -76,6 +77,7 @@ export const getMany = async (
   const searchParams: any = {};
   if (params.q) searchParams["param"] = params.q;
   if (params.categoryId) searchParams["categoryId"] = params.categoryId;
+  if (params.sortBy) searchParams["sortBy"] = params.sortBy;
   const queryString = new URLSearchParams(searchParams).toString();
 
   const res = await fetch(`/api/products?${queryString}`, {

@@ -30,3 +30,12 @@ export type ProductSearchParams = {
 export type ProductSortParams = {
   [P in keyof Omit<Product, "id" | "photos" | "categories">]?: "asc" | "desc";
 };
+
+export type SortOptions = {
+  [key in "name_asc" | "last_units_available" | "created_desc"]?: {
+    name: string;
+    value: ProductSortParams;
+  };
+};
+
+export type SortKey = keyof SortOptions;
