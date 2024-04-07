@@ -77,13 +77,17 @@ export const getMany = async (): Promise<response<Product[]>> => {
   return await res.json();
 };
 
-export const search = async (q: string): Promise<response<Product[]>> => {
-  const res = await fetch(
-    `/api/products/search?param=${encodeURIComponent(q)}`,
-    {
-      method: "GET",
-    },
-  );
+export const search = async (
+  q: string,
+  categoryId?: string | null,
+): Promise<response<Product[]>> => {
+  const searchParams: any = { param: q };
+  if (categoryId) searchParams["categoryId"] = categoryId;
+  const params = new URLSearchParams(searchParams).toString();
+
+  const res = await fetch(`/api/products/search?${params}`, {
+    method: "GET",
+  });
 
   if (!res.ok) {
     return { success: false, message: "Error fetching products" };
