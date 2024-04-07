@@ -207,10 +207,21 @@ export const removePhoto = async (
   }
 };
 
-export const search = async (q: string): Promise<response<Product[]>> => {
+interface searchParams {
+  q: string;
+  categoryId?: string | null;
+}
+
+export const search = async ({
+  q,
+  categoryId,
+}: searchParams): Promise<response<Product[]>> => {
   try {
+    const query: any = { name: { contains: q, mode: "insensitive" } };
+    if (categoryId) query.categories = { some: { categoryId } };
+
     const result = await prisma.product.findMany({
-      where: { name: { contains: q, mode: "insensitive" } },
+      where: query,
       include: { photos: true, categories: true },
     });
     const products = await Promise.all(
