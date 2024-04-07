@@ -11,10 +11,21 @@ import { useToast } from "@/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
 import { debounce } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Category } from "@/category/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCategoryStore } from "@/category/components/category-store-provider";
 
 export default function ProductsSearcher() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState<string>("");
+  const { categories } = useCategoryStore((store) => store);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const searchProduct = async () => {
@@ -45,25 +56,42 @@ export default function ProductsSearcher() {
 
   useEffect(() => {
     onSearchSubmit();
-  }, [search]);
+  }, [search, categoryId]);
 
   useEffect(() => {
     searchProduct();
   }, []);
 
+  const handleCategoryChange = (categoryId: string) => {
+    setCategoryId(categoryId);
+  };
+
   return (
-    <div
-      className="h-full w-100 p-5 pb-0 grid grid-rows-[70px_1fr]"
-      /*style={{ gridTemplateRows: "70px 1fr" }}*/
-    >
-      <div className="flex w-100 items-center space-x-2">
-        <Button type="button" onClick={onSearchSubmit}>
-          <Search className="h-4 w-5" />
-        </Button>
-        <Input placeholder="Nombre del producto" onChange={onSearchChange} />
+    <div className="h-full w-100 p-5 pb-0 grid grid-rows-[70px_1fr]">
+      <div className="w-full mb-4">
+        <div className="w-1/2 md:grid md:grid-cols-2 gap-4 mb-2">
+          <Select onValueChange={handleCategoryChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccione categiría" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id!}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex w-full items-center space-x-2">
+          <Button type="button" onClick={onSearchSubmit}>
+            <Search className="h-4 w-5" />
+          </Button>
+          <Input placeholder="Nombre del producto" onChange={onSearchChange} />
+        </div>
       </div>
 
-      <ScrollArea>
+      <ScrollArea className="mt-4">
         <ProductList products={products} />
       </ScrollArea>
     </div>
