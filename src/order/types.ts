@@ -23,7 +23,7 @@ export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "wallet";
 
 export type PaymentGeneralData = {
   id?: string;
-  orderId: string;
+  orderId?: string;
   amount: number;
   method: PaymentMethod;
   createdAt?: Date;
