@@ -9,6 +9,11 @@ import { Category } from "@/category/types";
 import { addCategoryToProduct } from "@/category/db_respository";
 import { response, successResponse } from "@/lib/types";
 
+interface searchParams {
+  q: string;
+  categoryId?: string | null;
+}
+
 export const create = async (product: Product): Promise<response<Product>> => {
   try {
     const { photos, categories, ...productData } = product;
@@ -91,9 +96,6 @@ export const find = async (id: string): Promise<response<Product>> => {
 
     if (product) {
       (product.price as unknown) = product.price.toNumber();
-      (product.categories as unknown[]) = await prisma.category.findMany({
-        where: { id: { in: product.categories.map((c) => c.categoryId) } },
-      });
       return { success: true, data: product } as response;
     } else {
       return { success: false, message: "Product not found" } as response;
@@ -207,11 +209,6 @@ export const removePhoto = async (
   }
 };
 
-interface searchParams {
-  q: string;
-  categoryId?: string | null;
-}
-
 export const search = async ({
   q,
   categoryId,
@@ -227,14 +224,7 @@ export const search = async ({
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-
-        // we restore the categories from the product
-        const categories = await Promise.all(
-          p.categories.map((c) =>
-            prisma.category.findUnique({ where: { id: c.categoryId } }),
-          ),
-        );
-        return { ...p, price, categories } as Product;
+        return { ...p, price } as Product;
       }),
     );
 
