@@ -5,6 +5,7 @@ import { Product } from "@/product/types";
 
 export type Actions = {
   addProduct: (product: Product) => void;
+  removeOrderItem: (orderItemId: string) => void;
   reset: () => void;
   increaseQuantity: (productId: string) => void;
   decreaseQuantity: (productId: string) => void;

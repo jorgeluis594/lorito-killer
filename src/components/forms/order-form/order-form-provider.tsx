@@ -78,6 +78,22 @@ export const useOrderFormActions = (): Actions => {
         return { ...state, orderItems: [...state.orderItems] };
       });
     },
+    removeOrderItem: (orderItemId: string) => {
+      orderFormStoreContext.setState((state) => {
+        const orderItem = state.orderItems.find(
+          (item) => item.id === orderItemId,
+        );
+
+        if (orderItem) {
+          state.total -= orderItem.total;
+          state.orderItems = state.orderItems.filter(
+            (item) => item.id !== orderItemId,
+          );
+        }
+
+        return { ...state, orderItems: [...state.orderItems] };
+      });
+    },
     reset: () => {
       const order = initOrderFormStore();
       orderFormStoreContext.setState({
