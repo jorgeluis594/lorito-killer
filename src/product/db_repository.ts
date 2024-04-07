@@ -60,16 +60,28 @@ export const update = async (product: Product): Promise<response<Product>> => {
 export const getMany = async ({
   sortBy,
   categoryId,
+  q,
 }: {
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
+  q?: string | null;
 }): Promise<response<Product[]>> => {
   try {
     const query: any = {
+      where: {},
       orderBy: sortBy,
       include: { photos: true, categories: true },
     };
-    if (categoryId) query.where = { categories: { some: { id: categoryId } } };
+    if (categoryId)
+      query.where = {
+        ...query.where,
+        categories: { some: { id: categoryId } },
+      };
+    if (q)
+      query.where = {
+        ...query.where,
+        name: { contains: q, mode: "insensitive" },
+      };
 
     const result = await prisma.product.findMany(query);
     const products = await Promise.all(
