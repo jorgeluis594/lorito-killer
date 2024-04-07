@@ -29,6 +29,7 @@ import {
   removeCategoryFromProduct,
 } from "@/category/actions";
 import { useCategoryStore } from "@/category/components/category-store-provider";
+import { Textarea } from "@/components/ui/textarea";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -42,6 +43,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
     price: data.price,
     sku: data.sku,
     purchasePrice: data.purchasePrice,
+    description: data.description,
     stock: data.stock,
     photos: data.photos,
     categories: data.categories || [],
@@ -331,6 +333,25 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </FormItem>
                 )}
               />
+              <div className="col-span-3">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descipción</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          rows={4}
+                          placeholder="Escribe la descripción del producto aqui."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
             <FormField
               control={form.control}
