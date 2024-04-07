@@ -54,6 +54,14 @@ export const useOrderFormActions = (): Actions => {
     );
   }
 
+  const updateTotal = () => {
+    const order = orderFormStoreContext.getState();
+    order.total = order.orderItems.reduce((acc, item) => acc + item.total, 0);
+    orderFormStoreContext.setState(() => {
+      return { total: order.total };
+    });
+  };
+
   const addProduct = (product: Product) => {
     const order = orderFormStoreContext.getState();
 
@@ -63,7 +71,6 @@ export const useOrderFormActions = (): Actions => {
 
     if (orderItem) {
       increaseQuantity(orderItem.id!);
-      return;
     } else {
       order.orderItems.push({
         product,
@@ -77,6 +84,7 @@ export const useOrderFormActions = (): Actions => {
           orderItems: [...order.orderItems],
         };
       });
+      updateTotal();
     }
   };
 
@@ -89,6 +97,8 @@ export const useOrderFormActions = (): Actions => {
     orderFormStoreContext.setState(() => {
       return { orderItems: [...order.orderItems] };
     });
+
+    updateTotal();
   };
 
   const increaseQuantity = (orderItemId: string) => {
@@ -104,11 +114,12 @@ export const useOrderFormActions = (): Actions => {
     } else {
       orderItem.quantity += 1;
       orderItem.total = orderItem.product.price * orderItem.quantity;
-    }
+      orderFormStoreContext.setState(() => {
+        return { orderItems: [...order.orderItems] };
+      });
 
-    orderFormStoreContext.setState(() => {
-      return { orderItems: [...order.orderItems] };
-    });
+      updateTotal();
+    }
   };
 
   const decreaseQuantity = (orderItemId: string) => {
@@ -126,18 +137,16 @@ export const useOrderFormActions = (): Actions => {
     }
 
     if (orderItem.quantity == 1) {
-      order.orderItems = order.orderItems.filter(
-        (item) => item.id !== orderItemId,
-      );
-      order.total -= orderItem.product.price;
+      removeOrderItem(orderItemId);
     } else {
       orderItem.quantity--;
       orderItem.total = orderItem.product.price * orderItem.quantity;
-    }
+      orderFormStoreContext.setState(() => {
+        return { orderItems: [...order.orderItems] };
+      });
 
-    orderFormStoreContext.setState(() => {
-      return { orderItems: [...order.orderItems] };
-    });
+      updateTotal();
+    }
   };
 
   return {
