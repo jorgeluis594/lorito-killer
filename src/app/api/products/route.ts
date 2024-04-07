@@ -17,9 +17,14 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
+  const param = searchParams.get("param");
   const categoryId = searchParams.get("categoryId");
 
-  const response = await getMany({ sortBy: { createdAt: "desc" }, categoryId });
+  const response = await getMany({
+    q: param,
+    sortBy: { createdAt: "desc" },
+    categoryId,
+  });
 
   return NextResponse.json(response, { status: response.success ? 200 : 404 });
 }

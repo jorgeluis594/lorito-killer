@@ -65,11 +65,20 @@ export const removePhoto = async (
   return await res.json();
 };
 
+export type GetManyParams = {
+  q?: string | null;
+  categoryId?: string | null;
+};
+
 export const getMany = async (
-  categoryId?: string | null,
+  params: GetManyParams = {},
 ): Promise<response<Product[]>> => {
-  const queryString = categoryId ? `?categoryId=${categoryId}` : "";
-  const res = await fetch(`/api/products${queryString}`, {
+  const searchParams: any = {};
+  if (params.q) searchParams["param"] = params.q;
+  if (params.categoryId) searchParams["categoryId"] = params.categoryId;
+  const queryString = new URLSearchParams(searchParams).toString();
+
+  const res = await fetch(`/api/products?${queryString}`, {
     method: "GET",
   });
 
