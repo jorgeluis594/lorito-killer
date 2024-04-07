@@ -64,6 +64,7 @@ model Order {
   id        String    @id @default(uuid())
   total     Decimal
   status    String
+  payments  Payment[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   orderItems     OrderItem[]
@@ -74,6 +75,25 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  CASH
+  WALLET
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  amount    Decimal
+  status    String
+  orderId   String
+  data      Json?
+  method    PaymentMethod
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
