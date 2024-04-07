@@ -108,8 +108,12 @@ export const find = async (id: string): Promise<response<Product>> => {
     });
 
     if (product) {
-      (product.price as unknown) = product.price.toNumber();
-      return { success: true, data: product } as response;
+      const price = product.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
+      const purchasePrice = product.purchasePrice.toNumber();
+      return {
+        success: true,
+        data: { ...product, price, purchasePrice },
+      } as response;
     } else {
       return { success: false, message: "Product not found" } as response;
     }
