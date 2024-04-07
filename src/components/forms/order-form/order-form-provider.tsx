@@ -54,6 +54,32 @@ export const useOrderFormActions = (): Actions => {
     );
   }
 
+  const addProduct = (product: Product) => {
+    const order = orderFormStoreContext.getState();
+
+    const orderItem = order.orderItems.find(
+      (item) => item.product.id === product.id,
+    );
+
+    if (orderItem) {
+      increaseQuantity(orderItem.id!);
+      return;
+    } else {
+      order.orderItems.push({
+        product,
+        id: crypto.randomUUID(),
+        quantity: 1,
+        total: product.price,
+      });
+
+      orderFormStoreContext.setState((state) => {
+        return {
+          orderItems: [...order.orderItems],
+        };
+      });
+    }
+  };
+
   const increaseQuantity = (orderItemId: string) => {
     const order = orderFormStoreContext.getState();
     const orderItem = order.orderItems.find((item) => item.id === orderItemId);
@@ -104,38 +130,7 @@ export const useOrderFormActions = (): Actions => {
   };
 
   return {
-    addProduct: (product: Product) => {
-      orderFormStoreContext.setState((state) => {
-        const orderItem = state.orderItems.find(
-          (item) => item.product.id === product.id,
-        );
-        let cartTotal = 0;
-
-        if (orderItem) {
-          const quantity = orderItem.quantity + 1;
-          const itemTotal = product.price * quantity;
-          cartTotal = state.orderItems.reduce(
-            (acc, item) =>
-              acc + item.id! === orderItem.id ? itemTotal : item.total,
-            0,
-          );
-        } else {
-          state.orderItems.push({
-            product,
-            id: crypto.randomUUID(),
-            quantity: 1,
-            total: product.price,
-          });
-        }
-        cartTotal += product.price;
-
-        return {
-          ...state,
-          total: cartTotal,
-          orderItems: [...state.orderItems],
-        };
-      });
-    },
+    addProduct,
     removeOrderItem: (orderItemId: string) => {
       orderFormStoreContext.setState((state) => {
         const orderItem = state.orderItems.find(
