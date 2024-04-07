@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { type CashPayment as CashPaymentMethod } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
-import { cn } from "@/lib/utils";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import * as React from "react";
 
 export const NonePayment: React.FC = () => {
@@ -33,7 +33,10 @@ export const NonePayment: React.FC = () => {
           <Smartphone className="w-12 h-12" />
           <p className="w-full text-center">YAPE</p>
         </div>
-        <div className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent">
+        <div
+          className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
+          onClick={() => setPaymentMode("card")}
+        >
           <CreditCard className="w-12 h-12" />
           <p className="w-full text-center">TARJETA</p>
         </div>
@@ -98,11 +101,41 @@ export const CashPayment: React.FC = () => {
 };
 
 export const WalletPayment: React.FC = () => {
-  return <p>Wallet payment</p>;
+  const orderTotal = useOrderFormStore((state) => state.order.total);
+
+  return <p>Wallet</p>;
 };
 
 export const CardPayment: React.FC = () => {
-  return <p>Card payment</p>;
+  const orderTotal = useOrderFormStore((state) => state.order.total);
+
+  return (
+    <div className="mt-4">
+      <div className="my-3">
+        <Label>Monto recibido</Label>
+        <Input
+          placeholder="Ingrese monto"
+          type="number"
+          value={orderTotal}
+          disabled
+        />
+      </div>
+      <ToggleGroup type="single" size="lg" variant="outline" className="gap-0">
+        <ToggleGroupItem
+          value="debit_card"
+          className="rounded-tr-none rounded-br-none w-48"
+        >
+          Débito
+        </ToggleGroupItem>
+        <ToggleGroupItem
+          value="credit_card"
+          className="rounded-tl-none rounded-bl-none w-48"
+        >
+          Crédito
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  );
 };
 
 export const CombinedPayment: React.FC = () => {
