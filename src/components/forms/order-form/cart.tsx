@@ -14,7 +14,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state);
-  const { increaseQuantity, decreaseQuantity, reset } = useOrderFormActions();
+  const { increaseQuantity, decreaseQuantity, reset, removeOrderItem } =
+    useOrderFormActions();
 
   const { toast } = useToast();
 
@@ -49,6 +50,7 @@ export default function Cart() {
                 item={item}
                 increaseQuantity={increaseQuantity}
                 decreaseQuantity={decreaseQuantity}
+                removeOrderItem={removeOrderItem}
               />
             ))}
           </div>
