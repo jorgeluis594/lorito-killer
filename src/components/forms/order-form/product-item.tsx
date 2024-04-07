@@ -31,6 +31,7 @@ export default function ProductItem({ product }: { product: Product }) {
         <p className="text-lg text-center font-medium mt-2">
           {formatPrice(product.price)}
         </p>
+        <p className="text-sm text-center mt-1">{product.stock} unid</p>
       </CardContent>
     </Card>
   );
