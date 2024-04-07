@@ -56,7 +56,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
             <span className="text-xl font-light mr-2">Total</span>
             {formatPrice(order.total)}
           </p>
-          <Separator className="my-4" />
           <PaymentView />
         </div>
         <DialogFooter>
