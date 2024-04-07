@@ -7,6 +7,7 @@ export const EMPTY_PRODUCT: Product = {
   price: 0,
   sku: "",
   purchasePrice: null,
+  description: "",
   stock: 0,
   photos: [],
   categories: [],
