@@ -65,8 +65,11 @@ export const removePhoto = async (
   return await res.json();
 };
 
-export const getMany = async (): Promise<response<Product[]>> => {
-  const res = await fetch(`/api/products`, {
+export const getMany = async (
+  categoryId?: string | null,
+): Promise<response<Product[]>> => {
+  const queryString = categoryId ? `?categoryId=${categoryId}` : "";
+  const res = await fetch(`/api/products${queryString}`, {
     method: "GET",
   });
 

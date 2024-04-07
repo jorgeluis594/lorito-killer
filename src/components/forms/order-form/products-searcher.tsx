@@ -32,9 +32,9 @@ export default function ProductsSearcher() {
     let response: response<Product[]>;
 
     if (search.length || search !== "") {
-      response = await searchProducts(search);
+      response = await searchProducts(search, categoryId);
     } else {
-      response = await getMany();
+      response = await getMany(categoryId);
     }
 
     if (response.success) {
@@ -72,7 +72,7 @@ export default function ProductsSearcher() {
         <div className="w-1/2 md:grid md:grid-cols-2 gap-4 mb-2">
           <Select onValueChange={handleCategoryChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Seleccione categiría" />
+              <SelectValue placeholder="Seleccione categoría" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
