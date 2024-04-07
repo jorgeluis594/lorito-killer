@@ -69,12 +69,9 @@ export const getMany = async ({
       orderBy: sortBy,
       include: { photos: true, categories: true },
     };
-    if (categoryId) query.where = { categories: { some: { categoryId } } };
+    if (categoryId) query.where = { categories: { some: { id: categoryId } } };
 
-    const result = await prisma.product.findMany({
-      orderBy: sortBy,
-      include: { photos: true, categories: true },
-    });
+    const result = await prisma.product.findMany(query);
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
@@ -216,7 +213,7 @@ export const search = async ({
 }: searchParams): Promise<response<Product[]>> => {
   try {
     const query: any = { name: { contains: q, mode: "insensitive" } };
-    if (categoryId) query.categories = { some: { categoryId } };
+    if (categoryId) query.categories = { some: { id: categoryId } };
 
     const result = await prisma.product.findMany({
       where: query,
