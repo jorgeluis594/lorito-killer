@@ -41,6 +41,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
     name: data.name,
     price: data.price,
     sku: data.sku,
+    purchasePrice: data.purchasePrice,
     stock: data.stock,
     photos: data.photos,
     categories: data.categories || [],
@@ -294,6 +295,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     <FormLabel>Precio</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="purchasePrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Precio de venta</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
