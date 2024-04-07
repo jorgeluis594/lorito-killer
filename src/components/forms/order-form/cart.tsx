@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import PaymentModal from "@/components/forms/order-form/create-order-modal/payment-modal";
 
 export default function Cart() {
-  const order = useOrderFormStore((state) => state);
+  const order = useOrderFormStore((state) => state.order);
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const { increaseQuantity, decreaseQuantity, reset, removeOrderItem } =
     useOrderFormActions();

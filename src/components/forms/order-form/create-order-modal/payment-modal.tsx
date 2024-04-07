@@ -21,7 +21,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   isOpen,
   onOpenChange,
 }) => {
-  const { ...order } = useOrderFormStore((state) => state);
+  const order = useOrderFormStore((state) => state.order);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>

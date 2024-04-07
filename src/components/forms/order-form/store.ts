@@ -11,20 +11,28 @@ export type Actions = {
   decreaseQuantity: (productId: string) => void;
 };
 
-export type OrderFormStore = Order;
+export type OrderFormStore = { order: Order };
 
-const defaultInitState: Order = {
-  orderItems: [],
-  status: "pending",
-  total: 0,
+const defaultInitState: OrderFormStore = {
+  order: {
+    orderItems: [],
+    payments: [],
+    status: "pending",
+    total: 0,
+  },
 };
 
-export const initOrderFormStore = (): Order => {
-  return { ...defaultInitState, orderItems: [] };
+export const initOrderFormStore = (): OrderFormStore => {
+  return {
+    ...defaultInitState,
+    order: { ...defaultInitState.order, orderItems: [] },
+  };
 };
 
 // The actions are set on the context provider
-export const createOrderFormStore = (initState: Order = defaultInitState) => {
+export const createOrderFormStore = (
+  initState: OrderFormStore = defaultInitState,
+) => {
   return createStore<OrderFormStore>()(() => ({
     ...initState,
   }));

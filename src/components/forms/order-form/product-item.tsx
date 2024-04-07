@@ -11,8 +11,6 @@ import {
 
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
-  const orderItems = useOrderFormStore((state) => state.orderItems);
-  const orderItem = orderItems.find((item) => item.product.id === product.id);
   const { addProduct } = useOrderFormActions();
 
   const onAddProductToCart = () => {
