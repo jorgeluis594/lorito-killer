@@ -54,17 +54,71 @@ export const useOrderFormActions = (): Actions => {
     );
   }
 
+  const increaseQuantity = (orderItemId: string) => {
+    const order = orderFormStoreContext.getState();
+    const orderItem = order.orderItems.find((item) => item.id === orderItemId);
+
+    if (!orderItem) {
+      console.error("Order item not found");
+      return;
+    } else if (orderItem.quantity >= orderItem.product.stock) {
+      console.error("Product stock exceeded");
+      return;
+    } else {
+      orderItem.quantity += 1;
+      orderItem.total = orderItem.product.price * orderItem.quantity;
+    }
+
+    orderFormStoreContext.setState(() => {
+      return { orderItems: [...order.orderItems] };
+    });
+  };
+
+  const decreaseQuantity = (orderItemId: string) => {
+    const order = orderFormStoreContext.getState();
+    const orderItem = order.orderItems.find((item) => item.id === orderItemId);
+
+    if (!orderItem) {
+      console.error("Order item not found");
+      return;
+    }
+
+    if (orderItem.quantity <= 0) {
+      console.error("Product quantity can't be less than 1");
+      return;
+    }
+
+    if (orderItem.quantity == 1) {
+      order.orderItems = order.orderItems.filter(
+        (item) => item.id !== orderItemId,
+      );
+      order.total -= orderItem.product.price;
+    } else {
+      orderItem.quantity--;
+      orderItem.total = orderItem.product.price * orderItem.quantity;
+    }
+
+    orderFormStoreContext.setState(() => {
+      return { orderItems: [...order.orderItems] };
+    });
+  };
+
   return {
     addProduct: (product: Product) => {
       orderFormStoreContext.setState((state) => {
         const orderItem = state.orderItems.find(
           (item) => item.product.id === product.id,
         );
+        let cartTotal = 0;
 
         if (orderItem) {
-          orderItem.quantity += 1;
-          orderItem.total = orderItem.product.price * orderItem.quantity;
-          state.total += orderItem.product.price;
+          const quantity = orderItem.quantity + 1;
+          const itemTotal = product.price * quantity;
+          cartTotal = state.orderItems.reduce(
+            (acc, item) =>
+              acc + item.id! === orderItem.id ? itemTotal : item.total,
+            0,
+          );
         } else {
           state.orderItems.push({
             product,
@@ -73,9 +127,13 @@ export const useOrderFormActions = (): Actions => {
             total: product.price,
           });
         }
-        state.total += product.price;
+        cartTotal += product.price;
 
-        return { ...state, orderItems: [...state.orderItems] };
+        return {
+          ...state,
+          total: cartTotal,
+          orderItems: [...state.orderItems],
+        };
       });
     },
     removeOrderItem: (orderItemId: string) => {
@@ -101,48 +159,7 @@ export const useOrderFormActions = (): Actions => {
         orderItems: [],
       });
     },
-    increaseQuantity: (orderItemId: string) => {
-      orderFormStoreContext.setState((state) => {
-        const orderItem = state.orderItems.find(
-          (item) => item.id === orderItemId,
-        );
-
-        if (!orderItem) {
-          console.error("Order item not found");
-        } else if (orderItem.quantity >= orderItem.product.stock) {
-          console.error("Product stock exceeded");
-        } else {
-          orderItem.quantity += 1;
-          orderItem.total = orderItem.product.price * orderItem.quantity;
-          state.total += orderItem.product.price;
-        }
-
-        return { ...state, orderItems: [...state.orderItems] };
-      });
-    },
-    decreaseQuantity: (orderItemId: string) => {
-      orderFormStoreContext.setState((state) => {
-        const orderItem = state.orderItems.find(
-          (item) => item.id === orderItemId,
-        );
-
-        if (!orderItem) {
-          console.error("Order item not found");
-        } else if (orderItem.quantity <= 0) {
-          console.error("Product quantity can't be less than 1");
-        } else if (orderItem.quantity == 1) {
-          state.orderItems = state.orderItems.filter(
-            (item) => item.id !== orderItemId,
-          );
-          state.total -= orderItem.product.price;
-        } else {
-          orderItem.quantity -= 1;
-          orderItem.total = orderItem.product.price * orderItem.quantity;
-          state.total -= orderItem.product.price;
-        }
-
-        return { ...state, orderItems: [...state.orderItems] };
-      });
-    },
+    increaseQuantity,
+    decreaseQuantity,
   };
 };
