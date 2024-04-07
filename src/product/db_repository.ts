@@ -24,9 +24,11 @@ export const create = async (product: Product): Promise<response<Product>> => {
 
     const createdResponse = await prisma.product.create({ data });
     const price = createdResponse.price.toNumber();
+    const purchasePrice = createdResponse.purchasePrice.toNumber();
     const createdProduct: Product = {
       ...createdResponse,
       price,
+      purchasePrice,
       categories: [],
     };
 
@@ -87,7 +89,8 @@ export const getMany = async ({
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-        return { ...p, price } as Product;
+        const purchasePrice = p.purchasePrice.toNumber();
+        return { ...p, price, purchasePrice } as Product;
       }),
     );
 
@@ -234,7 +237,8 @@ export const search = async ({
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-        return { ...p, price } as Product;
+        const purchasePrice = p.purchasePrice.toNumber();
+        return { ...p, price, purchasePrice } as Product;
       }),
     );
 
