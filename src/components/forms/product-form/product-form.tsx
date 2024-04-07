@@ -254,7 +254,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         >
           <div className="md:grid md:grid-cols-4 gap-4">
             <div className="col-span-2 md:grid md:grid-cols-3 gap-4 h-fit">
-              <div className="col-span-3">
+              <div className="col-span-2">
                 <FormField
                   control={form.control}
                   name="name"
@@ -275,6 +275,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </div>
               <FormField
                 control={form.control}
+                name="sku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código de barras</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="off" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="price"
                 render={({ field }) => (
                   <FormItem>
@@ -288,23 +301,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
               <FormField
                 control={form.control}
-                name="sku"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SKU</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="stock"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock</FormLabel>
+                    <FormLabel>Cantidad</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" type="number" {...field} />
                     </FormControl>
