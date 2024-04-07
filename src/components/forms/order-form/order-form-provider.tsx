@@ -158,5 +158,8 @@ export const useOrderFormActions = (): Actions => {
     },
     increaseQuantity,
     decreaseQuantity,
+    setPaymentMode: (mode: OrderFormStore["paymentMode"]) => {
+      orderFormStoreContext.setState({ paymentMode: mode });
+    },
   };
 };

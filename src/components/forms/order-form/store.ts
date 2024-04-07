@@ -3,15 +3,19 @@ import { createStore } from "zustand/vanilla";
 import { Order } from "@/order/types";
 import { Product } from "@/product/types";
 
+export type OrderFormStore = {
+  order: Order;
+  paymentMode: "card" | "wallet" | "cash" | "none" | "combine";
+};
+
 export type Actions = {
   addProduct: (product: Product) => void;
   removeOrderItem: (orderItemId: string) => void;
   reset: () => void;
   increaseQuantity: (productId: string) => void;
   decreaseQuantity: (productId: string) => void;
+  setPaymentMode: (mode: OrderFormStore["paymentMode"]) => void;
 };
-
-export type OrderFormStore = { order: Order };
 
 const defaultInitState: OrderFormStore = {
   order: {
@@ -20,6 +24,7 @@ const defaultInitState: OrderFormStore = {
     status: "pending",
     total: 0,
   },
+  paymentMode: "none",
 };
 
 export const initOrderFormStore = (): OrderFormStore => {
