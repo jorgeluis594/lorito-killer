@@ -54,11 +54,12 @@ const CategoryList: React.FC<CategoryListProps> = ({
           <div className="flex flex-row items-start space-x-3 space-y-0">
             <FormControl>
               <Checkbox
+                id={category.id}
                 checked={value.some((item) => item.id === category.id)}
                 onCheckedChange={createHandleCheckboxChange(category)}
               />
             </FormControl>
-            <FormLabel className="text-sm font-normal">
+            <FormLabel className="text-sm font-normal" htmlFor={category.id}>
               {category.name}
             </FormLabel>
           </div>
