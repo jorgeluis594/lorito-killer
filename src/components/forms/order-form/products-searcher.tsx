@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { Product } from "@/product/types";
+import { Product, ProductSortParams } from "@/product/types";
 import { getMany, type GetManyParams } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
