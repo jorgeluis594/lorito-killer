@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { Product, ProductSortParams } from "@/product/types";
+import { Product } from "@/product/types";
 import { getMany, type GetManyParams } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
@@ -18,16 +18,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCategoryStore } from "@/category/components/category-store-provider";
+import { SortOptions } from "@/product/types";
+import { sortOptions } from "@/product/constants";
 
 export default function ProductsSearcher() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState<string>("");
+  const [sortValue, setSortValue] = useState<keyof SortOptions>("created_desc");
   const { categories } = useCategoryStore((store) => store);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const searchProduct = async () => {
-    const params: GetManyParams = { categoryId };
+    const params: GetManyParams = { categoryId, sortBy: sortValue };
     if (search.length || search !== "") {
       params["q"] = search;
     }
@@ -52,7 +55,7 @@ export default function ProductsSearcher() {
 
   useEffect(() => {
     onSearchSubmit();
-  }, [search, categoryId]);
+  }, [search, categoryId, sortValue]);
 
   useEffect(() => {
     searchProduct();
@@ -60,6 +63,10 @@ export default function ProductsSearcher() {
 
   const handleCategoryChange = (categoryId: string) => {
     setCategoryId(categoryId);
+  };
+
+  const handleSortChange = (sortKey: keyof SortOptions) => {
+    setSortValue(sortKey);
   };
 
   return (
@@ -74,6 +81,19 @@ export default function ProductsSearcher() {
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id!}>
                   {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select onValueChange={handleSortChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Ordernar por" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(sortOptions).map(([key, { name }]) => (
+                <SelectItem key={key} value={key}>
+                  {name}
                 </SelectItem>
               ))}
             </SelectContent>
