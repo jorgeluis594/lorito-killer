@@ -5,13 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { Product } from "@/product/types";
-import { response } from "@/lib/types";
-import { search as searchProducts, getMany } from "@/product/api_repository";
+import { getMany, type GetManyParams } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
 import { debounce } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Category } from "@/category/types";
 import {
   Select,
   SelectContent,
@@ -29,13 +27,11 @@ export default function ProductsSearcher() {
   const { toast } = useToast();
 
   const searchProduct = async () => {
-    let response: response<Product[]>;
-
+    const params: GetManyParams = { categoryId };
     if (search.length || search !== "") {
-      response = await searchProducts(search, categoryId);
-    } else {
-      response = await getMany(categoryId);
+      params["q"] = search;
     }
+    const response = await getMany(params);
 
     if (response.success) {
       setProducts(response.data);
