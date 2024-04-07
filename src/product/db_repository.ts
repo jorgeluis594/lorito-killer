@@ -59,10 +59,18 @@ export const update = async (product: Product): Promise<response<Product>> => {
 
 export const getMany = async ({
   sortBy,
+  categoryId,
 }: {
   sortBy?: ProductSortParams;
+  categoryId?: searchParams["categoryId"];
 }): Promise<response<Product[]>> => {
   try {
+    const query: any = {
+      orderBy: sortBy,
+      include: { photos: true, categories: true },
+    };
+    if (categoryId) query.where = { categories: { some: { categoryId } } };
+
     const result = await prisma.product.findMany({
       orderBy: sortBy,
       include: { photos: true, categories: true },
@@ -70,14 +78,7 @@ export const getMany = async ({
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-
-        // we restore the categories from the product
-        const categories = await Promise.all(
-          p.categories.map((c) =>
-            prisma.category.findUnique({ where: { id: c.categoryId } }),
-          ),
-        );
-        return { ...p, price, categories } as Product;
+        return { ...p, price } as Product;
       }),
     );
 
