@@ -13,7 +13,6 @@ import {
   useOrderFormStore,
 } from "@/components/forms/order-form/order-form-provider";
 import { formatPrice } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 import {
   NonePayment,
   CashPayment,
@@ -21,6 +20,8 @@ import {
   CombinedPayment,
   WalletPayment,
 } from "./payment_views";
+import { create } from "@/order/actions";
+import { useToast } from "@/components/ui/use-toast";
 
 const PaymentViews = {
   none: NonePayment,
@@ -40,8 +41,27 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   onOpenChange,
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
-  const { getPaidAmount } = useOrderFormActions();
+  const { getPaidAmount, reset } = useOrderFormActions();
   const PaymentView = PaymentViews[paymentMode];
+  const { toast } = useToast();
+
+  const handleOrderCreation = async () => {
+    const response = await create(order);
+    if (response.success) {
+      reset();
+      toast({
+        title: "En hora buena!",
+        description: "Venta realizada con éxito",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        description:
+          "Error al realizar la venta, comuniquese con nostros para solucionar el problema",
+      });
+    }
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -63,7 +83,11 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         </div>
         <DialogFooter>
           {paymentMode !== "none" && (
-            <Button type="button" disabled={getPaidAmount() !== order.total}>
+            <Button
+              type="button"
+              disabled={getPaidAmount() !== order.total}
+              onClick={handleOrderCreation}
+            >
               Realiza pago
             </Button>
           )}
