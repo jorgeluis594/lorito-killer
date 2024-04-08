@@ -174,6 +174,13 @@ export const useOrderFormActions = (): Actions => {
   return {
     addProduct,
     removeOrderItem,
+    resetPayment: () => {
+      const { order } = orderFormStoreContext.getState();
+      orderFormStoreContext.setState({
+        order: { ...order, payments: [] },
+        paymentMode: "none",
+      });
+    },
     reset: () => {
       const order = initOrderFormStore();
       orderFormStoreContext.setState({

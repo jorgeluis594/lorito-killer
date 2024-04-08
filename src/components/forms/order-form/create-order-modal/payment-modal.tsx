@@ -41,7 +41,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   onOpenChange,
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
-  const { getPaidAmount, reset } = useOrderFormActions();
+  const { getPaidAmount, reset, resetPayment } = useOrderFormActions();
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
 
@@ -74,11 +74,21 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         <DialogHeader>
           <DialogTitle>Pagar pedido</DialogTitle>
         </DialogHeader>
-        <div className="my-2">
+        <div className="my-2 relative">
           <p className="text-2xl font-medium leading-none text-center">
             <span className="text-xl font-light mr-2">Total</span>
             {formatPrice(order.total)}
           </p>
+          {paymentMode !== "none" && (
+            <Button
+              type="button"
+              variant="link"
+              onClick={resetPayment}
+              className="absolute top-0 right-0 py-0"
+            >
+              CAMBIAR MÉTODO
+            </Button>
+          )}
           <PaymentView />
         </div>
         <DialogFooter>
