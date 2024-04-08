@@ -8,9 +8,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect, useState } from "react";
-import {
-  type CashPayment as CashPaymentMethod,
+import { useCallback, useEffect, useState } from "react";
+import type {
+  CashPayment as CashPaymentMethod,
   PaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
@@ -32,7 +32,10 @@ export const NonePayment: React.FC = () => {
           <HandCoins className="w-12 h-12" />
           <p className="w-full text-center">EFECTIVO</p>
         </div>
-        <div className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent">
+        <div
+          className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
+          onClick={() => setPaymentMode("wallet")}
+        >
           <Smartphone className="w-12 h-12" />
           <p className="w-full text-center">YAPE</p>
         </div>
@@ -43,7 +46,10 @@ export const NonePayment: React.FC = () => {
           <CreditCard className="w-12 h-12" />
           <p className="w-full text-center">TARJETA</p>
         </div>
-        <div className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent">
+        <div
+          className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
+          onClick={() => setPaymentMode("combine")}
+        >
           <PiggyBank className="w-12 h-12" />
           <p className="w-full text-center">COMBINADO</p>
         </div>
@@ -176,5 +182,96 @@ export const CardPayment: React.FC = () => {
 };
 
 export const CombinedPayment: React.FC = () => {
-  return <p>Combined payment</p>;
+  const orderTotal = useOrderFormStore((state) => state.order.total);
+  const { removeAllPayments, addPayment } = useOrderFormActions();
+  const [cashAmount, setCashAmount] = useState(0);
+  const [creditCardAmount, setCreditCardAmount] = useState(0);
+  const [debitCardAmount, setDebitCardAmount] = useState(0);
+  const [walletAmount, setWalletAmount] = useState(0);
+
+  const totalAmount = useCallback((): number => {
+    return [cashAmount, creditCardAmount, debitCardAmount, walletAmount].reduce(
+      (acc, amount) => {
+        if (amount) return acc + amount;
+        return acc;
+      },
+      0,
+    );
+  }, [cashAmount, creditCardAmount, debitCardAmount, walletAmount]);
+
+  const updatePayments = useCallback(() => {
+    removeAllPayments();
+
+    if (cashAmount > 0) {
+      addPayment({
+        amount: cashAmount,
+        method: "cash",
+        received_amount: cashAmount,
+        change: 0,
+      });
+    }
+    if (walletAmount > 0) {
+      addPayment({ amount: walletAmount, method: "wallet" });
+    }
+    if (creditCardAmount > 0) {
+      addPayment({ amount: creditCardAmount, method: "credit_card" });
+    }
+    if (debitCardAmount > 0) {
+      addPayment({ amount: debitCardAmount, method: "debit_card" });
+    }
+  }, [cashAmount, creditCardAmount, debitCardAmount, walletAmount]);
+
+  useEffect(() => {
+    if (totalAmount() !== orderTotal) {
+      return;
+    }
+
+    updatePayments();
+  }, [totalAmount, orderTotal, updatePayments]);
+
+  return (
+    <div className="mt-4">
+      <p className="text-sm font-medium text-destructive">
+        {totalAmount() != 0 && totalAmount() !== orderTotal
+          ? `El monto ${totalAmount()} recibido no coincide con el total`
+          : ""}
+      </p>
+      <div className="my-3">
+        <Label>Efectivo</Label>
+        <Input
+          placeholder="Ingrese monto"
+          type="number"
+          value={cashAmount}
+          onChange={(e) => setCashAmount(parseFloat(e.target.value))}
+        />
+      </div>
+      <div className="my-3">
+        <Label>Tarjeta de crédito</Label>
+        <Input
+          placeholder="Ingrese monto"
+          type="number"
+          value={creditCardAmount}
+          onChange={(e) => setCreditCardAmount(parseFloat(e.target.value))}
+        />
+      </div>
+      <div className="my-3">
+        <Label>Tarjeta de débito</Label>
+        <Input
+          placeholder="Ingrese monto"
+          type="number"
+          value={debitCardAmount}
+          onChange={(e) => setDebitCardAmount(parseFloat(e.target.value))}
+        />
+      </div>
+      <div className="my-3">
+        <Label>Billetera virtual (Yape, Plin, etc)</Label>
+        <Input
+          placeholder="Ingrese monto"
+          type="number"
+          value={walletAmount}
+          onChange={(e) => setWalletAmount(parseFloat(e.target.value))}
+        />
+      </div>
+    </div>
+  );
 };
