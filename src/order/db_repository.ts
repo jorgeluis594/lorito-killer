@@ -114,6 +114,7 @@ export const getOrders = async (): Promise<response<Order[]>> => {
             product: true,
           },
         },
+        payments: true,
       },
     });
 
@@ -127,7 +128,7 @@ export const getOrders = async (): Promise<response<Order[]>> => {
 };
 
 function transformOrderData(prismaOrders: any): Order {
-  const { orderItems, ...orderData } = prismaOrders;
+  const { orderItems, payments, ...orderData } = prismaOrders;
   const parsedOrderItems = orderItems.map((oi: any) => {
     const product: Product = {
       ...oi.product,
@@ -137,5 +138,9 @@ function transformOrderData(prismaOrders: any): Order {
     return { ...oi, product };
   });
 
-  return { ...orderData, orderItems: parsedOrderItems };
+  return {
+    ...orderData,
+    orderItems: parsedOrderItems,
+    payments: payments.map(mapPrismaToPayment),
+  };
 }
