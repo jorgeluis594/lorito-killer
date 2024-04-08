@@ -8,7 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useOrderFormStore } from "@/components/forms/order-form/order-form-provider";
+import {
+  useOrderFormActions,
+  useOrderFormStore,
+} from "@/components/forms/order-form/order-form-provider";
 import { formatPrice } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -37,7 +40,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   onOpenChange,
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
-
+  const { getPaidAmount } = useOrderFormActions();
   const PaymentView = PaymentViews[paymentMode];
 
   return (
@@ -59,7 +62,11 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           <PaymentView />
         </div>
         <DialogFooter>
-          <Button type="submit">Realiza pago</Button>
+          {paymentMode !== "none" && (
+            <Button type="button" disabled={getPaidAmount() !== order.total}>
+              Realiza pago
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

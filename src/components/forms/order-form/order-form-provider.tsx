@@ -187,9 +187,8 @@ export const useOrderFormActions = (): Actions => {
     },
     getPaidAmount,
     addPayment: (payment) => {
-      const paidAmount = getPaidAmount();
-      if (payment.amount >= paidAmount) {
-        console.log("Remaining amount is less than payment amount");
+      const { order } = orderFormStoreContext.getState();
+      if (payment.amount > order.total - getPaidAmount()) {
         return {
           success: false,
           message: "El monto pagado es mayor que el a pagar",
@@ -200,13 +199,11 @@ export const useOrderFormActions = (): Actions => {
         removePayment(payment.method);
       }
 
-      orderFormStoreContext.setState((state) => {
-        return {
-          order: {
-            ...state.order,
-            payments: [...state.order.payments, payment],
-          },
-        };
+      orderFormStoreContext.setState({
+        order: {
+          ...order,
+          payments: [...order.payments, payment],
+        },
       });
 
       return { success: true, data: { ...payment } };
