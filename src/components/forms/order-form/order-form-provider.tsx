@@ -10,6 +10,7 @@ import {
   Actions,
 } from "./store";
 import { Product } from "@/product/types";
+import { Payment, PaymentMethod } from "@/order/types";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -147,6 +148,14 @@ export const useOrderFormActions = (): Actions => {
     }
   };
 
+  const getPaidAmount = (): number => {
+    const { order } = orderFormStoreContext.getState();
+    return (order.payments || []).reduce(
+      (acc, payment) => acc + payment.amount,
+      0,
+    );
+  };
+
   return {
     addProduct,
     removeOrderItem,
@@ -160,6 +169,28 @@ export const useOrderFormActions = (): Actions => {
     decreaseQuantity,
     setPaymentMode: (mode: OrderFormStore["paymentMode"]) => {
       orderFormStoreContext.setState({ paymentMode: mode });
+    },
+    getPaidAmount,
+    addPayment: (payment) => {
+      const paidAmount = getPaidAmount();
+      if (payment.amount >= paidAmount) {
+        console.log("Remaining amount is less than payment amount");
+        return {
+          success: false,
+          message: "El monto pagado es mayor que el a pagar",
+        };
+      }
+
+      orderFormStoreContext.setState((state) => {
+        return {
+          order: {
+            ...state.order,
+            payments: [...state.order.payments, payment],
+          },
+        };
+      });
+
+      return { success: true, data: { ...payment } };
     },
   };
 };

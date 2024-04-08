@@ -1,7 +1,8 @@
 import { createStore } from "zustand/vanilla";
 
-import { Order } from "@/order/types";
+import { Order, Payment } from "@/order/types";
 import { Product } from "@/product/types";
+import { response } from "@/lib/types";
 
 export type OrderFormStore = {
   order: Order;
@@ -15,6 +16,8 @@ export type Actions = {
   increaseQuantity: (productId: string) => void;
   decreaseQuantity: (productId: string) => void;
   setPaymentMode: (mode: OrderFormStore["paymentMode"]) => void;
+  addPayment: (payment: Payment) => response<Payment>;
+  getPaidAmount: () => number;
 };
 
 const defaultInitState: OrderFormStore = {
