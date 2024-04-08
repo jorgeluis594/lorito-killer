@@ -85,7 +85,7 @@ export const CashPayment: React.FC = () => {
   useEffect(() => {
     removePayment("cash");
     addPayment(payment);
-  }, [payment, removePayment, addPayment]);
+  }, [payment]);
 
   return (
     <div className="mt-4">
@@ -121,7 +121,7 @@ export const WalletPayment: React.FC = () => {
 
   useEffect(() => {
     addPayment({ amount: orderTotal, method: "wallet" });
-  }, [addPayment, orderTotal]);
+  }, [orderTotal]);
 
   return (
     <div className="mt-4">
