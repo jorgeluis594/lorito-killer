@@ -111,8 +111,20 @@ export const CashPayment: React.FC = () => {
 
 export const WalletPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
+  const { addPayment } = useOrderFormActions();
 
-  return <p>Wallet</p>;
+  useEffect(() => {
+    addPayment({ amount: orderTotal, method: "wallet" });
+  }, [addPayment, orderTotal]);
+
+  return (
+    <div className="mt-4">
+      <div className="my-3">
+        <Label>Monto recibido</Label>
+        <Input type="number" value={orderTotal} disabled />
+      </div>
+    </div>
+  );
 };
 
 export const CardPayment: React.FC = () => {
