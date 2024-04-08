@@ -9,7 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
-import { type CashPayment as CashPaymentMethod } from "@/order/types";
+import {
+  type CashPayment as CashPaymentMethod,
+  PaymentMethod,
+} from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import * as React from "react";
@@ -51,6 +54,7 @@ export const NonePayment: React.FC = () => {
 
 export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
+  const { addPayment, removePayment } = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethod>({
     ...BlankCashPayment,
   });
@@ -71,6 +75,11 @@ export const CashPayment: React.FC = () => {
       });
     }
   }, [payment.received_amount, orderTotal]);
+
+  useEffect(() => {
+    removePayment("cash");
+    addPayment(payment);
+  }, [payment, removePayment, addPayment]);
 
   return (
     <div className="mt-4">
@@ -108,6 +117,16 @@ export const WalletPayment: React.FC = () => {
 
 export const CardPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
+  const { addPayment, removePayment } = useOrderFormActions();
+
+  const onCardChange = (
+    value: PaymentMethod & ("debit_card" | "credit_card"),
+  ) => {
+    if (value === "debit_card") removePayment("credit_card");
+    if (value === "credit_card") removePayment("debit_card");
+
+    addPayment({ amount: orderTotal, method: value });
+  };
 
   return (
     <div className="mt-4">
@@ -120,9 +139,15 @@ export const CardPayment: React.FC = () => {
           disabled
         />
       </div>
-      <ToggleGroup type="single" size="lg" variant="outline" className="gap-0">
+      <ToggleGroup
+        type="single"
+        size="lg"
+        variant="outline"
+        className="gap-0"
+        onValueChange={onCardChange}
+      >
         <ToggleGroupItem
-          value="debit_card"
+          value={"debit_card"}
           className="rounded-tr-none rounded-br-none w-48"
         >
           Débito
