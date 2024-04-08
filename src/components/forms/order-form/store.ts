@@ -19,6 +19,7 @@ export type Actions = {
   addPayment: (payment: Payment) => response<Payment>;
   getPaidAmount: () => number;
   removePayment: (paymentMethod: PaymentMethod) => void;
+  removeAllPayments: () => void;
 };
 
 const defaultInitState: OrderFormStore = {

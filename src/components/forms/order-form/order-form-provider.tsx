@@ -212,5 +212,12 @@ export const useOrderFormActions = (): Actions => {
       return { success: true, data: { ...payment } };
     },
     removePayment,
+    removeAllPayments: () => {
+      const { order } = orderFormStoreContext.getState();
+
+      orderFormStoreContext.setState({
+        order: { ...order, payments: [] },
+      });
+    },
   };
 };
