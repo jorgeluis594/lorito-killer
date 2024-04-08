@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 
-import { Order, Payment } from "@/order/types";
+import { Order, Payment, PaymentMethod } from "@/order/types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
 
@@ -18,6 +18,7 @@ export type Actions = {
   setPaymentMode: (mode: OrderFormStore["paymentMode"]) => void;
   addPayment: (payment: Payment) => response<Payment>;
   getPaidAmount: () => number;
+  removePayment: (paymentMethod: PaymentMethod) => void;
 };
 
 const defaultInitState: OrderFormStore = {

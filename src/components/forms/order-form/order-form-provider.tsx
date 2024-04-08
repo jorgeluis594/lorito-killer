@@ -63,6 +63,21 @@ export const useOrderFormActions = (): Actions => {
     });
   };
 
+  const getPayment = (paymentMethod: PaymentMethod): Payment | undefined => {
+    const { order } = orderFormStoreContext.getState();
+    return order.payments.find((payment) => payment.method === paymentMethod);
+  };
+
+  const removePayment = (paymentMethod: PaymentMethod) => {
+    const { order } = orderFormStoreContext.getState();
+    order.payments = order.payments.filter(
+      (payment) => payment.method !== paymentMethod,
+    );
+    orderFormStoreContext.setState({
+      order: { ...order, payments: [...order.payments] },
+    });
+  };
+
   const addProduct = (product: Product) => {
     const { order } = orderFormStoreContext.getState();
 
@@ -181,6 +196,10 @@ export const useOrderFormActions = (): Actions => {
         };
       }
 
+      if (getPayment(payment.method)) {
+        removePayment(payment.method);
+      }
+
       orderFormStoreContext.setState((state) => {
         return {
           order: {
@@ -192,5 +211,6 @@ export const useOrderFormActions = (): Actions => {
 
       return { success: true, data: { ...payment } };
     },
+    removePayment,
   };
 };
