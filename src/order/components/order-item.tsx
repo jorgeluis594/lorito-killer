@@ -27,7 +27,7 @@ export default function OrderItem({
       </div>
       <div>
         <div className="text-sm font-medium">{formatPrice(order.total)}</div>
-        <div className="text-xs text-gray-500">{order.status}</div>
+        <div className="text-xs text-gray-500 text-end">Pagado</div>
       </div>
     </div>
   );
