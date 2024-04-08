@@ -5,7 +5,6 @@ CREATE TYPE "PaymentMethod" AS ENUM ('CREDIT_CARD', 'DEBIT_CARD', 'CASH', 'WALLE
 CREATE TABLE "Payment" (
     "id" TEXT NOT NULL,
     "amount" DECIMAL(65,30) NOT NULL,
-    "status" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "data" JSONB,
     "method" "PaymentMethod" NOT NULL,

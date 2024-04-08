@@ -89,7 +89,6 @@ enum PaymentMethod {
 model Payment {
   id        String   @id @default(uuid())
   amount    Decimal
-  status    String
   orderId   String
   data      Json?
   method    PaymentMethod
