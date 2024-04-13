@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { columns } from "./columns";
 import { Product } from "@/product/types";
 import { buttonVariants } from "@/components/ui/button";
+import ProductModalForm from "@/product/components/form/product-modal-form"
 import Link from "next/link";
 
 interface ProductsClientProps {
@@ -24,12 +25,7 @@ export default function ProductsClient({
           title={data ? `Productos (${data.length})` : ""}
           description="Gestiona tus productos!"
         />
-        <Link
-          href="/dashboard/products/new"
-          className={`${buttonVariants({ variant: "outline" })} text-xs md:text-sm`}
-        >
-          <Plus className="mr-2 h-4 w-4" /> Agregar producto
-        </Link>
+        <ProductModalForm />
       </div>
       <Separator />
       <DataTable

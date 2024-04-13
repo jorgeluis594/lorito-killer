@@ -30,6 +30,7 @@ import {
 } from "@/category/actions";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { Textarea } from "@/components/ui/textarea";
+import { log } from "console";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -103,7 +104,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const addCategoryToProduct = async (category: Category) => {
+  const addCategoryToProduct = async (category: Category) => { //mas adelante
     const productCategories = form.getValues("categories") || [];
     if (!initialProduct) return;
     if (productCategories.find((c) => c.id === category.id)) return;
