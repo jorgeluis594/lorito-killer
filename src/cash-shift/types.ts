@@ -5,7 +5,7 @@ export type CashShift = {
   userId: string;
   start: Date;
   end: Date;
-  isOpened: boolean;
+  status: "open" | "closed";
   initialAmount: number;
   finalAmount: number;
   totalSales: number;
