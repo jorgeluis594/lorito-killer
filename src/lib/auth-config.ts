@@ -14,6 +14,9 @@ export const authConfig: NextAuthOptions = {
 
       return token;
     },
+    session: async ({ session, token, user }) => {
+      return { ...session, ...token };
+    },
   },
   providers: [
     CredentialsProvider({
