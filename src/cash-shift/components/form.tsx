@@ -22,27 +22,55 @@ import * as z from "zod";
 import { BadgeDollarSign } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createCashShift } from "@/cash-shift/components/actions";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 const CashShiftFormSchema = z.object({
-  initialAmount: z
+  initialAmount: z.coerce
     .number()
     .nonnegative("El monto inicial debe ser mayor o igual a 0"),
 });
 
-type ProductFormValues = z.infer<typeof CashShiftFormSchema>;
+type CashShiftFormValues = z.infer<typeof CashShiftFormSchema>;
 
 export default function CardShiftForm() {
-  const form = useForm<ProductFormValues>({
+  const { data: session } = useSession();
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+
+  const form = useForm<CashShiftFormValues>({
     resolver: zodResolver(CashShiftFormSchema),
     defaultValues: { initialAmount: 0 },
   });
 
-  const onSubmit = async (data: ProductFormValues) => {
-    console.log(data);
+  const onSubmit = async (data: CashShiftFormValues) => {
+    const response = await createCashShift(
+      (session as any).userId as string,
+      data.initialAmount,
+    );
+
+    if (!response.success) {
+      console.error(response.message);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al abrir la caja: " + response.message,
+        variant: "destructive",
+      });
+      return;
+    } else {
+      toast({
+        title: "Exito!",
+        description: "Caja abierta correctamente",
+      });
+      form.reset();
+      setOpen(false);
+    }
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="text-xs md:text-sm">
           <BadgeDollarSign className="w-4 h-4 mr-2" /> Abrir caja
@@ -70,9 +98,7 @@ export default function CardShiftForm() {
               />
             </div>
             <DialogFooter>
-              <Button type="button" size="sm">
-                Abrir
-              </Button>
+              <Button size="sm">Abrir</Button>
             </DialogFooter>
           </form>
         </Form>
