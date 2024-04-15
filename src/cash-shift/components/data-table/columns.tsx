@@ -1,9 +1,9 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { CashShift } from "@/cash-shift/types";
+import { CashShiftWithOutOrders } from "@/cash-shift/types";
 
-export const columns: ColumnDef<CashShift>[] = [
+export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
   {
     accessorKey: "seller",
     header: "VENDEDOR",

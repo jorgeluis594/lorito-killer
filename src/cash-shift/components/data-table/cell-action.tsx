@@ -10,11 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Edit, MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { CashShift } from "@/cash-shift/types";
+import { CashShiftWithOutOrders } from "@/cash-shift/types";
 import { useToast } from "@/components/ui/use-toast";
 
 interface CellActionProps {
-  cashShift: CashShift;
+  cashShift: CashShiftWithOutOrders;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ cashShift }) => {
