@@ -5,6 +5,7 @@ import {
   ShiftStatus,
 } from "@prisma/client";
 import type { CashShift, CashShiftResponse } from "./types";
+import { response } from "@/lib/types";
 
 const cashShiftMapper: { open: "OPEN"; closed: "CLOSED" } = {
   open: "OPEN",
@@ -29,9 +30,9 @@ const cashShiftToPrisma = (
   closedAt: cashShift.status == "open" ? null : cashShift.closedAt,
 });
 
-export const createCashShift = async (
-  cashShift: CashShift,
-): Promise<CashShiftResponse> => {
+export const createCashShift = async <T extends CashShift>(
+  cashShift: T,
+): Promise<response<T>> => {
   try {
     await prisma.cashShift.create({
       data: cashShiftToPrisma(cashShift),
