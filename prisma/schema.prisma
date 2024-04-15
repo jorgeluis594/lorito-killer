@@ -60,6 +60,8 @@ model CashShift {
   orders        Order[]
   payments      Payment[]
   status        ShiftStatus
+  openedAt      DateTime
+  closedAt      DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

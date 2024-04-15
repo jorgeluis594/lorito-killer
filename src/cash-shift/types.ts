@@ -1,12 +1,9 @@
 import { Order, Payment } from "@/order/types";
 import { response } from "@/lib/types";
 
-export type CashShift = {
+type CashShiftBase = {
   id: string;
   userId: string;
-  start: Date;
-  end: Date;
-  status: "open" | "closed";
   initialAmount: number;
   finalAmount: number;
   totalSales: number;
@@ -16,9 +13,22 @@ export type CashShift = {
   totalWalletSales: number;
   orders: Order[];
   payments: Payment[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
+
+export type OpenCashShift = CashShiftBase & {
+  status: "open";
+  openedAt: Date;
+};
+
+export type ClosedCashShift = CashShiftBase & {
+  status: "closed";
+  openedAt: Date;
+  closed: Date;
+};
+
+export type CashShift = OpenCashShift | ClosedCashShift;
 
 export type CashShiftWithOutOrders = Omit<CashShift, "orders" | "payments">;
 
