@@ -1,11 +1,19 @@
 import prisma from "@/lib/prisma";
 import {
+  $Enums,
   CashShift as PrismaCashSift,
+  Order,
+  Payment,
   Prisma,
   ShiftStatus,
 } from "@prisma/client";
-import type { CashShift, CashShiftResponse } from "./types";
+import type { CashShift, OpenCashShift } from "./types";
 import { response } from "@/lib/types";
+import {
+  mapPrismaPaymentToPayment,
+  transformOrderData,
+} from "@/order/db_repository";
+import PaymentMethod = $Enums.PaymentMethod;
 
 const cashShiftMapper: { open: "OPEN"; closed: "CLOSED" } = {
   open: "OPEN",
@@ -41,5 +49,77 @@ export const createCashShift = async <T extends CashShift>(
     return { success: true, data: structuredClone(cashShift) };
   } catch (error: any) {
     return { success: false, message: error.message };
+  }
+};
+
+export const getLastOpenCashShift = async (
+  userId: string,
+): Promise<response<OpenCashShift>> => {
+  const cashShift = await prisma.cashShift.findFirst({
+    where: {
+      userId,
+      status: "OPEN",
+    },
+    orderBy: { openedAt: "desc" },
+    include: { orders: true, payments: true },
+  });
+
+  if (!cashShift) {
+    return { success: false, message: "No se encontró ninguna caja abierta" };
+  }
+
+  return {
+    success: true,
+    data: prismaCashShiftToCashShift(cashShift) as OpenCashShift,
+  };
+};
+
+function sumPaymentsAmount(
+  payments: Payment[],
+  filter: PaymentMethod | null = null,
+): number {
+  return payments
+    .filter((payment) => (!!filter ? payment.method === filter : true))
+    .reduce((acc, payment) => acc + Number(payment.amount), 0);
+}
+
+export const prismaCashShiftToCashShift = (
+  prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
+): CashShift => {
+  const baseCashShift = {
+    id: prismaCashShift.id,
+    userId: prismaCashShift.userId,
+    initialAmount: Number(prismaCashShift.initialAmount),
+    openedAt: prismaCashShift.openedAt,
+    totalSales: sumPaymentsAmount(prismaCashShift.payments),
+    totalCashSales: sumPaymentsAmount(prismaCashShift.payments || [], "CASH"),
+    totalDebitCardSales: sumPaymentsAmount(
+      prismaCashShift.payments || [],
+      "DEBIT_CARD",
+    ),
+    totalCreditCardSales: sumPaymentsAmount(
+      prismaCashShift.payments || [],
+      "CREDIT_CARD",
+    ),
+    totalWalletSales: sumPaymentsAmount(
+      prismaCashShift.payments || [],
+      "WALLET",
+    ),
+    orders: (prismaCashShift.orders || []).map(transformOrderData),
+    payments: (prismaCashShift.payments || []).map(mapPrismaPaymentToPayment),
+  };
+
+  if (prismaCashShift.status === "OPEN") {
+    return {
+      ...baseCashShift,
+      status: "open",
+    };
+  } else {
+    return {
+      ...baseCashShift,
+      status: "closed",
+      finalAmount: Number(prismaCashShift.finalAmount),
+      closedAt: prismaCashShift.closedAt!,
+    };
   }
 };
