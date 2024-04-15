@@ -1,18 +1,10 @@
-import { Suspense } from "react";
 import BreadCrumb from "@/components/breadcrumb";
 import { Heading } from "@/components/ui/heading";
 import CashShiftForm from "@/cash-shift/components/form";
 import { Separator } from "@/components/ui/separator";
-import { DataTable } from "@/components/ui/data-table";
-import { columns } from "@/cash-shift/components/data-table/columns";
+import CashShiftClientTable from "@/cash-shift/components/data-table/client";
 
 const breadcrumbItems = [{ title: "Caja chica", link: "/cash_shifts" }];
-
-async function ResultTable() {
-  return (
-    <DataTable searchKey="name" columns={columns} data={[]} isLoading={false} />
-  );
-}
 
 export default async function Page() {
   return (
@@ -23,12 +15,7 @@ export default async function Page() {
         <CashShiftForm />
       </div>
       <Separator />
-      <DataTable
-        searchKey="name"
-        columns={columns}
-        data={[]}
-        isLoading={false}
-      />
+      <CashShiftClientTable />
     </div>
   );
 }
