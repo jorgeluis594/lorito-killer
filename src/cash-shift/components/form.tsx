@@ -3,7 +3,6 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -11,61 +10,68 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
+  Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import * as z from "zod";
+import { BadgeDollarSign } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-export default function Form() {
+const CashShiftFormSchema = z.object({
+  initialAmount: z
+    .number()
+    .nonnegative("El monto inicial debe ser mayor o igual a 0"),
+});
+
+type ProductFormValues = z.infer<typeof CashShiftFormSchema>;
+
+export default function CardShiftForm() {
+  const form = useForm<ProductFormValues>({
+    resolver: zodResolver(CashShiftFormSchema),
+    defaultValues: { initialAmount: 0 },
+  });
+
+  const onSubmit = async (data: ProductFormValues) => {
+    console.log(data);
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          ＋
+        <Button variant="outline" className="text-xs md:text-sm">
+          <BadgeDollarSign className="w-4 h-4 mr-2" /> Abrir caja
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
-          <form id="gategory-form">
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>Agregar categoría</DialogTitle>
-              <DialogDescription>
-                Categoriza tus productos para una mejor organización.
-              </DialogDescription>
+              <DialogTitle>Abrir caja</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="py-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="initialAmount"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel>Monto inicial</FormLabel>
                     <FormControl>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Input
-                          id="category"
-                          placeholder="Nombre de categoría..."
-                          className="col-span-4"
-                          {...field}
-                        />
-                        <FormMessage className="col-span-4" />
-                      </div>
+                      <Input placeholder="Monto inicial" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
             <DialogFooter>
-              {
-                // button submit form
-              }
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.handleSubmit(onSubmit)}
-              >
-                Agregar categoría
+              <Button type="button" size="sm">
+                Abrir
               </Button>
             </DialogFooter>
           </form>
