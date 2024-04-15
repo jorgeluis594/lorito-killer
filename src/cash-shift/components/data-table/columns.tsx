@@ -2,6 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { CashShiftWithOutOrders } from "@/cash-shift/types";
+import { format } from "date-fns";
 
 export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
   {
@@ -9,8 +10,10 @@ export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
     header: "VENDEDOR",
   },
   {
-    accessorKey: "createdAt",
+    accessorKey: "openedAt",
     header: "APERTURA",
+    cell: ({ row }) =>
+      format(new Date(row.original.openedAt), "dd/MM/yyyy hh:mm aa"),
   },
   {
     accessorKey: "closedAt",
