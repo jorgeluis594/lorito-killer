@@ -30,6 +30,15 @@ export type ClosedCashShift = CashShiftBase & {
 
 export type CashShift = OpenCashShift | ClosedCashShift;
 
-export type CashShiftWithOutOrders = Omit<CashShift, "orders" | "payments">;
+export type CashShiftWithOutOrders = Omit<
+  CashShift,
+  | "orders"
+  | "payments"
+  | "totalSales"
+  | "totalCashSales"
+  | "totalWalletSales"
+  | "totalCreditCardSales"
+  | "totalDebitCardSales"
+>;
 
 export type CashShiftResponse = response<CashShift>;

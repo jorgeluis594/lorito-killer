@@ -7,7 +7,7 @@ import {
   Prisma,
   ShiftStatus,
 } from "@prisma/client";
-import type { CashShift, OpenCashShift } from "./types";
+import type { CashShift, CashShiftWithOutOrders, OpenCashShift } from "./types";
 import { response } from "@/lib/types";
 import {
   mapPrismaPaymentToPayment,
@@ -50,6 +50,27 @@ export const createCashShift = async <T extends CashShift>(
   } catch (error: any) {
     return { success: false, message: error.message };
   }
+};
+
+export const getManyCashShifts = async (
+  userId: string,
+): Promise<response<CashShiftWithOutOrders[]>> => {
+  const cashShifts = await prisma.cashShift.findMany({
+    where: { userId },
+    orderBy: { openedAt: "desc" },
+  });
+
+  return {
+    success: true,
+    data: cashShifts.map((prismaCashShift) => ({
+      ...prismaCashShift,
+      status: prismaCashShift.status == "OPEN" ? "open" : "closed",
+      initialAmount: Number(prismaCashShift.initialAmount),
+      finalAmount: prismaCashShift.finalAmount
+        ? Number(prismaCashShift.finalAmount)
+        : undefined,
+    })),
+  };
 };
 
 export const getLastOpenCashShift = async (
