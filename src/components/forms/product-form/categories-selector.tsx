@@ -4,7 +4,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Category } from "@/category/types";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import React from "react";
 import { FormControl, FormLabel } from "@/components/ui/form";
 import { useCategoryStore } from "@/category/components/category-store-provider";
@@ -50,21 +56,25 @@ const CategoryList: React.FC<CategoryListProps> = ({
   return (
     <>
       {categories.map((category) => (
-        <div key={category.id}>
-          <div className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox
-                id={category.id}
-                checked={value.some((item) => item.id === category.id)}
-                onCheckedChange={createHandleCheckboxChange(category)}
-              />
-            </FormControl>
-            <FormLabel className="text-sm font-normal" htmlFor={category.id}>
-              {category.name}
-            </FormLabel>
-          </div>
-          <Separator className="my-2" />
-        </div>
+        <SelectItem 
+          key={category.id}
+          value={category.name}
+        >{category.name}</SelectItem>
+        // <div key={category.id}>
+        //   <div className="flex flex-row items-start space-x-3 space-y-0">
+        //     <FormControl>
+        //       <Checkbox
+        //         id={category.id}
+        //         checked={value.some((item) => item.id === category.id)}
+        //         onCheckedChange={createHandleCheckboxChange(category)}
+        //       />
+        //     </FormControl>
+        //     <FormLabel className="text-sm font-normal" htmlFor={category.id}>
+        //       {category.name}
+        //     </FormLabel>
+        //   </div>
+        //   <Separator className="my-2" />
+        // </div>
       ))}
     </>
   );
@@ -77,9 +87,14 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   const { categories, isLoading } = useCategoryStore((store) => store);
 
   return (
-    <div>
-      <ScrollArea className="h-72 w-100 rounded-md border">
-        <div className="p-4">
+    <div className="w-full">
+      <Select>
+        <FormControl>
+            <SelectTrigger>
+            <SelectValue placeholder="" />
+          </SelectTrigger>
+        </FormControl>
+        <SelectContent>
           {isLoading ? (
             <CategoriesSkeleton />
           ) : (
@@ -89,8 +104,8 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
               onChange={onChange}
             />
           )}
-        </div>
-      </ScrollArea>
+        </SelectContent>
+      </Select>
     </div>
   );
 };

@@ -58,7 +58,7 @@ export default function NewCategoryDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" className="rounded-full w-6 h-6 flex items-center justify-center text-lg border-2 border-slate-400">
           ＋
         </Button>
       </DialogTrigger>
