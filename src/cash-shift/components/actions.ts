@@ -1,7 +1,7 @@
 "use server";
 
 import { OpenCashShift } from "@/cash-shift/types";
-import { createCashShift as persistCashShift } from "@/cash-shift/db_repository";
+import cashShiftCreator from "@/cash-shift/use-cases/cash-shift-creator";
 import { response } from "@/lib/types";
 
 export const createCashShift = async (
@@ -23,5 +23,5 @@ export const createCashShift = async (
     openedAt: new Date(),
   };
 
-  return await persistCashShift(cashShift);
+  return await cashShiftCreator(cashShift);
 };
