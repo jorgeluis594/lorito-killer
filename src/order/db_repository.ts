@@ -50,7 +50,9 @@ function mapPaymentToPrisma(payment: Payment): PaymentPrismaMatch {
   }
 }
 
-function mapPrismaToPayment(prismaPayment: PaymentPrismaMatch): Payment {
+export function mapPrismaPaymentToPayment(
+  prismaPayment: PaymentPrismaMatch,
+): Payment {
   if (prismaPayment.method === "CASH") {
     return {
       ...prismaPayment,
@@ -91,7 +93,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       ...createdOrderResponse,
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
-      payments: createdOrderResponse.payments.map(mapPrismaToPayment),
+      payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
     };
 
@@ -127,7 +129,7 @@ export const getOrders = async (): Promise<response<Order[]>> => {
   }
 };
 
-function transformOrderData(prismaOrders: any): Order {
+export function transformOrderData(prismaOrders: any): Order {
   const { orderItems, payments, ...orderData } = prismaOrders;
   const parsedOrderItems = orderItems.map((oi: any) => {
     const product: Product = {
@@ -141,6 +143,6 @@ function transformOrderData(prismaOrders: any): Order {
   return {
     ...orderData,
     orderItems: parsedOrderItems,
-    payments: payments.map(mapPrismaToPayment),
+    payments: payments.map(mapPrismaPaymentToPayment),
   };
 }
