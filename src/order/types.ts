@@ -11,6 +11,7 @@ export type OrderItem = {
 
 export type Order = {
   id?: string;
+  cashShiftId: string;
   orderItems: OrderItem[];
   total: number;
   status: "pending" | "completed" | "cancelled";
@@ -24,6 +25,7 @@ export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "wallet";
 export type PaymentGeneralData = {
   id?: string;
   orderId?: string;
+  cashShiftId: string;
   amount: number;
   method: PaymentMethod;
   createdAt?: Date;
