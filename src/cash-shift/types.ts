@@ -5,7 +5,6 @@ type CashShiftBase = {
   id: string;
   userId: string;
   initialAmount: number;
-  finalAmount: number;
   totalSales: number;
   totalCashSales: number;
   totalDebitCardSales: number;
@@ -24,8 +23,9 @@ export type OpenCashShift = CashShiftBase & {
 
 export type ClosedCashShift = CashShiftBase & {
   status: "closed";
+  finalAmount: number;
   openedAt: Date;
-  closed: Date;
+  closedAt: Date;
 };
 
 export type CashShift = OpenCashShift | ClosedCashShift;

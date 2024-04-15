@@ -55,8 +55,10 @@ enum ShiftStatus {
 
 model CashShift {
   id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   initialAmount Decimal
-  finalAmount   Decimal
+  finalAmount   Decimal?
   orders        Order[]
   payments      Payment[]
   status        ShiftStatus
@@ -95,6 +97,7 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  cashShifts CashShift[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
