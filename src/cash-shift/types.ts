@@ -1,4 +1,5 @@
 import { Order, Payment } from "@/order/types";
+import { response } from "@/lib/types";
 
 export type CashShift = {
   id: string;
@@ -18,3 +19,7 @@ export type CashShift = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type CashShiftWithOutOrders = Omit<CashShift, "orders" | "payments">;
+
+export type CashShiftResponse = response<CashShift>;
