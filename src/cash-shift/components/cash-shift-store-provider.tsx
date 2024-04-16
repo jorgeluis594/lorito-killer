@@ -24,16 +24,8 @@ export interface CashShiftStoreProviderProps {
   children: ReactNode;
 }
 
-export const CategoryStoreProvider = async ({
-  children,
-}: CashShiftStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<CashShiftStore>>();
+const CashShiftLoader = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
-
-  if (!storeRef.current) {
-    storeRef.current = createCashShiftStore({ ...defaultInitState });
-  }
-
   const { cashShift, isLoading, setCashShift } = useCashShiftStore(
     (store) => store,
   );
@@ -54,9 +46,21 @@ export const CategoryStoreProvider = async ({
     }
   }, []);
 
+  return <>{children}</>;
+};
+
+export const CashShiftStoreProvider = ({
+  children,
+}: CashShiftStoreProviderProps) => {
+  const storeRef = useRef<StoreApi<CashShiftStore>>();
+
+  if (!storeRef.current) {
+    storeRef.current = createCashShiftStore({ ...defaultInitState });
+  }
+
   return (
     <CashShiftStoreContext.Provider value={storeRef.current}>
-      {children}
+      <CashShiftLoader>{children}</CashShiftLoader>
     </CashShiftStoreContext.Provider>
   );
 };
