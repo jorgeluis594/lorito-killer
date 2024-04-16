@@ -36,10 +36,10 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
         if (response.success) {
           setCashShift(response.data);
         } else {
+          setCashShift(null);
           toast({
-            title: "Error",
-            description: response.message,
-            variant: "destructive",
+            description:
+              "No tienes una caja abierta, abre una para generar ventas",
           });
         }
       });
