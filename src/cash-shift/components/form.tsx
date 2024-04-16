@@ -35,7 +35,7 @@ const CashShiftFormSchema = z.object({
 
 type CashShiftFormValues = z.infer<typeof CashShiftFormSchema>;
 
-export default function CardShiftForm() {
+export default function CashShiftForm() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
