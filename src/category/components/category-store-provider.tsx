@@ -12,13 +12,13 @@ import {
 export const CategoryStoreContext =
   createContext<StoreApi<CategoryStore> | null>(null);
 
-export interface CounterStoreProviderProps {
+export interface CategoryStoreProviderProps {
   children: ReactNode;
 }
 
 export const CategoryStoreProvider = async ({
   children,
-}: CounterStoreProviderProps) => {
+}: CategoryStoreProviderProps) => {
   const storeRef = useRef<StoreApi<CategoryStore>>();
   if (!storeRef.current) {
     storeRef.current = createCategoryStore(iniCategoriesParams());
