@@ -4,6 +4,11 @@ import { CellAction } from "./cell-action";
 import { CashShiftWithOutOrders } from "@/cash-shift/types";
 import { format } from "date-fns";
 
+const statusSpanishMapper = {
+  open: "Abierto",
+  closed: "Cerrado",
+};
+
 export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
   {
     accessorKey: "seller",
@@ -30,6 +35,7 @@ export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
   {
     accessorKey: "status",
     header: "ESTADO",
+    cell: ({ row }) => statusSpanishMapper[row.original.status],
   },
   {
     id: "actions",
