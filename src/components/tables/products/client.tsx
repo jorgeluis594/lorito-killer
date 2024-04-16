@@ -30,7 +30,7 @@ export default function ProductsClient({
           description="Gestiona tus productos!"
         />
         <Button type="button" variant="outline" className="text-xs md:text-sm" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4"/> Agregar producto</Button>
-        <ProductoModalForm open={open}/>
+        <ProductoModalForm open={open} setOpen={setOpen}/>
       </div>
       <Separator />
       <DataTable

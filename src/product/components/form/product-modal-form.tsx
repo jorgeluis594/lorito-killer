@@ -40,6 +40,7 @@ type ProductFormValues = z.infer<typeof ProductSchema>;
 interface ProductFormProps {
   initialProduct?: Product | null;
   open: boolean;
+  setOpen: (val: boolean) => void
 }
 
 const transformToProduct = (data: ProductFormValues): Product => {
@@ -57,7 +58,8 @@ const transformToProduct = (data: ProductFormValues): Product => {
 
 export const ProductoModalForm: React.FC<ProductFormProps> = ({
   initialProduct = null,
-  open
+  open,
+  setOpen
 }) => {
   const title = initialProduct ? "Editar producto" : "Agregar producto";
   const description = initialProduct
@@ -251,7 +253,7 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[450px] sm:h-[700px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6">
           <div className="flex items-center justify-between">
