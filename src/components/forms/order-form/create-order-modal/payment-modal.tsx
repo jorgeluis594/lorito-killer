@@ -46,7 +46,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const { toast } = useToast();
 
   const handleOrderCreation = async () => {
-    const response = await create(order);
+    const response = await create({ ...order, status: "completed" });
     if (response.success) {
       reset();
       toast({
