@@ -182,9 +182,13 @@ export const useOrderFormActions = (): Actions => {
       });
     },
     reset: () => {
-      const order = initOrderFormStore();
+      const {
+        order: { cashShiftId },
+      } = orderFormStoreContext.getState();
+      const { order, ...rest } = initOrderFormStore();
       orderFormStoreContext.setState({
-        ...initOrderFormStore(),
+        ...rest,
+        order: { ...order, cashShiftId: cashShiftId },
       });
     },
     increaseQuantity,
