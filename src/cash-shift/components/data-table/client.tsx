@@ -33,12 +33,5 @@ export default function TableClient() {
     fetchData();
   }, []);
 
-  return (
-    <DataTable
-      searchKey="name"
-      columns={columns}
-      data={cashShifts}
-      isLoading={loading}
-    />
-  );
+  return <DataTable columns={columns} data={cashShifts} isLoading={loading} />;
 }
