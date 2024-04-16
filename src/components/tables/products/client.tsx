@@ -5,9 +5,10 @@ import { Separator } from "@/components/ui/separator";
 import { Plus } from "lucide-react";
 import { columns } from "./columns";
 import { Product } from "@/product/types";
-import { buttonVariants } from "@/components/ui/button";
-import ProductModalForm from "@/product/components/form/product-modal-form"
+import { Button, buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
+import { ProductoModalForm } from "@/product/components/form/product-modal-form";
+import { useState } from "react";
 
 interface ProductsClientProps {
   data: Product[] | null;
@@ -18,6 +19,9 @@ export default function ProductsClient({
   data,
   isLoading,
 }: ProductsClientProps) {
+
+  const [open, setOpen] = useState(false)
+
   return (
     <>
       <div className="flex items-start justify-between">
@@ -25,7 +29,8 @@ export default function ProductsClient({
           title={data ? `Productos (${data.length})` : ""}
           description="Gestiona tus productos!"
         />
-        <ProductModalForm />
+        <Button type="button" variant="outline" className="text-xs md:text-sm" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4"/> Agregar producto</Button>
+        <ProductoModalForm open={open}/>
       </div>
       <Separator />
       <DataTable

@@ -1,24 +1,13 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Category } from "@/category/types";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import React, { useEffect } from "react";
 import { FormControl, FormLabel } from "@/components/ui/form";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Actions } from '../order-form/store';
-import MultipleSelector, {Option} from "@/components/ui/multiple-selector";
-import { log } from "console";
-import { Option } from '../../ui/multiple-selector';
+import MultipleSelector, { Option } from "@/components/ui/multiple-selector";
 
 interface SelectCategoriesProps {
   value: Category[];
@@ -115,26 +104,6 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
         }
       />
     </div>
-    // <div className="w-full">
-    //   <Select>
-    //     <FormControl>
-    //       <SelectTrigger>
-    //         <SelectValue placeholder="" />
-    //       </SelectTrigger>
-    //     </FormControl>
-    //     <SelectContent>
-    //       {isLoading ? (
-    //         <CategoriesSkeleton />
-    //       ) : (
-    //         <CategoryList
-    //           categories={categories}
-    //           value={value}
-    //           onChange={onChange}
-    //         />
-    //       )}
-    //     </SelectContent>
-    //   </Select>
-    // </div>
   );
 };
 

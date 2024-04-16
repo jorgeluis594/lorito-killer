@@ -54,7 +54,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
 export const ProductForm: React.FC<ProductFormProps> = ({
   initialProduct = null,
 }) => {
-  const title = initialProduct ? "Editar producto" : "Registrar producto";
+  const title = initialProduct ? "Editar producto" : "Agregar producto";
   const description = initialProduct
     ? "Editar producto."
     : "Registra un nuevo producto";
@@ -166,7 +166,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         photosToAppend,
       );
       if (storePhotoResponse.success) {
-        debugger
         form.setValue("photos", [...currentPhotos, ...storePhotoResponse.data]);
         toast({
           description: "Photos subidas con exito",
@@ -248,11 +247,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   return (
     <>
+      <div className="flex items-center justify-between">
+        <Heading title={title} description={description}/>
+      </div>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="max-w-md mx-auto space-y-8">
-          <div className="space-y-4">
+          <div className="space-y-4 p-2">
             <FormField
               control={form.control}
               name="name"
