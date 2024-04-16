@@ -19,7 +19,7 @@ const CashShiftIsNotOpen = () => {
 };
 
 export default function ProductSearcherWithCashShiftChecker() {
-  const { cashShift, isLoading } = useCashShiftStore((store) => store);
+  const { cashShift } = useCashShiftStore((store) => store);
 
   return <>{cashShift ? <ProductsSearcher /> : <CashShiftIsNotOpen />}</>;
 }

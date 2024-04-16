@@ -6,8 +6,6 @@ import {
   useOrderFormStore,
 } from "@/components/forms/order-form/order-form-provider";
 import { Button } from "@/components/ui/button";
-import { create } from "@/order/actions";
-import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,18 +19,6 @@ export default function Cart() {
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const { increaseQuantity, decreaseQuantity, reset, removeOrderItem } =
     useOrderFormActions();
-
-  const { toast } = useToast();
-
-  const handleOrderCreation = async () => {
-    const response = await create(order);
-    if (response.success) {
-      reset();
-      toast({ description: "Venta realizada con éxito" });
-    } else {
-      toast({ description: "Error al realizar la venta" });
-    }
-  };
 
   useEffect(() => {
     reset();
