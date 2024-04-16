@@ -16,6 +16,7 @@ import type {
 import { BlankCashPayment } from "@/order/constants";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import * as React from "react";
+import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -60,6 +61,7 @@ export const NonePayment: React.FC = () => {
 
 export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
+  const { cashShift } = useCashShiftStore((store) => store);
   const { addPayment, removePayment } = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethod>({
     ...BlankCashPayment,
@@ -69,7 +71,11 @@ export const CashPayment: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>,
   ) {
     const value = parseFloat(event.target.value);
-    setPayment({ ...payment, received_amount: value });
+    setPayment({
+      ...payment,
+      cashShiftId: cashShift!.id,
+      received_amount: value,
+    });
   }
 
   useEffect(() => {
@@ -118,9 +124,14 @@ export const CashPayment: React.FC = () => {
 export const WalletPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { addPayment } = useOrderFormActions();
+  const { cashShift } = useCashShiftStore((store) => store);
 
   useEffect(() => {
-    addPayment({ amount: orderTotal, method: "wallet" });
+    addPayment({
+      cashShiftId: cashShift!.id,
+      amount: orderTotal,
+      method: "wallet",
+    });
   }, [orderTotal]);
 
   return (
@@ -136,6 +147,7 @@ export const WalletPayment: React.FC = () => {
 export const CardPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { addPayment, removePayment } = useOrderFormActions();
+  const { cashShift } = useCashShiftStore((store) => store);
 
   const onCardChange = (
     value: PaymentMethod & ("debit_card" | "credit_card"),
@@ -143,7 +155,11 @@ export const CardPayment: React.FC = () => {
     if (value === "debit_card") removePayment("credit_card");
     if (value === "credit_card") removePayment("debit_card");
 
-    addPayment({ amount: orderTotal, method: value });
+    addPayment({
+      cashShiftId: cashShift!.id,
+      amount: orderTotal,
+      method: value,
+    });
   };
 
   return (
@@ -183,6 +199,7 @@ export const CardPayment: React.FC = () => {
 
 export const CombinedPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
+  const { cashShift } = useCashShiftStore((store) => store);
   const { removeAllPayments, addPayment } = useOrderFormActions();
   const [cashAmount, setCashAmount] = useState(0);
   const [creditCardAmount, setCreditCardAmount] = useState(0);
@@ -204,6 +221,7 @@ export const CombinedPayment: React.FC = () => {
 
     if (cashAmount > 0) {
       addPayment({
+        cashShiftId: cashShift!.id,
         amount: cashAmount,
         method: "cash",
         received_amount: cashAmount,
@@ -211,13 +229,25 @@ export const CombinedPayment: React.FC = () => {
       });
     }
     if (walletAmount > 0) {
-      addPayment({ amount: walletAmount, method: "wallet" });
+      addPayment({
+        cashShiftId: cashShift!.id,
+        amount: walletAmount,
+        method: "wallet",
+      });
     }
     if (creditCardAmount > 0) {
-      addPayment({ amount: creditCardAmount, method: "credit_card" });
+      addPayment({
+        cashShiftId: cashShift!.id,
+        amount: creditCardAmount,
+        method: "credit_card",
+      });
     }
     if (debitCardAmount > 0) {
-      addPayment({ amount: debitCardAmount, method: "debit_card" });
+      addPayment({
+        cashShiftId: cashShift!.id,
+        amount: debitCardAmount,
+        method: "debit_card",
+      });
     }
   }, [cashAmount, creditCardAmount, debitCardAmount, walletAmount]);
 
