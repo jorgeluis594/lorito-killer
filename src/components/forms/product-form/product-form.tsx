@@ -166,6 +166,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         photosToAppend,
       );
       if (storePhotoResponse.success) {
+        debugger
         form.setValue("photos", [...currentPhotos, ...storePhotoResponse.data]);
         toast({
           description: "Photos subidas con exito",
@@ -250,28 +251,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full"
-        >
-          <div>
-            <div className="pt-2">
-            <FormField
-              control={form.control}
-              name="photos"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Agregar Producto</FormLabel>
-                  <FormControl>
-                    <FileUpload
-                      onChange={handlePhotosUpdated}
-                      value={field.value || []}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            </div>
-            <div className="pt-2">
+          className="max-w-md mx-auto space-y-8">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -279,160 +260,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <FormItem>
                   <FormLabel>Nombre</FormLabel>
                   <FormControl>
-                    <Input
-                      autoComplete="off"
-                      {...field}
-                    />
+                    <Input autoComplete="off" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            </div>
-            <div>
-              <div className="flex pt-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Código de barras</FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete="off"
-                          placeholder="Max 13 dígitos"
-                          {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cantidad</FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete="off"
-                          type="number"
-                          {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="flex pt-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Precio de Compra</FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete="off"
-                          type="number"
-                          placeholder="S/ 0.00"
-                          {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="purchasePrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Precio de venta</FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete="off"
-                          type="number"
-                          placeholder="S/ 0.00"
-                          {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-            <div className="pt-2">
-              <FormField
-                control={form.control}
-                name="categories"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoría</FormLabel>
-                    <div className="flex justify-between items-center gap-4">
-                      <CategoriesSelector
-                        value={field.value || []}
-                        onChange={handleCategoriesUpdated}
-                      />
-                      <NewCategoryDialog addCategory={onCategoryAdded} />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="pt-2">
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={4}
-                        placeholder="Escribe la descripción del producto aqui."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-          <div className="flex justify-center">
-            <Button className="btn-success" type="submit">
-              {action}
-            </Button>
-          </div>
-        </form>
-      </Form>
-      {/* <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full"
-        >
-          <div className="md:grid md:grid-cols-4 gap-4">
-            <div className="md:grid md:grid-cols-3 gap-4 h-fit">
-              <div className="col-span-2">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre</FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete="off"
-                          placeholder="Nombre del producto"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="sku"
@@ -440,33 +274,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   <FormItem>
                     <FormLabel>Código de barras</FormLabel>
                     <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Precio</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="purchasePrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Precio de venta</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" type="number" {...field} />
+                      <Input autoComplete="off" placeholder="Max 13 dígitos" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -485,65 +293,83 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   </FormItem>
                 )}
               />
-              <div className="col-span-3">
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descipción</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          rows={4}
-                          placeholder="Escribe la descripción del producto aqui."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Precio de Compra</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="off" type="number" placeholder="S/ 0.00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="purchasePrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Precio de venta</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="off" type="number" placeholder="S/ 0.00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <FormField
               control={form.control}
               name="categories"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex justify-between items-center">
-                    <FormLabel>Categorías</FormLabel>
+                  <FormLabel>Categoría</FormLabel>
+                  <div className="flex justify-between items-center gap-4">
+                    <CategoriesSelector value={field.value || []} onChange={handleCategoriesUpdated} />
                     <NewCategoryDialog addCategory={onCategoryAdded} />
                   </div>
-                  <CategoriesSelector
-                    value={field.value || []}
-                    onChange={handleCategoriesUpdated}
-                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descripción</FormLabel>
+                  <FormControl>
+                    <Textarea rows={4} placeholder="Escribe la descripción del producto aqui." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="photos"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FileUpload onChange={handlePhotosUpdated} value={field.value || []} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <FormField
-            control={form.control}
-            name="photos"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Imagenes</FormLabel>
-                <FormControl>
-                  <FileUpload
-                    onChange={handlePhotosUpdated}
-                    value={field.value || []}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button className="ml-auto btn-success" type="submit">
-            {action}
-          </Button>
+          <div className="flex justify-center">
+            <Button className="btn-success" type="submit">
+              {action}
+            </Button>
+          </div>
         </form>
-      </Form> */}
+
+      </Form>
     </>
   );
 };

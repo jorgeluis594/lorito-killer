@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } 
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Plus } from "lucide-react";
 import { ProductForm } from "@/components/forms/product-form/product-form";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 export default function ProductoModalForm() {
@@ -13,8 +14,10 @@ export default function ProductoModalForm() {
         <DialogTrigger asChild>
           <Button variant="outline" className="text-xs md:text-sm"><Plus className="mr-2 h-4 w-4" /> Agregar producto</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[450px] w-full flex flex-col justify-center items-center">
-          <ProductForm/>
+        <DialogContent className="sm:max-w-[450px] sm:h-[700px] w-full flex flex-col justify-center items-center p-0">
+          <ScrollArea className="p-6">
+            <ProductForm/>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     )

@@ -16,7 +16,7 @@ export interface CounterStoreProviderProps {
   children: ReactNode;
 }
 
-export const CategoryStoreProvider = async ({
+export const CategoryStoreProvider = ({
   children,
 }: CounterStoreProviderProps) => {
   const storeRef = useRef<StoreApi<CategoryStore>>();
