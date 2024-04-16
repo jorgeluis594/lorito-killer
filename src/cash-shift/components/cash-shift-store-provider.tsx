@@ -16,6 +16,7 @@ import {
   defaultInitState,
 } from "@/cash-shift/components/store";
 import { getLastOpenCashShift } from "@/cash-shift/api_repository";
+import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
 
 export const CashShiftStoreContext =
   createContext<StoreApi<CashShiftStore> | null>(null);
@@ -26,15 +27,15 @@ export interface CashShiftStoreProviderProps {
 
 const CashShiftLoader = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
-  const { cashShift, isLoading, setCashShift } = useCashShiftStore(
-    (store) => store,
-  );
+  const { isLoading, setCashShift } = useCashShiftStore((store) => store);
+  const { setCashShift: setCashShiftToOrder } = useOrderFormActions();
 
   useEffect(() => {
     if (isLoading) {
       getLastOpenCashShift().then((response) => {
         if (response.success) {
           setCashShift(response.data);
+          setCashShiftToOrder(response.data);
         } else {
           setCashShift(null);
           toast({

@@ -223,5 +223,11 @@ export const useOrderFormActions = (): Actions => {
         order: { ...order, payments: [] },
       });
     },
+    setCashShift: (cashShift) => {
+      const { order } = orderFormStoreContext.getState();
+      orderFormStoreContext.setState({
+        order: { ...order, cashShiftId: cashShift.id },
+      });
+    },
   };
 };
