@@ -26,6 +26,7 @@ import { createCashShift } from "@/cash-shift/components/actions";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 
 const CashShiftFormSchema = z.object({
   initialAmount: z.coerce
@@ -37,6 +38,7 @@ type CashShiftFormValues = z.infer<typeof CashShiftFormSchema>;
 
 export default function CashShiftForm() {
   const { data: session } = useSession();
+  const { setCashShift } = useCashShiftStore((store) => store);
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
 
@@ -52,7 +54,6 @@ export default function CashShiftForm() {
     );
 
     if (!response.success) {
-      console.error(response.message);
       toast({
         title: "Error",
         description: "Ocurrió un error al abrir la caja: " + response.message,
@@ -64,6 +65,7 @@ export default function CashShiftForm() {
         title: "Exito!",
         description: "Caja abierta correctamente",
       });
+      setCashShift(response.data);
       form.reset();
       setOpen(false);
     }
