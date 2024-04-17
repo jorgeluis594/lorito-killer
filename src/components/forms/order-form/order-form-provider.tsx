@@ -11,6 +11,7 @@ import {
 } from "./store";
 import { Product } from "@/product/types";
 import { Payment, PaymentMethod } from "@/order/types";
+import { EMPTY_PRODUCT } from "@/product/constants";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -82,15 +83,17 @@ export const useOrderFormActions = (): Actions => {
     const { order } = orderFormStoreContext.getState();
 
     const orderItem = order.orderItems.find(
-      (item) => item.product.id === product.id,
+      (item) => item.productId === product.id,
     );
 
     if (orderItem) {
       increaseQuantity(orderItem.id!);
     } else {
       order.orderItems.push({
-        product,
         id: crypto.randomUUID(),
+        productId: product.id!,
+        productName: product.name,
+        productPrice: product.price,
         quantity: 1,
         total: product.price,
       });
@@ -116,18 +119,19 @@ export const useOrderFormActions = (): Actions => {
   };
 
   const increaseQuantity = (orderItemId: string) => {
+    const product = EMPTY_PRODUCT; // TODO: get product from API
     const { order } = orderFormStoreContext.getState();
     const orderItem = order.orderItems.find((item) => item.id === orderItemId);
 
     if (!orderItem) {
       console.error("Order item not found");
       return;
-    } else if (orderItem.quantity >= orderItem.product.stock) {
+    } else if (orderItem.quantity >= product.stock) {
       console.error("Product stock exceeded");
       return;
     } else {
       orderItem.quantity += 1;
-      orderItem.total = orderItem.product.price * orderItem.quantity;
+      orderItem.total = orderItem.productPrice * orderItem.quantity;
       orderFormStoreContext.setState(() => {
         return { order: { ...order, orderItems: [...order.orderItems] } };
       });
@@ -154,7 +158,7 @@ export const useOrderFormActions = (): Actions => {
       removeOrderItem(orderItemId);
     } else {
       orderItem.quantity--;
-      orderItem.total = orderItem.product.price * orderItem.quantity;
+      orderItem.total = orderItem.productPrice * orderItem.quantity;
       orderFormStoreContext.setState(() => {
         return { order: { ...order, orderItems: [...order.orderItems] } };
       });

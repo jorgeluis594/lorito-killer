@@ -10,13 +10,12 @@ async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { product, ...orderItemData } = orderItem;
+  const { productName, ...orderItemData } = orderItem;
   try {
     const persistedOrderItem = await prisma.orderItem.create({
       data: {
         ...orderItemData,
-        orderId: orderId,
-        productId: orderItem.product.id!,
+        orderId,
       },
     });
 

@@ -43,7 +43,7 @@ export default function Cart() {
             <div>
               {order.orderItems.map((item) => (
                 <CartItem
-                  key={item.product.id}
+                  key={item.productId}
                   item={item}
                   increaseQuantity={increaseQuantity}
                   decreaseQuantity={decreaseQuantity}
