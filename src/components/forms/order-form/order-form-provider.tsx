@@ -11,8 +11,8 @@ import {
 } from "./store";
 import { Product } from "@/product/types";
 import { Payment, PaymentMethod } from "@/order/types";
-import { EMPTY_PRODUCT } from "@/product/constants";
 import { useToast } from "@/components/ui/use-toast";
+import { findProduct } from "@/product/api_repository";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -59,6 +59,48 @@ export const useOrderFormActions = (): Actions => {
     );
   }
 
+  const stockChecker = (orderItemId: string) => {
+    const { order } = orderFormStoreContext.getState();
+    const orderItem = order.orderItems.find((item) => item.id === orderItemId);
+
+    if (!orderItem) {
+      console.error("Order item not found");
+      return;
+    }
+
+    findProduct(orderItem.productId).then((response) => {
+      if (!response.success) {
+        return;
+      }
+
+      if (response.data.stock === 0) {
+        toast({
+          description: `Producto ${response.data.name} sin stock`,
+          variant: "destructive",
+        });
+        removeOrderItem(orderItemId);
+        return;
+      }
+
+      if (response.data.stock < orderItem.quantity) {
+        toast({
+          description:
+            `No hay suficiente stock de ${response.data.name}, stock disponible: ` +
+            response.data.stock,
+          variant: "destructive",
+        });
+        orderItem.quantity = response.data.stock;
+        orderItem.total = orderItem.productPrice * orderItem.quantity;
+
+        orderFormStoreContext.setState({
+          order: { ...order, orderItems: [...order.orderItems] },
+        });
+
+        updateTotal();
+      }
+    });
+  };
+
   const updateTotal = () => {
     const { order } = orderFormStoreContext.getState();
     order.total = order.orderItems.reduce((acc, item) => acc + item.total, 0);
@@ -92,8 +134,9 @@ export const useOrderFormActions = (): Actions => {
     if (orderItem) {
       increaseQuantity(orderItem.id!);
     } else {
+      const orderItemId = crypto.randomUUID();
       order.orderItems.push({
-        id: crypto.randomUUID(),
+        id: orderItemId,
         productId: product.id!,
         productName: product.name,
         productPrice: product.price,
@@ -105,6 +148,7 @@ export const useOrderFormActions = (): Actions => {
         return { order: { ...order, orderItems: [...order.orderItems] } };
       });
       updateTotal();
+      stockChecker(orderItemId);
     }
   };
 
@@ -122,29 +166,22 @@ export const useOrderFormActions = (): Actions => {
   };
 
   const increaseQuantity = (orderItemId: string) => {
-    const product = EMPTY_PRODUCT; // TODO: get product from API
     const { order } = orderFormStoreContext.getState();
     const orderItem = order.orderItems.find((item) => item.id === orderItemId);
 
     if (!orderItem) {
       console.error("Order item not found");
       return;
-    } else if (orderItem.quantity >= product.stock) {
-      toast({
-        description:
-          "No hay suficiente stock, stock disponible: " + product.stock,
-        variant: "destructive",
-      });
-      return;
-    } else {
-      orderItem.quantity += 1;
-      orderItem.total = orderItem.productPrice * orderItem.quantity;
-      orderFormStoreContext.setState(() => {
-        return { order: { ...order, orderItems: [...order.orderItems] } };
-      });
-
-      updateTotal();
     }
+
+    orderItem.quantity += 1;
+    orderItem.total = orderItem.productPrice * orderItem.quantity;
+    orderFormStoreContext.setState(() => {
+      return { order: { ...order, orderItems: [...order.orderItems] } };
+    });
+
+    updateTotal();
+    stockChecker(orderItemId);
   };
 
   const decreaseQuantity = (orderItemId: string) => {
@@ -157,7 +194,11 @@ export const useOrderFormActions = (): Actions => {
     }
 
     if (orderItem.quantity <= 0) {
-      console.error("Product quantity can't be less than 1");
+      toast({
+        description: "La cantidad no puede ser menor a 0",
+        variant: "destructive",
+      });
+      removeOrderItem(orderItemId);
       return;
     }
 
@@ -171,6 +212,7 @@ export const useOrderFormActions = (): Actions => {
       });
 
       updateTotal();
+      stockChecker(orderItemId);
     }
   };
 
