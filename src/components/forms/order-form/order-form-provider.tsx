@@ -12,6 +12,7 @@ import {
 import { Product } from "@/product/types";
 import { Payment, PaymentMethod } from "@/order/types";
 import { EMPTY_PRODUCT } from "@/product/constants";
+import { useToast } from "@/components/ui/use-toast";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -49,6 +50,8 @@ export const useOrderFormStore = <T,>(
 };
 
 export const useOrderFormActions = (): Actions => {
+  const { toast } = useToast();
+
   const orderFormStoreContext = useContext(OrderFormStoreContext);
   if (!orderFormStoreContext) {
     throw new Error(
@@ -127,7 +130,11 @@ export const useOrderFormActions = (): Actions => {
       console.error("Order item not found");
       return;
     } else if (orderItem.quantity >= product.stock) {
-      console.error("Product stock exceeded");
+      toast({
+        description:
+          "No hay suficiente stock, stock disponible: " + product.stock,
+        variant: "destructive",
+      });
       return;
     } else {
       orderItem.quantity += 1;
