@@ -11,7 +11,7 @@ import type { CashShift, CashShiftWithOutOrders, OpenCashShift } from "./types";
 import { response } from "@/lib/types";
 import {
   mapPrismaPaymentToPayment,
-  transformOrderData,
+  transformOrdersData,
 } from "@/order/db_repository";
 import PaymentMethod = $Enums.PaymentMethod;
 
@@ -91,7 +91,7 @@ export const getLastOpenCashShift = async (
 
   return {
     success: true,
-    data: prismaCashShiftToCashShift(cashShift) as OpenCashShift,
+    data: (await prismaCashShiftToCashShift(cashShift)) as OpenCashShift,
   };
 };
 
@@ -104,9 +104,9 @@ function sumPaymentsAmount(
     .reduce((acc, payment) => acc + Number(payment.amount), 0);
 }
 
-export const prismaCashShiftToCashShift = (
+export const prismaCashShiftToCashShift = async (
   prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
-): CashShift => {
+): Promise<CashShift> => {
   const baseCashShift = {
     id: prismaCashShift.id,
     userId: prismaCashShift.userId,
@@ -126,7 +126,7 @@ export const prismaCashShiftToCashShift = (
       prismaCashShift.payments || [],
       "WALLET",
     ),
-    orders: (prismaCashShift.orders || []).map(transformOrderData),
+    orders: await transformOrdersData(prismaCashShift.orders || []),
     payments: (prismaCashShift.payments || []).map(mapPrismaPaymentToPayment),
   };
 
