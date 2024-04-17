@@ -109,3 +109,15 @@ export const search = async (
 
   return await res.json();
 };
+
+export const findProduct = async (id: string): Promise<response<Product>> => {
+  const res = await fetch(`/api/products/${id}`, {
+    method: "GET",
+  });
+
+  if (res.status === 404) {
+    return { success: false, message: "Producto no encontrado" };
+  }
+
+  return await res.json();
+};
