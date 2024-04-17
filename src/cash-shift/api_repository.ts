@@ -25,5 +25,25 @@ export const getLastOpenCashShift = async (): Promise<
     return { success: false, message: "Error cargando caja chica" };
   }
 
-  return await response.json();
+  const openCashShiftResponse =
+    (await response.json()) as response<OpenCashShift>;
+  if (!openCashShiftResponse.success) {
+    return { success: false, message: openCashShiftResponse.message };
+  }
+
+  return {
+    ...openCashShiftResponse,
+    data: {
+      ...openCashShiftResponse.data,
+      orders: [
+        ...openCashShiftResponse.data.orders.map((o) => ({
+          ...o,
+          createdAt: new Date(o.createdAt as unknown as string),
+        })),
+      ],
+      createdAt: new Date(
+        openCashShiftResponse.data.createdAt as unknown as string,
+      ),
+    },
+  };
 };
