@@ -1,8 +1,8 @@
-import { Product } from "@/product/types";
-
 export type OrderItem = {
   id?: string;
-  product: Product;
+  productId: string;
+  productName: string;
+  productPrice: number;
   quantity: number;
   total: number;
   createdAt?: Date;
