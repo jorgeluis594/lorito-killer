@@ -1,4 +1,4 @@
-import CashShiftForm from "@/cash-shift/components/form";
+import OpenCashShiftForm from "@/cash-shift/components/open-cash-shift-form";
 
 export default function CashShiftIsNotOpen() {
   return (
@@ -8,7 +8,7 @@ export default function CashShiftIsNotOpen() {
           No tienes una caja abierta, abre una para generar ventas
         </p>
         <hr className="my-4" />
-        <CashShiftForm />
+        <OpenCashShiftForm />
       </div>
     </div>
   );

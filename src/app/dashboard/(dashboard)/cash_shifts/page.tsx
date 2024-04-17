@@ -1,6 +1,6 @@
 import BreadCrumb from "@/components/breadcrumb";
 import { Heading } from "@/components/ui/heading";
-import CashShiftForm from "@/cash-shift/components/form";
+import CashShiftForm from "@/cash-shift/components/open-cash-shift-form";
 import { Separator } from "@/components/ui/separator";
 import CashShiftClientTable from "@/cash-shift/components/data-table/client";
 
