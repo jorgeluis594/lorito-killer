@@ -22,6 +22,7 @@ import {
 } from "./payment_views";
 import { create } from "@/order/actions";
 import { useToast } from "@/components/ui/use-toast";
+import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 
 const PaymentViews = {
   none: NonePayment,
@@ -42,6 +43,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
   const { getPaidAmount, reset, resetPayment } = useOrderFormActions();
+  const { addOrder } = useCashShiftStore((state) => state);
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
 
@@ -53,6 +55,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         title: "En hora buena!",
         description: "Venta realizada con éxito",
       });
+      addOrder(response.data);
     } else {
       toast({
         variant: "destructive",

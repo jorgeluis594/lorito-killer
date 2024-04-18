@@ -1,5 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import { OpenCashShift } from "@/cash-shift/types";
+import { Order } from "@/order/types";
 
 export type CashShiftState =
   | { cashShift: OpenCashShift | null; isLoading: false }
@@ -9,6 +10,7 @@ export type CashShiftActions = {
   setCashShift: (cashShift: OpenCashShift | null) => void;
   setIsLoading: () => void;
   removeCashShift: () => void;
+  addOrder: (order: Order) => void;
 };
 
 export type CashShiftStore = CashShiftState & CashShiftActions;
@@ -27,5 +29,22 @@ export const createCashShiftStore = (
       set({ cashShift, isLoading: false }),
     removeCashShift: () => set({ cashShift: null, isLoading: false }),
     setIsLoading: () => set({ isLoading: true, cashShift: null }),
+    addOrder: (order: Order) => {
+      set((state) => {
+        if (state.cashShift) {
+          state.cashShift.orders.push(order);
+          return {
+            cashShift: {
+              ...state.cashShift,
+              orders: [...state.cashShift.orders, order].sort(
+                (a, b) => b.createdAt!.getTime() - a.createdAt!.getTime(),
+              ),
+            },
+          };
+        } else {
+          return state;
+        }
+      });
+    },
   }));
 };

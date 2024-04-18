@@ -34,7 +34,10 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
     if (isLoading) {
       getLastOpenCashShift().then((response) => {
         if (response.success) {
-          setCashShift(response.data);
+          const sortedOrders = response.data.orders.sort(
+            (a, b) => b.createdAt!.getTime() - a.createdAt!.getTime(),
+          );
+          setCashShift({ ...response.data, orders: sortedOrders });
           setCashShiftToOrder(response.data);
         } else {
           setCashShift(null);
