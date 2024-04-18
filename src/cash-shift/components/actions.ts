@@ -1,7 +1,8 @@
 "use server";
 
-import { OpenCashShift } from "@/cash-shift/types";
+import { OpenCashShift, ClosedCashShift } from "@/cash-shift/types";
 import cashShiftCreator from "@/cash-shift/use-cases/cash-shift-creator";
+import * as repository from "@/cash-shift/db_repository";
 import { response } from "@/lib/types";
 
 export const createCashShift = async (
@@ -24,4 +25,26 @@ export const createCashShift = async (
   };
 
   return await cashShiftCreator(cashShift);
+};
+
+export const closeCashShift = async (
+  cashShift: OpenCashShift,
+  finalAmount: number,
+): Promise<response<ClosedCashShift>> => {
+  const closedCashShift: ClosedCashShift = {
+    ...cashShift,
+    status: "closed",
+    finalAmount: finalAmount,
+    closedAt: new Date(),
+  };
+
+  const response = await repository.createCashShift(closedCashShift);
+  if (!response.success) {
+    return {
+      success: false,
+      message: "No se pudo cerrar caja, comuniquese con soporte",
+    };
+  }
+
+  return response;
 };
