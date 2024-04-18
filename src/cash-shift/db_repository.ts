@@ -15,29 +15,6 @@ import {
 } from "@/order/db_repository";
 import PaymentMethod = $Enums.PaymentMethod;
 
-const cashShiftMapper: { open: "OPEN"; closed: "CLOSED" } = {
-  open: "OPEN",
-  closed: "CLOSED",
-};
-
-const cashShiftStatusToPrisma = (status: CashShift["status"]): ShiftStatus =>
-  cashShiftMapper[status];
-
-const cashShiftToPrisma = (
-  cashShift: CashShift,
-): Omit<PrismaCashSift, "createdAt" | "updatedAt"> => ({
-  id: cashShift.id,
-  userId: cashShift.userId,
-  openedAt: cashShift.openedAt,
-  initialAmount: new Prisma.Decimal(cashShift.initialAmount),
-  finalAmount:
-    cashShift.status == "open"
-      ? null
-      : new Prisma.Decimal(cashShift.finalAmount),
-  status: cashShiftStatusToPrisma(cashShift.status),
-  closedAt: cashShift.status == "open" ? null : cashShift.closedAt,
-});
-
 export const createCashShift = async <T extends CashShift>(
   cashShift: T,
 ): Promise<response<T>> => {
@@ -118,14 +95,23 @@ export const getLastOpenCashShift = async (
   };
 };
 
-function sumPaymentsAmount(
-  payments: Payment[],
-  filter: PaymentMethod | null = null,
-): number {
-  return payments
-    .filter((payment) => (!!filter ? payment.method === filter : true))
-    .reduce((acc, payment) => acc + Number(payment.amount), 0);
-}
+export const findCashShift = async <T extends CashShift>(
+  id: string,
+): Promise<response<T>> => {
+  const cashShift = await prisma.cashShift.findUnique({
+    where: { id },
+    include: { orders: true, payments: true },
+  });
+
+  if (!cashShift) {
+    return { success: false, message: "No se encontró la caja" };
+  }
+
+  return {
+    success: true,
+    data: await prismaCashShiftToCashShift<T>(cashShift),
+  };
+};
 
 export const prismaCashShiftToCashShift = async <T extends CashShift>(
   prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
@@ -166,4 +152,36 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
       closedAt: prismaCashShift.closedAt!,
     } as T;
   }
+};
+
+const cashShiftStatusToPrisma = (status: CashShift["status"]): ShiftStatus =>
+  cashShiftMapper[status];
+
+const cashShiftToPrisma = (
+  cashShift: CashShift,
+): Omit<PrismaCashSift, "createdAt" | "updatedAt"> => ({
+  id: cashShift.id,
+  userId: cashShift.userId,
+  openedAt: cashShift.openedAt,
+  initialAmount: new Prisma.Decimal(cashShift.initialAmount),
+  finalAmount:
+    cashShift.status == "open"
+      ? null
+      : new Prisma.Decimal(cashShift.finalAmount),
+  status: cashShiftStatusToPrisma(cashShift.status),
+  closedAt: cashShift.status == "open" ? null : cashShift.closedAt,
+});
+
+function sumPaymentsAmount(
+  payments: Payment[],
+  filter: PaymentMethod | null = null,
+): number {
+  return payments
+    .filter((payment) => (!!filter ? payment.method === filter : true))
+    .reduce((acc, payment) => acc + Number(payment.amount), 0);
+}
+
+const cashShiftMapper: { open: "OPEN"; closed: "CLOSED" } = {
+  open: "OPEN",
+  closed: "CLOSED",
 };

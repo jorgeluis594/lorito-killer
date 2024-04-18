@@ -8,14 +8,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Edit, MoreHorizontal } from "lucide-react";
+import { FileBarChart2, MoreHorizontal } from "lucide-react";
 import { CashShiftWithOutOrders } from "@/cash-shift/types";
+import { useRouter } from "next/navigation";
 
 interface CellActionProps {
   cashShift: CashShiftWithOutOrders;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ cashShift }) => {
+  const router = useRouter();
+
   return (
     <>
       <DropdownMenu modal={false}>
@@ -28,9 +31,15 @@ export const CellAction: React.FC<CellActionProps> = ({ cashShift }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
 
-          <DropdownMenuItem>
-            <Edit className="mr-2 h-4 w-4" /> Hello world
-          </DropdownMenuItem>
+          {cashShift.status === "closed" && (
+            <DropdownMenuItem
+              onClick={() =>
+                router.push(`/dashboard/cash_shifts/${cashShift.id}/reports`)
+              }
+            >
+              <FileBarChart2 className="mr-2 h-4 w-4" /> Reporte de caja
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>
