@@ -2,19 +2,13 @@ import { NavItem } from "@/ui/types";
 
 export const navItems: NavItem[] = [
   {
-    title: "Productos",
-    href: "/dashboard/products",
-    icon: "blocks",
-    label: "productos",
-  },
-  {
     title: "Crear pedido",
     href: "/dashboard/orders/new",
     icon: "shoppingCart",
     label: "nuevo pedido",
   },
   {
-    title: "Pedidos",
+    title: "Lista de pedidos",
     href: "/dashboard/orders",
     icon: "receipt",
     label: "pedidos",
@@ -24,5 +18,11 @@ export const navItems: NavItem[] = [
     href: "/dashboard/cash_shifts",
     icon: "cashRegister",
     label: "caja chica",
+  },
+  {
+    title: "Productos",
+    href: "/dashboard/products",
+    icon: "blocks",
+    label: "productos",
   },
 ];
