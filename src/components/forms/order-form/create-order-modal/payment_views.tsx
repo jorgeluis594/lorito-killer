@@ -59,12 +59,17 @@ export const NonePayment: React.FC = () => {
   );
 };
 
+type CashPaymentMethodState = Omit<CashPaymentMethod, "received_amount"> & {
+  received_amount: number | null;
+};
+
 export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { cashShift } = useCashShiftStore((store) => store);
   const { addPayment, removePayment } = useOrderFormActions();
-  const [payment, setPayment] = useState<CashPaymentMethod>({
+  const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
+    received_amount: null,
   });
 
   function handleChangeReceivedAmount(
@@ -79,6 +84,8 @@ export const CashPayment: React.FC = () => {
   }
 
   useEffect(() => {
+    if (payment.received_amount === null) return;
+
     if (payment.received_amount >= orderTotal) {
       setPayment({
         ...payment,
@@ -89,8 +96,11 @@ export const CashPayment: React.FC = () => {
   }, [payment.received_amount, orderTotal]);
 
   useEffect(() => {
+    const { received_amount, ...rest } = payment;
+    if (received_amount === null) return;
+
     removePayment("cash");
-    addPayment(payment);
+    addPayment({ ...rest, received_amount });
   }, [payment]);
 
   return (
@@ -100,11 +110,13 @@ export const CashPayment: React.FC = () => {
         <Input
           placeholder="Ingrese monto"
           type="number"
-          value={payment.received_amount}
+          value={payment.received_amount || ""}
           onChange={handleChangeReceivedAmount}
         />
         <p className="text-sm font-medium text-destructive">
-          {payment.received_amount !== 0 && payment.received_amount < orderTotal
+          {payment.received_amount !== 0 &&
+          payment.received_amount !== null &&
+          payment.received_amount! < orderTotal
             ? "El monto recibido es menor al total"
             : ""}
         </p>
@@ -271,7 +283,7 @@ export const CombinedPayment: React.FC = () => {
         <Input
           placeholder="Ingrese monto"
           type="number"
-          value={cashAmount}
+          value={cashAmount || ""}
           onChange={(e) => setCashAmount(parseFloat(e.target.value))}
         />
       </div>
