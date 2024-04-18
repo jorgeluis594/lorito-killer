@@ -7,7 +7,7 @@ import {
   Prisma,
   ShiftStatus,
 } from "@prisma/client";
-import type { CashShift, CashShiftWithOutOrders, OpenCashShift } from "./types";
+import type { OpenCashShift, CashShiftWithOutOrders, CashShift } from "./types";
 import { response } from "@/lib/types";
 import {
   mapPrismaPaymentToPayment,
@@ -42,11 +42,15 @@ export const createCashShift = async <T extends CashShift>(
   cashShift: T,
 ): Promise<response<T>> => {
   try {
-    await prisma.cashShift.create({
+    const persistedCashShift = await prisma.cashShift.create({
       data: cashShiftToPrisma(cashShift),
+      include: { orders: true, payments: true },
     });
 
-    return { success: true, data: structuredClone(cashShift) };
+    return {
+      success: true,
+      data: await prismaCashShiftToCashShift<T>(persistedCashShift),
+    };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
@@ -91,7 +95,7 @@ export const getLastOpenCashShift = async (
 
   return {
     success: true,
-    data: (await prismaCashShiftToCashShift(cashShift)) as OpenCashShift,
+    data: await prismaCashShiftToCashShift<OpenCashShift>(cashShift),
   };
 };
 
@@ -104,9 +108,9 @@ function sumPaymentsAmount(
     .reduce((acc, payment) => acc + Number(payment.amount), 0);
 }
 
-export const prismaCashShiftToCashShift = async (
+export const prismaCashShiftToCashShift = async <T extends CashShift>(
   prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
-): Promise<CashShift> => {
+): Promise<T> => {
   const baseCashShift = {
     id: prismaCashShift.id,
     userId: prismaCashShift.userId,
@@ -134,13 +138,13 @@ export const prismaCashShiftToCashShift = async (
     return {
       ...baseCashShift,
       status: "open",
-    };
+    } as T;
   } else {
     return {
       ...baseCashShift,
       status: "closed",
       finalAmount: Number(prismaCashShift.finalAmount),
       closedAt: prismaCashShift.closedAt!,
-    };
+    } as T;
   }
 };

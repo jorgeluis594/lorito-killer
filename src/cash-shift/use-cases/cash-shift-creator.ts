@@ -1,11 +1,11 @@
-import { CashShift } from "@/cash-shift/types";
+import { OpenCashShift } from "@/cash-shift/types";
 import {
   createCashShift,
   getLastOpenCashShift,
 } from "@/cash-shift/db_repository";
 import { response } from "@/lib/types";
 
-export default async function cashShiftCreator<T extends CashShift>(
+export default async function cashShiftCreator<T extends OpenCashShift>(
   cashShift: T,
 ): Promise<response<T>> {
   const foundCashShiftResponse = await getLastOpenCashShift(cashShift.userId);
