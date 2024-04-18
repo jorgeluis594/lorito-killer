@@ -27,6 +27,7 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import { useRouter } from "next/router";
 
 const CashShiftFormSchema = z.object({
   initialAmount: z.coerce
@@ -41,6 +42,7 @@ export default function OpenCashShiftForm() {
   const { setCashShift } = useCashShiftStore((store) => store);
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const form = useForm<CashShiftFormValues>({
     resolver: zodResolver(CashShiftFormSchema),
@@ -68,6 +70,7 @@ export default function OpenCashShiftForm() {
       setCashShift(response.data);
       form.reset();
       setOpen(false);
+      router.reload();
     }
   };
 
