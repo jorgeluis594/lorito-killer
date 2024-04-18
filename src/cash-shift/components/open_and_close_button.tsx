@@ -4,6 +4,7 @@ import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-prov
 import { Button } from "@/components/ui/button";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import OpenCashShiftForm from "@/cash-shift/components/open-cash-shift-form";
+import CloseCashShiftForm from "@/cash-shift/components/close-cash-shift-form";
 
 export default function OpenAndCloseButton() {
   const { cashShift, isLoading } = useCashShiftStore((state) => state);
@@ -17,5 +18,5 @@ export default function OpenAndCloseButton() {
     );
   }
 
-  return cashShift ? <p>Hello</p> : <OpenCashShiftForm />;
+  return cashShift ? <CloseCashShiftForm /> : <OpenCashShiftForm />;
 }

@@ -42,7 +42,7 @@ export default function OpenCashShiftForm() {
 
   const form = useForm<CashShiftFormValues>({
     resolver: zodResolver(CashShiftFormSchema),
-    defaultValues: { finalAmount: 0 },
+    defaultValues: { finalAmount: cashShift!.initialAmount },
   });
 
   const onSubmit = async (data: CashShiftFormValues) => {
