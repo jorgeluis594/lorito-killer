@@ -26,7 +26,7 @@ import { closeCashShift } from "@/cash-shift/components/actions";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 const CashShiftFormSchema = z.object({
   finalAmount: z.coerce
@@ -62,10 +62,10 @@ export default function OpenCashShiftForm() {
         title: "Exito!",
         description: "Caja cerrada correctamente",
       });
+      router.refresh();
       removeCashShift();
       form.reset();
       setOpen(false);
-      router.reload();
     }
   };
 
