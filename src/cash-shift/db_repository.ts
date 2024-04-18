@@ -56,6 +56,25 @@ export const createCashShift = async <T extends CashShift>(
   }
 };
 
+export const saveCashShift = async <T extends CashShift>(
+  cashShift: T,
+): Promise<response<T>> => {
+  try {
+    const persistedCashShift = await prisma.cashShift.update({
+      where: { id: cashShift.id },
+      data: cashShiftToPrisma(cashShift),
+      include: { orders: true, payments: true },
+    });
+
+    return {
+      success: true,
+      data: await prismaCashShiftToCashShift<T>(persistedCashShift),
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
 export const getManyCashShifts = async (
   userId: string,
 ): Promise<response<CashShiftWithOutOrders[]>> => {

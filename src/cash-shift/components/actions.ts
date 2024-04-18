@@ -38,7 +38,7 @@ export const closeCashShift = async (
     closedAt: new Date(),
   };
 
-  const response = await repository.createCashShift(closedCashShift);
+  const response = await repository.saveCashShift(closedCashShift);
   if (!response.success) {
     return {
       success: false,
