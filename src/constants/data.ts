@@ -16,13 +16,13 @@ export const navItems: NavItem[] = [
   {
     title: "Pedidos",
     href: "/dashboard/orders",
-    icon: "shoppingCart",
+    icon: "receipt",
     label: "pedidos",
   },
   {
     title: "Caja chica",
     href: "/dashboard/cash_shifts",
-    icon: "shoppingCart",
+    icon: "cashRegister",
     label: "caja chica",
   },
 ];
