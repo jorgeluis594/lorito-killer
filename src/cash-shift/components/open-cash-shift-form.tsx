@@ -28,6 +28,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import { useRouter } from "next/navigation";
+import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
 
 const CashShiftFormSchema = z.object({
   initialAmount: z.coerce
@@ -43,6 +44,7 @@ export default function OpenCashShiftForm() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { setCashShift: serCashShiftToOrder } = useOrderFormActions();
 
   const form = useForm<CashShiftFormValues>({
     resolver: zodResolver(CashShiftFormSchema),
@@ -67,8 +69,9 @@ export default function OpenCashShiftForm() {
         title: "Exito!",
         description: "Caja abierta correctamente",
       });
-      router.refresh();
       setCashShift(response.data);
+      serCashShiftToOrder(response.data);
+      router.refresh();
       form.reset();
       setOpen(false);
     }
