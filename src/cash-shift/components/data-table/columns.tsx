@@ -1,7 +1,7 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
-import { CashShiftWithOutOrders } from "@/cash-shift/types";
+import { CashShiftWithOutOrders, ClosedCashShift } from "@/cash-shift/types";
 import { format } from "date-fns";
 
 const statusSpanishMapper = {
@@ -23,6 +23,18 @@ export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
   {
     accessorKey: "closedAt",
     header: "CIERRE",
+    cell: ({ row }) => {
+      const cashShift = row.original;
+      if (cashShift.status === "closed") {
+        const closedCashShift = cashShift as ClosedCashShift;
+        return format(
+          new Date(closedCashShift.closedAt),
+          "dd/MM/yyyy hh:mm aa",
+        );
+      } else {
+        return "-";
+      }
+    },
   },
   {
     accessorKey: "initialAmount",
