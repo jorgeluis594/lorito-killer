@@ -72,9 +72,9 @@ export default function OrderData({ order }: { order: Order }) {
             <tbody>
               {order.orderItems.map((orderItem) => (
                 <tr key={orderItem.id}>
-                  <td className="pl-2 border py-1">{orderItem.product.name}</td>
+                  <td className="pl-2 border py-1">{orderItem.productName}</td>
                   <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.product.price)}
+                    {formatPrice(orderItem.productPrice)}
                   </td>
                   <td className="pl-2 border py-1">{orderItem.quantity}</td>
                   <td className="pl-2 border py-1">

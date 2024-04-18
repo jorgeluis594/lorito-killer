@@ -6,30 +6,19 @@ import {
   useOrderFormStore,
 } from "@/components/forms/order-form/order-form-provider";
 import { Button } from "@/components/ui/button";
-import { create } from "@/order/actions";
-import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PaymentModal from "@/components/forms/order-form/create-order-modal/payment-modal";
+import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
+  const cashShift = useCashShiftStore((state) => state.cashShift);
+
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const { increaseQuantity, decreaseQuantity, reset, removeOrderItem } =
     useOrderFormActions();
-
-  const { toast } = useToast();
-
-  const handleOrderCreation = async () => {
-    const response = await create(order);
-    if (response.success) {
-      reset();
-      toast({ description: "Venta realizada con éxito" });
-    } else {
-      toast({ description: "Error al realizar la venta" });
-    }
-  };
 
   useEffect(() => {
     reset();
@@ -54,7 +43,7 @@ export default function Cart() {
             <div>
               {order.orderItems.map((item) => (
                 <CartItem
-                  key={item.product.id}
+                  key={item.productId}
                   item={item}
                   increaseQuantity={increaseQuantity}
                   decreaseQuantity={decreaseQuantity}
@@ -65,7 +54,11 @@ export default function Cart() {
           </div>
         </ScrollArea>
         <div className="p-5">
-          <Button className="w-full" onClick={() => setOpenPaymentModal(true)}>
+          <Button
+            className="w-full"
+            onClick={() => setOpenPaymentModal(true)}
+            disabled={!cashShift || order.orderItems.length === 0}
+          >
             <div className="flex justify-between w-full">
               <p className="text-end text-xl font-bold">Vender!</p>
               <p className="text-end text-xl font-bold">

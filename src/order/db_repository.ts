@@ -2,7 +2,13 @@ import type { Order, OrderItem } from "@/order/types";
 import { response, successResponse } from "@/lib/types";
 import prisma from "@/lib/prisma";
 import { Product } from "@/product/types";
-import { $Enums, type Payment as PrismaPayment, Prisma } from "@prisma/client";
+import {
+  $Enums,
+  type Payment as PrismaPayment,
+  Prisma,
+  type Order as PrismaOrder,
+  type OrderItem as PrismaOrderItem,
+} from "@prisma/client";
 import { Payment } from "@/order/types";
 import PaymentMethod = $Enums.PaymentMethod;
 
@@ -10,13 +16,12 @@ async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { product, ...orderItemData } = orderItem;
+  const { productName, ...orderItemData } = orderItem;
   try {
     const persistedOrderItem = await prisma.orderItem.create({
       data: {
         ...orderItemData,
-        orderId: orderId,
-        productId: orderItem.product.id!,
+        orderId,
       },
     });
 
@@ -50,7 +55,9 @@ function mapPaymentToPrisma(payment: Payment): PaymentPrismaMatch {
   }
 }
 
-function mapPrismaToPayment(prismaPayment: PaymentPrismaMatch): Payment {
+export function mapPrismaPaymentToPayment(
+  prismaPayment: PaymentPrismaMatch,
+): Payment {
   if (prismaPayment.method === "CASH") {
     return {
       ...prismaPayment,
@@ -91,7 +98,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       ...createdOrderResponse,
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
-      payments: createdOrderResponse.payments.map(mapPrismaToPayment),
+      payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
     };
 
@@ -107,40 +114,83 @@ export const create = async (order: Order): Promise<response<Order>> => {
 
 export const getOrders = async (): Promise<response<Order[]>> => {
   try {
-    const orders = await prisma.order.findMany({
-      include: {
-        orderItems: {
-          include: {
-            product: true,
-          },
-        },
-        payments: true,
-      },
-    });
+    const orders = await prisma.order.findMany({});
 
     return {
       success: true,
-      data: orders.map(transformOrderData),
+      data: await transformOrdersData(orders),
     };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
 };
 
-function transformOrderData(prismaOrders: any): Order {
-  const { orderItems, payments, ...orderData } = prismaOrders;
-  const parsedOrderItems = orderItems.map((oi: any) => {
-    const product: Product = {
-      ...oi.product,
-      price: oi.product.price.toNumber(),
-      categories: [],
-    };
-    return { ...oi, product };
+export async function transformOrdersData(
+  prismaOrders: PrismaOrder[],
+): Promise<Order[]> {
+  const prismaOrderItems = await prisma.orderItem.findMany({
+    where: { orderId: { in: prismaOrders.map((order) => order.id) } },
   });
 
-  return {
-    ...orderData,
-    orderItems: parsedOrderItems,
-    payments: payments.map(mapPrismaToPayment),
-  };
+  const prismaOrderItemsMap = prismaOrderItems.reduce(
+    (acc: Record<string, typeof prismaOrderItems>, oi) => {
+      if (!acc[oi.orderId]) {
+        acc[oi.orderId] = [];
+      }
+      acc[oi.orderId].push(oi);
+
+      return acc;
+    },
+    {},
+  );
+
+  const payments = await prisma.payment.findMany({
+    where: { orderId: { in: prismaOrders.map((order) => order.id) } },
+  });
+
+  const prismaProducts = await prisma.product.findMany({
+    where: { id: { in: prismaOrderItems.map((oi) => oi.productId) } },
+  });
+
+  const prismaProductsMap = prismaProducts.reduce(
+    (acc: Record<string, (typeof prismaProducts)[0]>, product) => {
+      acc[product.id] = product;
+      return acc;
+    },
+    {},
+  );
+
+  return prismaOrders.map((prismaOrder: PrismaOrder) => {
+    if (!isOrderStatus(prismaOrder.status)) {
+      throw new Error(`Invalid order status: ${prismaOrder.status}`);
+    }
+
+    const parsedOrderItems = prismaOrderItemsMap[prismaOrder.id].map(
+      (oi: PrismaOrderItem) => {
+        const { orderId, ...orderItemData } = oi;
+        return {
+          ...oi,
+          productName: prismaProductsMap[oi.productId].name,
+          productPrice: prismaProductsMap[oi.productId].price.toNumber(),
+          total: oi.total.toNumber(),
+        };
+      },
+    );
+
+    return {
+      ...prismaOrder,
+      orderItems: parsedOrderItems,
+      payments: payments.map(mapPrismaPaymentToPayment),
+      total: prismaOrder.total.toNumber(),
+      status: prismaOrder.status,
+    };
+  });
+}
+
+function isOrderStatus(
+  status: any,
+): status is "pending" | "completed" | "cancelled" {
+  return (
+    status === "pending" || status === "completed" || status === "cancelled"
+  );
 }
