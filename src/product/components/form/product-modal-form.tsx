@@ -6,7 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Product, Photo } from "@/product/types";
@@ -36,11 +36,6 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
-interface ProductFormProps {
-  open: boolean;
-  setOpen: (val: boolean) => void;
-}
-
 const transformToProduct = (data: ProductFormValues): Product => {
   return {
     name: data.name,
@@ -54,7 +49,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
   };
 };
 
-const ProductModalForm: React.FC<ProductFormProps> = ({ open, setOpen }) => {
+const ProductModalForm: React.FC = () => {
   const formStore = useProductFormStore((store) => store);
   const title = formStore.isNew ? "Agregar producto" : "Editar producto";
   const description = formStore.isNew
@@ -69,6 +64,14 @@ const ProductModalForm: React.FC<ProductFormProps> = ({ open, setOpen }) => {
     resolver: zodResolver(ProductSchema),
     defaultValues: formStore.isNew ? EMPTY_PRODUCT : formStore.product,
   });
+
+  useEffect(() => {
+    if (formStore.isNew) {
+      form.reset(EMPTY_PRODUCT);
+    } else {
+      form.reset(formStore.product);
+    }
+  }, [formStore, form]);
 
   const onSubmit = async (data: ProductFormValues) => {
     if (!formStore.isNew) {
@@ -236,7 +239,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({ open, setOpen }) => {
   };
 
   return (
-    <Dialog open={open}>
+    <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="sm:max-w-[525px] sm:h-[700px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6">
           <div className="flex items-center justify-between">
