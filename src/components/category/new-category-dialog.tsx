@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Category } from "@/category/types";
 import { createCategory } from "@/category/actions";
 import { CategorySchema } from "@/category/schema";
+import { useCategoryStore } from "@/category/components/category-store-provider";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -37,7 +38,7 @@ export default function NewCategoryDialog({
   addCategory,
 }: NewSectionDialogProps) {
   const [open, setOpen] = useState(false);
-
+  const { categories , setCategories} = useCategoryStore((store) => store)
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(CategorySchema),
     defaultValues: { name: "" } as Category,
@@ -47,7 +48,8 @@ export default function NewCategoryDialog({
     const createdCategory = await createCategory(data);
 
     if (createdCategory.success) {
-      addCategory(createdCategory.data as Category);
+      setCategories([...categories, createdCategory.data])
+      addCategory(createdCategory.data);
       form.setValue("name", "");
       setOpen(false);
     } else {

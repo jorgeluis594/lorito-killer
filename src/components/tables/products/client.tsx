@@ -5,9 +5,8 @@ import { Separator } from "@/components/ui/separator";
 import { Plus } from "lucide-react";
 import { columns } from "./columns";
 import { Product } from "@/product/types";
-import { Button, buttonVariants } from "@/components/ui/button";
-import Link from "next/link";
-import { ProductoModalForm } from "@/product/components/form/product-modal-form";
+import { Button } from "@/components/ui/button";
+import ProductoModalForm from "@/product/components/form/product-modal-form";
 import { useState } from "react";
 
 interface ProductsClientProps {

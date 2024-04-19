@@ -2,8 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import * as z from "zod";
 
@@ -56,7 +55,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
   };
 };
 
-export const ProductoModalForm: React.FC<ProductFormProps> = ({
+const ProductoModalForm: React.FC<ProductFormProps> = ({
   initialProduct = null,
   open,
   setOpen
@@ -88,6 +87,7 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Producto actualizado con exito",
         });
+        setOpen(false)
       } else {
         toast({
           title: "Error",
@@ -101,6 +101,7 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Producto creado con exito",
         });
+        setOpen(false)
       } else {
         toast({
           title: "Error",
@@ -117,15 +118,6 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
     if (productCategories.find((c) => c.id === category.id)) return;
 
     await handleCategoriesUpdated([...productCategories, category]);
-  };
-
-  const onCategoryAdded = async (category: Category) => {
-    const categoryFound = categories.find((c) => c.id === category.id);
-    if (!categoryFound) {
-      setCategories([...categories, category]);
-    }
-
-    await addCategoryToProduct(category);
   };
 
   const handlePhotosUpdated = async (newPhotos: Photo[]) => {
@@ -254,7 +246,7 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[450px] sm:h-[700px] w-full flex flex-col justify-center items-center p-0">
+      <DialogContent className="sm:max-w-[525px] sm:h-[700px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6">
           <div className="flex items-center justify-between">
             <Heading title={title} description={description} />
@@ -311,7 +303,7 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Precio de Compra</FormLabel>
+                        <FormLabel>Precio Compra</FormLabel>
                         <FormControl>
                           <Input autoComplete="off" type="number" placeholder="S/ 0.00" {...field} />
                         </FormControl>
@@ -341,7 +333,7 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
                       <FormLabel>Categoría</FormLabel>
                       <div className="flex justify-between items-center gap-4">
                         <CategoriesSelector value={field.value || []} onChange={handleCategoriesUpdated} />
-                        <NewCategoryDialog addCategory={onCategoryAdded} />
+                        <NewCategoryDialog addCategory={addCategoryToProduct} />
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -386,3 +378,5 @@ export const ProductoModalForm: React.FC<ProductFormProps> = ({
     </Dialog>
   )
 }
+
+export default ProductoModalForm

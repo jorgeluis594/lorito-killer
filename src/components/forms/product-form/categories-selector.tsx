@@ -32,43 +32,43 @@ interface CategoryListProps {
   onChange: (categories: Category[]) => void;
 }
 
-const CategoryList: React.FC<CategoryListProps> = ({
-  categories,
-  value,
-  onChange,
-}) => {
-  const createHandleCheckboxChange =
-    (category: Category) => (checked: boolean) => {
-      if (checked) {
-        onChange([...value, category]);
-      } else {
-        onChange(value.filter((item) => item.id !== category.id));
-      }
-    };
+// const CategoryList: React.FC<CategoryListProps> = ({
+//   categories,
+//   value,
+//   onChange,
+// }) => {
+//   const createHandleCheckboxChange =
+//     (category: Category) => (checked: boolean) => {
+//       if (checked) {
+//         onChange([...value, category]);
+//       } else {
+//         onChange(value.filter((item) => item.id !== category.id));
+//       }
+//     };
     
-  return (
-    <>
+//   return (
+//     <>
 
-      {categories.map((category) => (
-        <div key={category.id}>
-          <div className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox
-                id={category.id}
-                checked={value.some((item) => item.id === category.id)}
-                onCheckedChange={createHandleCheckboxChange(category)}
-              />
-            </FormControl>
-            <FormLabel className="text-sm font-normal" htmlFor={category.id}>
-              {category.name}
-            </FormLabel>
-          </div>
-          <Separator className="my-2" />
-        </div>
-      ))}
-    </>
-  );
-};
+//       {categories.map((category) => (
+//         <div key={category.id}>
+//           <div className="flex flex-row items-start space-x-3 space-y-0">
+//             <FormControl>
+//               <Checkbox
+//                 id={category.id}
+//                 checked={value.some((item) => item.id === category.id)}
+//                 onCheckedChange={createHandleCheckboxChange(category)}
+//               />
+//             </FormControl>
+//             <FormLabel className="text-sm font-normal" htmlFor={category.id}>
+//               {category.name}
+//             </FormLabel>
+//           </div>
+//           <Separator className="my-2" />
+//         </div>
+//       ))}
+//     </>
+//   );
+// };
 
 const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   value,
@@ -76,12 +76,12 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
 }) => {
   const { categories, isLoading } = useCategoryStore((store) => store);
 
-  useEffect(() => {
-    categories.map(category => ({
-      label: category.name,
-      value: category.id
-    }))
-  }, [categories]);
+  // useEffect(() => {
+  //   categories.map(category => ({
+  //     label: category.name,
+  //     value: category.id
+  //   }))
+  // }, [categories]);
 
   const handelSelectedCategories = (options: Option[]) => {
     const selectedCategories = options.map(option => categories.find(c => c.id === option.value))
@@ -92,14 +92,14 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
     <div className="w-full">
       <MultipleSelector
         defaultOptions={categories.map(category => ({
-          label: category.name,
-          value: category.id
+          label: `${category.name}`,
+          value: `${category.id}`
         }))}
         onChange={handelSelectedCategories}
         placeholder="Seleccione"
         emptyIndicator={
           <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
-            no results found.
+            No hay mas resultados.
           </p>
         }
       />
