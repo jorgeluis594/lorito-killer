@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
 
@@ -33,6 +33,8 @@ import {
 } from "@/category/actions";
 import { Textarea } from "@/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
+import { DialogClose } from "@/components/ui/dialog";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -62,7 +64,9 @@ const ProductModalForm: React.FC = () => {
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
-    defaultValues: formStore.isNew ? EMPTY_PRODUCT : formStore.product,
+    defaultValues: formStore.isNew
+      ? EMPTY_PRODUCT
+      : formStore.product || EMPTY_PRODUCT,
   });
 
   useEffect(() => {
@@ -74,6 +78,8 @@ const ProductModalForm: React.FC = () => {
   }, [formStore, form]);
 
   const onSubmit = async (data: ProductFormValues) => {
+    formStore.setOpen(false);
+
     if (!formStore.isNew) {
       const res = await repository.update({
         id: formStore.product.id,
@@ -83,13 +89,13 @@ const ProductModalForm: React.FC = () => {
         toast({
           description: "Producto actualizado con exito",
         });
-        // setOpen(false);
       } else {
         toast({
           title: "Error",
           variant: "destructive",
           description: "Error al actualizar el producto, " + res.message,
         });
+        formStore.resetProduct();
       }
     } else {
       const res = await repository.create(transformToProduct(data));
@@ -97,13 +103,13 @@ const ProductModalForm: React.FC = () => {
         toast({
           description: "Producto creado con exito",
         });
-        // setOpen(false);
       } else {
         toast({
           title: "Error",
           variant: "destructive",
           description: "Error al registrar el producto, " + res.message,
         });
+        formStore.resetProduct();
       }
     }
   };
@@ -240,15 +246,15 @@ const ProductModalForm: React.FC = () => {
 
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
-      <DialogContent className="sm:max-w-[525px] sm:h-[700px] w-full flex flex-col justify-center items-center p-0">
-        <ScrollArea className="p-6">
+      <DialogContent className="sm:max-w-[750px] sm:h-[800px] w-full flex flex-col justify-center items-center p-0">
+        <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
             <Heading title={title} description={description} />
           </div>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="max-w-md mx-auto space-y-8"
+              className="mx-auto space-y-8"
             >
               <div className="space-y-4 p-2">
                 <FormField
@@ -384,13 +390,27 @@ const ProductModalForm: React.FC = () => {
                   )}
                 />
               </div>
-              <div className="flex justify-center">
-                <Button className="btn-success" type="submit">
-                  {action}
-                </Button>
-              </div>
             </form>
           </Form>
+          <DialogFooter className="sm:justify-start">
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                Cerrar
+              </Button>
+            </DialogClose>
+            <Button
+              className="btn-success"
+              type="button"
+              disabled={formStore.performingAction}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {formStore.performingAction ? (
+                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                action
+              )}
+            </Button>
+          </DialogFooter>
         </ScrollArea>
       </DialogContent>
     </Dialog>

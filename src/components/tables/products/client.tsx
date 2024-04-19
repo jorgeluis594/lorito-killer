@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import { SyntheticEvent, useState } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 interface ProductsClientProps {
   data: Product[] | null;
@@ -19,7 +20,9 @@ export default function ProductsClient({
   data,
   isLoading,
 }: ProductsClientProps) {
-  const { resetProduct, setOpen } = useProductFormStore((store) => store);
+  const { resetProduct, setOpen, performingAction } = useProductFormStore(
+    (store) => store,
+  );
 
   const onNewProductClick = (e: SyntheticEvent) => {
     e.preventDefault();
@@ -41,9 +44,19 @@ export default function ProductsClient({
           type="button"
           variant="outline"
           className="text-xs md:text-sm"
+          disabled={performingAction}
           onClick={onNewProductClick}
         >
-          <Plus className="mr-2 h-4 w-4" /> Agregar producto
+          {performingAction ? (
+            <>
+              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Guardando
+              product
+            </>
+          ) : (
+            <>
+              <Plus className="mr-2 h-4 w-4" /> Agregar producto
+            </>
+          )}
         </Button>
       </div>
       <Separator />
