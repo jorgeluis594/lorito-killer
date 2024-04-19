@@ -51,7 +51,13 @@ const transformToProduct = (data: ProductFormValues): Product => {
   };
 };
 
-const ProductModalForm: React.FC = () => {
+interface ProductFormProps {
+  onActionPerformed: () => void;
+}
+
+const ProductModalForm: React.FC<ProductFormProps> = ({
+  onActionPerformed,
+}) => {
   const formStore = useProductFormStore((store) => store);
   const title = formStore.isNew ? "Agregar producto" : "Editar producto";
   const description = formStore.isNew
@@ -89,6 +95,7 @@ const ProductModalForm: React.FC = () => {
         toast({
           description: "Producto actualizado con exito",
         });
+        onActionPerformed();
       } else {
         toast({
           title: "Error",
@@ -103,6 +110,7 @@ const ProductModalForm: React.FC = () => {
         toast({
           description: "Producto creado con exito",
         });
+        onActionPerformed();
       } else {
         toast({
           title: "Error",

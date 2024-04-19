@@ -9,19 +9,18 @@ const Products = () => {
   const [products, setProducts] = useState<null | Product[]>(null);
   const [error, setError] = useState<null | string>();
   const [isLoading, setIsLoading] = useState(true);
+  const fetchProducts = async () => {
+    const response = await getManyProducts();
+    setIsLoading(false);
+
+    if (!response.success) {
+      setError(response.message);
+    } else {
+      setProducts(response.data);
+    }
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const response = await getManyProducts();
-      setIsLoading(false);
-
-      if (!response.success) {
-        setError(response.message);
-      } else {
-        setProducts(response.data);
-      }
-    };
-
     fetchProducts();
   }, []);
 
@@ -29,7 +28,17 @@ const Products = () => {
     return <div>Error: {error}</div>;
   }
 
-  return <ProductsClient data={products} isLoading={isLoading} />;
+  const reloadProducts = () => {
+    fetchProducts();
+  };
+
+  return (
+    <ProductsClient
+      data={products}
+      isLoading={isLoading}
+      onUpsertProductPerformed={reloadProducts}
+    />
+  );
 };
 
 export default function ListProducts() {

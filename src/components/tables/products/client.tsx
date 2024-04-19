@@ -14,11 +14,13 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 interface ProductsClientProps {
   data: Product[] | null;
   isLoading: boolean;
+  onUpsertProductPerformed: () => void;
 }
 
 export default function ProductsClient({
   data,
   isLoading,
+  onUpsertProductPerformed,
 }: ProductsClientProps) {
   const { resetProduct, setOpen, performingAction } = useProductFormStore(
     (store) => store,
@@ -34,7 +36,7 @@ export default function ProductsClient({
     <>
       {/* ProductModalForm is used to edit (cell-action.tsx dispatches the
       action to edit the product and opens the modal) and create a new product.*/}
-      <ProductModalForm />
+      <ProductModalForm onActionPerformed={onUpsertProductPerformed} />
       <div className="flex items-start justify-between">
         <Heading
           title={data ? `Productos (${data.length})` : ""}
