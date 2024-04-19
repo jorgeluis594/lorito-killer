@@ -76,24 +76,19 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
 }) => {
   const { categories, isLoading } = useCategoryStore((store) => store);
 
-  // useEffect(() => {
-  //   categories.map(category => ({
-  //     label: category.name,
-  //     value: category.id
-  //   }))
-  // }, [categories]);
-
   const handelSelectedCategories = (options: Option[]) => {
-    const selectedCategories = options.map(option => categories.find(c => c.id === option.value))
-    onChange(selectedCategories as Category[])
-  }
+    const selectedCategories = options.map((option) =>
+      categories.find((c) => c.id === option.value),
+    );
+    onChange(selectedCategories as Category[]);
+  };
 
   return (
     <div className="w-full">
       <MultipleSelector
-        defaultOptions={categories.map(category => ({
+        options={categories.map((category) => ({
           label: `${category.name}`,
-          value: `${category.id}`
+          value: `${category.id}`,
         }))}
         onChange={handelSelectedCategories}
         placeholder="Seleccione"
