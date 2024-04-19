@@ -32,43 +32,41 @@ interface CategoryListProps {
   onChange: (categories: Category[]) => void;
 }
 
-// const CategoryList: React.FC<CategoryListProps> = ({
-//   categories,
-//   value,
-//   onChange,
-// }) => {
-//   const createHandleCheckboxChange =
-//     (category: Category) => (checked: boolean) => {
-//       if (checked) {
-//         onChange([...value, category]);
-//       } else {
-//         onChange(value.filter((item) => item.id !== category.id));
-//       }
-//     };
-    
-//   return (
-//     <>
-
-//       {categories.map((category) => (
-//         <div key={category.id}>
-//           <div className="flex flex-row items-start space-x-3 space-y-0">
-//             <FormControl>
-//               <Checkbox
-//                 id={category.id}
-//                 checked={value.some((item) => item.id === category.id)}
-//                 onCheckedChange={createHandleCheckboxChange(category)}
-//               />
-//             </FormControl>
-//             <FormLabel className="text-sm font-normal" htmlFor={category.id}>
-//               {category.name}
-//             </FormLabel>
-//           </div>
-//           <Separator className="my-2" />
-//         </div>
-//       ))}
-//     </>
-//   );
-// };
+export const CategoryList: React.FC<CategoryListProps> = ({
+  categories,
+  value,
+  onChange,
+}) => {
+  const createHandleCheckboxChange =
+    (category: Category) => (checked: boolean) => {
+      if (checked) {
+        onChange([...value, category]);
+      } else {
+        onChange(value.filter((item) => item.id !== category.id));
+      }
+    };
+  return (
+    <>
+      {categories.map((category) => (
+        <div key={category.id}>
+          <div className="flex flex-row items-start space-x-3 space-y-0">
+            <FormControl>
+              <Checkbox
+                id={category.id}
+                checked={value.some((item) => item.id === category.id)}
+                onCheckedChange={createHandleCheckboxChange(category)}
+              />
+            </FormControl>
+            <FormLabel className="text-sm font-normal" htmlFor={category.id}>
+              {category.name}
+            </FormLabel>
+          </div>
+          <Separator className="my-2" />
+        </div>
+      ))}
+    </>
+  );
+};
 
 const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   value,
