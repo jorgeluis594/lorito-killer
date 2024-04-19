@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
 
 import React from "react";
@@ -31,15 +31,14 @@ import {
   addCategoryToProduct as attachCategoryToProduct,
   removeCategoryFromProduct,
 } from "@/category/actions";
-import { useCategoryStore } from "@/category/components/category-store-provider";
 import { Textarea } from "@/components/ui/textarea";
+import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
 interface ProductFormProps {
-  initialProduct?: Product | null;
   open: boolean;
-  setOpen: (val: boolean) => void
+  setOpen: (val: boolean) => void;
 }
 
 const transformToProduct = (data: ProductFormValues): Product => {
@@ -55,39 +54,33 @@ const transformToProduct = (data: ProductFormValues): Product => {
   };
 };
 
-const ProductoModalForm: React.FC<ProductFormProps> = ({
-  initialProduct = null,
-  open,
-  setOpen
-}) => {
-  const title = initialProduct ? "Editar producto" : "Agregar producto";
-  const description = initialProduct
-    ? "Editar producto."
-    : "Registra un nuevo producto";
-  const action = initialProduct ? "Guardar cambios" : "Agregar Producto";
+const ProductModalForm: React.FC<ProductFormProps> = ({ open, setOpen }) => {
+  const formStore = useProductFormStore((store) => store);
+  const title = formStore.isNew ? "Agregar producto" : "Editar producto";
+  const description = formStore.isNew
+    ? "Registra un nuevo producto"
+    : "Editar producto.";
 
-  const { categories, setCategories } = useCategoryStore((store) => store);
+  const action = formStore.isNew ? "Agregar Producto" : "Guardar cambios";
 
   const { toast } = useToast();
 
-  const product = initialProduct ? initialProduct : EMPTY_PRODUCT;
-
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
-    defaultValues: product,
+    defaultValues: formStore.isNew ? EMPTY_PRODUCT : formStore.product,
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    if (initialProduct) {
+    if (!formStore.isNew) {
       const res = await repository.update({
-        id: product.id,
+        id: formStore.product.id,
         ...transformToProduct(data),
       });
       if (res.success) {
         toast({
           description: "Producto actualizado con exito",
         });
-        setOpen(false)
+        // setOpen(false);
       } else {
         toast({
           title: "Error",
@@ -101,7 +94,7 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Producto creado con exito",
         });
-        setOpen(false)
+        // setOpen(false);
       } else {
         toast({
           title: "Error",
@@ -112,9 +105,9 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const addCategoryToProduct = async (category: Category) => { //mas adelante
+  const addCategoryToProduct = async (category: Category) => {
     const productCategories = form.getValues("categories") || [];
-    if (!initialProduct) return;
+    if (formStore.isNew) return;
     if (productCategories.find((c) => c.id === category.id)) return;
 
     await handleCategoriesUpdated([...productCategories, category]);
@@ -124,8 +117,7 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
     const currentPhotos = form.getValues("photos") || [];
 
     // If the product is new, there is no need to remove the photo from the server
-    if (!initialProduct || !initialProduct.id)
-      return form.setValue("photos", newPhotos);
+    if (formStore.isNew) return form.setValue("photos", newPhotos);
 
     const photosToRemove = currentPhotos.filter(
       (photo: Photo) =>
@@ -142,8 +134,8 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
       form.setValue("photos", newPhotos);
       for (const photo of photosToRemove) {
         const removePhotoResponse = await repository.removePhoto(
-          initialProduct.id as string,
-          photo.id as string,
+          formStore.product.id!,
+          photo.id!,
         );
         if (removePhotoResponse.success) {
           toast({
@@ -161,7 +153,7 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
 
     if (photosToAppend.length) {
       const storePhotoResponse = await repository.storePhotos(
-        initialProduct.id as string,
+        formStore.product.id!,
         photosToAppend,
       );
       if (storePhotoResponse.success) {
@@ -182,8 +174,7 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
   const handleCategoriesUpdated = async (categories: Category[]) => {
     const currentCategories = form.getValues("categories") || [];
     // If the product is new, there is no need to remove the category from the server
-    if (!initialProduct || !initialProduct.id)
-      return form.setValue("categories", categories);
+    if (formStore.isNew) return form.setValue("categories", categories);
 
     const categoriesToRemove = currentCategories.filter(
       (category: Category) =>
@@ -202,8 +193,8 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
       form.setValue("categories", categories);
       for (const category of categoriesToRemove) {
         const removeCategoryReponse = await removeCategoryFromProduct(
-          initialProduct.id,
-          category.id as string,
+          formStore.product.id!,
+          category.id!,
         );
         if (removeCategoryReponse.success) {
           toast({
@@ -226,8 +217,8 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
       ]);
       for (const category of categoriesToAppend) {
         const attachCategoryResponse = await attachCategoryToProduct(
-          initialProduct.id,
-          category.id as string,
+          formStore.product.id!,
+          category.id!,
         );
         if (attachCategoryResponse.success) {
           toast({
@@ -245,7 +236,7 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open}>
       <DialogContent className="sm:max-w-[525px] sm:h-[700px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6">
           <div className="flex items-center justify-between">
@@ -254,7 +245,8 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="max-w-md mx-auto space-y-8">
+              className="max-w-md mx-auto space-y-8"
+            >
               <div className="space-y-4 p-2">
                 <FormField
                   control={form.control}
@@ -277,7 +269,11 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Código de barras</FormLabel>
                         <FormControl>
-                          <Input autoComplete="off" placeholder="Max 13 dígitos" {...field} />
+                          <Input
+                            autoComplete="off"
+                            placeholder="Max 13 dígitos"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -305,7 +301,12 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Precio Compra</FormLabel>
                         <FormControl>
-                          <Input autoComplete="off" type="number" placeholder="S/ 0.00" {...field} />
+                          <Input
+                            autoComplete="off"
+                            type="number"
+                            placeholder="S/ 0.00"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -318,7 +319,12 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Precio de venta</FormLabel>
                         <FormControl>
-                          <Input autoComplete="off" type="number" placeholder="S/ 0.00" {...field} />
+                          <Input
+                            autoComplete="off"
+                            type="number"
+                            placeholder="S/ 0.00"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -332,7 +338,10 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
                     <FormItem>
                       <FormLabel>Categoría</FormLabel>
                       <div className="flex justify-between items-center gap-4">
-                        <CategoriesSelector value={field.value || []} onChange={handleCategoriesUpdated} />
+                        <CategoriesSelector
+                          value={field.value || []}
+                          onChange={handleCategoriesUpdated}
+                        />
                         <NewCategoryDialog addCategory={addCategoryToProduct} />
                       </div>
                       <FormMessage />
@@ -346,7 +355,11 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
                     <FormItem>
                       <FormLabel>Descripción</FormLabel>
                       <FormControl>
-                        <Textarea rows={4} placeholder="Escribe la descripción del producto aqui." {...field} />
+                        <Textarea
+                          rows={4}
+                          placeholder="Escribe la descripción del producto aqui."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -358,7 +371,10 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <FileUpload onChange={handlePhotosUpdated} value={field.value || []} />
+                        <FileUpload
+                          onChange={handlePhotosUpdated}
+                          value={field.value || []}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -371,12 +387,11 @@ const ProductoModalForm: React.FC<ProductFormProps> = ({
                 </Button>
               </div>
             </form>
-
           </Form>
         </ScrollArea>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default ProductoModalForm
+export default ProductModalForm;
