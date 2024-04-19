@@ -68,6 +68,11 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   );
 };
 
+const categoryToOption = (category: Category): Option => ({
+  label: category.name,
+  value: category.id!,
+});
+
 const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   value,
   onChange,
@@ -84,10 +89,8 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   return (
     <div className="w-full">
       <MultipleSelector
-        options={categories.map((category) => ({
-          label: `${category.name}`,
-          value: `${category.id}`,
-        }))}
+        options={categories.map(categoryToOption)}
+        value={value.map(categoryToOption)}
         onChange={handelSelectedCategories}
         placeholder="Seleccione"
         emptyIndicator={
