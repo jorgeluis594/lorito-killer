@@ -260,6 +260,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   const handleSymbol = (symbol: any, matchedSymbologies: any) => {
     form.setValue("sku", symbol);
+    console.log({ symbol });
   };
 
   useSymbologyScanner(handleSymbol, {
