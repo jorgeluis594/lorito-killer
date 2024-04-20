@@ -68,24 +68,26 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   const { toast } = useToast();
 
+  // The createdAt and updatedAt fields are not part of the form
+  const { createdAt, updatedAt, ...productData } = formStore.product || {};
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
     defaultValues: formStore.isNew
       ? EMPTY_PRODUCT
-      : formStore.product || EMPTY_PRODUCT,
+      : productData || EMPTY_PRODUCT,
   });
 
   useEffect(() => {
     if (formStore.isNew) {
       form.reset(EMPTY_PRODUCT);
     } else {
-      form.reset(formStore.product);
+      form.reset(productData);
     }
   }, [formStore, form]);
 
   const onSubmit = async (data: ProductFormValues) => {
     formStore.setOpen(false);
-
     if (!formStore.isNew) {
       const res = await repository.update({
         id: formStore.product.id,
@@ -410,7 +412,14 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
               className="btn-success"
               type="button"
               disabled={formStore.performingAction}
-              onClick={form.handleSubmit(onSubmit)}
+              onClick={() => {
+                console.log(
+                  "Button clicked. Form valid:",
+                  form.formState.isValid,
+                );
+                console.log("Form errors:", form.formState.errors);
+                form.handleSubmit(onSubmit)();
+              }}
             >
               {formStore.performingAction ? (
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
