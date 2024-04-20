@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, MoneyInput } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
@@ -318,7 +318,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Precio Compra</FormLabel>
                         <FormControl>
-                          <Input
+                          <MoneyInput
                             autoComplete="off"
                             type="number"
                             placeholder="S/ 0.00"
