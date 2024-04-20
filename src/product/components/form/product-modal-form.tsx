@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
 
-import React, { useEffect } from "react";
+import { useSymbologyScanner } from "@use-symbology-scanner/react";
+
+import React, { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Product, Photo } from "@/product/types";
@@ -70,6 +72,8 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
+
+  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
@@ -254,6 +258,15 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  const handleSymbol = (symbol: any, matchedSymbologies: any) => {
+    form.setValue("sku", symbol);
+  };
+
+  useSymbologyScanner(handleSymbol, {
+    target: barcodeInputRef,
+    scannerOptions: { maxDelay: 20, suffix: "\n" },
+  });
+
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="sm:max-w-[750px] sm:h-[800px] w-full flex flex-col justify-center items-center p-0">
@@ -291,7 +304,11 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                           <Input
                             autoComplete="off"
                             placeholder="Max 13 dígitos"
-                            {...field}
+                            {...{ ...field, ref: undefined }}
+                            ref={(e) => {
+                              field.ref(e);
+                              barcodeInputRef.current = e;
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
