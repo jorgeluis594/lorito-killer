@@ -37,7 +37,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   isLoading?: boolean;
-  searchKey: string;
+  searchKey?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -97,20 +97,21 @@ export function DataTable<TData, TValue>({
     </>
   );
 
-  /* this can be used to get the selectedrows
-  console.log("value", table.getFilteredSelectedRowModel()); */
-
   return (
     <>
       <div className="flex justify-between">
-        <Input
-          placeholder={`Buscar por ${searchKey}...`}
-          value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(searchKey)?.setFilterValue(event.target.value)
-          }
-          className="w-full md:max-w-sm"
-        />
+        {searchKey && (
+          <Input
+            placeholder={`Buscar por ${searchKey}...`}
+            value={
+              (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+            }
+            onChange={(event) =>
+              table.getColumn(searchKey)?.setFilterValue(event.target.value)
+            }
+            className="w-full md:max-w-sm"
+          />
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

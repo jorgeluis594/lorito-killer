@@ -48,22 +48,45 @@ model Category {
   updatedAt DateTime @updatedAt
 }
 
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+model CashShift {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  initialAmount Decimal
+  finalAmount   Decimal?
+  orders        Order[]
+  payments      Payment[]
+  status        ShiftStatus
+  openedAt      DateTime
+  closedAt      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 model OrderItem {
-  id        String   @id @default(uuid())
-  quantity  Int
-  total     Decimal
-  productId String
-  orderId   String
-  product   Product @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  quantity     Int
+  total        Decimal
+  productId    String
+  orderId      String
+  productPrice Decimal
+  product      Product @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Order {
   id        String    @id @default(uuid())
+  cashShiftId String
   total     Decimal
   status    String
+  cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   payments  Payment[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -75,6 +98,7 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  cashShifts CashShift[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -88,10 +112,12 @@ enum PaymentMethod {
 
 model Payment {
   id        String   @id @default(uuid())
+  cashShiftId String
   amount    Decimal
   orderId   String
   data      Json?
   method    PaymentMethod
+  cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

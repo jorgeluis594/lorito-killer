@@ -23,9 +23,9 @@ export default function CartItem({
   return (
     <div className="py-2 border-b grid grid-cols-[270px,1fr,140px] transition animate-move-from-left-to-right hover:bg-accent group">
       <div className="pl-4 ">
-        <p className="text-sm">{item.product.name}</p>
+        <p className="text-sm">{item.productName}</p>
         <p className="text-sm text-muted-foreground">
-          {formatPrice(item.product.price)}
+          {formatPrice(item.productPrice)}
         </p>
       </div>
       <div className="flex justify-around items-center">

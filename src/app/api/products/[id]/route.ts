@@ -41,3 +41,12 @@ export async function DELETE(
   const response = await deleteProduct(findProductResponse.data);
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }
+
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } },
+) {
+  const response = await findProduct(params.id);
+
+  return NextResponse.json(response, { status: response.success ? 200 : 404 });
+}

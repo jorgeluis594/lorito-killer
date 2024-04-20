@@ -3,6 +3,7 @@ import { createStore } from "zustand/vanilla";
 import { Order, Payment, PaymentMethod } from "@/order/types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
+import { CashShift } from "@/cash-shift/types";
 
 export type OrderFormStore = {
   order: Order;
@@ -21,10 +22,12 @@ export type Actions = {
   removePayment: (paymentMethod: PaymentMethod) => void;
   removeAllPayments: () => void;
   resetPayment: () => void;
+  setCashShift: (cashShift: CashShift) => void;
 };
 
 const defaultInitState: OrderFormStore = {
   order: {
+    cashShiftId: "",
     orderItems: [],
     payments: [],
     status: "pending",

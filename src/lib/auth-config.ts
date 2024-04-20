@@ -8,6 +8,16 @@ export const authConfig: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
+  callbacks: {
+    jwt: async ({ token, user }) => {
+      if (user?.id) token.userId = user.id;
+
+      return token;
+    },
+    session: async ({ session, token, user }) => {
+      return { ...session, ...token };
+    },
+  },
   providers: [
     CredentialsProvider({
       credentials: {
