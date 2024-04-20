@@ -1,14 +1,13 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Category } from "@/category/types";
 import { Checkbox } from "@/components/ui/checkbox";
-
-import React from "react";
+import React, { useEffect } from "react";
 import { FormControl, FormLabel } from "@/components/ui/form";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { Skeleton } from "@/components/ui/skeleton";
+import MultipleSelector, { Option } from "@/components/ui/multiple-selector";
 
 interface SelectCategoriesProps {
   value: Category[];
@@ -33,7 +32,7 @@ interface CategoryListProps {
   onChange: (categories: Category[]) => void;
 }
 
-const CategoryList: React.FC<CategoryListProps> = ({
+export const CategoryList: React.FC<CategoryListProps> = ({
   categories,
   value,
   onChange,
@@ -46,7 +45,6 @@ const CategoryList: React.FC<CategoryListProps> = ({
         onChange(value.filter((item) => item.id !== category.id));
       }
     };
-
   return (
     <>
       {categories.map((category) => (
@@ -70,27 +68,37 @@ const CategoryList: React.FC<CategoryListProps> = ({
   );
 };
 
+const categoryToOption = (category: Category): Option => ({
+  label: category.name,
+  value: category.id!,
+});
+
 const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   value,
   onChange,
 }) => {
   const { categories, isLoading } = useCategoryStore((store) => store);
 
+  const handelSelectedCategories = (options: Option[]) => {
+    const selectedCategories = options.map((option) =>
+      categories.find((c) => c.id === option.value),
+    );
+    onChange(selectedCategories as Category[]);
+  };
+
   return (
-    <div>
-      <ScrollArea className="h-72 w-100 rounded-md border">
-        <div className="p-4">
-          {isLoading ? (
-            <CategoriesSkeleton />
-          ) : (
-            <CategoryList
-              categories={categories}
-              value={value}
-              onChange={onChange}
-            />
-          )}
-        </div>
-      </ScrollArea>
+    <div className="w-full">
+      <MultipleSelector
+        options={categories.map(categoryToOption)}
+        value={value.map(categoryToOption)}
+        onChange={handelSelectedCategories}
+        placeholder="Seleccione"
+        emptyIndicator={
+          <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
+            No hay mas resultados.
+          </p>
+        }
+      />
     </div>
   );
 };

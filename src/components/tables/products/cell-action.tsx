@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Product } from "@/product/types";
 import { deleteProduct } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
+import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 
 interface CellActionProps {
   product: Product;
@@ -22,6 +23,7 @@ interface CellActionProps {
 export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const { setProduct } = useProductFormStore((store) => store);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -63,9 +65,7 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
 
-          <DropdownMenuItem
-            onClick={() => router.push(`/dashboard/products/${product.id}`)}
-          >
+          <DropdownMenuItem onClick={() => setProduct(product)}>
             <Edit className="mr-2 h-4 w-4" /> Editar
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>
