@@ -260,12 +260,14 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   };
 
   const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
-    isBarCodeValid(symbol, 3) && form.setValue("sku", symbol);
+    if (isBarCodeValid(symbol, 3)) {
+      form.setValue("sku", symbol);
+    }
   };
 
   useSymbologyScanner(handleSymbol, {
     target: barcodeInputRef,
-    scannerOptions: { maxDelay: 500 },
+    scannerOptions: { maxDelay: 20, suffix: "\n" },
   });
 
   return (
