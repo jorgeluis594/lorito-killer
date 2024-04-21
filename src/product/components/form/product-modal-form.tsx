@@ -37,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { DialogClose } from "@/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import { isBarCodeValid } from "@/lib/utils";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -258,14 +259,13 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleSymbol = (symbol: any, matchedSymbologies: any) => {
-    form.setValue("sku", symbol);
-    console.log({ symbol });
+  const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
+    isBarCodeValid(symbol, 3) && form.setValue("sku", symbol);
   };
 
   useSymbologyScanner(handleSymbol, {
     target: barcodeInputRef,
-    scannerOptions: { maxDelay: 20, suffix: "\n" },
+    scannerOptions: { maxDelay: 500 },
   });
 
   return (
