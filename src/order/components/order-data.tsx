@@ -1,6 +1,10 @@
 import { Order, PaymentMethod } from "@/order/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice, localizeDate } from "@/lib/utils";
+import { Printer } from "lucide-react";
+import { BlobProvider } from "@react-pdf/renderer";
+import Voucher from "@/order/components/voucher";
+import { buttonVariants } from "@/components/ui/button";
 
 const paymentMethodMap = {
   cash: "Efectivo",
@@ -17,8 +21,24 @@ export default function OrderData({ order }: { order: Order }) {
   return (
     <div className="h-full mt-8 flex justify-center">
       <Card className={"w-11/12"}>
-        <CardHeader>
-          <CardTitle>Pedido {order.id}</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mb-4">
+          <CardTitle>Pedido {order.id!.substring(0, 8)}</CardTitle>
+          <BlobProvider document={<Voucher />}>
+            {({ url, loading }) =>
+              loading ? (
+                <p>Cargando...</p>
+              ) : (
+                <a
+                  className={buttonVariants({ variant: "ghost" })}
+                  href={url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Printer className="cursor-pointer h-4 w-4" />
+                </a>
+              )
+            }
+          </BlobProvider>
         </CardHeader>
         <CardContent>
           <table className="table-auto border w-full">
