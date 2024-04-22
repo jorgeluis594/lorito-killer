@@ -79,6 +79,7 @@ export default function ProductsSearcher() {
   const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
     if (isBarCodeValid(symbol, 3)) {
       setSkuValue(symbol);
+      console.log("symbol", symbol);
       findProduct(symbol).then((response) => {
         if (!response.success) {
           toast({
@@ -88,7 +89,7 @@ export default function ProductsSearcher() {
           });
           return;
         }
-
+        console.log({ data: response.data });
         addProduct(response.data);
       });
     }
