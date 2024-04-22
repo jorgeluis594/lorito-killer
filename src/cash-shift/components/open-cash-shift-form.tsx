@@ -57,6 +57,7 @@ export default function OpenCashShiftForm() {
       (session as any).userId as string,
       data.initialAmount,
     );
+    console.log({ responseCashShftCreater: response });
 
     if (!response.success && response.type === "AuthError") {
       toast({
