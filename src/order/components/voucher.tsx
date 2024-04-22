@@ -13,12 +13,13 @@ const styles = StyleSheet.create({
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "center",
+    padding: 10,
   },
   section: {
     width: "100%",
     margin: 2,
     padding: 6,
-    fontSize: 8,
+    fontSize: 10,
   },
   header: {
     fontSize: 16,
@@ -26,14 +27,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   description: {
-    fontSize: 8,
+    fontSize: 10,
     textAlign: "center",
   },
   text: {
-    fontSize: 8,
+    fontSize: 10,
   },
   textCenter: {
-    fontSize: 8,
+    fontSize: 10,
     textAlign: "center",
   },
 });
@@ -45,7 +46,11 @@ interface voucherProps {
 // Create Document Component
 const Voucher = ({ order }: voucherProps) => (
   <Document>
-    <Page size={{ width: 302.36 }} style={styles.page}>
+    <Page
+      size={{ width: 215, height: 842 }}
+      style={styles.page}
+      orientation="portrait"
+    >
       <View
         style={[
           styles.section,
@@ -138,12 +143,13 @@ const Voucher = ({ order }: voucherProps) => (
             flexDirection: "row",
             justifyContent: "flex-start",
             lineHeight: "1.2px",
+            marginBottom: "2px",
           }}
         >
-          <Text style={{ fontSize: "8px", fontWeight: "black" }}>
+          <Text style={{ fontSize: "10px", fontWeight: "black" }}>
             Total de lineas:{" "}
           </Text>
-          <Text style={{ fontSize: "8px" }}>{order.orderItems.length}</Text>
+          <Text style={{ fontSize: "10px" }}>{order.orderItems.length}</Text>
         </View>
         <View
           style={{
@@ -153,10 +159,10 @@ const Voucher = ({ order }: voucherProps) => (
             lineHeight: "2px",
           }}
         >
-          <Text style={{ fontSize: "8px", fontWeight: "black" }}>
+          <Text style={{ fontSize: "10px", fontWeight: "black" }}>
             Total de productos:{" "}
           </Text>
-          <Text style={{ fontSize: "8px" }}>
+          <Text style={{ fontSize: "10px" }}>
             {order.orderItems.reduce((acc, oi) => acc + oi.quantity, 0)}
           </Text>
         </View>
