@@ -1,5 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { PaymentMethod } from "@/order/types";
+import { format } from "date-fns";
 
 const formater = new Intl.NumberFormat("es-PE", {
   style: "currency",
@@ -38,6 +40,9 @@ export const localizeDate = (data: Date) =>
     minute: "2-digit",
   });
 
+export const shortLocalizeDate = (date: Date): string =>
+  format(date, "dd/MM/yyyy hh:mm aa");
+
 export const isBarCodeValid = (
   barcode: string,
   allowedRepetitions: number,
@@ -60,4 +65,15 @@ export const isBarCodeValid = (
   });
 
   return repeatedCharactersNum <= 3;
+};
+
+const paymentMethodMap = {
+  cash: "Efectivo",
+  credit_card: "Tarjeta de crédito",
+  debit_card: "Tarjeta de débito",
+  wallet: "Billetera digital",
+};
+
+export const paymentMethodToText = (method: PaymentMethod) => {
+  return paymentMethodMap[method];
 };
