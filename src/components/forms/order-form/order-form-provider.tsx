@@ -136,14 +136,17 @@ export const useOrderFormActions = (): Actions => {
       increaseQuantity(orderItem.id!);
     } else {
       const orderItemId = crypto.randomUUID();
-      order.orderItems.push({
+      const oi = {
         id: orderItemId,
         productId: product.id!,
         productName: product.name,
         productPrice: product.price,
         quantity: 1,
         total: product.price,
-      });
+      };
+      order.orderItems.push(oi);
+
+      console.log("From action", { order, oi });
 
       orderFormStoreContext.setState(() => {
         return { order: { ...order, orderItems: [...order.orderItems] } };
