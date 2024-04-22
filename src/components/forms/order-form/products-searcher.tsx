@@ -103,23 +103,21 @@ export default function ProductsSearcher() {
 
   const onKeyDown = (ev: KeyboardEvent) => {
     if (ev.keyCode === 13) {
-      setTimeout(() => {
-        findProduct(skuValueRef.current).then((response) => {
-          if (!response.success) {
-            toast({
-              title: "Error",
-              variant: "destructive",
-              description: `Producto con sku: ${skuValueRef.current} no encontrado`,
-            });
-            return;
-          }
+      findProduct(skuValueRef.current).then((response) => {
+        if (!response.success) {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: `Producto con sku: ${skuValueRef.current} no encontrado`,
+          });
+          return;
+        }
 
-          addProduct(response.data);
-          setSkuValue("");
-        });
+        addProduct(response.data);
+        setSkuValue("");
+      });
 
-        barcodeInputRef.current?.focus();
-      }, 50);
+      barcodeInputRef.current?.focus();
     }
   };
 

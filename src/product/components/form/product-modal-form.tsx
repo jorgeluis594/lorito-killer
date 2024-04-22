@@ -335,7 +335,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="price"
+                    name="purchasePrice"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Precio Compra</FormLabel>
@@ -353,7 +353,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                   />
                   <FormField
                     control={form.control}
-                    name="purchasePrice"
+                    name="price"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Precio de venta</FormLabel>
