@@ -101,8 +101,8 @@ export default function ProductsSearcher() {
     skuValueRef.current = skuValue;
   }, [skuValue]);
 
-  const onKeyPress = (ev: KeyboardEvent) => {
-    console.log({ skuValue: skuValueRef.current });
+  const onKeyDown = (ev: KeyboardEvent) => {
+    console.log("from onKeyDown", { skuValue: skuValueRef.current });
     if (ev.keyCode === 13) {
       findProduct(skuValueRef.current).then((response) => {
         if (!response.success) {
@@ -122,18 +122,14 @@ export default function ProductsSearcher() {
   useEffect(() => {
     const currentElement = barcodeInputRef.current;
     if (currentElement) {
-      currentElement.addEventListener("keypress", onKeyPress);
+      currentElement.addEventListener("keydown", onKeyDown);
     }
     return () => {
       if (currentElement) {
-        currentElement.removeEventListener("keypress", onKeyPress);
+        currentElement.removeEventListener("keydown", onKeyDown);
       }
     };
   }, []);
-
-  useEffect(() => {
-    console.log({ skuValue });
-  }, [skuValue]);
 
   return (
     <div className="h-full w-100 p-5 pb-0 grid grid-rows-[70px_1fr]">
