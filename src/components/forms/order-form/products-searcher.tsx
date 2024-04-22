@@ -104,8 +104,8 @@ export default function ProductsSearcher() {
   const onKeyDown = (ev: KeyboardEvent) => {
     if (ev.keyCode === 13) {
       setTimeout(() => {
-        console.log("from onKeyDown", { skuValue: skuValueRef.current });
         findProduct(skuValueRef.current).then((response) => {
+          console.log("from onKeyDown", { skuValue: skuValueRef.current });
           if (!response.success) {
             toast({
               title: "Error",
@@ -114,6 +114,7 @@ export default function ProductsSearcher() {
             });
             return;
           }
+          console.log({ product: response.data });
           addProduct(response.data);
           setSkuValue("");
         });
