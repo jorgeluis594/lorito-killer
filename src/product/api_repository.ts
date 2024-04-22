@@ -135,14 +135,13 @@ export const findProduct = async (id: string): Promise<response<Product>> => {
   }
 
   const productResponse = await res.json();
-
   return {
     ...productResponse,
     data: {
       ...productResponse.data,
-      price: parseFloat(productResponse.price),
-      createdAt: new Date(productResponse.createdAt),
-      updatedAt: new Date(productResponse.updatedAt),
+      price: parseFloat(productResponse.data.price),
+      createdAt: new Date(productResponse.data.createdAt),
+      updatedAt: new Date(productResponse.data.updatedAt),
     },
   };
 };
