@@ -100,6 +100,46 @@ export default function ProductsSearcher() {
     scannerOptions: { maxDelay: 50, suffix: "\n" },
   });
 
+  const skuValueRef = useRef(skuValue);
+
+  useEffect(() => {
+    skuValueRef.current = skuValue;
+  }, [skuValue]);
+
+  const onKeyPress = (ev: KeyboardEvent) => {
+    console.log({ skuValue: skuValueRef.current });
+    if (ev.keyCode === 13) {
+      findProduct(skuValueRef.current).then((response) => {
+        if (!response.success) {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: `Producto con sku: ${skuValueRef.current} no encontrado`,
+          });
+          return;
+        }
+        addProduct(response.data);
+        setSkuValue("");
+      });
+    }
+  };
+
+  useEffect(() => {
+    const currentElement = barcodeInputRef.current;
+    if (currentElement) {
+      currentElement.addEventListener("keypress", onKeyPress);
+    }
+    return () => {
+      if (currentElement) {
+        currentElement.removeEventListener("keypress", onKeyPress);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log({ skuValue });
+  }, [skuValue]);
+
   return (
     <div className="h-full w-100 p-5 pb-0 grid grid-rows-[70px_1fr]">
       <div className="w-full mb-4">
