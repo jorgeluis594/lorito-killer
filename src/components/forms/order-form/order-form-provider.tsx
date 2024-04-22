@@ -125,6 +125,7 @@ export const useOrderFormActions = (): Actions => {
   };
 
   const addProduct = (product: Product) => {
+    console.log("Add product from action", { product });
     const { order } = orderFormStoreContext.getState();
 
     const orderItem = order.orderItems.find(
