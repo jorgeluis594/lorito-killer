@@ -181,6 +181,7 @@ export default function ProductsSearcher() {
               autoFocus={true}
               value={skuValue}
               onChange={(e) => setSkuValue(e.target.value)}
+              ref={barcodeInputRef}
             />
           </div>
         </div>
