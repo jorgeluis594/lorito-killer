@@ -29,6 +29,7 @@ import { useState } from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import { useRouter } from "next/navigation";
 import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
+import { signOut } from "next-auth/react";
 
 const CashShiftFormSchema = z.object({
   initialAmount: z.coerce
@@ -56,6 +57,16 @@ export default function OpenCashShiftForm() {
       (session as any).userId as string,
       data.initialAmount,
     );
+
+    if (!response.success && response.type === "AuthError") {
+      toast({
+        title: "Error",
+        description: "Inicia sesión de nuevo",
+        variant: "destructive",
+      });
+      await signOut({ callbackUrl: "/login" });
+      return;
+    }
 
     if (!response.success) {
       toast({

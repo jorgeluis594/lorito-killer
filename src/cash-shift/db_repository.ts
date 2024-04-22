@@ -15,6 +15,11 @@ import {
 } from "@/order/db_repository";
 import PaymentMethod = $Enums.PaymentMethod;
 
+// improve this
+export const userExists = async (userId: string) => {
+  return !!(await prisma.user.findUnique({ where: { id: userId } }));
+};
+
 export const createCashShift = async <T extends CashShift>(
   cashShift: T,
 ): Promise<response<T>> => {
