@@ -17,6 +17,14 @@ export const getLastOpenCashShift = async (): Promise<
 > => {
   const response = await fetch("/api/cash_shifts/last_open");
 
+  if (response.status === 401) {
+    return {
+      success: false,
+      message: "Usuario no autenticado",
+      type: "AuthError",
+    };
+  }
+
   if (response.status === 404) {
     return { success: false, message: "No hay caja chica abierta" };
   }

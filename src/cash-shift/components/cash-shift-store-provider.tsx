@@ -17,6 +17,7 @@ import {
 } from "@/cash-shift/components/store";
 import { getLastOpenCashShift } from "@/cash-shift/api_repository";
 import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
+import { signOut } from "next-auth/react";
 
 export const CashShiftStoreContext =
   createContext<StoreApi<CashShiftStore> | null>(null);
@@ -40,6 +41,10 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
           setCashShift({ ...response.data, orders: sortedOrders });
           setCashShiftToOrder(response.data);
         } else {
+          if (response.type === "AuthError") {
+            signOut({ callbackUrl: "/login" });
+            return;
+          }
           setCashShift(null);
           toast({
             description:
