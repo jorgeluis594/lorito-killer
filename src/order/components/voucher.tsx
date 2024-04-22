@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "center",
-    padding: 10,
+    padding: 4,
   },
   section: {
     width: "100%",
@@ -47,7 +47,7 @@ interface voucherProps {
 const Voucher = ({ order }: voucherProps) => (
   <Document>
     <Page
-      size={{ width: 215, height: 842 }}
+      size={{ width: 215, height: 595 }}
       style={styles.page}
       orientation="portrait"
     >
