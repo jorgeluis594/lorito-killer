@@ -78,18 +78,38 @@ const Voucher = ({ order }: voucherProps) => (
         </Text>
       </View>
       <View style={[styles.section, { marginTop: "5px" }]}>
+        <View
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
+            marginBottom: "5px",
+          }}
+        >
+          <Text style={[styles.text, { width: "45%" }]}>Producto</Text>
+          <Text style={[styles.text, { width: "15%", textAlign: "center" }]}>
+            Cantidad
+          </Text>
+          <Text style={[styles.text, { width: "20%", textAlign: "center" }]}>
+            Precio
+          </Text>
+          <Text style={[styles.text, { width: "20%", textAlign: "right" }]}>
+            Total
+          </Text>
+        </View>
+
         {order.orderItems.map((orderItem, index) => (
           <View
             key={index}
             style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}
           >
-            <Text style={[styles.text, { width: "50%" }]}>
+            <Text style={[styles.text, { width: "45%" }]}>
               {orderItem.productName}
             </Text>
-            <Text style={[styles.text, { width: "10%" }]}>
+            <Text style={[styles.text, { width: "15%", textAlign: "center" }]}>
               {orderItem.quantity}
             </Text>
-            <Text style={[styles.text, { width: "20%" }]}>
+            <Text style={[styles.text, { width: "20%", textAlign: "center" }]}>
               {formatPrice(orderItem.productPrice)}
             </Text>
             <Text style={[styles.text, { width: "20%", textAlign: "right" }]}>
