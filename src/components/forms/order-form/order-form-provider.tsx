@@ -146,8 +146,6 @@ export const useOrderFormActions = (): Actions => {
       };
       order.orderItems.push(oi);
 
-      console.log("From action", { order, oi });
-
       orderFormStoreContext.setState(() => {
         return { order: { ...order, orderItems: [...order.orderItems] } };
       });

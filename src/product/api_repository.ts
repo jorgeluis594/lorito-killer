@@ -139,7 +139,7 @@ export const findProduct = async (id: string): Promise<response<Product>> => {
   return {
     ...productResponse,
     data: {
-      ...productResponse,
+      ...productResponse.data,
       createdAt: new Date(productResponse.createdAt),
       updatedAt: new Date(productResponse.updatedAt),
     },
