@@ -119,5 +119,14 @@ export const findProduct = async (id: string): Promise<response<Product>> => {
     return { success: false, message: "Producto no encontrado" };
   }
 
-  return await res.json();
+  const productResponse = await res.json();
+
+  return {
+    ...productResponse,
+    data: {
+      ...productResponse,
+      createdAt: new Date(productResponse.createdAt),
+      updatedAt: new Date(productResponse.updatedAt),
+    },
+  };
 };

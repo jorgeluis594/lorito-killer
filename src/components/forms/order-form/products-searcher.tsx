@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -8,7 +8,7 @@ import { Product } from "@/product/types";
 import { getMany, type GetManyParams } from "@/product/api_repository";
 import { useToast } from "@/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
-import { debounce } from "@/lib/utils";
+import { debounce, isBarCodeValid } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -20,6 +20,9 @@ import {
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { SortOptions } from "@/product/types";
 import { sortOptions } from "@/product/constants";
+import { useSymbologyScanner } from "@use-symbology-scanner/react";
+import { findProduct } from "@/product/api_repository";
+import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
 
 export default function ProductsSearcher() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,6 +31,8 @@ export default function ProductsSearcher() {
   const { categories } = useCategoryStore((store) => store);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [skuValue, setSkuValue] = useState<string>("");
+  const { addProduct } = useOrderFormActions();
 
   const searchProduct = async () => {
     const params: GetManyParams = { categoryId, sortBy: sortValue };
@@ -69,6 +74,31 @@ export default function ProductsSearcher() {
     setSortValue(sortKey);
   };
 
+  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
+    if (isBarCodeValid(symbol, 3)) {
+      setSkuValue(symbol);
+      findProduct(symbol).then((response) => {
+        if (!response.success) {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: `Producto con sku: ${symbol} no encontrado`,
+          });
+          return;
+        }
+
+        addProduct(response.data);
+      });
+    }
+  };
+
+  useSymbologyScanner(handleSymbol, {
+    target: barcodeInputRef,
+    scannerOptions: { maxDelay: 20, suffix: "\n" },
+  });
+
   return (
     <div className="h-full w-100 p-5 pb-0 grid grid-rows-[70px_1fr]">
       <div className="w-full mb-4">
@@ -103,7 +133,21 @@ export default function ProductsSearcher() {
           <Button type="button" onClick={onSearchSubmit}>
             <Search className="h-4 w-5" />
           </Button>
-          <Input placeholder="Nombre del producto" onChange={onSearchChange} />
+          <div className="grid grid-cols-4 gap-3">
+            <Input
+              placeholder="Nombre del producto"
+              className="col-span-2"
+              onChange={onSearchChange}
+            />
+            <Input
+              placeholder="Código de barra"
+              className="col-span-1"
+              autoFocus={true}
+              value={skuValue}
+              ref={barcodeInputRef}
+              onChange={(e) => setSkuValue(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
