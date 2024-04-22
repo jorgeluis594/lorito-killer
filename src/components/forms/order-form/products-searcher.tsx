@@ -97,7 +97,7 @@ export default function ProductsSearcher() {
 
   useSymbologyScanner(handleSymbol, {
     target: barcodeInputRef,
-    scannerOptions: { maxDelay: 20, suffix: "\n" },
+    scannerOptions: { maxDelay: 50 },
   });
 
   return (
