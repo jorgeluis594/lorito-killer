@@ -33,8 +33,9 @@ export const createCashShift = async (
     openedAt: new Date(),
   };
 
+  console.log({ cashShift });
   const cashShiftResponse = await repository.createCashShift(cashShift);
-  console.log({ cashShiftResponse });
+  console.error({ cashShiftResponse });
   return cashShiftResponse;
 };
 
