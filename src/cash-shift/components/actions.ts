@@ -9,9 +9,8 @@ export const createCashShift = async (
   userId: string,
   initialAmount: number,
 ): Promise<response<OpenCashShift>> => {
-  console.log({ userId });
-  const userExists = await repository.userExists(userId);
-  if (!userExists) {
+  const userResponse = await repository.userByEmail(userId);
+  if (!userResponse.success) {
     return {
       success: false,
       message: "Usuario no existe",
@@ -21,7 +20,7 @@ export const createCashShift = async (
 
   const cashShift: OpenCashShift = {
     id: crypto.randomUUID(),
-    userId: userId,
+    userId: userResponse.data.id,
     initialAmount: initialAmount,
     totalSales: 0,
     totalCashSales: 0,
@@ -34,10 +33,7 @@ export const createCashShift = async (
     openedAt: new Date(),
   };
 
-  console.log({ cashShift });
-  const cashShiftResponse = await cashShiftCreator(cashShift);
-  console.error({ cashShiftResponse });
-  return cashShiftResponse;
+  return await cashShiftCreator(cashShift);
 };
 
 export const closeCashShift = async (

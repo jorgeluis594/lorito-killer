@@ -53,12 +53,10 @@ export default function OpenCashShiftForm() {
   });
 
   const onSubmit = async (data: CashShiftFormValues) => {
-    console.log({ session });
     const response = await createCashShift(
-      (session as any).userId as string,
+      session!.user!.email!,
       data.initialAmount,
     );
-    console.log({ responseCashShftCreater: response });
 
     if (!response.success && response.type === "AuthError") {
       toast({
