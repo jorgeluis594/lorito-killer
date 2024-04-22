@@ -53,6 +53,7 @@ export default function OpenCashShiftForm() {
   });
 
   const onSubmit = async (data: CashShiftFormValues) => {
+    console.log({ session });
     const response = await createCashShift(
       (session as any).userId as string,
       data.initialAmount,
