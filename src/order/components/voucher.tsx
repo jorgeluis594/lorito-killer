@@ -106,7 +106,12 @@ const Voucher = ({ order }: voucherProps) => (
         {order.orderItems.map((orderItem, index) => (
           <View
             key={index}
-            style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginBottom: "1.5px",
+            }}
           >
             <Text style={[styles.text, { width: "45%" }]}>
               {orderItem.productName}
@@ -143,7 +148,6 @@ const Voucher = ({ order }: voucherProps) => (
             flexDirection: "row",
             justifyContent: "flex-start",
             lineHeight: "1.2px",
-            marginBottom: "2px",
           }}
         >
           <Text style={{ fontSize: "10px", fontWeight: "black" }}>
