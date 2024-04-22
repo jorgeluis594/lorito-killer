@@ -51,6 +51,8 @@ export const isBarCodeValid = (
   let currentRepetitions = 0;
   let repeatedCharactersNum = 0;
 
+  console.log({ barcode });
+
   barcode.split("").forEach((character) => {
     if (currentCharacter !== character) {
       if (currentRepetitions > allowedRepetitions) {
