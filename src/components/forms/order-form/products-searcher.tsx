@@ -95,11 +95,6 @@ export default function ProductsSearcher() {
     }
   };
 
-  useSymbologyScanner(handleSymbol, {
-    target: barcodeInputRef,
-    scannerOptions: { maxDelay: 50, suffix: "\n" },
-  });
-
   const skuValueRef = useRef(skuValue);
 
   useEffect(() => {
@@ -185,7 +180,6 @@ export default function ProductsSearcher() {
               className="col-span-1"
               autoFocus={true}
               value={skuValue}
-              ref={barcodeInputRef}
               onChange={(e) => setSkuValue(e.target.value)}
             />
           </div>
