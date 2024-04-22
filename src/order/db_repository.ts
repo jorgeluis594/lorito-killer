@@ -147,6 +147,13 @@ export async function transformOrdersData(
   const payments = await prisma.payment.findMany({
     where: { orderId: { in: prismaOrders.map((order) => order.id) } },
   });
+  const orderPayments = payments.reduce(
+    (acc: Record<string, PrismaPayment[]>, payment) => {
+      acc[payment.orderId] = [...(acc[payment.orderId] || []), payment];
+      return acc;
+    },
+    {},
+  );
 
   const prismaProducts = await prisma.product.findMany({
     where: { id: { in: prismaOrderItems.map((oi) => oi.productId) } },
@@ -180,7 +187,9 @@ export async function transformOrdersData(
     return {
       ...prismaOrder,
       orderItems: parsedOrderItems,
-      payments: payments.map(mapPrismaPaymentToPayment),
+      payments: (orderPayments[prismaOrder.id] || []).map(
+        mapPrismaPaymentToPayment,
+      ),
       total: prismaOrder.total.toNumber(),
       status: prismaOrder.status,
     };
