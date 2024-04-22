@@ -33,6 +33,9 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 10,
   },
+  listProductsText: {
+    fontSize: "8px",
+  },
   textCenter: {
     fontSize: 10,
     textAlign: "center",
@@ -110,19 +113,34 @@ const Voucher = ({ order }: voucherProps) => (
               display: "flex",
               flexDirection: "row",
               flexWrap: "wrap",
-              marginBottom: "1.5px",
+              marginBottom: "3px",
             }}
           >
-            <Text style={[styles.text, { width: "45%" }]}>
+            <Text style={[styles.listProductsText, { width: "45%" }]}>
               {orderItem.productName}
             </Text>
-            <Text style={[styles.text, { width: "15%", textAlign: "center" }]}>
+            <Text
+              style={[
+                styles.listProductsText,
+                { width: "15%", textAlign: "center" },
+              ]}
+            >
               {orderItem.quantity}
             </Text>
-            <Text style={[styles.text, { width: "20%", textAlign: "center" }]}>
+            <Text
+              style={[
+                styles.listProductsText,
+                { width: "20%", textAlign: "center" },
+              ]}
+            >
               {formatPrice(orderItem.productPrice)}
             </Text>
-            <Text style={[styles.text, { width: "20%", textAlign: "right" }]}>
+            <Text
+              style={[
+                styles.listProductsText,
+                { width: "20%", textAlign: "right" },
+              ]}
+            >
               {formatPrice(orderItem.total)}
             </Text>
           </View>
