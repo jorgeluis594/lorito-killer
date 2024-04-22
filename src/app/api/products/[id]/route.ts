@@ -2,6 +2,7 @@ import {
   find as findProduct,
   update as UpdateProduct,
   deleteProduct,
+  findBy,
 } from "@/product/db_repository";
 import { Product } from "@/product/types";
 import { NextResponse } from "next/server";
@@ -46,7 +47,10 @@ export async function GET(
   _req: Request,
   { params }: { params: { id: string } },
 ) {
-  const response = await findProduct(params.id);
+  let response = await findProduct(params.id);
+  if (!response.success) {
+    response = await findBy({ sku: params.id });
+  }
 
   return NextResponse.json(response, { status: response.success ? 200 : 404 });
 }
