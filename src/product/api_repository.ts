@@ -87,8 +87,23 @@ export const getMany = async (
   if (!res.ok) {
     return { success: false, message: "Error fetching products" };
   }
+  const data = (await res.json()) as response<Product[]>;
+  if (!data.success) {
+    return data;
+  }
 
-  return await res.json();
+  return {
+    ...data,
+    data: data.data.map((product) => ({
+      ...product,
+      createdAt: new Date(product.createdAt!),
+      updatedAt: new Date(product.updatedAt!),
+      photos: (product.photos || []).map((photo) => ({
+        ...photo,
+        createdAt: new Date(photo.createdAt!),
+      })),
+    })),
+  };
 };
 
 export const search = async (
