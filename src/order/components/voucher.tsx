@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   text: {
-    fontSize: 10,
+    fontSize: "10px",
   },
   listProductsText: {
     fontSize: "8px",
@@ -94,10 +94,10 @@ const Voucher = ({ order }: voucherProps) => (
             marginBottom: "5px",
           }}
         >
-          <Text style={[styles.text, { width: "45%" }]}>Producto</Text>
           <Text style={[styles.text, { width: "15%", textAlign: "center" }]}>
             Cantidad
           </Text>
+          <Text style={[styles.text, { width: "45%" }]}>Producto</Text>
           <Text style={[styles.text, { width: "20%", textAlign: "center" }]}>
             Precio
           </Text>
@@ -116,9 +116,6 @@ const Voucher = ({ order }: voucherProps) => (
               marginBottom: "3px",
             }}
           >
-            <Text style={[styles.listProductsText, { width: "45%" }]}>
-              {orderItem.productName}
-            </Text>
             <Text
               style={[
                 styles.listProductsText,
@@ -126,6 +123,9 @@ const Voucher = ({ order }: voucherProps) => (
               ]}
             >
               {orderItem.quantity}
+            </Text>
+            <Text style={[styles.listProductsText, { width: "45%" }]}>
+              {orderItem.productName}
             </Text>
             <Text
               style={[

@@ -134,6 +134,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               onPdfCreated={() => {
                 onOpenChange(false);
                 reset();
+                setOrderCreated(null);
               }}
             />
           ) : (
