@@ -46,6 +46,16 @@ function mapPaymentToPrisma(payment: Payment): PaymentPrismaMatch {
       amount: new Prisma.Decimal(paymentData.amount),
       data: { received_amount, change },
     };
+  } else if (payment.method == "wallet") {
+    return {
+      ...payment,
+      method: payment.method.toUpperCase() as PaymentMethod,
+      amount: new Prisma.Decimal(payment.amount),
+      data: {
+        operationCode: payment.operationCode,
+        name: payment.name,
+      },
+    };
   } else {
     return {
       ...payment,
@@ -65,6 +75,14 @@ export function mapPrismaPaymentToPayment(
       method: prismaPayment.method.toLowerCase() as any,
       received_amount: ((prismaPayment.data as any) || {}).received_amount,
       change: ((prismaPayment.data as any) || {}).change,
+    };
+  } else if (prismaPayment.method === "WALLET") {
+    return {
+      ...prismaPayment,
+      amount: prismaPayment.amount.toNumber(),
+      method: prismaPayment.method.toLowerCase() as any,
+      operationCode: ((prismaPayment.data as any) || {}).operationCode,
+      name: ((prismaPayment.data as any) || {}).name,
     };
   } else {
     return {
