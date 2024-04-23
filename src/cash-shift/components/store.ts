@@ -32,7 +32,7 @@ export const createCashShiftStore = (
     addOrder: (order: Order) => {
       set((state) => {
         if (state.cashShift) {
-          if (!state.cashShift.orders.find((o) => o.id === order.id)) {
+          if (state.cashShift.orders.find((o) => o.id === order.id)) {
             return state;
           }
 
