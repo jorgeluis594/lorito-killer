@@ -17,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/input";
 import * as z from "zod";
 import { BadgeDollarSign } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -98,7 +98,12 @@ export default function OpenCashShiftForm() {
                   <FormItem>
                     <FormLabel>Monto inicial</FormLabel>
                     <FormControl>
-                      <Input placeholder="Monto inicial" {...field} />
+                      <MoneyInput
+                        placeholder="Monto inicial" 
+                        autoComplete="off"
+                        type="number"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

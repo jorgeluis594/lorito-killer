@@ -6,7 +6,7 @@ import {
   useOrderFormStore,
 } from "@/components/forms/order-form/order-form-provider";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
+import { Input, MoneyInput } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCallback, useEffect, useState } from "react";
 import type {
@@ -107,7 +107,7 @@ export const CashPayment: React.FC = () => {
     <div className="mt-4">
       <div className="my-3">
         <Label>Monto recibido</Label>
-        <Input
+        <MoneyInput
           placeholder="Ingrese monto"
           type="number"
           value={payment.received_amount || ""}
@@ -150,7 +150,7 @@ export const WalletPayment: React.FC = () => {
     <div className="mt-4">
       <div className="my-3">
         <Label>Monto recibido</Label>
-        <Input type="number" value={orderTotal} disabled />
+        <MoneyInput type="number" value={orderTotal} disabled />
       </div>
     </div>
   );
@@ -178,7 +178,7 @@ export const CardPayment: React.FC = () => {
     <div className="mt-4">
       <div className="my-3">
         <Label>Monto recibido</Label>
-        <Input
+        <MoneyInput
           placeholder="Ingrese monto"
           type="number"
           value={orderTotal}
@@ -280,7 +280,7 @@ export const CombinedPayment: React.FC = () => {
       </p>
       <div className="my-3">
         <Label>Efectivo</Label>
-        <Input
+        <MoneyInput
           placeholder="Ingrese monto"
           type="number"
           value={cashAmount || ""}
@@ -289,7 +289,7 @@ export const CombinedPayment: React.FC = () => {
       </div>
       <div className="my-3">
         <Label>Tarjeta de crédito</Label>
-        <Input
+        <MoneyInput
           placeholder="Ingrese monto"
           type="number"
           value={creditCardAmount}
@@ -298,7 +298,7 @@ export const CombinedPayment: React.FC = () => {
       </div>
       <div className="my-3">
         <Label>Tarjeta de débito</Label>
-        <Input
+        <MoneyInput
           placeholder="Ingrese monto"
           type="number"
           value={debitCardAmount}
@@ -307,7 +307,7 @@ export const CombinedPayment: React.FC = () => {
       </div>
       <div className="my-3">
         <Label>Billetera virtual (Yape, Plin, etc)</Label>
-        <Input
+        <MoneyInput
           placeholder="Ingrese monto"
           type="number"
           value={walletAmount}

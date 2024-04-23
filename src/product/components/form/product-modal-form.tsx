@@ -338,7 +338,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Precio de venta</FormLabel>
                         <FormControl>
-                          <Input
+                          <MoneyInput
                             autoComplete="off"
                             type="number"
                             placeholder="S/ 0.00"
