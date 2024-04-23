@@ -6,8 +6,6 @@ import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
 
-import { useSymbologyScanner } from "@use-symbology-scanner/react";
-
 import React, { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
