@@ -23,6 +23,9 @@ import {
 import { create } from "@/order/actions";
 import { useToast } from "@/components/ui/use-toast";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import Voucher from "@/order/components/voucher";
+import React, { useState } from "react";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 const PaymentViews = {
   none: NonePayment,
@@ -46,8 +49,10 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const { addOrder } = useCashShiftStore((state) => state);
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
+  const [creatingOrder, setCreatingOrder] = useState(false);
 
   const handleOrderCreation = async () => {
+    setCreatingOrder(true);
     const response = await create({ ...order, status: "completed" });
     if (response.success) {
       reset();
@@ -63,7 +68,34 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           "Error al realizar la venta, comuniquese con nostros para solucionar el problema",
       });
     }
+    setCreatingOrder(false);
     onOpenChange(false);
+  };
+
+  const CreateOrderButton = ({ amountIsValid }: { amountIsValid: boolean }) => {
+    if (creatingOrder) {
+      return (
+        <Button className="btn-success" type="button" disabled={true}>
+          <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Realizando pago
+        </Button>
+      );
+    } else if (paymentMode !== "none") {
+      return (
+        <Button
+          type="button"
+          disabled={amountIsValid}
+          onClick={handleOrderCreation}
+        >
+          Realiza pago
+        </Button>
+      );
+    } else {
+      return (
+        <Button type="button" disabled={true}>
+          Realiza pago
+        </Button>
+      );
+    }
   };
 
   return (
@@ -95,15 +127,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           <PaymentView />
         </div>
         <DialogFooter>
-          {paymentMode !== "none" && (
-            <Button
-              type="button"
-              disabled={getPaidAmount() !== order.total}
-              onClick={handleOrderCreation}
-            >
-              Realiza pago
-            </Button>
-          )}
+          <CreateOrderButton amountIsValid={getPaidAmount() !== order.total} />
         </DialogFooter>
       </DialogContent>
     </Dialog>
