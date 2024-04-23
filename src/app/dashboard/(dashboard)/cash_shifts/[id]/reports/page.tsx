@@ -6,7 +6,10 @@ import { findCashShift } from "@/cash-shift/db_repository";
 import { notFound } from "next/navigation";
 import { CashShift } from "@/cash-shift/types";
 
-const breadcrumbItems = [{ title: "Caja chica", link: "/cash_shifts" }];
+const breadcrumbItems = [
+  { title: "Caja chica", link: "/cash_shifts" },
+  { title: "Reportes", link: "/" },
+];
 
 export default async function Page({
   params: { id },
