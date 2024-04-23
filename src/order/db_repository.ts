@@ -47,13 +47,14 @@ function mapPaymentToPrisma(payment: Payment): PaymentPrismaMatch {
       data: { received_amount, change },
     };
   } else if (payment.method == "wallet") {
+    const { name, operationCode, ...paymentData } = payment;
     return {
-      ...payment,
+      ...paymentData,
       method: payment.method.toUpperCase() as PaymentMethod,
       amount: new Prisma.Decimal(payment.amount),
       data: {
-        operationCode: payment.operationCode,
-        name: payment.name,
+        operationCode: operationCode,
+        name: name,
       },
     };
   } else {
@@ -100,7 +101,6 @@ function mapPaymentsToPrisma(payments: Payment[]): PaymentPrismaMatch[] {
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
     const { orderItems, payments, ...orderData } = order;
-
     const createdOrderResponse = await prisma.order.create({
       data: {
         ...orderData,
