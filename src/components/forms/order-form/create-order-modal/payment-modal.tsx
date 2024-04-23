@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -23,11 +23,8 @@ import {
 import { create } from "@/order/actions";
 import { useToast } from "@/components/ui/use-toast";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
-import Voucher from "@/order/components/voucher";
 import React, { useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { Printer } from "lucide-react";
-import { BlobProvider } from "@react-pdf/renderer";
 import PdfVoucherRedirection from "@/order/components/pdf-voucher-redirection";
 import { Order } from "@/order/types";
 
