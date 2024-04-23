@@ -46,6 +46,17 @@ function mapPaymentToPrisma(payment: Payment): PaymentPrismaMatch {
       amount: new Prisma.Decimal(paymentData.amount),
       data: { received_amount, change },
     };
+  } else if (payment.method == "wallet") {
+    const { name, operationCode, ...paymentData } = payment;
+    return {
+      ...paymentData,
+      method: payment.method.toUpperCase() as PaymentMethod,
+      amount: new Prisma.Decimal(payment.amount),
+      data: {
+        operationCode: operationCode,
+        name: name,
+      },
+    };
   } else {
     return {
       ...payment,
@@ -66,6 +77,14 @@ export function mapPrismaPaymentToPayment(
       received_amount: ((prismaPayment.data as any) || {}).received_amount,
       change: ((prismaPayment.data as any) || {}).change,
     };
+  } else if (prismaPayment.method === "WALLET") {
+    return {
+      ...prismaPayment,
+      amount: prismaPayment.amount.toNumber(),
+      method: prismaPayment.method.toLowerCase() as any,
+      operationCode: ((prismaPayment.data as any) || {}).operationCode,
+      name: ((prismaPayment.data as any) || {}).name,
+    };
   } else {
     return {
       ...prismaPayment,
@@ -82,7 +101,6 @@ function mapPaymentsToPrisma(payments: Payment[]): PaymentPrismaMatch[] {
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
     const { orderItems, payments, ...orderData } = order;
-
     const createdOrderResponse = await prisma.order.create({
       data: {
         ...orderData,
@@ -147,6 +165,13 @@ export async function transformOrdersData(
   const payments = await prisma.payment.findMany({
     where: { orderId: { in: prismaOrders.map((order) => order.id) } },
   });
+  const orderPayments = payments.reduce(
+    (acc: Record<string, PrismaPayment[]>, payment) => {
+      acc[payment.orderId] = [...(acc[payment.orderId] || []), payment];
+      return acc;
+    },
+    {},
+  );
 
   const prismaProducts = await prisma.product.findMany({
     where: { id: { in: prismaOrderItems.map((oi) => oi.productId) } },
@@ -180,7 +205,9 @@ export async function transformOrdersData(
     return {
       ...prismaOrder,
       orderItems: parsedOrderItems,
-      payments: payments.map(mapPrismaPaymentToPayment),
+      payments: (orderPayments[prismaOrder.id] || []).map(
+        mapPrismaPaymentToPayment,
+      ),
       total: prismaOrder.total.toNumber(),
       status: prismaOrder.status,
     };

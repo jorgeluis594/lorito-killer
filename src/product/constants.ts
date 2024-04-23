@@ -5,7 +5,6 @@ export const IMG_MAX_LIMIT = 5;
 export const EMPTY_PRODUCT = {
   name: "",
   price: 0,
-  sku: "",
   description: "",
   stock: undefined,
   photos: [],

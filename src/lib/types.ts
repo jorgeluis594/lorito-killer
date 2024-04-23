@@ -8,6 +8,7 @@ export type successResponse<DataType = any> = {
 export type errorResponse = {
   success: false;
   message: string;
+  type?: "AuthError";
 };
 
 export type response<DataType = any> =

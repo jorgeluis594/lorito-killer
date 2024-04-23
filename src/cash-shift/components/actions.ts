@@ -9,9 +9,18 @@ export const createCashShift = async (
   userId: string,
   initialAmount: number,
 ): Promise<response<OpenCashShift>> => {
+  const userResponse = await repository.userByEmail(userId);
+  if (!userResponse.success) {
+    return {
+      success: false,
+      message: "Usuario no existe",
+      type: "AuthError",
+    };
+  }
+
   const cashShift: OpenCashShift = {
     id: crypto.randomUUID(),
-    userId: userId,
+    userId: userResponse.data.id,
     initialAmount: initialAmount,
     totalSales: 0,
     totalCashSales: 0,

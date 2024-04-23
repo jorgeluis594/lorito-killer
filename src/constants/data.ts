@@ -2,7 +2,7 @@ import { NavItem } from "@/ui/types";
 
 export const navItems: NavItem[] = [
   {
-    title: "Crear pedido",
+    title: "Nueva venta",
     href: "/dashboard/orders/new",
     icon: "shoppingCart",
     label: "nuevo pedido",

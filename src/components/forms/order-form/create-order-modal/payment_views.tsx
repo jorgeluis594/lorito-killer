@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import type {
   CashPayment as CashPaymentMethod,
   PaymentMethod,
+  WalletPayment as WalletPaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -137,20 +138,44 @@ export const WalletPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { addPayment } = useOrderFormActions();
   const { cashShift } = useCashShiftStore((store) => store);
+  const [name, setName] = useState<string | null>(null);
+  const [operationCode, setOperationCode] = useState<string | null>(null);
 
   useEffect(() => {
-    addPayment({
+    const params: WalletPaymentMethod = {
       cashShiftId: cashShift!.id,
       amount: orderTotal,
       method: "wallet",
-    });
-  }, [orderTotal]);
+      name: name || undefined,
+      operationCode: operationCode || undefined,
+    };
+
+    addPayment(params);
+  }, [orderTotal, name, operationCode]);
 
   return (
     <div className="mt-4">
       <div className="my-3">
         <Label>Monto recibido</Label>
         <MoneyInput type="number" value={orderTotal} disabled />
+      </div>
+
+      <div className="my-3">
+        <Label>Nombre de cliente</Label>
+        <Input
+          placeholder="Ingrese nombre"
+          value={name || ""}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+
+      <div className="my-3">
+        <Label>Código de operación</Label>
+        <Input
+          placeholder="Código de operación"
+          value={operationCode || ""}
+          onChange={(e) => setOperationCode(e.target.value)}
+        />
       </div>
     </div>
   );

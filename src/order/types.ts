@@ -42,6 +42,8 @@ export type DebitCardPayment = PaymentGeneralData & {
 
 export type WalletPayment = PaymentGeneralData & {
   method: "wallet";
+  operationCode?: string;
+  name?: string;
 };
 
 export type CashPayment = PaymentGeneralData & {

@@ -29,6 +29,7 @@ import { useState } from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import { useRouter } from "next/navigation";
 import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
+import { signOut } from "next-auth/react";
 
 const CashShiftFormSchema = z.object({
   initialAmount: z.coerce
@@ -38,7 +39,13 @@ const CashShiftFormSchema = z.object({
 
 type CashShiftFormValues = z.infer<typeof CashShiftFormSchema>;
 
-export default function OpenCashShiftForm() {
+interface OpenCashShiftFormProps {
+  onCashShiftOpened?: () => void;
+}
+
+export default function OpenCashShiftForm({
+  onCashShiftOpened = undefined,
+}: OpenCashShiftFormProps) {
   const { data: session } = useSession();
   const { setCashShift } = useCashShiftStore((store) => store);
   const { toast } = useToast();
@@ -53,9 +60,19 @@ export default function OpenCashShiftForm() {
 
   const onSubmit = async (data: CashShiftFormValues) => {
     const response = await createCashShift(
-      (session as any).userId as string,
+      session!.user!.email!,
       data.initialAmount,
     );
+
+    if (!response.success && response.type === "AuthError") {
+      toast({
+        title: "Error",
+        description: "Inicia sesión de nuevo",
+        variant: "destructive",
+      });
+      await signOut({ callbackUrl: "/login" });
+      return;
+    }
 
     if (!response.success) {
       toast({
@@ -69,9 +86,9 @@ export default function OpenCashShiftForm() {
         title: "Exito!",
         description: "Caja abierta correctamente",
       });
+      onCashShiftOpened && onCashShiftOpened();
       setCashShift(response.data);
       serCashShiftToOrder(response.data);
-      router.refresh();
       form.reset();
       setOpen(false);
     }

@@ -135,14 +135,16 @@ export const useOrderFormActions = (): Actions => {
       increaseQuantity(orderItem.id!);
     } else {
       const orderItemId = crypto.randomUUID();
-      order.orderItems.push({
+      const oi = {
         id: orderItemId,
         productId: product.id!,
         productName: product.name,
         productPrice: product.price,
         quantity: 1,
         total: product.price,
-      });
+      };
+
+      order.orderItems.push(oi);
 
       orderFormStoreContext.setState(() => {
         return { order: { ...order, orderItems: [...order.orderItems] } };
@@ -252,15 +254,18 @@ export const useOrderFormActions = (): Actions => {
     getPaidAmount,
     addPayment: (payment) => {
       const { order } = orderFormStoreContext.getState();
+      if (getPayment(payment.method)) {
+        removePayment(payment.method);
+        order.payments = order.payments.filter(
+          (storedPayment) => storedPayment.method !== payment.method,
+        );
+      }
+
       if (payment.amount > order.total - getPaidAmount()) {
         return {
           success: false,
           message: "El monto pagado es mayor que el a pagar",
         };
-      }
-
-      if (getPayment(payment.method)) {
-        removePayment(payment.method);
       }
 
       orderFormStoreContext.setState({

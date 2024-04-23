@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
 
-import React, { useEffect } from "react";
+import { useSymbologyScanner } from "@use-symbology-scanner/react";
+
+import React, { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Product, Photo } from "@/product/types";
@@ -35,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { DialogClose } from "@/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import { isBarCodeValid } from "@/lib/utils";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -70,6 +73,8 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
+
+  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
@@ -254,6 +259,17 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
+    if (isBarCodeValid(symbol, 3)) {
+      form.setValue("sku", symbol);
+    }
+  };
+
+  useSymbologyScanner(handleSymbol, {
+    target: barcodeInputRef,
+    scannerOptions: { maxDelay: 20, suffix: "\n" },
+  });
+
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="sm:max-w-[750px] sm:h-[800px] w-full flex flex-col justify-center items-center p-0">
@@ -291,7 +307,11 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                           <Input
                             autoComplete="off"
                             placeholder="Max 13 dígitos"
-                            {...field}
+                            {...{ ...field, ref: undefined }}
+                            ref={(e) => {
+                              field.ref(e);
+                              barcodeInputRef.current = e;
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -319,7 +339,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="price"
+                    name="purchasePrice"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Precio Compra</FormLabel>
@@ -337,7 +357,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                   />
                   <FormField
                     control={form.control}
-                    name="purchasePrice"
+                    name="price"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Precio de venta</FormLabel>
@@ -416,14 +436,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
               className="btn-success"
               type="button"
               disabled={formStore.performingAction}
-              onClick={() => {
-                console.log(
-                  "Button clicked. Form valid:",
-                  form.formState.isValid,
-                );
-                console.log("Form errors:", form.formState.errors);
-                form.handleSubmit(onSubmit)();
-              }}
+              onClick={form.handleSubmit(onSubmit)}
             >
               {formStore.performingAction ? (
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />

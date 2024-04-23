@@ -10,8 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import SignOut from "@/components/layout/sign-out";
+import { getServerSession } from "next-auth";
 
-export function UserNav() {
+export async function UserNav() {
+  const session = await getServerSession();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,9 +28,9 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Jorge</p>
+            <p className="text-sm font-medium leading-none">Usuario</p>
             <p className="text-xs leading-none text-muted-foreground">
-              jorg3.594@gmail.com
+              {session?.user?.email}
             </p>
           </div>
         </DropdownMenuLabel>

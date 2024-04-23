@@ -14,6 +14,28 @@ import {
   transformOrdersData,
 } from "@/order/db_repository";
 import PaymentMethod = $Enums.PaymentMethod;
+import { User } from "@/user/types";
+
+// improve this
+export const userExists = async (userId: string) => {
+  return !!(await prisma.user.findUnique({ where: { id: userId } }));
+};
+
+export const userByEmail = async (email: string): Promise<response<User>> => {
+  try {
+    const persistedUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!persistedUser) return { success: false, message: "User not found" };
+
+    const { password, ...user } = persistedUser;
+
+    return { success: true, data: user };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
 
 export const createCashShift = async <T extends CashShift>(
   cashShift: T,

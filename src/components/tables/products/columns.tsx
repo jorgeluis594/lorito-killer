@@ -2,6 +2,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { Product } from "@/product/types";
+import { formatPrice } from "@/lib/utils";
 
 export const columns: ColumnDef<Product>[] = [
   {
@@ -23,8 +24,15 @@ export const columns: ColumnDef<Product>[] = [
     header: "CANTIDAD",
   },
   {
+    accessorKey: "purchasePrice",
+    header: "PRECIO DE VENTA",
+    cell: ({ row }) =>
+      row.original.purchasePrice && formatPrice(row.original.purchasePrice),
+  },
+  {
     accessorKey: "price",
-    header: "PRECIO",
+    header: "PRECIO DE COMPRA",
+    cell: ({ row }) => formatPrice(row.original.price),
   },
   {
     id: "actions",

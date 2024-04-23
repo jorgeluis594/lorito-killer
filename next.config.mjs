@@ -11,15 +11,7 @@ const nextConfig = {
   webpack: (config) => {
     config.externals = [...config.externals, 'bcrypt'];
     return config
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/',
-        destination: '/dashboard',
-      },
-    ]
-  },
+  }
 };
 
 export default nextConfig;

@@ -16,6 +16,10 @@ export default async function productCreator(
     return { success: false, message: parsedProduct.error.message };
   }
 
+  if (!product.sku) {
+    return repository.create(product);
+  }
+
   const { success: productFound } = await repository.findBy({
     sku: product.sku,
   });
