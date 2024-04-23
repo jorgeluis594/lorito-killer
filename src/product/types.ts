@@ -14,7 +14,7 @@ export type Product = {
   id?: string;
   name: string;
   price: number;
-  sku: string;
+  sku?: string;
   stock: number;
   purchasePrice?: number;
   description: string;
