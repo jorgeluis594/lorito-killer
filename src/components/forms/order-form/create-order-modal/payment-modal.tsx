@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,10 @@ import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-prov
 import Voucher from "@/order/components/voucher";
 import React, { useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import { Printer } from "lucide-react";
+import { BlobProvider } from "@react-pdf/renderer";
+import PdfVoucherRedirection from "@/order/components/pdf-voucher-redirection";
+import { Order } from "@/order/types";
 
 const PaymentViews = {
   none: NonePayment,
@@ -50,17 +54,18 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const [orderCreated, setOrderCreated] = useState<Order | null>(null);
 
   const handleOrderCreation = async () => {
     setCreatingOrder(true);
     const response = await create({ ...order, status: "completed" });
     if (response.success) {
-      reset();
       toast({
         title: "En hora buena!",
-        description: "Venta realizada con éxito",
+        description: "Venta realizada con éxito, generando comprobante",
       });
       addOrder(response.data);
+      setOrderCreated(response.data);
     } else {
       toast({
         variant: "destructive",
@@ -69,14 +74,13 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
       });
     }
     setCreatingOrder(false);
-    onOpenChange(false);
   };
 
   const CreateOrderButton = ({ amountIsValid }: { amountIsValid: boolean }) => {
     if (creatingOrder) {
       return (
         <Button className="btn-success" type="button" disabled={true}>
-          <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Realizando pago
+          <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
         </Button>
       );
     } else if (paymentMode !== "none") {
@@ -124,7 +128,17 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               CAMBIAR MÉTODO
             </Button>
           )}
-          <PaymentView />
+          {orderCreated ? (
+            <PdfVoucherRedirection
+              order={orderCreated}
+              onPdfCreated={() => {
+                onOpenChange(false);
+                reset();
+              }}
+            />
+          ) : (
+            <PaymentView />
+          )}
         </div>
         <DialogFooter>
           <CreateOrderButton amountIsValid={getPaidAmount() !== order.total} />
