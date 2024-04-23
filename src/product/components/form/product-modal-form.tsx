@@ -263,11 +263,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  useSymbologyScanner(handleSymbol, {
-    target: barcodeInputRef,
-    scannerOptions: { maxDelay: 20, suffix: "\n" },
-  });
-
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="sm:max-w-[750px] sm:h-[800px] w-full flex flex-col justify-center items-center p-0">
