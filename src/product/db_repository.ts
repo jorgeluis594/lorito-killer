@@ -27,6 +27,7 @@ export const create = async (product: Product): Promise<response<Product>> => {
     const purchasePrice = createdResponse.purchasePrice.toNumber();
     const createdProduct: Product = {
       ...createdResponse,
+      sku: createdResponse.sku || undefined,
       price,
       purchasePrice,
       categories: [],
