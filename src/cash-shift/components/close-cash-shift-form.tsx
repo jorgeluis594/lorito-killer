@@ -36,7 +36,13 @@ const CashShiftFormSchema = z.object({
 
 type CashShiftFormValues = z.infer<typeof CashShiftFormSchema>;
 
-export default function OpenCashShiftForm() {
+interface CloseCashShiftFormProps {
+  onCashShiftClosed: () => void;
+}
+
+export default function CloseCashShiftForm({
+  onCashShiftClosed,
+}: CloseCashShiftFormProps) {
   const { cashShift, removeCashShift } = useCashShiftStore((store) => store);
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -62,7 +68,7 @@ export default function OpenCashShiftForm() {
         title: "Exito!",
         description: "Caja cerrada correctamente",
       });
-      router.refresh();
+      onCashShiftClosed();
       removeCashShift();
       form.reset();
       setOpen(false);

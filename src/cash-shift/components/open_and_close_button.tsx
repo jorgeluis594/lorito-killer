@@ -6,7 +6,12 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import OpenCashShiftForm from "@/cash-shift/components/open-cash-shift-form";
 import CloseCashShiftForm from "@/cash-shift/components/close-cash-shift-form";
 
-export default function OpenAndCloseButton() {
+interface OpenAndCloseButtonProps {
+  onActionPerform: () => void;
+}
+export default function OpenAndCloseButton({
+  onActionPerform,
+}: OpenAndCloseButtonProps) {
   const { cashShift, isLoading } = useCashShiftStore((state) => state);
 
   if (isLoading) {
@@ -18,5 +23,9 @@ export default function OpenAndCloseButton() {
     );
   }
 
-  return cashShift ? <CloseCashShiftForm /> : <OpenCashShiftForm />;
+  return cashShift ? (
+    <CloseCashShiftForm onCashShiftClosed={onActionPerform} />
+  ) : (
+    <OpenCashShiftForm onCashShiftOpened={onActionPerform} />
+  );
 }
