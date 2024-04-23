@@ -17,7 +17,7 @@ model Product {
   id        String   @id @default(uuid())
   name      String
   price     Decimal
-  sku       String
+  sku       String?
   stock     Int
   purchasePrice Decimal
   description String
