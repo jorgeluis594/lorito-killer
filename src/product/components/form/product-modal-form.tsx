@@ -74,7 +74,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
     defaultValues: formStore.isNew
-      ? EMPTY_PRODUCT
+      ? {...EMPTY_PRODUCT, stock: undefined}
       : productData || EMPTY_PRODUCT,
   });
 
@@ -305,7 +305,11 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Cantidad</FormLabel>
                         <FormControl>
-                          <Input autoComplete="off" type="number" {...field} />
+                          <Input
+                            autoComplete="off"
+                            type="number"
+                            placeholder="Ingrese cantidad"
+                            {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
