@@ -29,7 +29,9 @@ export default async function Page({
         <Heading title="Reportes" description="Manten al día tus cuentas" />
       </div>
       <Separator />
-      <CashShiftReportTw cashShift={cashShiftFoundResponse.data} />
+      <div className="h-[calc(100vh-theme(space.64))]">
+        <CashShiftReportTw cashShift={cashShiftFoundResponse.data} />
+      </div>
     </div>
   );
 }

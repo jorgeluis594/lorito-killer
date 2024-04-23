@@ -20,7 +20,7 @@ export default function CashShiftReportTw({
   cashShift,
 }: CashShiftReportTwProps) {
   return (
-    <ScrollArea className="mt-3">
+    <ScrollArea className="mt-3 h-full">
       <div className="my-5">
         <h2 className="text-xl font-medium">Reporte general</h2>
       </div>
