@@ -72,6 +72,7 @@ export default function CloseCashShiftForm({
       removeCashShift();
       form.reset();
       setOpen(false);
+      router.push(`/dashboard/cash_shifts/${response.data.id}/reports`);
     }
   };
 
