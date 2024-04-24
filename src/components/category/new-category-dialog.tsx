@@ -27,6 +27,7 @@ import { Category } from "@/category/types";
 import { createCategory } from "@/category/actions";
 import { CategorySchema } from "@/category/schema";
 import { useCategoryStore } from "@/category/components/category-store-provider";
+import { useToast } from "@/components/ui/use-toast";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -44,6 +45,8 @@ export default function NewCategoryDialog({
     defaultValues: { name: "" } as Category,
   });
 
+  const { toast } = useToast();
+
   const onSubmit = async (data: CategoryFormValues) => {
     const createdCategory = await createCategory(data);
 
@@ -51,9 +54,16 @@ export default function NewCategoryDialog({
       setCategories([...categories, createdCategory.data])
       addCategory(createdCategory.data);
       form.setValue("name", "");
+      toast({
+        description: `Categoria ${createdCategory.data.name} creada con exito`,
+      });
       setOpen(false);
     } else {
       alert(createdCategory.message);
+      toast({
+        title: "Error",
+        description: `Error al crear la categoria`,
+      });
     }
   };
 

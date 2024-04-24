@@ -1,6 +1,6 @@
 import { Product, SortOptions } from "@/product/types";
 
-export const IMG_MAX_LIMIT = 5;
+export const IMG_MAX_LIMIT = 1;
 
 export const EMPTY_PRODUCT = {
   name: "",

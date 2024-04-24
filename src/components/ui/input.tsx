@@ -23,7 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 const MoneyInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, onChange, ...props }, ref) => {
+  ({ className, type, onChange, disabled, ...props }, ref) => {
     const initialValue = props.value ? formatPrice(Number(props.value)) : "";
 
     const [value, setValue] = useReducer((_: any, next: string) => {
@@ -58,6 +58,7 @@ const MoneyInput = React.forwardRef<HTMLInputElement, InputProps>(
         }}
         value={value}
         ref={ref}
+        disabled={disabled}
       />
     );
   },

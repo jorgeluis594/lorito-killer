@@ -64,12 +64,12 @@ export default function FileUpload({
           />
         )}
       </div>
-      <div className="my-4 flex items-center gap-4">
+      <div className="my-4 flex items-center justify-center gap-4">
         {!!value.length &&
           value?.map((item) => (
             <div
               key={item.key}
-              className="relative w-[100px] h-[100px] rounded-md overflow-hidden"
+              className="relative w-[180px] h-[180px] rounded-md overflow-hidden"
             >
               <div className="z-10 absolute top-2 right-2">
                 <Button
@@ -84,7 +84,7 @@ export default function FileUpload({
               <div>
                 <Image
                   fill
-                  className="object-cover"
+                  className="object-cover item"
                   alt="Image"
                   src={item.url || ""}
                 />
