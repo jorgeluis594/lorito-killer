@@ -2,14 +2,14 @@ import { Product, SortOptions } from "@/product/types";
 
 export const IMG_MAX_LIMIT = 5;
 
-export const EMPTY_PRODUCT: Product = {
+export const EMPTY_PRODUCT = {
   name: "",
   price: 0,
   description: "",
-  stock: 0,
+  stock: undefined,
   photos: [],
   categories: [],
-};
+} as Omit<Product, 'stock'>;
 
 export const sortOptions: SortOptions = {
   name_asc: { name: "Alfabéticamente", value: { name: "asc" } },
