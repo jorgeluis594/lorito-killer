@@ -39,6 +39,7 @@ export const create = async (data: Order): Promise<response<Order>> => {
   const createOrderResponse = await createOrder(data);
   if (createOrderResponse.success) {
     revalidatePath("/api/orders");
+    await updateProductsStocks(createOrderResponse.data);
   }
 
   return createOrderResponse;
