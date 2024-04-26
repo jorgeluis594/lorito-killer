@@ -57,6 +57,7 @@ const MoneyInput = React.forwardRef<HTMLInputElement, InputProps>(
           handleChange(onChange, ev);
         }}
         value={value}
+        ref={ref}
       />
     );
   },

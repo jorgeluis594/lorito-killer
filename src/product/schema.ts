@@ -28,7 +28,9 @@ export const ProductSchema = z.object({
       message: "SKU solo puede contener carácteres alfanuméricos y guión abajo",
     })
     .optional(),
-  stock: z.coerce.number(),
+  stock: z.coerce.number().refine((data) => data !== null, {
+    message: "Stock is required",
+  }),
   photos: z
     .array(PhotoSchema)
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })

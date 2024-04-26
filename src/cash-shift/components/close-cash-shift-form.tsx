@@ -17,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Input, MoneyInput } from "@/components/ui/input";
 import * as z from "zod";
 import { FaCashRegister } from "react-icons/fa";
 import { useForm } from "react-hook-form";
@@ -97,7 +97,12 @@ export default function CloseCashShiftForm({
                   <FormItem>
                     <FormLabel>Monto final</FormLabel>
                     <FormControl>
-                      <Input placeholder="Monto final" {...field} />
+                      <MoneyInput
+                        placeholder="Monto final"
+                        autoComplete="off"
+                        type="number"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -6,8 +6,6 @@ import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as z from "zod";
 
-import { useSymbologyScanner } from "@use-symbology-scanner/react";
-
 import React, { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -79,7 +77,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
     defaultValues: formStore.isNew
-      ? EMPTY_PRODUCT
+      ? {...EMPTY_PRODUCT, stock: undefined}
       : productData || EMPTY_PRODUCT,
   });
 
@@ -265,11 +263,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  useSymbologyScanner(handleSymbol, {
-    target: barcodeInputRef,
-    scannerOptions: { maxDelay: 20, suffix: "\n" },
-  });
-
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="sm:max-w-[750px] sm:h-[800px] w-full flex flex-col justify-center items-center p-0">
@@ -325,7 +318,11 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Cantidad</FormLabel>
                         <FormControl>
-                          <Input autoComplete="off" type="number" {...field} />
+                          <Input
+                            autoComplete="off"
+                            type="number"
+                            placeholder="Ingrese cantidad"
+                            {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -358,7 +355,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                       <FormItem>
                         <FormLabel>Precio de venta</FormLabel>
                         <FormControl>
-                          <Input
+                          <MoneyInput
                             autoComplete="off"
                             type="number"
                             placeholder="S/ 0.00"
