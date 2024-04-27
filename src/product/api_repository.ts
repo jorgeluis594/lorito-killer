@@ -39,6 +39,8 @@ export const deleteProduct = async (
   return await res.json();
 };
 
+type photoApi = Omit<Photo, "createdAt"> & { createdAt: string };
+
 export const storePhotos = async (
   productId: string,
   photos: Photo[],
@@ -51,7 +53,17 @@ export const storePhotos = async (
     },
   });
 
-  return await res.json();
+  const storePhotoResponse: response<photoApi[]> = await res.json();
+  if (!storePhotoResponse.success) {
+    return storePhotoResponse;
+  }
+
+  const storedPhotos: Photo[] = storePhotoResponse.data.map((photo) => ({
+    ...photo,
+    createdAt: new Date(photo.createdAt),
+  }));
+
+  return { success: true, data: storedPhotos };
 };
 
 export const removePhoto = async (
