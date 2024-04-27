@@ -93,8 +93,21 @@ model Order {
   orderItems     OrderItem[]
 }
 
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String
+  address   String
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id        String   @id @default(uuid())
+  companyId String?
+  company  Company?  @relation(fields: [companyId], references: [id])
   email     String   @unique
   password  String
   name      String?
