@@ -143,6 +143,21 @@ export const getOrders = async (): Promise<response<Order[]>> => {
   }
 };
 
+/**
+ * Transforms Prisma Order data to the Order data used in the application.
+ *
+ * @param {PrismaOrder[]} prismaOrders - The orders data fetched from Prisma.
+ *
+ * @returns {Promise<Order[]>} - Returns a promise that resolves to an array of transformed orders.
+ *
+ * @throws {Error} - Throws an error if the order status is invalid.
+ *
+ * @example
+ *
+ * const prismaOrders = await prisma.order.findMany({});
+ * const orders = await transformOrdersData(prismaOrders);
+ *
+ */
 export async function transformOrdersData(
   prismaOrders: PrismaOrder[],
 ): Promise<Order[]> {
