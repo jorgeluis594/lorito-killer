@@ -24,6 +24,7 @@ export const authConfig: NextAuthOptions = {
         ...session,
         user: {
           ...session.user,
+          id: persistedUser.data.id,
           name: persistedUser.data.name,
           email: persistedUser.data.email,
           companyId: persistedUser.data.companyId,
