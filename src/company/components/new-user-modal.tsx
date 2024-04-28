@@ -1,6 +1,11 @@
 "use client";
 
 import { User } from "lucide-react";
+import { useState } from "react";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import {
   Dialog,
   DialogContent,
@@ -20,10 +25,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+
+import { createUser } from "@/user/actions";
+import { useUserSession } from "@/lib/use-user-session";
+import { useToast } from "@/components/ui/use-toast";
 
 const userFormSchema = z
   .object({
@@ -43,6 +48,8 @@ type UserFormValue = z.infer<typeof userFormSchema>;
 export default function NewUserModal() {
   const [open, setOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const { toast } = useToast();
+  const user = useUserSession();
   const form = useForm<UserFormValue>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -51,8 +58,45 @@ export default function NewUserModal() {
     },
   });
 
-  const onSubmit = (data: UserFormValue) => {
-    console.log({ data });
+  const onSubmit = async (data: UserFormValue) => {
+    setLoading(true);
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Debes iniciar sesión",
+        variant: "destructive",
+      });
+      return;
+    }
+    const response = await createUser(
+      user.companyId,
+      data.email,
+      data.password,
+    );
+
+    if (!response.success && response.message === "El usuario ya existe") {
+      form.setError("email", {
+        type: "manual",
+        message: response.message,
+      });
+      return;
+    }
+
+    if (!response.success) {
+      toast({
+        title: "Error",
+        description: "No se pudo crear el usuario, intente en unos minutos", // TODO: agregar manejo de errores
+        variant: "destructive",
+      });
+      return;
+    }
+
+    form.reset();
+    toast({
+      title: "Usuario creado",
+      description: "El usuario ha sido creado exitosamente",
+    });
+    setOpen(false);
   };
 
   return (
@@ -63,6 +107,14 @@ export default function NewUserModal() {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Agregar Usuario</DialogTitle>
+          <DialogDescription>
+            Da vida a un nuevo miembro en tu equipo empresarial, capaz de
+            impulsar tus ventas.
+          </DialogDescription>
+        </DialogHeader>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -112,13 +164,15 @@ export default function NewUserModal() {
                 </FormItem>
               )}
             />
-            <Button
-              disabled={loading}
-              className="ml-auto w-full mt-6"
-              type="submit"
-            >
-              Registrarse
-            </Button>
+            <DialogFooter>
+              <Button
+                disabled={loading}
+                className="ml-auto w-full mt-6"
+                type="submit"
+              >
+                Registrar
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
