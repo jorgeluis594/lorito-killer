@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import SignOut from "@/components/layout/sign-out";
 import { getServerSession } from "next-auth";
+import Link from "next/link";
 
 export async function UserNav() {
   const session = await getServerSession();
@@ -21,7 +22,7 @@ export async function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src={""} alt={""} />
-            <AvatarFallback>Jorge</AvatarFallback>
+            <AvatarFallback>{session!.user!.name![0]}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -36,6 +37,9 @@ export async function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+          <DropdownMenuItem>
+            <Link href="/dashboard/users/edit-profile">Editar perfil</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem>
             <SignOut />
           </DropdownMenuItem>
