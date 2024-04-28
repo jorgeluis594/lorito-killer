@@ -4,6 +4,7 @@ import { response } from "@/lib/types";
 type CashShiftBase = {
   id: string;
   userId: string;
+  companyId: string;
   initialAmount: number;
   totalSales: number;
   totalCashSales: number;
