@@ -14,6 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import React from "react";
+import { updateCompany } from "@/company/components/actions";
+import { Company } from "@/company/types";
+import { useToast } from "@/components/ui/use-toast";
 
 const CompanyFormSchema = zod.object({
   name: zod
@@ -30,19 +33,31 @@ const CompanyFormSchema = zod.object({
 
 type CompanyFormValues = zod.infer<typeof CompanyFormSchema>;
 
-export default function CompanyForm() {
+export default function CompanyForm({ company }: { company: Company }) {
+  const { toast } = useToast();
+
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(CompanyFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-    },
+    defaultValues: { ...company },
   });
 
   const handleSubmit = async (data: CompanyFormValues) => {
-    console.log(data);
+    const response = await updateCompany({ ...company, ...data });
+
+    if (!response.success) {
+      toast({
+        title: "Error",
+        description:
+          "No se pudo actualizar la empresa, intentalo en unos minutos",
+        variant: "destructive",
+      });
+      return;
+    } else {
+      toast({
+        title: "Empresa actualizada",
+        description: "Los datos de la empresa han sido actualizados",
+      });
+    }
   };
 
   return (

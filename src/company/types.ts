@@ -4,5 +4,4 @@ export type Company = {
   phone: string;
   email: string;
   address: string;
-  createdAt: Date;
 };
