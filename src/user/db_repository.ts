@@ -44,3 +44,19 @@ export const updateUser = async (user: User): Promise<response<User>> => {
     return { success: false, message: error.message };
   }
 };
+
+export const updatePassword = async (
+  userId: string,
+  newPassword: string,
+): Promise<response<User>> => {
+  try {
+    const { password, ...persistedUser } = await prisma.user.update({
+      where: { id: userId },
+      data: { password: newPassword },
+    });
+
+    return { success: true, data: { ...persistedUser } };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
