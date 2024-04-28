@@ -31,3 +31,16 @@ export const createUser = async (
     return { success: false, message: error.message };
   }
 };
+
+export const updateUser = async (user: User): Promise<response<User>> => {
+  try {
+    const { password, ...persistedUser } = await prisma.user.update({
+      where: { id: user.id },
+      data: user,
+    });
+
+    return { success: true, data: { ...persistedUser } };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};

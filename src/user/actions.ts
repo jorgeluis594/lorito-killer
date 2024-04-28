@@ -6,10 +6,12 @@ import { response } from "@/lib/types";
 import { User } from "@/user/types";
 
 export const createUser = async (
+  companyId: string,
   email: string,
   password: string,
 ): Promise<response<User>> => {
   const createdUserResponse = await registerUser(repository, {
+    companyId,
     email,
     password,
   });
@@ -21,4 +23,8 @@ export const createUser = async (
   const user = createdUserResponse.data;
   // signInWithEmail(user.email, password);
   return createdUserResponse;
+};
+
+export const updateUser = async (user: User): Promise<response<User>> => {
+  return await repository.updateUser(user);
 };
