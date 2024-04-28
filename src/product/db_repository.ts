@@ -27,6 +27,7 @@ export const create = async (product: Product): Promise<response<Product>> => {
     const purchasePrice = createdResponse.purchasePrice.toNumber();
     const createdProduct: Product = {
       ...createdResponse,
+      companyId: createdResponse.companyId || "some_company_id",
       sku: createdResponse.sku || undefined,
       price,
       purchasePrice,
@@ -91,7 +92,12 @@ export const getMany = async ({
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
         const purchasePrice = p.purchasePrice.toNumber();
-        return { ...p, price, purchasePrice } as Product;
+        return {
+          ...p,
+          companyId: p.companyId || "some_company_id",
+          price,
+          purchasePrice,
+        } as Product;
       }),
     );
 
