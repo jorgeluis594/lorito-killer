@@ -38,7 +38,7 @@ export async function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem>
-            <Link href="/dashboard/users/edit-profile">Editar perfil</Link>
+            <Link href="/dashboard/settings">Configuración</Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <SignOut />
