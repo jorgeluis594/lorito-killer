@@ -23,7 +23,10 @@ export const createUser = async (
       data: { ...user, password: user.password },
     });
 
-    return { success: true, data: persistedUser };
+    return {
+      success: true,
+      data: { ...persistedUser, companyId: persistedUser.id! },
+    };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
