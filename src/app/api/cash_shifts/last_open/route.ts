@@ -7,6 +7,13 @@ export const revalidate = 0;
 export async function GET() {
   const session = await getSession();
 
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { success: false, message: "Unathenticated user" },
+      { status: 401 },
+    );
+  }
+
   if (!(await userExists(session.user.id))) {
     return NextResponse.json(
       { success: false, message: "Unathenticated user" },
