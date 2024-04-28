@@ -36,11 +36,13 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 import { DialogClose } from "@/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { isBarCodeValid } from "@/lib/utils";
+import { useUserSession } from "@/lib/use-user-session";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
 const transformToProduct = (data: ProductFormValues): Product => {
   return {
+    companyId: data.companyId,
     name: data.name,
     price: data.price,
     sku: data.sku,
@@ -60,6 +62,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   onActionPerformed,
 }) => {
   const formStore = useProductFormStore((store) => store);
+  const user = useUserSession();
   const title = formStore.isNew ? "Agregar producto" : "Editar producto";
   const description = formStore.isNew
     ? "Registra un nuevo producto"
@@ -77,17 +80,17 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
     defaultValues: formStore.isNew
-      ? {...EMPTY_PRODUCT, stock: undefined}
+      ? { ...EMPTY_PRODUCT, stock: undefined }
       : productData || EMPTY_PRODUCT,
   });
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset(EMPTY_PRODUCT);
+      form.reset({ ...EMPTY_PRODUCT, companyId: user!.companyId });
     } else {
       form.reset(productData);
     }
-  }, [formStore, form]);
+  }, [formStore, form, user]);
 
   const onSubmit = async (data: ProductFormValues) => {
     formStore.setOpen(false);
@@ -322,7 +325,8 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                             autoComplete="off"
                             type="number"
                             placeholder="Ingrese cantidad"
-                            {...field} />
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
