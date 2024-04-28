@@ -18,6 +18,14 @@ const execute = async () => {
     data: { companyId: company.id },
   });
   console.log(response);
+
+  const products = await prisma.product.findMany();
+  const productsResponse = await prisma.product.updateMany({
+    where: { id: { in: products.map((p) => p.id) } },
+    data: { companyId: company.id },
+  });
+
+  console.log(productsResponse);
 };
 
 execute().then(() => {
