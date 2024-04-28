@@ -86,6 +86,7 @@ export const getManyCashShifts = async (
     success: true,
     data: cashShifts.map((prismaCashShift) => ({
       ...prismaCashShift,
+      companyId: prismaCashShift.companyId || "some_company_id",
       status: prismaCashShift.status == "OPEN" ? "open" : "closed",
       initialAmount: Number(prismaCashShift.initialAmount),
       finalAmount: prismaCashShift.finalAmount
@@ -184,6 +185,7 @@ const cashShiftToPrisma = (
 ): Omit<PrismaCashSift, "createdAt" | "updatedAt"> => ({
   id: cashShift.id,
   userId: cashShift.userId,
+  companyId: cashShift.companyId,
   openedAt: cashShift.openedAt,
   initialAmount: new Prisma.Decimal(cashShift.initialAmount),
   finalAmount:
