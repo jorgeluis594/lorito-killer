@@ -12,6 +12,7 @@ export type Photo = {
 
 export type Product = {
   id?: string;
+  companyId: string;
   name: string;
   price: number;
   sku?: string;
