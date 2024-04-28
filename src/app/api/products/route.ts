@@ -4,6 +4,7 @@ import { Product, ProductSortParams, SortKey } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { sortOptions } from "@/product/constants";
+import { getSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
   const data = (await req.json()) as Product;
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
+  const { user } = await getSession();
   const param = searchParams.get("param");
   const categoryId = searchParams.get("categoryId");
   const sortKey = searchParams.get("sortBy") as SortKey | null;
@@ -28,6 +30,7 @@ export async function GET(req: Request) {
 
   const response = await getMany({
     q: param,
+    companyId: user.companyId,
     sortBy: sortBy,
     categoryId,
   });

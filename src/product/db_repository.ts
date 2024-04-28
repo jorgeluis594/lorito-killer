@@ -62,17 +62,19 @@ export const update = async (product: Product): Promise<response<Product>> => {
 };
 
 export const getMany = async ({
+  companyId,
   sortBy,
   categoryId,
   q,
 }: {
+  companyId: string;
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
   q?: string | null;
 }): Promise<response<Product[]>> => {
   try {
     const query: any = {
-      where: {},
+      where: { companyId },
       orderBy: sortBy,
       include: { photos: true, categories: true },
     };
