@@ -80,20 +80,24 @@ export const saveCashShift = async <T extends CashShift>(
 };
 
 export const getManyCashShifts = async (
-  userId: string,
+  companyId: string,
 ): Promise<response<CashShiftWithOutOrders[]>> => {
   const cashShifts = await prisma.cashShift.findMany({
-    where: { userId },
+    where: { companyId },
     orderBy: { openedAt: "desc" },
   });
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const users = await prisma.user.findMany({ where: { companyId } });
+  const mappedUsers = users.reduce((acc: Record<string, typeof user>, user) => {
+    acc[user.id] = user;
+    return acc;
+  }, {});
 
   return {
     success: true,
     data: cashShifts.map((prismaCashShift) => ({
       ...prismaCashShift,
-      userName: user!.name || "sin nombre",
+      userName: mappedUsers[prismaCashShift.userId].name || "sin nombre",
       companyId: prismaCashShift.companyId || "some_company_id",
       status: prismaCashShift.status == "OPEN" ? "open" : "closed",
       initialAmount: Number(prismaCashShift.initialAmount),

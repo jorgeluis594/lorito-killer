@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const response = await getManyCashShifts(session.user.id);
+  const response = await getManyCashShifts(session.user.companyId);
 
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }
