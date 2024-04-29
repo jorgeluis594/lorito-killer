@@ -11,7 +11,7 @@ const statusSpanishMapper = {
 
 export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
   {
-    accessorKey: "seller",
+    accessorKey: "userName",
     header: "VENDEDOR",
   },
   {
