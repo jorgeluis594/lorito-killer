@@ -36,7 +36,11 @@ export const create = async (data: Order): Promise<response<Order>> => {
     };
   }
 
-  const createOrderResponse = await createOrder(data);
+  const createOrderResponse = await createOrder({
+    ...data,
+    cashShiftId: openCashShift.id,
+    companyId: session.user.companyId,
+  });
   if (createOrderResponse.success) {
     revalidatePath("/api/orders");
     await updateProductsStocks(createOrderResponse.data);
