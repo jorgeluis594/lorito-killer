@@ -2,11 +2,10 @@ import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth-config";
 
 type Session = {
-  user: { name: string; email: string };
+  user: { name: string; email: string; id: string; companyId: string };
   name: string;
   email: string;
   sub: string;
-  userId: string;
   iat: number;
   exp: number;
   jti: string;

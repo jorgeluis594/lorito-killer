@@ -45,7 +45,11 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
 
   const onSubmit = async (data: UserFormValue) => {
     if (action === "signup") {
-      const createUserResponse = await createUser(data.email, data.password);
+      const createUserResponse = await createUser(
+        "TODO: This view is not beging used, do we need to remove this?",
+        data.email,
+        data.password,
+      );
       if (!createUserResponse.success) {
         form.setError("email", {
           type: "manual",

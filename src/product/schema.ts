@@ -15,6 +15,7 @@ export const PhotoSchema = z.object({
 
 export const ProductSchema = z.object({
   id: z.string().optional(),
+  companyId: z.string(),
   name: z.string().min(3, {
     message: "El nombre del producto debe tener al menos 3 caracteres",
   }),

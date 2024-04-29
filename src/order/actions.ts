@@ -15,7 +15,7 @@ import { Product } from "@/product/types";
 export const create = async (data: Order): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
   const session = await getSession();
-  const openCashShiftResponse = await getLastOpenCashShift(session.userId);
+  const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
   if (!openCashShiftResponse.success) {
     return { success: false, message: "No tienes una caja abierta" };
   }
@@ -29,16 +29,21 @@ export const create = async (data: Order): Promise<response<Order>> => {
     };
   }
 
-  if (openCashShift.userId !== session.userId) {
+  if (openCashShift.userId !== session.user.id) {
     return {
       success: false,
       message: "La caja abierta no pertenece al usuario",
     };
   }
 
-  const createOrderResponse = await createOrder(data);
+  const createOrderResponse = await createOrder({
+    ...data,
+    cashShiftId: openCashShift.id,
+    companyId: session.user.companyId,
+  });
   if (createOrderResponse.success) {
     revalidatePath("/api/orders");
+    await updateProductsStocks(createOrderResponse.data);
   }
 
   return createOrderResponse;

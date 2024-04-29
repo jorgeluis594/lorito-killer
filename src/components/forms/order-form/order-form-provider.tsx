@@ -238,12 +238,12 @@ export const useOrderFormActions = (): Actions => {
     },
     reset: () => {
       const {
-        order: { cashShiftId },
+        order: { cashShiftId, companyId },
       } = orderFormStoreContext.getState();
       const { order, ...rest } = initOrderFormStore();
       orderFormStoreContext.setState({
         ...rest,
-        order: { ...order, cashShiftId: cashShiftId },
+        order: { ...order, cashShiftId: cashShiftId, companyId: companyId },
       });
     },
     increaseQuantity,
@@ -288,7 +288,11 @@ export const useOrderFormActions = (): Actions => {
     setCashShift: (cashShift) => {
       const { order } = orderFormStoreContext.getState();
       orderFormStoreContext.setState({
-        order: { ...order, cashShiftId: cashShift.id },
+        order: {
+          ...order,
+          cashShiftId: cashShift.id,
+          companyId: cashShift.companyId,
+        },
       });
     },
   };

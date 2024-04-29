@@ -15,7 +15,21 @@ export const authConfig: NextAuthOptions = {
       return token;
     },
     session: async ({ session, token, user }) => {
-      return { ...session, ...token };
+      if (!session.user) return session;
+
+      const persistedUser = await getUserByEmail(session.user.email!);
+      if (!persistedUser.success) return session;
+
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: persistedUser.data.id,
+          name: persistedUser.data.name,
+          email: persistedUser.data.email,
+          companyId: persistedUser.data.companyId,
+        },
+      };
     },
   },
   providers: [

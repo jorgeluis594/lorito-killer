@@ -7,7 +7,12 @@ import {
   Prisma,
   ShiftStatus,
 } from "@prisma/client";
-import type { OpenCashShift, CashShiftWithOutOrders, CashShift } from "./types";
+import type {
+  OpenCashShift,
+  CashShiftWithOutOrders,
+  CashShift,
+  CashShiftBase,
+} from "./types";
 import { response } from "@/lib/types";
 import {
   mapPrismaPaymentToPayment,
@@ -31,7 +36,10 @@ export const userByEmail = async (email: string): Promise<response<User>> => {
 
     const { password, ...user } = persistedUser;
 
-    return { success: true, data: user };
+    return {
+      success: true,
+      data: { ...user, companyId: user.companyId || "some_company_id" },
+    };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
@@ -75,17 +83,25 @@ export const saveCashShift = async <T extends CashShift>(
 };
 
 export const getManyCashShifts = async (
-  userId: string,
+  companyId: string,
 ): Promise<response<CashShiftWithOutOrders[]>> => {
   const cashShifts = await prisma.cashShift.findMany({
-    where: { userId },
+    where: { companyId },
     orderBy: { openedAt: "desc" },
   });
+
+  const users = await prisma.user.findMany({ where: { companyId } });
+  const mappedUsers = users.reduce((acc: Record<string, typeof user>, user) => {
+    acc[user.id] = user;
+    return acc;
+  }, {});
 
   return {
     success: true,
     data: cashShifts.map((prismaCashShift) => ({
       ...prismaCashShift,
+      userName: mappedUsers[prismaCashShift.userId].name || "sin nombre",
+      companyId: prismaCashShift.companyId || "some_company_id",
       status: prismaCashShift.status == "OPEN" ? "open" : "closed",
       initialAmount: Number(prismaCashShift.initialAmount),
       finalAmount: prismaCashShift.finalAmount
@@ -138,11 +154,20 @@ export const findCashShift = async <T extends CashShift>(
 export const prismaCashShiftToCashShift = async <T extends CashShift>(
   prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
 ): Promise<T> => {
-  const baseCashShift = {
+  const user = await prisma.user.findUnique({
+    where: { id: prismaCashShift.userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const baseCashShift: CashShiftBase = {
     id: prismaCashShift.id,
     userId: prismaCashShift.userId,
+    companyId: prismaCashShift.companyId || "some_company_id",
+    userName: user.name || "sin nombre",
     initialAmount: Number(prismaCashShift.initialAmount),
-    openedAt: prismaCashShift.openedAt,
     totalSales: sumPaymentsAmount(prismaCashShift.payments),
     totalCashSales: sumPaymentsAmount(prismaCashShift.payments || [], "CASH"),
     totalDebitCardSales: sumPaymentsAmount(
@@ -164,12 +189,14 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
   if (prismaCashShift.status === "OPEN") {
     return {
       ...baseCashShift,
+      openedAt: prismaCashShift.openedAt,
       status: "open",
     } as T;
   } else {
     return {
       ...baseCashShift,
       status: "closed",
+      openedAt: prismaCashShift.openedAt,
       finalAmount: Number(prismaCashShift.finalAmount),
       closedAt: prismaCashShift.closedAt!,
     } as T;
@@ -184,6 +211,7 @@ const cashShiftToPrisma = (
 ): Omit<PrismaCashSift, "createdAt" | "updatedAt"> => ({
   id: cashShift.id,
   userId: cashShift.userId,
+  companyId: cashShift.companyId,
   openedAt: cashShift.openedAt,
   initialAmount: new Prisma.Decimal(cashShift.initialAmount),
   finalAmount:

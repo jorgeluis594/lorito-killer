@@ -114,6 +114,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
 
     const createdOrder: Order = {
       ...createdOrderResponse,
+      companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
@@ -143,6 +144,21 @@ export const getOrders = async (): Promise<response<Order[]>> => {
   }
 };
 
+/**
+ * Transforms Prisma Order data to the Order data used in the application.
+ *
+ * @param {PrismaOrder[]} prismaOrders - The orders data fetched from Prisma.
+ *
+ * @returns {Promise<Order[]>} - Returns a promise that resolves to an array of transformed orders.
+ *
+ * @throws {Error} - Throws an error if the order status is invalid.
+ *
+ * @example
+ *
+ * const prismaOrders = await prisma.order.findMany({});
+ * const orders = await transformOrdersData(prismaOrders);
+ *
+ */
 export async function transformOrdersData(
   prismaOrders: PrismaOrder[],
 ): Promise<Order[]> {
@@ -151,11 +167,11 @@ export async function transformOrdersData(
   });
 
   const prismaOrderItemsMap = prismaOrderItems.reduce(
-    (acc: Record<string, typeof prismaOrderItems>, oi) => {
+    (acc: Record<string, typeof prismaOrderItems | undefined>, oi) => {
       if (!acc[oi.orderId]) {
         acc[oi.orderId] = [];
       }
-      acc[oi.orderId].push(oi);
+      acc[oi.orderId]!.push(oi);
 
       return acc;
     },
@@ -190,7 +206,7 @@ export async function transformOrdersData(
       throw new Error(`Invalid order status: ${prismaOrder.status}`);
     }
 
-    const parsedOrderItems = prismaOrderItemsMap[prismaOrder.id].map(
+    const parsedOrderItems = (prismaOrderItemsMap[prismaOrder.id] || []).map(
       (oi: PrismaOrderItem) => {
         const { orderId, ...orderItemData } = oi;
         return {
@@ -204,6 +220,7 @@ export async function transformOrdersData(
 
     return {
       ...prismaOrder,
+      companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(
         mapPrismaPaymentToPayment,

@@ -1,9 +1,11 @@
 import { Order, Payment } from "@/order/types";
 import { response } from "@/lib/types";
 
-type CashShiftBase = {
+export type CashShiftBase = {
   id: string;
   userId: string;
+  companyId: string;
+  userName: string;
   initialAmount: number;
   totalSales: number;
   totalCashSales: number;

@@ -15,6 +15,8 @@ datasource db {
 
 model Product {
   id        String   @id @default(uuid())
+  companyId String?
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   name      String
   price     Decimal
   sku       String?
@@ -42,6 +44,8 @@ model Photo {
 
 model Category {
   id        String   @id @default(uuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   name      String
   products  Product[]
   createdAt DateTime @default(now())
@@ -57,6 +61,8 @@ model CashShift {
   id            String   @id @default(uuid())
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  companyId     String?
+  company       Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   initialAmount Decimal
   finalAmount   Decimal?
   orders        Order[]
@@ -84,6 +90,8 @@ model OrderItem {
 model Order {
   id        String    @id @default(uuid())
   cashShiftId String
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   total     Decimal
   status    String
   cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -93,8 +101,25 @@ model Order {
   orderItems     OrderItem[]
 }
 
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String
+  address   String
+  users     User[]
+  products Product[]
+  cashShifts CashShift[]
+  orders Order[]
+  categories Category[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id        String   @id @default(uuid())
+  companyId String?
+  company  Company?  @relation(fields: [companyId], references: [id])
   email     String   @unique
   password  String
   name      String?

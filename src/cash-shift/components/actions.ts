@@ -21,6 +21,8 @@ export const createCashShift = async (
   const cashShift: OpenCashShift = {
     id: crypto.randomUUID(),
     userId: userResponse.data.id,
+    companyId: userResponse.data.companyId,
+    userName: userResponse.data.name || "Usuario sin nombre",
     initialAmount: initialAmount,
     totalSales: 0,
     totalCashSales: 0,

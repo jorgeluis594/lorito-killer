@@ -9,22 +9,36 @@ export const create = async (
   try {
     const foundResponse = await findByName(category.name);
     if (foundResponse.success) {
-      return foundResponse as response;
+      return foundResponse;
     }
 
     const createdCategory = await prisma.category.create({ data: category });
-    return { success: true, data: createdCategory } as response<Category>;
+    return {
+      success: true,
+      data: {
+        ...createdCategory,
+        companyId: createdCategory.companyId || "some_company_id",
+      },
+    };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
-export const getMany = async (): Promise<response<Category[]>> => {
+export const getMany = async (
+  companyId: string,
+): Promise<response<Category[]>> => {
   try {
-    const categories = await prisma.category.findMany();
-    return { success: true, data: categories } as response<Category[]>;
+    const categories = (
+      await prisma.category.findMany({ where: { companyId } })
+    ).map((c) => ({
+      ...c,
+      companyId: c.companyId || "some_company_id",
+    }));
+
+    return { success: true, data: categories };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -33,12 +47,18 @@ export const find = async (id: string): Promise<response<Category>> => {
     const category = await prisma.category.findUnique({ where: { id } });
 
     if (category) {
-      return { success: true, data: category } as response<Category>;
+      return {
+        success: true,
+        data: {
+          ...category,
+          companyId: category.companyId || "some_company_id",
+        },
+      };
     } else {
-      return { success: false, message: "Category not found" } as response;
+      return { success: false, message: "Category not found" };
     }
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -75,15 +95,15 @@ export const removeCategoryFromProduct = async (
         },
       },
     });
-    return { success: true, data: category } as response<Category>;
+    return { success: true, data: category };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
 const findByName = async (name: string): Promise<response<Category>> => {
   try {
-    const category = await prisma.category.findMany({
+    const categories = await prisma.category.findMany({
       where: {
         name: {
           equals: name,
@@ -93,10 +113,16 @@ const findByName = async (name: string): Promise<response<Category>> => {
       take: 1,
     });
 
-    if (category.length) {
-      return { success: true, data: category[0] } as response<Category>;
+    if (categories.length) {
+      return {
+        success: true,
+        data: {
+          ...categories[0],
+          companyId: categories[0].companyId || "some_company_id",
+        },
+      };
     } else {
-      return { success: false, message: "Category not found" } as response;
+      return { success: false, message: "Category not found" };
     }
   } catch (error: any) {
     return { success: false, message: error.message } as response;
