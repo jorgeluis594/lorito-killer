@@ -36,7 +36,10 @@ export const userByEmail = async (email: string): Promise<response<User>> => {
 
     const { password, ...user } = persistedUser;
 
-    return { success: true, data: user };
+    return {
+      success: true,
+      data: { ...user, companyId: user.companyId || "some_company_id" },
+    };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
