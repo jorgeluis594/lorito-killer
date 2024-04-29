@@ -22,12 +22,26 @@ export type Actions = {
   removePayment: (paymentMethod: PaymentMethod) => void;
   removeAllPayments: () => void;
   resetPayment: () => void;
+  /**
+   * Sets the cash shift and company ID in the order form.
+   *
+   * This method is responsible for updating the cash shift ID and company ID in the order form.
+   * It retrieves the current state of the order form, and then updates the `cashShiftId` and `companyId` fields
+   * with the corresponding values from the provided cash shift object.
+   *
+   * Note: This method currently also sets the `companyId` in the order form, which may not be its responsibility.
+   * This aspect of the method's functionality may need to be refactored in the future.
+   * To see the implementation of set companyId in the order form, see the `setCompanyId` method in the `order-form-provider.tsx` file.
+   *
+   * @param {CashShift} cashShift - The cash shift object containing the new cash shift ID and company ID.
+   */
   setCashShift: (cashShift: CashShift) => void;
 };
 
 const defaultInitState: OrderFormStore = {
   order: {
     cashShiftId: "",
+    companyId: "",
     orderItems: [],
     payments: [],
     status: "pending",
