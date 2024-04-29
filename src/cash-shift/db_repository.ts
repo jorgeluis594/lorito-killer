@@ -7,7 +7,12 @@ import {
   Prisma,
   ShiftStatus,
 } from "@prisma/client";
-import type { OpenCashShift, CashShiftWithOutOrders, CashShift } from "./types";
+import type {
+  OpenCashShift,
+  CashShiftWithOutOrders,
+  CashShift,
+  CashShiftBase,
+} from "./types";
 import { response } from "@/lib/types";
 import {
   mapPrismaPaymentToPayment,
@@ -82,10 +87,13 @@ export const getManyCashShifts = async (
     orderBy: { openedAt: "desc" },
   });
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
   return {
     success: true,
     data: cashShifts.map((prismaCashShift) => ({
       ...prismaCashShift,
+      userName: user!.name || "sin nombre",
       companyId: prismaCashShift.companyId || "some_company_id",
       status: prismaCashShift.status == "OPEN" ? "open" : "closed",
       initialAmount: Number(prismaCashShift.initialAmount),
@@ -139,11 +147,20 @@ export const findCashShift = async <T extends CashShift>(
 export const prismaCashShiftToCashShift = async <T extends CashShift>(
   prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
 ): Promise<T> => {
-  const baseCashShift = {
+  const user = await prisma.user.findUnique({
+    where: { id: prismaCashShift.userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const baseCashShift: CashShiftBase = {
     id: prismaCashShift.id,
     userId: prismaCashShift.userId,
+    companyId: prismaCashShift.companyId || "some_company_id",
+    userName: user.name || "sin nombre",
     initialAmount: Number(prismaCashShift.initialAmount),
-    openedAt: prismaCashShift.openedAt,
     totalSales: sumPaymentsAmount(prismaCashShift.payments),
     totalCashSales: sumPaymentsAmount(prismaCashShift.payments || [], "CASH"),
     totalDebitCardSales: sumPaymentsAmount(
@@ -165,12 +182,14 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
   if (prismaCashShift.status === "OPEN") {
     return {
       ...baseCashShift,
+      openedAt: prismaCashShift.openedAt,
       status: "open",
     } as T;
   } else {
     return {
       ...baseCashShift,
       status: "closed",
+      openedAt: prismaCashShift.openedAt,
       finalAmount: Number(prismaCashShift.finalAmount),
       closedAt: prismaCashShift.closedAt!,
     } as T;
