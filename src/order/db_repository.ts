@@ -114,6 +114,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
 
     const createdOrder: Order = {
       ...createdOrderResponse,
+      companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
@@ -219,6 +220,7 @@ export async function transformOrdersData(
 
     return {
       ...prismaOrder,
+      companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(
         mapPrismaPaymentToPayment,
