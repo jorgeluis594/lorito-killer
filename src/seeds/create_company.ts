@@ -42,6 +42,14 @@ const execute = async () => {
   });
 
   console.log(ordersResponse);
+
+  const categories = await prisma.category.findMany();
+  const categoriesResponse = await prisma.category.updateMany({
+    where: { id: { in: categories.map((c) => c.id) } },
+    data: { companyId: company.id },
+  });
+
+  console.log(categoriesResponse);
 };
 
 execute().then(() => {
