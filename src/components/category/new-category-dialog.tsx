@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,7 @@ import { Category } from "@/category/types";
 import { createCategory } from "@/category/actions";
 import { CategorySchema } from "@/category/schema";
 import { useCategoryStore } from "@/category/components/category-store-provider";
+import { useUserSession } from "@/lib/use-user-session";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -37,18 +38,26 @@ interface NewSectionDialogProps {
 export default function NewCategoryDialog({
   addCategory,
 }: NewSectionDialogProps) {
+  const user = useUserSession();
   const [open, setOpen] = useState(false);
-  const { categories , setCategories} = useCategoryStore((store) => store)
+  const { categories, setCategories } = useCategoryStore((store) => store);
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(CategorySchema),
-    defaultValues: { name: "" } as Category,
+    defaultValues: { name: "" },
   });
 
+  useEffect(() => {
+    form.setValue("companyId", user?.companyId || "");
+  }, [user]);
+
   const onSubmit = async (data: CategoryFormValues) => {
-    const createdCategory = await createCategory(data);
+    const createdCategory = await createCategory({
+      ...data,
+      companyId: user!.companyId,
+    });
 
     if (createdCategory.success) {
-      setCategories([...categories, createdCategory.data])
+      setCategories([...categories, createdCategory.data]);
       addCategory(createdCategory.data);
       form.setValue("name", "");
       setOpen(false);
@@ -60,7 +69,11 @@ export default function NewCategoryDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon" className="mr-5 rounded-full w-6 h-6 flex items-center justify-center text-lg border-2 border-slate-400">
+        <Button
+          variant="outline"
+          size="icon"
+          className="mr-5 rounded-full w-6 h-6 flex items-center justify-center text-lg border-2 border-slate-400"
+        >
           ＋
         </Button>
       </DialogTrigger>
