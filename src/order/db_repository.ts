@@ -167,11 +167,11 @@ export async function transformOrdersData(
   });
 
   const prismaOrderItemsMap = prismaOrderItems.reduce(
-    (acc: Record<string, typeof prismaOrderItems>, oi) => {
+    (acc: Record<string, typeof prismaOrderItems | undefined>, oi) => {
       if (!acc[oi.orderId]) {
         acc[oi.orderId] = [];
       }
-      acc[oi.orderId].push(oi);
+      acc[oi.orderId]!.push(oi);
 
       return acc;
     },
@@ -206,7 +206,7 @@ export async function transformOrdersData(
       throw new Error(`Invalid order status: ${prismaOrder.status}`);
     }
 
-    const parsedOrderItems = prismaOrderItemsMap[prismaOrder.id].map(
+    const parsedOrderItems = (prismaOrderItemsMap[prismaOrder.id] || []).map(
       (oi: PrismaOrderItem) => {
         const { orderId, ...orderItemData } = oi;
         return {
