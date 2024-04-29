@@ -88,6 +88,8 @@ model OrderItem {
 model Order {
   id        String    @id @default(uuid())
   cashShiftId String
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   total     Decimal
   status    String
   cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -106,6 +108,7 @@ model Company {
   users     User[]
   products Product[]
   cashShifts CashShift[]
+  orders Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
