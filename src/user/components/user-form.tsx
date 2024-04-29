@@ -14,7 +14,7 @@ export default function UserForm() {
   const user = useUserSession()!;
   const { update } = useSession();
 
-  const [name, setName] = useState<string>(user.name || "");
+  const [name, setName] = useState<string>(user?.name || "");
   const [loading, setLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
