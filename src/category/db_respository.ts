@@ -25,12 +25,17 @@ export const create = async (
   }
 };
 
-export const getMany = async (): Promise<response<Category[]>> => {
+export const getMany = async (
+  companyId: string,
+): Promise<response<Category[]>> => {
   try {
-    const categories = (await prisma.category.findMany()).map((c) => ({
+    const categories = (
+      await prisma.category.findMany({ where: { companyId } })
+    ).map((c) => ({
       ...c,
       companyId: c.companyId || "some_company_id",
     }));
+
     return { success: true, data: categories };
   } catch (error: any) {
     return { success: false, message: error.message };
