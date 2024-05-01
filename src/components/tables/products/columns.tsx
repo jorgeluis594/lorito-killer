@@ -26,13 +26,14 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "purchasePrice",
     header: "PRECIO DE VENTA",
-    cell: ({ row }) =>
-      row.original.purchasePrice && formatPrice(row.original.purchasePrice),
+    cell: ({ row }) => formatPrice(row.original.price),
   },
   {
     accessorKey: "price",
     header: "PRECIO DE COMPRA",
-    cell: ({ row }) => formatPrice(row.original.price),
+    cell: ({ row }) =>
+      row.original.purchasePrice && formatPrice(row.original.purchasePrice),
+    
   },
   {
     id: "actions",
