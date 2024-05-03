@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input, MoneyInput } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/shared/components/ui/button";
+import { Input, MoneyInput } from "@/shared/components/ui/input";
+import { Dialog, DialogContent, DialogFooter } from "@/shared/components/ui/dialog";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
 
 import React, { useEffect, useRef } from "react";
@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { Product, Photo } from "@/product/types";
 import { EMPTY_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
-import FileUpload from "@/components/file-upload";
+import FileUpload from "@/product/components/file-upload/file-upload";
 import {
   Form,
   FormControl,
@@ -20,20 +20,20 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Heading } from "@/components/ui/heading";
+} from "@/shared/components/ui/form";
+import { Heading } from "@/shared/components/ui/heading";
 import { ProductSchema } from "@/product/schema";
 import CategoriesSelector from "@/product/components/category/categories-selector";
-import { useToast } from "@/components/ui/use-toast";
-import NewCategoryDialog from "@/components/category/new-category-dialog";
+import { useToast } from "@/shared/components/ui/use-toast";
+import NewCategoryDialog from "@/product/components/category/new-category-dialog";
 import { Category } from "@/category/types";
 import {
   addCategoryToProduct as attachCategoryToProduct,
   removeCategoryFromProduct,
 } from "@/category/actions";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
-import { DialogClose } from "@/components/ui/dialog";
+import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";

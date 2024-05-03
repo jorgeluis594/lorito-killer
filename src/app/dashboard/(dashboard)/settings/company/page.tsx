@@ -1,10 +1,10 @@
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@/shared/components/ui/separator";
 import CompanyForm from "@/company/components/company-form";
 import { getSession } from "@/lib/auth";
 import { getCompany } from "@/company/db_repository";
 import { notFound } from "next/navigation";
 import NewUserModal from "@/company/components/new-user-modal";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/shared/components/ui/label";
 
 export const revalidate = 0;
 

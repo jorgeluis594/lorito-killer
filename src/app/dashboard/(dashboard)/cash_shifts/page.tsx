@@ -1,4 +1,4 @@
-import BreadCrumb from "@/components/breadcrumb";
+import BreadCrumb from "@/shared/breadcrumb";
 import CashShiftClientTable from "@/cash-shift/components/data-table/client";
 
 const breadcrumbItems = [{ title: "Caja chica", link: "/cash_shifts" }];

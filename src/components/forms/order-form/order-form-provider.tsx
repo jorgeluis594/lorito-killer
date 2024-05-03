@@ -11,7 +11,7 @@ import {
 } from "./store";
 import { Product } from "@/product/types";
 import { Payment, PaymentMethod } from "@/order/types";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(

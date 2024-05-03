@@ -1,22 +1,22 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
 import { Search } from "lucide-react";
 import { Product } from "@/product/types";
 import { getMany, type GetManyParams } from "@/product/api_repository";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 import ProductList from "@/components/forms/order-form/product-list";
 import { debounce, isBarCodeValid } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { SortOptions } from "@/product/types";
 import { sortOptions } from "@/product/constants";

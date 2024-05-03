@@ -5,9 +5,9 @@ import {
   useOrderFormActions,
   useOrderFormStore,
 } from "@/components/forms/order-form/order-form-provider";
-import { Separator } from "@/components/ui/separator";
-import { Input, MoneyInput } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Separator } from "@/shared/components/ui/separator";
+import { Input, MoneyInput } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
 import { useCallback, useEffect, useState } from "react";
 import type {
   CashPayment as CashPaymentMethod,
@@ -15,7 +15,7 @@ import type {
   WalletPayment as WalletPaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/components/ui/toggle-group";
 import * as React from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 

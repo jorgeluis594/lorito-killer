@@ -1,13 +1,13 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { LoadingButton } from "@/components/ui/button";
+import { Label } from "@/shared/components/ui/label";
+import { Input } from "@/shared/components/ui/input";
+import { LoadingButton } from "@/shared/components/ui/button";
 
 import { updateUser } from "@/user/actions";
 import { useUserSession } from "@/lib/use-user-session";
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 import { useSession } from "next-auth/react";
 
 export default function UserForm() {

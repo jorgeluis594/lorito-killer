@@ -1,7 +1,7 @@
 "use client";
 
 import { Product } from "@/product/types";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
 import {

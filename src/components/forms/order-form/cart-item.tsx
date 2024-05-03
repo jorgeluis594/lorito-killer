@@ -1,7 +1,7 @@
 import { OrderItem } from "@/order/types";
 import { Plus, Minus } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { Trash } from "lucide-react";
 
 interface CartItemProps {

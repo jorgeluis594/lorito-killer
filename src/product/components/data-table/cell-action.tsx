@@ -1,19 +1,19 @@
 "use client";
-import { AlertModal } from "@/components/modal/alert-modal";
-import { Button } from "@/components/ui/button";
+import { AlertModal } from "@/shared/components/modal/alert-modal";
+import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import { Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product } from "@/product/types";
 import { deleteProduct } from "@/product/api_repository";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 
 interface CellActionProps {

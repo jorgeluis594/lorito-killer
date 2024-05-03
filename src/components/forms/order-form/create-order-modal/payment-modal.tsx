@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 import {
   useOrderFormActions,
   useOrderFormStore,
@@ -21,7 +21,7 @@ import {
   WalletPayment,
 } from "./payment_views";
 import { create } from "@/order/actions";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import React, { useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";

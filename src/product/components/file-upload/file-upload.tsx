@@ -1,11 +1,11 @@
 "use client";
 
-import {UploadDropzone} from "@/components/uploadthing";
+import {UploadDropzone} from "@/shared/uploadthing";
 import {Trash} from "lucide-react";
 import Image from "next/image";
 import {IMG_MAX_LIMIT} from "@/product/constants";
-import {Button} from "./ui/button";
-import {useToast} from "./ui/use-toast";
+import {Button} from "../../../shared/components/ui/button";
+import {useToast} from "../../../shared/components/ui/use-toast";
 import {Photo} from "@/product/types";
 
 interface ImageUploadProps {

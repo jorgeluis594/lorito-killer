@@ -1,8 +1,8 @@
-import BreadCrumb from "@/components/breadcrumb";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
+import BreadCrumb from "@/shared/breadcrumb";
+import { Heading } from "@/shared/components/ui/heading";
+import { Separator } from "@/shared/components/ui/separator";
 
-import NavItems from "@/shared/components/settings-nav-items";
+import NavItems from "@/shared/settings-nav-items";
 
 const breadcrumbItems = [{ title: "Configuraciones", link: "/" }];
 

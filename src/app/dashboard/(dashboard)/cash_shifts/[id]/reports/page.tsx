@@ -1,6 +1,6 @@
-import BreadCrumb from "@/components/breadcrumb";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
+import BreadCrumb from "@/shared/breadcrumb";
+import { Heading } from "@/shared/components/ui/heading";
+import { Separator } from "@/shared/components/ui/separator";
 import CashShiftReportTw from "@/cash-shift/cash-shift-report-tailwind";
 import { findCashShift } from "@/cash-shift/db_repository";
 import { notFound } from "next/navigation";

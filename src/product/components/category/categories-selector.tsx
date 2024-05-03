@@ -1,13 +1,13 @@
 "use client";
 
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@/shared/components/ui/separator";
 import { Category } from "@/category/types";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import React, { useEffect } from "react";
-import { FormControl, FormLabel } from "@/components/ui/form";
+import { FormControl, FormLabel } from "@/shared/components/ui/form";
 import { useCategoryStore } from "@/category/components/category-store-provider";
-import { Skeleton } from "@/components/ui/skeleton";
-import MultipleSelector, { Option } from "@/components/ui/multiple-selector";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import MultipleSelector, { Option } from "@/shared/components/ui/multiple-selector";
 
 interface SelectCategoriesProps {
   value: Category[];

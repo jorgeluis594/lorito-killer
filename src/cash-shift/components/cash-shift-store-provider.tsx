@@ -7,7 +7,7 @@ import {
   useContext,
   useEffect,
 } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 import { type StoreApi, useStore } from "zustand";
 
 import {

@@ -1,4 +1,4 @@
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@/shared/components/ui/separator";
 import UserForm from "@/user/components/user-form";
 import ChangePasswordForm from "@/user/components/change-password-form";
 

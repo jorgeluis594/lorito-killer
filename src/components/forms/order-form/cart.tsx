@@ -5,10 +5,10 @@ import {
   useOrderFormActions,
   useOrderFormStore,
 } from "@/components/forms/order-form/order-form-provider";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import PaymentModal from "@/components/forms/order-form/create-order-modal/payment-modal";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 

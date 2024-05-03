@@ -1,11 +1,11 @@
 "use client";
-import { DataTable } from "@/components/ui/data-table";
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { Heading } from "@/shared/components/ui/heading";
+import { Separator } from "@/shared/components/ui/separator";
 import { Plus } from "lucide-react";
 import { columns } from "./columns";
 import { Product } from "@/product/types";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import { SyntheticEvent, useState } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
