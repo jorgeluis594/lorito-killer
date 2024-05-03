@@ -1,7 +1,7 @@
 "use client";
 
 import { getMany as getManyProducts } from "@/product/api_repository";
-import ProductsClient from "@/components/tables/products/client";
+import ProductsClient from "@/product/components/data-table/client";
 import { Suspense, useEffect, useState } from "react";
 import { Product } from "@/product/types";
 

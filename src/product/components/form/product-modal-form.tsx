@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Heading } from "@/components/ui/heading";
 import { ProductSchema } from "@/product/schema";
-import CategoriesSelector from "@/components/forms/product-form/categories-selector";
+import CategoriesSelector from "@/product/components/category/categories-selector";
 import { useToast } from "@/components/ui/use-toast";
 import NewCategoryDialog from "@/components/category/new-category-dialog";
 import { Category } from "@/category/types";
