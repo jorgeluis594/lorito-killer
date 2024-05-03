@@ -7,7 +7,7 @@ import { Search } from "lucide-react";
 import { Product } from "@/product/types";
 import { getMany, type GetManyParams } from "@/product/api_repository";
 import { useToast } from "@/shared/components/ui/use-toast";
-import ProductList from "@/components/forms/order-form/product-list";
+import ProductList from "@/new-order/components/products-view/product-list";
 import { debounce, isBarCodeValid } from "@/lib/utils";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
@@ -22,7 +22,7 @@ import { SortOptions } from "@/product/types";
 import { sortOptions } from "@/product/constants";
 import { useSymbologyScanner } from "@use-symbology-scanner/react";
 import { findProduct } from "@/product/api_repository";
-import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
+import { useOrderFormActions } from "@/new-order/order-form-provider";
 
 export default function ProductsSearcher() {
   const [products, setProducts] = useState<Product[]>([]);

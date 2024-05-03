@@ -4,7 +4,7 @@ import { HandCoins, Smartphone, CreditCard, PiggyBank } from "lucide-react";
 import {
   useOrderFormActions,
   useOrderFormStore,
-} from "@/components/forms/order-form/order-form-provider";
+} from "@/new-order/order-form-provider";
 import { Separator } from "@/shared/components/ui/separator";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";

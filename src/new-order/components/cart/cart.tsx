@@ -1,15 +1,15 @@
 "use client";
 
-import CartItem from "@/components/forms/order-form/cart-item";
+import CartItem from "@/new-order/components/cart/cart-item";
 import {
   useOrderFormActions,
   useOrderFormStore,
-} from "@/components/forms/order-form/order-form-provider";
+} from "@/new-order/order-form-provider";
 import { Button } from "@/shared/components/ui/button";
 import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
-import PaymentModal from "@/components/forms/order-form/create-order-modal/payment-modal";
+import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 
 export default function Cart() {

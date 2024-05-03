@@ -3,7 +3,7 @@ import Sidebar from "@/shared/components/layout/sidebar";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
-import { OrderFormProvider } from "@/components/forms/order-form/order-form-provider";
+import { OrderFormProvider } from "@/new-order/order-form-provider";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { MobileSidebar } from "@/shared/components/layout/mobile-sidebar";

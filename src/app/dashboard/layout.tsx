@@ -1,4 +1,4 @@
-import { OrderFormProvider } from "@/components/forms/order-form/order-form-provider";
+import { OrderFormProvider } from "@/new-order/order-form-provider";
 import { CategoryStoreProvider } from "@/category/components/category-store-provider";
 import { CashShiftStoreProvider } from "@/cash-shift/components/cash-shift-store-provider";
 import CategoriesLoader from "@/category/components/categories-loader";

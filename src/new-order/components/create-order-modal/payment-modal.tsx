@@ -11,7 +11,7 @@ import {
 import {
   useOrderFormActions,
   useOrderFormStore,
-} from "@/components/forms/order-form/order-form-provider";
+} from "@/new-order/order-form-provider";
 import { formatPrice } from "@/lib/utils";
 import {
   NonePayment,

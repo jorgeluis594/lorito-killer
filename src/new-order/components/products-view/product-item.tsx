@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   useOrderFormActions,
   useOrderFormStore,
-} from "@/components/forms/order-form/order-form-provider";
+} from "@/new-order/order-form-provider";
 
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
