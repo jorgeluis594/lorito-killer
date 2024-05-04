@@ -22,6 +22,7 @@ export default async function productCreator(
 
   const { success: productFound } = await repository.findBy({
     sku: product.sku,
+    companyId: product.companyId,
   });
 
   if (productFound) {
