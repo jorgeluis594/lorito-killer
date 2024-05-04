@@ -71,7 +71,8 @@ export default function NewCategoryDialog({
       alert(createdCategory.message);
       toast({
         title: "Error",
-        description: `Error al crear la categoria`,
+        variant: "destructive",
+        description: "Error al crear la categoria",
       });
     }
   };
