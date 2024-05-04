@@ -28,6 +28,7 @@ import { createCategory } from "@/category/actions";
 import { CategorySchema } from "@/category/schema";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { useUserSession } from "@/lib/use-user-session";
+import { useToast } from "@/components/ui/use-toast";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -46,6 +47,8 @@ export default function NewCategoryDialog({
     defaultValues: { name: "" },
   });
 
+  const { toast } = useToast();
+
   useEffect(() => {
     form.setValue("companyId", user?.companyId || "");
   }, [user]);
@@ -60,9 +63,17 @@ export default function NewCategoryDialog({
       setCategories([...categories, createdCategory.data]);
       addCategory(createdCategory.data);
       form.setValue("name", "");
+      toast({
+        description: `Categoria ${createdCategory.data.name} creada con exito`,
+      });
       setOpen(false);
     } else {
       alert(createdCategory.message);
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Error al crear la categoria",
+      });
     }
   };
 
