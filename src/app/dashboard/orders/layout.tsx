@@ -1,13 +1,13 @@
-import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
+import Header from "@/shared/components/layout/header";
+import Sidebar from "@/shared/components/layout/sidebar";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
-import { OrderFormProvider } from "@/components/forms/order-form/order-form-provider";
+import { OrderFormProvider } from "@/new-order/order-form-provider";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { MobileSidebar } from "@/components/layout/mobile-sidebar";
-import { UserNav } from "@/components/layout/user-nav";
+import { MobileSidebar } from "@/shared/components/layout/mobile-sidebar";
+import { UserNav } from "@/shared/components/layout/user-nav";
 
 export default function OrdersLayout({
   children,

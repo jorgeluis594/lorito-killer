@@ -1,15 +1,15 @@
 "use client";
 
 import { columns } from "@/cash-shift/components/data-table/columns";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "@/shared/components/ui/data-table";
 import { useState, useEffect, useCallback } from "react";
 import { CashShiftWithOutOrders } from "@/cash-shift/types";
 import { getManyCashShifts } from "@/cash-shift/api_repository";
-import { useToast } from "@/components/ui/use-toast";
-import BreadCrumb from "@/components/breadcrumb";
-import { Heading } from "@/components/ui/heading";
+import { useToast } from "@/shared/components/ui/use-toast";
+import BreadCrumb from "@/shared/breadcrumb";
+import { Heading } from "@/shared/components/ui/heading";
 import OpenAndCloseButton from "@/cash-shift/components/open_and_close_button";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@/shared/components/ui/separator";
 
 export default function TableClient() {
   const [loading, setLoading] = useState(true);

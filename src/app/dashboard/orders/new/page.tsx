@@ -1,5 +1,5 @@
-import Cart from "@/components/forms/order-form/cart";
-import ProductSearcherWithCashShiftChecker from "@/components/forms/order-form/product-searcher-with-cash-shift-checker";
+import Cart from "@/new-order/components/cart/cart";
+import ProductSearcherWithCashShiftChecker from "@/new-order/product-searcher-with-cash-shift-checker";
 
 export default async function OrdersPage() {
   return (

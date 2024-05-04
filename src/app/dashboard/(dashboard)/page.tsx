@@ -1,5 +1,5 @@
-import { Overview } from "@/components/overview";
-import { RecentSales } from "@/components/recent-sales";
+import { Overview } from "@/shared/overview";
+import { RecentSales } from "@/shared/recent-sales";
 
 import {
   Card,
@@ -7,9 +7,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@/shared/components/ui/card";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 
 export default function page() {
   return (

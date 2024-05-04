@@ -1,5 +1,5 @@
-import BreadCrumb from "@/components/breadcrumb";
-import ListProducts from "@/components/product/list-product";
+import BreadCrumb from "@/shared/breadcrumb";
+import ListProducts from "@/product/components/list-product";
 import { ProductFormStoreProvider } from "@/product/components/form/product-form-store-provider";
 
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { getMany as getManyCategories } from "@/category/api_repository";
 import { useCategoryStore } from "@/category/components/category-store-provider";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 
 export default function CategoriesLoader({
   children,

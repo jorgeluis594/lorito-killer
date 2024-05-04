@@ -7,7 +7,7 @@ import {
   useContext,
   useEffect,
 } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/shared/components/ui/use-toast";
 import { type StoreApi, useStore } from "zustand";
 
 import {
@@ -16,7 +16,7 @@ import {
   defaultInitState,
 } from "@/cash-shift/components/store";
 import { getLastOpenCashShift } from "@/cash-shift/api_repository";
-import { useOrderFormActions } from "@/components/forms/order-form/order-form-provider";
+import { useOrderFormActions } from "@/new-order/order-form-provider";
 import { signOut } from "next-auth/react";
 
 export const CashShiftStoreContext =

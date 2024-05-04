@@ -1,7 +1,7 @@
 "use client";
 
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import OpenCashShiftForm from "@/cash-shift/components/open-cash-shift-form";
 import CloseCashShiftForm from "@/cash-shift/components/close-cash-shift-form";

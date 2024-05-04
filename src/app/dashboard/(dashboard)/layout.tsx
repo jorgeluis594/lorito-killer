@@ -1,5 +1,5 @@
-import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
+import Header from "@/shared/components/layout/header";
+import Sidebar from "@/shared/components/layout/sidebar";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";

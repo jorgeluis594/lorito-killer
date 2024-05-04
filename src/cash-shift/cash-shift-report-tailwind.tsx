@@ -1,5 +1,5 @@
 import { ClosedCashShift } from "@/cash-shift/types";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -8,7 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/components/ui/table";
 import { format } from "date-fns";
 import { formatPrice } from "@/lib/utils";
 

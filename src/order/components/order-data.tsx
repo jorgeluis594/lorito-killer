@@ -1,10 +1,10 @@
 import { Order } from "@/order/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { formatPrice, localizeDate, paymentMethodToText } from "@/lib/utils";
 import { Printer } from "lucide-react";
 import { BlobProvider } from "@react-pdf/renderer";
 import Voucher from "@/order/components/voucher";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/shared/components/ui/button";
 
 export default function OrderData({ order }: { order: Order }) {
   return (
