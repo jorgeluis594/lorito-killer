@@ -194,15 +194,15 @@ export const findBy = async (
 };
 
 export const deleteProduct = async (
-  product: Product,
-): Promise<response<Product>> => {
+  product: SingleProduct,
+): Promise<response<SingleProduct>> => {
   try {
     const deletedProduct = await prisma.product.delete({
-      where: { id: product.id },
+      where: { id: product.id, isPackage: false },
     });
-    return { success: true, data: deletedProduct } as response;
+    return { success: true, data: product };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -211,9 +211,9 @@ export const getPhotos = async (
 ): Promise<response<Photo[]>> => {
   try {
     const photos = await prisma.photo.findMany({ where: { productId } });
-    return { success: true, data: photos } as response<Photo[]>;
+    return { success: true, data: photos };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -223,11 +223,10 @@ export const getPhoto = async (
 ): Promise<response<Photo>> => {
   try {
     const photo = await prisma.photo.findUnique({ where: { id: photoId } });
-    if (!photo)
-      return { success: false, message: "Photo not found" } as response;
-    return { success: true, data: photo } as response<Photo>;
+    if (!photo) return { success: false, message: "Photo not found" };
+    return { success: true, data: photo };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -255,9 +254,9 @@ export const storePhotos = async (
         }),
       ),
     );
-    return { success: true, data: createdPhotos } as response<Photo[]>;
+    return { success: true, data: createdPhotos };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -272,9 +271,9 @@ export const removePhoto = async (
     await prisma.photo.delete({
       where: { id: photoId, productId: productId },
     });
-    return { success: true, data: photoResponse.data } as response;
+    return { success: true, data: photoResponse.data };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
