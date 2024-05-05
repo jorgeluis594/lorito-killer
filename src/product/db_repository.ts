@@ -124,10 +124,10 @@ export const getMany = async ({
   }
 };
 
-export const find = async (id: string): Promise<response<Product>> => {
+export const find = async (id: string): Promise<response<SingleProduct>> => {
   try {
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id, isPackage: true },
       include: { photos: true, categories: true },
     });
 
@@ -136,13 +136,24 @@ export const find = async (id: string): Promise<response<Product>> => {
       const purchasePrice = product.purchasePrice.toNumber();
       return {
         success: true,
-        data: { ...product, price, purchasePrice },
-      } as response;
+        data: {
+          ...product,
+          price,
+          purchasePrice,
+          companyId: product.companyId || "some_company_id",
+          sku: product.sku || undefined,
+          type: SingleProductType,
+          categories: product.categories.map((c) => ({
+            ...c,
+            companyId: c.companyId || "some_company_id",
+          })),
+        },
+      };
     } else {
-      return { success: false, message: "Product not found" } as response;
+      return { success: false, message: "Product not found" };
     }
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
