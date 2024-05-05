@@ -10,7 +10,7 @@ import {
   update as updateProduct,
 } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
-import { Product } from "@/product/types";
+import { PackageProductType, Product } from "@/product/types";
 
 export const create = async (data: Order): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
@@ -66,12 +66,15 @@ async function updateProductsStocks(order: Order) {
     .filter((r) => r.success)
     .map((r) => (r.success && r.data) as Product);
 
-  Promise.all(
-    products.map((product) =>
+  await Promise.all(
+    products.map((product) => {
+      // TODO: Handle the logic of stock discount on package products
+      if (product.type === PackageProductType) return;
+
       updateProduct({
         ...product,
         stock: product.stock - orderItemsByProductMapper[product.id!].quantity,
-      }),
-    ),
+      });
+    }),
   );
 }
