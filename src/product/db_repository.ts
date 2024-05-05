@@ -17,37 +17,49 @@ interface searchParams {
   categoryId?: string | null;
 }
 
+const singleProductToPrisma = (
+  product: SingleProduct,
+): Prisma.ProductCreateInput => {
+  const { type, ...data } = product;
+  return {
+    ...data,
+    photos: product.photos ? { create: product.photos } : undefined,
+    categories: product.categories
+      ? { connect: product.categories.map((c) => ({ id: c.id })) }
+      : undefined,
+  };
+};
+
 export const create = async (
   product: SingleProduct,
 ): Promise<response<SingleProduct>> => {
   try {
     const { photos, categories, ...productData } = product;
-    const data: any = {
-      ...productData,
-      photos: photos ? { create: photos } : undefined,
-    };
 
-    const createdResponse = await prisma.product.create({ data });
-    const price = createdResponse.price.toNumber();
-    const purchasePrice = createdResponse.purchasePrice.toNumber();
+    const createdResponse = await prisma.product.create({
+      data: singleProductToPrisma(product),
+    });
+    const purchasePrice =
+      createdResponse.purchasePrice && createdResponse.purchasePrice.toNumber();
+
+    const productCategories = await prisma.category.findMany({
+      where: { id: { in: categories.map((c) => c.id!) } },
+    });
+
     const createdProduct: SingleProduct = {
       ...createdResponse,
       companyId: createdResponse.companyId || "some_company_id",
       type: SingleProductType,
       sku: createdResponse.sku || undefined,
-      price,
-      purchasePrice,
-      categories: [],
+      price: createdResponse.price.toNumber(),
+      purchasePrice: purchasePrice || undefined,
+      categories: productCategories.map((c) => ({
+        ...c,
+        companyId: c.companyId || "some_company_id",
+      })),
     };
 
-    const categoriesResponse = await Promise.all(
-      categories.map((c) => addCategoryToProduct(createdProduct, c)),
-    );
-    createdProduct.categories = categoriesResponse
-      .filter((c): c is successResponse<Category> => c.success)
-      .map((c) => c.data);
-
-    return { success: true, data: { ...createdProduct, price } };
+    return { success: true, data: createdProduct };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
@@ -101,7 +113,9 @@ export const getMany = async ({
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-        const purchasePrice = p.purchasePrice.toNumber();
+        const purchasePrice = !!p.purchasePrice
+          ? p.purchasePrice.toNumber()
+          : undefined;
         const result: SingleProduct = {
           ...p,
           companyId: p.companyId || "some_company_id",
@@ -120,7 +134,7 @@ export const getMany = async ({
 
     return { success: true, data: products };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
@@ -133,7 +147,9 @@ export const find = async (id: string): Promise<response<SingleProduct>> => {
 
     if (product) {
       const price = product.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-      const purchasePrice = product.purchasePrice.toNumber();
+      const purchasePrice = !!product.purchasePrice
+        ? product.purchasePrice.toNumber()
+        : undefined;
       return {
         success: true,
         data: {
@@ -181,7 +197,9 @@ export const findBy = async (
         type: SingleProductType,
         price: product.price.toNumber(),
         sku: product.sku || undefined,
-        purchasePrice: product.purchasePrice.toNumber(),
+        purchasePrice: !!product.purchasePrice
+          ? product.purchasePrice.toNumber()
+          : undefined,
         categories: product.categories.map((c) => ({
           ...c,
           companyId: c.companyId || "some_company_id",
@@ -295,7 +313,9 @@ export const search = async ({
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-        const purchasePrice = p.purchasePrice.toNumber();
+        const purchasePrice = !!p.purchasePrice
+          ? p.purchasePrice.toNumber()
+          : undefined;
         return { ...p, price, purchasePrice };
       }),
     );
