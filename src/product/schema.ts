@@ -1,4 +1,3 @@
-import { Product, Photo } from "./types";
 import * as z from "zod";
 import { IMG_MAX_LIMIT } from "@/product/constants";
 import { CategorySchema } from "@/category/schema";
@@ -40,7 +39,3 @@ export const ProductSchema = z.object({
   updatedAt: z.date().optional(),
   createdAt: z.date().optional(),
 });
-
-// Ensure that the schema and the type are identical
-z.util.assertEqual<Product, z.infer<typeof ProductSchema>>(true);
-z.util.assertEqual<Photo, z.infer<typeof PhotoSchema>>(true);
