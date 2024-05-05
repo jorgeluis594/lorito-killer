@@ -23,14 +23,17 @@ type ProductBase = {
   createdAt?: Date;
 };
 
+export const SingleProductType = "SingleProduct";
+
 export type SingleProduct = ProductBase & {
   purchasePrice?: number;
-  type: "SingleProduct";
+  type: typeof SingleProductType;
   stock: number;
 };
 
+export const PackageProductType = "PackageProduct";
 export type PackageProduct = ProductBase & {
-  type: "PackageProduct";
+  type: typeof PackageProductType;
   productItems: ProductItem[];
 };
 
