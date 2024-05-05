@@ -52,8 +52,11 @@ export type ProductSearchParams = {
   categories?: { id?: string };
 };
 
+// TODO: Add sort params for package product
 export type ProductSortParams = {
-  [P in keyof Omit<Product, "id" | "photos" | "categories">]?: "asc" | "desc";
+  [P in keyof Omit<SingleProduct, "id" | "photos" | "categories">]?:
+    | "asc"
+    | "desc";
 };
 
 export type SortOptions = {

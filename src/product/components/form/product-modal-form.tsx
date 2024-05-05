@@ -13,7 +13,12 @@ import * as z from "zod";
 import React, { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Product, Photo } from "@/product/types";
+import {
+  Product,
+  Photo,
+  SingleProduct,
+  SingleProductType,
+} from "@/product/types";
 import { EMPTY_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
@@ -44,12 +49,13 @@ import { useUserSession } from "@/lib/use-user-session";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
-const transformToProduct = (data: ProductFormValues): Product => {
+const transformToProduct = (data: ProductFormValues): SingleProduct => {
   return {
     companyId: data.companyId,
     name: data.name,
     price: data.price,
     sku: data.sku,
+    type: SingleProductType,
     purchasePrice: data.purchasePrice,
     description: data.description,
     stock: data.stock,

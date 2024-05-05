@@ -1,9 +1,10 @@
-import { Product, SortOptions } from "@/product/types";
+import { Product, SingleProductType, SortOptions } from "@/product/types";
 
 export const IMG_MAX_LIMIT = 1;
 
 export const EMPTY_PRODUCT = {
   companyId: "",
+  type: SingleProductType,
   name: "",
   price: 0,
   description: "",
