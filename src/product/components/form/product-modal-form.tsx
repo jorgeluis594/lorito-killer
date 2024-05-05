@@ -2,7 +2,11 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
-import { Dialog, DialogContent, DialogFooter } from "@/shared/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+} from "@/shared/components/ui/dialog";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
 
@@ -74,8 +78,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
-
-  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
@@ -260,12 +262,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
-    if (isBarCodeValid(symbol, 3)) {
-      form.setValue("sku", symbol);
-    }
-  };
-
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
@@ -303,11 +299,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                           <Input
                             autoComplete="off"
                             placeholder="Max 13 dígitos"
-                            {...{ ...field, ref: undefined }}
-                            ref={(e) => {
-                              field.ref(e);
-                              barcodeInputRef.current = e;
-                            }}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
