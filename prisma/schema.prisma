@@ -25,9 +25,23 @@ model Product {
   description String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isPacakge Boolean @default(false)
   photos    Photo[]
+  childPackageItems PackageItem[] @relation("ChildProducts")
+  parentPackageItems PackageItem[] @relation("ParentProducts")
   categories Category[]
   orderItems OrderItem[]
+}
+
+model PackageItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+  childProductId String
+  parentProductId String
+  childProduct   Product @relation("ChildProducts", fields: [childProductId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  parentProduct   Product @relation("ParentProducts", fields: [parentProductId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Photo {
