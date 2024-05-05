@@ -159,7 +159,7 @@ export const find = async (id: string): Promise<response<SingleProduct>> => {
 
 export const findBy = async (
   params: ProductSearchParams,
-): Promise<response<Product>> => {
+): Promise<response<SingleProduct>> => {
   try {
     const { categories, ...rest } = params;
     const searchParams: any = { ...rest };
@@ -167,12 +167,29 @@ export const findBy = async (
       searchParams.categories = { categories: { id: categories.id } };
     }
 
-    const product = await prisma.product.findFirst({ where: searchParams });
+    const product = await prisma.product.findFirst({
+      where: { ...searchParams, isPackage: false },
+      include: { photos: true, categories: true },
+    });
     if (!product) return { success: false, message: "Product not found" };
 
-    return { success: true, data: product } as response;
+    return {
+      success: true,
+      data: {
+        ...product,
+        companyId: product.companyId || "some_company_id",
+        type: SingleProductType,
+        price: product.price.toNumber(),
+        sku: product.sku || undefined,
+        purchasePrice: product.purchasePrice.toNumber(),
+        categories: product.categories.map((c) => ({
+          ...c,
+          companyId: c.companyId || "some_company_id",
+        })),
+      },
+    };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
