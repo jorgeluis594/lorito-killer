@@ -2,7 +2,11 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
-import { Dialog, DialogContent, DialogFooter } from "@/shared/components/ui/dialog";
+import { 
+  Dialog,
+  DialogContent,
+  DialogFooter
+} from "@/shared/components/ui/dialog";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
 
@@ -37,6 +41,7 @@ import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
+import { findProductBySku } from "@/product/components/form/product-find-action";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -75,6 +80,16 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
+  useEffect(() => {
+    async function findProduct(companyId: string, sku: string) {
+      const response = await findProductBySku(companyId, sku);
+      console.log({ response });
+    }
+
+    if (formStore?.product?.sku)
+      findProduct(formStore.product.companyId, formStore.product.sku);
+  }, [formStore])
+
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
@@ -83,6 +98,16 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
       ? { ...EMPTY_PRODUCT, stock: undefined }
       : productData || EMPTY_PRODUCT,
   });
+
+  const productSku = form.watch('sku');
+
+  useEffect(() => {
+    console.log({ productSku });
+    form.setError("sku", {
+      type: "custom",
+      message: "Ya existe un producto con el mismo sku",
+    });
+  }, [productSku])
 
   useEffect(() => {
     if (formStore.isNew) {
@@ -303,11 +328,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                           <Input
                             autoComplete="off"
                             placeholder="Max 13 dígitos"
-                            {...{ ...field, ref: undefined }}
-                            ref={(e) => {
-                              field.ref(e);
-                              barcodeInputRef.current = e;
-                            }}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
