@@ -134,10 +134,9 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   const addCategoryToProduct = async (category: Category) => {
     const productCategories = form.getValues("categories") || [];
-    if (formStore.isNew) return;
     if (productCategories.find((c) => c.id === category.id)) return;
 
-    await handleCategoriesUpdated([...productCategories, category]);
+    await onCategoryAdded(category);
   };
 
   const handlePhotosUpdated = async (newPhotos: Photo[]) => {
@@ -198,67 +197,52 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleCategoriesUpdated = async (categories: Category[]) => {
-    const currentCategories = form.getValues("categories") || [];
-    // If the product is new, there is no need to remove the category from the server
-    if (formStore.isNew) return form.setValue("categories", categories);
+  const onCategoryAdded = async (category: Category) => {
+    const currentValues = form.getValues("categories") || [];
+    form.setValue("categories", [...currentValues, category]);
+    if (formStore.isNew) return;
 
-    const categoriesToRemove = currentCategories.filter(
-      (category: Category) =>
-        !categories.find(
-          (newCategory: Category) => newCategory.id === category.id,
-        ),
+    const attachCategoryResponse = await attachCategoryToProduct(
+      formStore.product.id!,
+      category.id!,
     );
-    const categoriesToAppend = categories.filter(
-      (category: Category) =>
-        !currentCategories.find(
-          (currentCategory: Category) => currentCategory.id === category.id,
-        ),
-    );
-
-    if (categoriesToRemove.length) {
-      form.setValue("categories", categories);
-      for (const category of categoriesToRemove) {
-        const removeCategoryReponse = await removeCategoryFromProduct(
-          formStore.product.id!,
-          category.id!,
-        );
-        if (removeCategoryReponse.success) {
-          toast({
-            description: `Categoria ${category.name} eliminada del producto con exito`,
-          });
-        } else {
-          toast({
-            title: "Error",
-            variant: "destructive",
-            description: `Error al eliminar la categoria ${category.name}`,
-          });
-        }
-      }
+    if (attachCategoryResponse.success) {
+      toast({
+        description: `Categoria ${category.name} agregada con exito`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: `Error al agregar la categoria ${category.name}`,
+      });
+      form.setValue("categories", currentValues);
     }
+  };
 
-    if (categoriesToAppend.length) {
-      form.setValue("categories", [
-        ...currentCategories,
-        ...categoriesToAppend,
-      ]);
-      for (const category of categoriesToAppend) {
-        const attachCategoryResponse = await attachCategoryToProduct(
-          formStore.product.id!,
-          category.id!,
-        );
-        if (attachCategoryResponse.success) {
-          toast({
-            description: `Categoria ${category.name} agregada con exito`,
-          });
-        } else {
-          toast({
-            title: "Error",
-            variant: "destructive",
-            description: `Error al agregar la categoria ${category.name}`,
-          });
-        }
-      }
+  const onCategoryRemoved = async (category: Category) => {
+    const currentCategories = form.getValues("categories") || [];
+    const newCategories = currentCategories.filter(
+      (c: Category) => c.id !== category.id,
+    );
+    form.setValue("categories", newCategories);
+
+    if (formStore.isNew) return;
+
+    const removeCategoryResponse = await removeCategoryFromProduct(
+      formStore.product.id!,
+      category.id!,
+    );
+    if (removeCategoryResponse.success) {
+      toast({
+        description: `Categoria ${category.name} eliminada del producto con exito`,
+      });
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: `Error al eliminar la categoria ${category.name}`,
+      });
     }
   };
 
@@ -372,7 +356,8 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
                       <div className="flex justify-between items-center gap-4">
                         <CategoriesSelector
                           value={field.value || []}
-                          onChange={handleCategoriesUpdated}
+                          onCategoryAdded={onCategoryAdded}
+                          onCategoryRemoved={onCategoryRemoved}
                         />
                         <NewCategoryDialog addCategory={addCategoryToProduct} />
                       </div>
