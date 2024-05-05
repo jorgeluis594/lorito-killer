@@ -1,9 +1,11 @@
 import prisma from "@/lib/prisma";
-import type {
+import {
   Product,
   Photo,
   ProductSearchParams,
   ProductSortParams,
+  SingleProduct,
+  SingleProductType,
 } from "./types";
 import { Category } from "@/category/types";
 import { addCategoryToProduct } from "@/category/db_respository";
@@ -14,7 +16,9 @@ interface searchParams {
   categoryId?: string | null;
 }
 
-export const create = async (product: Product): Promise<response<Product>> => {
+export const create = async (
+  product: SingleProduct,
+): Promise<response<SingleProduct>> => {
   try {
     const { photos, categories, ...productData } = product;
     const data: any = {
@@ -25,9 +29,10 @@ export const create = async (product: Product): Promise<response<Product>> => {
     const createdResponse = await prisma.product.create({ data });
     const price = createdResponse.price.toNumber();
     const purchasePrice = createdResponse.purchasePrice.toNumber();
-    const createdProduct: Product = {
+    const createdProduct: SingleProduct = {
       ...createdResponse,
       companyId: createdResponse.companyId || "some_company_id",
+      type: SingleProductType,
       sku: createdResponse.sku || undefined,
       price,
       purchasePrice,
@@ -94,12 +99,13 @@ export const getMany = async ({
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
         const purchasePrice = p.purchasePrice.toNumber();
-        return {
+        const result: Product = {
           ...p,
           companyId: p.companyId || "some_company_id",
           price,
           purchasePrice,
-        } as Product;
+        };
+        return result;
       }),
     );
 
