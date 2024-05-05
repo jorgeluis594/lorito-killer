@@ -10,6 +10,7 @@ import {
 import { Category } from "@/category/types";
 import { addCategoryToProduct } from "@/category/db_respository";
 import { response, successResponse } from "@/lib/types";
+import { Prisma } from "@prisma/client";
 
 interface searchParams {
   q: string;
@@ -76,12 +77,11 @@ export const getMany = async ({
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
   q?: string | null;
-}): Promise<response<Product[]>> => {
+}): Promise<response<SingleProduct[]>> => {
   try {
-    const query: any = {
-      where: { companyId },
+    const query: Prisma.ProductFindManyArgs = {
+      where: { companyId, isPackage: false },
       orderBy: sortBy,
-      include: { photos: true, categories: true },
     };
     if (categoryId)
       query.where = {
@@ -94,15 +94,24 @@ export const getMany = async ({
         name: { contains: q, mode: "insensitive" },
       };
 
-    const result = await prisma.product.findMany(query);
+    const result = await prisma.product.findMany({
+      ...query,
+      include: { photos: true, categories: true },
+    });
     const products = await Promise.all(
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
         const purchasePrice = p.purchasePrice.toNumber();
-        const result: Product = {
+        const result: SingleProduct = {
           ...p,
           companyId: p.companyId || "some_company_id",
+          type: SingleProductType,
+          sku: p.sku || undefined,
           price,
+          categories: p.categories.map((c) => ({
+            ...c,
+            companyId: c.companyId || "some_company_id",
+          })),
           purchasePrice,
         };
         return result;
