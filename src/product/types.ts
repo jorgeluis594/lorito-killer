@@ -10,19 +10,37 @@ export type Photo = {
   createdAt?: Date;
 };
 
-export type Product = {
+type ProductBase = {
   id?: string;
   companyId: string;
   name: string;
   price: number;
   sku?: string;
-  stock: number;
-  purchasePrice?: number;
   description: string;
   photos?: Photo[];
   categories: Category[];
   updatedAt?: Date;
   createdAt?: Date;
+};
+
+export type SingleProduct = ProductBase & {
+  purchasePrice?: number;
+  type: "SingleProduct";
+  stock: number;
+};
+
+export type PackageProduct = ProductBase & {
+  type: "PackageProduct";
+  productItems: ProductItem[];
+};
+
+export type Product = SingleProduct | PackageProduct;
+
+export type ProductItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
 };
 
 export type ProductSearchParams = {
