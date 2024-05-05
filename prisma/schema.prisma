@@ -25,7 +25,7 @@ model Product {
   description String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isPacakge Boolean @default(false)
+  isPackage Boolean @default(false)
   photos    Photo[]
   childPackageItems PackageItem[] @relation("ChildProducts")
   parentPackageItems PackageItem[] @relation("ParentProducts")
