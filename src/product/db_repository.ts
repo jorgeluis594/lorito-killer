@@ -280,9 +280,12 @@ export const removePhoto = async (
 export const search = async ({
   q,
   categoryId,
-}: searchParams): Promise<response<Product[]>> => {
+}: searchParams): Promise<response<SingleProduct[]>> => {
   try {
-    const query: any = { name: { contains: q, mode: "insensitive" } };
+    const query: Prisma.ProductWhereInput = {
+      name: { contains: q, mode: "insensitive" },
+      isPackage: false,
+    };
     if (categoryId) query.categories = { some: { id: categoryId } };
 
     const result = await prisma.product.findMany({
@@ -293,11 +296,23 @@ export const search = async ({
       result.map(async (p) => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
         const purchasePrice = p.purchasePrice.toNumber();
-        return { ...p, price, purchasePrice } as Product;
+        return { ...p, price, purchasePrice };
       }),
     );
 
-    return { success: true, data: products };
+    return {
+      success: true,
+      data: products.map((p) => ({
+        ...p,
+        companyId: p.companyId || "some_company_id",
+        sku: p.sku || undefined,
+        type: SingleProductType,
+        categories: p.categories.map((c) => ({
+          ...c,
+          companyId: c.companyId || "some_company_id",
+        })),
+      })),
+    };
   } catch (error: any) {
     return { success: false, message: error.message } as response;
   }
