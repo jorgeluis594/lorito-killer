@@ -12,7 +12,7 @@ export const PhotoSchema = z.object({
   createdAt: z.date().optional(),
 });
 
-export const ProductSchema = z.object({
+export const SingleProductSchema = z.object({
   id: z.string().optional(),
   companyId: z.string(),
   name: z.string().min(3, {

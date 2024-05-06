@@ -1,5 +1,5 @@
-import { Product, ProductSearchParams, SingleProduct } from "@/product/types";
-import { ProductSchema } from "@/product/schema";
+import { ProductSearchParams, SingleProduct } from "@/product/types";
+import { SingleProductSchema } from "@/product/schema";
 import { response } from "@/lib/types";
 
 interface Repository {
@@ -11,7 +11,7 @@ export default async function productCreator(
   repository: Repository,
   product: SingleProduct,
 ): Promise<response<SingleProduct>> {
-  const parsedProduct = ProductSchema.safeParse(product);
+  const parsedProduct = SingleProductSchema.safeParse(product);
   if (!parsedProduct.success) {
     return { success: false, message: parsedProduct.error.message };
   }

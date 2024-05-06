@@ -31,7 +31,7 @@ import {
   FormMessage,
 } from "@/shared/components/ui/form";
 import { Heading } from "@/shared/components/ui/heading";
-import { ProductSchema } from "@/product/schema";
+import { SingleProductSchema } from "@/product/schema";
 import CategoriesSelector from "@/product/components/category/categories-selector";
 import { useToast } from "@/shared/components/ui/use-toast";
 import NewCategoryDialog from "@/product/components/category/new-category-dialog";
@@ -47,7 +47,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 
-type ProductFormValues = z.infer<typeof ProductSchema>;
+type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
 const transformToProduct = (data: ProductFormValues): SingleProduct => {
   return {
@@ -86,7 +86,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
   const form = useForm<ProductFormValues>({
-    resolver: zodResolver(ProductSchema),
+    resolver: zodResolver(SingleProductSchema),
     defaultValues: formStore.isNew
       ? { ...EMPTY_PRODUCT, stock: undefined }
       : productData || EMPTY_PRODUCT,
