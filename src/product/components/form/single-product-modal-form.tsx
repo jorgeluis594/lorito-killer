@@ -19,7 +19,7 @@ import {
   SingleProduct,
   SingleProductType,
 } from "@/product/types";
-import { EMPTY_PRODUCT } from "@/product/constants";
+import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
@@ -88,13 +88,13 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(SingleProductSchema),
     defaultValues: formStore.isNew
-      ? { ...EMPTY_PRODUCT, stock: undefined }
-      : productData || EMPTY_PRODUCT,
+      ? { ...EMPTY_SINGLE_PRODUCT, stock: undefined }
+      : productData || EMPTY_SINGLE_PRODUCT,
   });
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({ ...EMPTY_PRODUCT, companyId: user!.companyId });
+      form.reset({ ...EMPTY_SINGLE_PRODUCT, companyId: user!.companyId });
     } else {
       form.reset(productData);
     }

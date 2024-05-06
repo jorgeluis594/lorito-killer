@@ -7,7 +7,7 @@ export default function ProductModalForm({
 }: {
   onActionPerformed: () => void;
 }) {
-  const productType = useProductFormStore((store) => store.product?.type);
+  const productType = useProductFormStore((store) => store.productType);
 
   return (
     productType !== PackageProductType && (
