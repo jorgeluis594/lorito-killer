@@ -1,15 +1,12 @@
 import prisma from "@/lib/prisma";
 import {
-  Product,
   Photo,
   ProductSearchParams,
   ProductSortParams,
   SingleProduct,
   SingleProductType,
 } from "./types";
-import { Category } from "@/category/types";
-import { addCategoryToProduct } from "@/category/db_respository";
-import { response, successResponse } from "@/lib/types";
+import { response } from "@/lib/types";
 import { Prisma } from "@prisma/client";
 
 interface searchParams {
