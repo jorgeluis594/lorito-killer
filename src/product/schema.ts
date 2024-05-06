@@ -43,6 +43,7 @@ export const SingleProductSchema = z.object({
 export const ProductItemSchema = z.object({
   id: z.string(),
   productId: z.string(),
+  productName: z.string(),
   quantity: z.number(),
 });
 
