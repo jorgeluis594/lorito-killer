@@ -4,27 +4,18 @@ import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
 } from "@/shared/components/ui/dialog";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import {
-  Product,
-  Photo,
-  SingleProduct,
-  SingleProductType,
-  PackageProduct,
-  PackageProductType,
-} from "@/product/types";
-import {
-  EMPTY_PACKAGE_PRODUCT,
-  EMPTY_SINGLE_PRODUCT,
-} from "@/product/constants";
+import { PackageProduct, PackageProductType, Photo } from "@/product/types";
+import { EMPTY_PACKAGE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
@@ -36,7 +27,7 @@ import {
   FormMessage,
 } from "@/shared/components/ui/form";
 import { Heading } from "@/shared/components/ui/heading";
-import { PackageProductSchema, SingleProductSchema } from "@/product/schema";
+import { PackageProductSchema } from "@/product/schema";
 import CategoriesSelector from "@/product/components/category/categories-selector";
 import { useToast } from "@/shared/components/ui/use-toast";
 import NewCategoryDialog from "@/product/components/category/new-category-dialog";
@@ -47,9 +38,7 @@ import {
 } from "@/category/actions";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
-import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
@@ -127,7 +116,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
           description:
             "Error al actualizar el pack de productos, " + res.message,
         });
-        formStore.resetProduct();
+        formStore.resetProduct(PackageProductType);
       }
     } else {
       const res = await repository.create(transformToProduct(data));
@@ -143,7 +132,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
           description:
             "Error al registrar el pack de productos, " + res.message,
         });
-        formStore.resetProduct();
+        formStore.resetProduct(PackageProductType);
       }
     }
   };

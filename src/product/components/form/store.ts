@@ -44,7 +44,9 @@ export type ProductFormState =
 
 export type ProductFormActions = {
   setProduct: (product: Product) => void;
-  resetProduct: () => void;
+  resetProduct: (
+    productType: typeof SingleProductType | typeof PackageProductType,
+  ) => void;
   setOpen: (open: boolean) => void;
   setPerformingAction: (performingAction: boolean) => void;
 };
@@ -83,7 +85,24 @@ export const createProductFormStore = (
               productType: product.type,
             },
       ),
-    resetProduct: () => set({ ...defaultInitState }),
+    resetProduct: (productType) =>
+      set(
+        productType === SingleProductType
+          ? {
+              product: null,
+              productType: SingleProductType,
+              isNew: true,
+              open: false,
+              performingAction: false,
+            }
+          : {
+              product: null,
+              productType: PackageProductType,
+              isNew: true,
+              open: false,
+              performingAction: false,
+            },
+      ),
     setOpen: (open) => set({ open }),
     setPerformingAction: (performingAction: boolean) =>
       set({ performingAction }),

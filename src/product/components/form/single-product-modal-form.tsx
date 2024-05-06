@@ -4,21 +4,17 @@ import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
 } from "@/shared/components/ui/dialog";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import {
-  Product,
-  Photo,
-  SingleProduct,
-  SingleProductType,
-} from "@/product/types";
+import { Photo, SingleProduct, SingleProductType } from "@/product/types";
 import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
@@ -42,9 +38,7 @@ import {
 } from "@/category/actions";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
-import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
@@ -93,8 +87,8 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   });
 
   useEffect(() => {
-    if (formStore.isNew) {
-      form.reset({ ...EMPTY_SINGLE_PRODUCT, companyId: user!.companyId });
+    if (user && formStore.isNew) {
+      form.reset({ ...EMPTY_SINGLE_PRODUCT, companyId: user.companyId });
     } else {
       form.reset(productData);
     }
@@ -118,7 +112,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           variant: "destructive",
           description: "Error al actualizar el producto, " + res.message,
         });
-        formStore.resetProduct();
+        formStore.resetProduct(SingleProductType);
       }
     } else {
       const res = await repository.create(transformToProduct(data));
@@ -133,7 +127,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           variant: "destructive",
           description: "Error al registrar el producto, " + res.message,
         });
-        formStore.resetProduct();
+        formStore.resetProduct(SingleProductType);
       }
     }
   };

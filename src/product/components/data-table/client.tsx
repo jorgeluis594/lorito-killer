@@ -4,9 +4,9 @@ import { Heading } from "@/shared/components/ui/heading";
 import { Separator } from "@/shared/components/ui/separator";
 import { Plus } from "lucide-react";
 import { columns } from "./columns";
-import { Product } from "@/product/types";
+import { Product, SingleProductType } from "@/product/types";
 import { Button } from "@/shared/components/ui/button";
-import { SyntheticEvent, useState } from "react";
+import { SyntheticEvent } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import ProductModalForm from "@/product/components/form/product-modal-form";
@@ -28,7 +28,7 @@ export default function ProductsClient({
 
   const onNewProductClick = (e: SyntheticEvent) => {
     e.preventDefault();
-    resetProduct();
+    resetProduct(SingleProductType);
     setOpen(true);
   };
 
