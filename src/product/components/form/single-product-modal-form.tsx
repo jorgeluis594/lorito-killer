@@ -68,7 +68,7 @@ interface ProductFormProps {
   onActionPerformed: () => void;
 }
 
-const ProductModalForm: React.FC<ProductFormProps> = ({
+const SingleProductModalForm: React.FC<ProductFormProps> = ({
   onActionPerformed,
 }) => {
   const formStore = useProductFormStore((store) => store);
@@ -431,4 +431,4 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   );
 };
 
-export default ProductModalForm;
+export default SingleProductModalForm;

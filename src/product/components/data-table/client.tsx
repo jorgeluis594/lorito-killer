@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { columns } from "./columns";
 import { Product } from "@/product/types";
 import { Button } from "@/shared/components/ui/button";
-import ProductModalForm from "@/product/components/form/product-modal-form";
+import SingleProductModalForm from "@/product/components/form/single-product-modal-form";
 import { SyntheticEvent, useState } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
@@ -36,7 +36,7 @@ export default function ProductsClient({
     <>
       {/* ProductModalForm is used to edit (cell-action.tsx dispatches the
       action to edit the product and opens the modal) and create a new product.*/}
-      <ProductModalForm onActionPerformed={onUpsertProductPerformed} />
+      <SingleProductModalForm onActionPerformed={onUpsertProductPerformed} />
       <div className="flex items-start justify-between">
         <Heading
           title={data ? `Productos (${data.length})` : ""}
