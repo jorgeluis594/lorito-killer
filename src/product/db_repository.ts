@@ -141,12 +141,28 @@ export const findBy = async (
       searchParams.categories = { categories: { id: categories.id } };
     }
 
-    const product = await prisma.product.findFirst({ where: searchParams });
+    const product = await prisma.product.findFirst({
+      where: searchParams,
+      include: { categories: true },
+    });
     if (!product) return { success: false, message: "Product not found" };
 
-    return { success: true, data: product } as response;
+    return {
+      success: true,
+      data: {
+        ...product,
+        companyId: product.companyId || "some_company_id",
+        price: product.price.toNumber(),
+        purchasePrice: product.purchasePrice.toNumber(),
+        sku: product.sku || undefined,
+        categories: product.categories.map((c) => ({
+          ...c,
+          companyId: c.companyId || "some_company_id",
+        })),
+      },
+    };
   } catch (error: any) {
-    return { success: false, message: error.message } as response;
+    return { success: false, message: error.message };
   }
 };
 
