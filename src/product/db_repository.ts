@@ -65,8 +65,10 @@ export const create = async (
   }
 };
 
-export const update = async (product: Product): Promise<response<Product>> => {
-  const { photos, categories, ...productData } = product;
+export const update = async (
+  product: SingleProduct,
+): Promise<response<SingleProduct>> => {
+  const { photos, categories, type, ...productData } = product;
 
   try {
     await prisma.product.update({
@@ -141,7 +143,7 @@ export const getMany = async ({
 export const find = async (id: string): Promise<response<SingleProduct>> => {
   try {
     const product = await prisma.product.findUnique({
-      where: { id, isPackage: true },
+      where: { id, isPackage: false },
       include: { photos: true, categories: true },
     });
 

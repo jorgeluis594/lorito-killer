@@ -4,16 +4,16 @@ import {
   deleteProduct,
   findBy,
 } from "@/product/db_repository";
-import { Product } from "@/product/types";
+import { SingleProduct } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } },
 ) {
-  const productData = (await req.json()) as Product;
-  const { success } = await findProduct(params.id);
-  if (!success) {
+  const productData: SingleProduct = await req.json();
+  const findProductResponse = await findProduct(params.id);
+  if (!findProductResponse.success) {
     return NextResponse.json(
       { success: false, message: "Product not found" },
       { status: 404 },
