@@ -137,6 +137,7 @@ export const search = async (
   return await res.json();
 };
 
+// acepta id o sku
 export const findProduct = async (id: string): Promise<response<Product>> => {
   const res = await fetch(`/api/products/${id}`, {
     method: "GET",

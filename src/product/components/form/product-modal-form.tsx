@@ -39,9 +39,10 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { isBarCodeValid } from "@/lib/utils";
+import { debounce, isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 import { findProductBySku } from "@/product/components/form/product-find-action";
+import async from '../../../app/dashboard/(dashboard)/cash_shifts/[id]/reports/page';
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -81,13 +82,11 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
   useEffect(() => {
-    async function findProduct(companyId: string, sku: string) {
-      const response = await findProductBySku(companyId, sku);
-      console.log({ response });
-    }
+    // async function findProduct(companyId: string, sku: string) {
+    //   const response = await findProductBySku(companyId, sku);
+    //   console.log({ response });
+    // }
 
-    if (formStore?.product?.sku)
-      findProduct(formStore.product.companyId, formStore.product.sku);
   }, [formStore])
 
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
@@ -102,11 +101,21 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   const productSku = form.watch('sku');
 
   useEffect(() => {
-    console.log({ productSku });
-    form.setError("sku", {
-      type: "custom",
-      message: "Ya existe un producto con el mismo sku",
-    });
+    const skuSearch = async function () {
+      const res = await repository.findProduct(productSku!)
+      if(res.success){
+        form.setError("sku", {
+          type: "custom",
+          message: "Ya existe un producto con el mismo sku",
+        });
+      }else{
+        form.clearErrors('sku')
+      }
+    }
+
+    const skuDebounce = debounce(skuSearch, 200)
+
+    skuDebounce()
   }, [productSku])
 
   useEffect(() => {
