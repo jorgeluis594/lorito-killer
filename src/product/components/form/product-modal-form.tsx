@@ -212,6 +212,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   };
 
   const handleCategoriesUpdated = async (categories: Category[]) => {
+    console.log("en handleCategories", { errors: form.formState.errors });
     const currentCategories = form.getValues("categories") || [];
     // If the product is new, there is no need to remove the category from the server
     if (formStore.isNew) return form.setValue("categories", categories);
@@ -290,7 +291,10 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
           </div>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={() => {
+                console.log({ errors: form.formState.errors });
+                form.handleSubmit(onSubmit)();
+              }}
               className="mx-auto space-y-8"
             >
               <div className="space-y-4 p-2">
@@ -444,7 +448,10 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
               className="btn-success"
               type="button"
               disabled={formStore.performingAction}
-              onClick={form.handleSubmit(onSubmit)}
+              onClick={() => {
+                console.log({ errors: form.formState.errors });
+                form.handleSubmit(onSubmit)();
+              }}
             >
               {formStore.performingAction ? (
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
