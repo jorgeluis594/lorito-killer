@@ -41,7 +41,6 @@ import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { debounce, isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
-import { findProductBySku } from "@/product/components/form/product-find-action";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -80,16 +79,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
-  useEffect(() => {
-    async function findProduct(companyId: string, sku: string) {
-      const response = await findProductBySku(companyId, sku);
-      console.log({ response });
-    }
-
-    if (formStore?.product?.sku)
-      findProduct(formStore.product.companyId, formStore.product.sku);
-  }, [formStore]);
-
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
@@ -104,36 +93,26 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   useEffect(() => {
     const skuSearch = async function () {
       const res = await repository.findProduct(productSku!)
-      if(formStore.isNew){
-        console.log(res)
-        if(res.success){
+
+      if (res.success) {
+        if (!formStore.isNew && productSku === formStore.product.sku || productSku === "") {
+          form.clearErrors('sku');
+        } else if (formStore) {
           form.setError("sku", {
             type: "custom",
             message: "Ya existe un producto con el mismo sku",
           });
-        }else{
-          form.clearErrors('sku')
         }
-      }else{
-        console.log({productSku})
-        if(res.success && productSku === formStore.product.sku && productSku === undefined){
-          form.clearErrors('sku')
-        }else{
-          if(res.success){
-            form.setError("sku", {
-              type: "custom",
-              message: "Ya existe un producto con el mismo sku",
-            });
-          }else{
-            form.clearErrors('sku')
-          }
-        }
+      } else {
+        form.clearErrors('sku');
       }
     }
+
+
     const skuDebounce = debounce(skuSearch, 200)
 
     skuDebounce()
-    
+
   }, [productSku])
 
   useEffect(() => {
