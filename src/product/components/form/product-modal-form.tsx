@@ -99,16 +99,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
       : productData || EMPTY_PRODUCT,
   });
 
-  const productSku = form.watch("sku");
-
-  useEffect(() => {
-    console.log({ productSku });
-    form.setError("sku", {
-      type: "custom",
-      message: "Ya existe un producto con el mismo sku",
-    });
-  }, [productSku]);
-
   useEffect(() => {
     if (formStore.isNew) {
       form.reset({ ...EMPTY_PRODUCT, companyId: user!.companyId });
