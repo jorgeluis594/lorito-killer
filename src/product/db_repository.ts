@@ -147,7 +147,8 @@ export const findBy = async (
     });
     if (!product) return { success: false, message: "Product not found" };
 
-    return { success: true,
+    return {
+      success: true,
       data: {
         ...product,
         companyId: product.companyId || "some_company_id",
@@ -158,7 +159,8 @@ export const findBy = async (
           ...c,
           companyId: c.companyId || "some_company_id",
         })),
-      }};
+      },
+    };
   } catch (error: any) {
     return { success: false, message: error.message };
   }

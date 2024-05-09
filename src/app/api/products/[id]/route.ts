@@ -20,8 +20,8 @@ export async function PUT(
     );
   }
 
-  const responsed = await findBy({sku: productData.sku})
-  if(responsed.success && responsed.data.id !== productData.id){
+  const responsed = await findBy({ sku: productData.sku });
+  if (responsed.success && responsed.data.id !== productData.id) {
     return NextResponse.json({ success: false, message: "Ya existe un producto con el sku" });
   }
 

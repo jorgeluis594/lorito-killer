@@ -2,10 +2,10 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
-import { 
+import {
   Dialog,
   DialogContent,
-  DialogFooter
+  DialogFooter,
 } from "@/shared/components/ui/dialog";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
@@ -42,7 +42,6 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { debounce, isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 import { findProductBySku } from "@/product/components/form/product-find-action";
-import async from '../../../app/dashboard/(dashboard)/cash_shifts/[id]/reports/page';
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -82,12 +81,14 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
   useEffect(() => {
-    // async function findProduct(companyId: string, sku: string) {
-    //   const response = await findProductBySku(companyId, sku);
-    //   console.log({ response });
-    // }
+    async function findProduct(companyId: string, sku: string) {
+      const response = await findProductBySku(companyId, sku);
+      console.log({ response });
+    }
 
-  }, [formStore])
+    if (formStore?.product?.sku)
+      findProduct(formStore.product.companyId, formStore.product.sku);
+  }, [formStore]);
 
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
