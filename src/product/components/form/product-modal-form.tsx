@@ -101,6 +101,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   useEffect(() => {
     if (formStore.isNew) {
+      console.log({ user });
       form.reset({ ...EMPTY_PRODUCT, companyId: user!.companyId });
     } else {
       form.reset(productData);
