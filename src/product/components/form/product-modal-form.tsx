@@ -42,6 +42,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 import { findProductBySku } from "@/product/components/form/product-find-action";
+import { getCompany } from "@/order/actions";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -101,7 +102,11 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({ ...EMPTY_PRODUCT, companyId: user!.companyId });
+      getCompany().then((response) => {
+        if (response.success) {
+          form.setValue("companyId", response.data.id);
+        }
+      });
     } else {
       form.reset(productData);
     }
