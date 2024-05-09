@@ -104,19 +104,36 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   useEffect(() => {
     const skuSearch = async function () {
       const res = await repository.findProduct(productSku!)
-      if(res.success){
-        form.setError("sku", {
-          type: "custom",
-          message: "Ya existe un producto con el mismo sku",
-        });
+      if(formStore.isNew){
+        console.log(res)
+        if(res.success){
+          form.setError("sku", {
+            type: "custom",
+            message: "Ya existe un producto con el mismo sku",
+          });
+        }else{
+          form.clearErrors('sku')
+        }
       }else{
-        form.clearErrors('sku')
+        console.log({productSku})
+        if(res.success && productSku === formStore.product.sku && productSku === undefined){
+          form.clearErrors('sku')
+        }else{
+          if(res.success){
+            form.setError("sku", {
+              type: "custom",
+              message: "Ya existe un producto con el mismo sku",
+            });
+          }else{
+            form.clearErrors('sku')
+          }
+        }
       }
     }
-
     const skuDebounce = debounce(skuSearch, 200)
 
     skuDebounce()
+    
   }, [productSku])
 
   useEffect(() => {
