@@ -31,8 +31,7 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "price",
     header: "PRECIO DE COMPRA",
-    cell: ({ row }) =>
-      row.original.purchasePrice && formatPrice(row.original.purchasePrice),
+    cell: ({ row }) => formatPrice(row.original.purchasePrice),
     
   },
   {

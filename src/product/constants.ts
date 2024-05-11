@@ -6,6 +6,7 @@ export const EMPTY_PRODUCT = {
   companyId: "",
   name: "",
   price: 0,
+  purchasePrice: 0,
   description: "",
   stock: undefined,
   photos: [],

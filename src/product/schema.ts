@@ -20,7 +20,7 @@ export const ProductSchema = z.object({
     message: "El nombre del producto debe tener al menos 3 caracteres",
   }),
   price: z.coerce.number().gt(0, "El producto debe tener un precio"),
-  purchasePrice: z.coerce.number().optional(),
+  purchasePrice: z.coerce.number().default(0),
   description: z.string(),
   sku: z
     .string()
