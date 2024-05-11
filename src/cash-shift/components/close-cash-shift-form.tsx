@@ -27,6 +27,8 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { useState } from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import { useRouter } from "next/navigation";
+import { formatPrice } from "@/lib/utils";
+import { ToastAction } from "@/shared/components/ui/toast";
 
 const CashShiftFormSchema = z.object({
   finalAmount: z.coerce
@@ -50,11 +52,11 @@ export default function CloseCashShiftForm({
 
   const form = useForm<CashShiftFormValues>({
     resolver: zodResolver(CashShiftFormSchema),
-    defaultValues: { finalAmount: cashShift!.initialAmount },
+    defaultValues: { finalAmount: 0 },
   });
 
-  const onSubmit = async (data: CashShiftFormValues) => {
-    const response = await closeCashShift(cashShift!, data.finalAmount);
+  const closeCashShiftUi = async (amount: number) => {
+    const response = await closeCashShift(cashShift!, amount);
 
     if (!response.success) {
       toast({
@@ -74,6 +76,27 @@ export default function CloseCashShiftForm({
       setOpen(false);
       router.push(`/dashboard/cash_shifts/${response.data.id}/reports`);
     }
+  };
+
+  const onSubmit = async (data: CashShiftFormValues) => {
+    if (data.finalAmount === 0) {
+      toast({
+        title: "El monto de cierre es 0",
+        description: `Estas seguro de cerrar caja con ${formatPrice(data.finalAmount)}`,
+        variant: "destructive",
+        action: (
+          <ToastAction
+            altText="Cerrar caja"
+            onClick={() => closeCashShiftUi(data.finalAmount)}
+          >
+            Cerrar caja
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+
+    await closeCashShiftUi(data.finalAmount);
   };
 
   return (

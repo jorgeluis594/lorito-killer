@@ -41,7 +41,7 @@ import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { debounce, isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
-import { findProductBySku } from "@/product/components/form/product-find-action";
+import { getCompany } from "@/order/actions";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -80,16 +80,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
-  useEffect(() => {
-    async function findProduct(companyId: string, sku: string) {
-      const response = await findProductBySku(companyId, sku);
-      console.log({ response });
-    }
-
-    if (formStore?.product?.sku)
-      findProduct(formStore.product.companyId, formStore.product.sku);
-  }, [formStore]);
-
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
@@ -121,7 +111,11 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({ ...EMPTY_PRODUCT, companyId: user!.companyId });
+      getCompany().then((response) => {
+        if (response.success) {
+          form.setValue("companyId", response.data.id);
+        }
+      });
     } else {
       form.reset(productData);
     }

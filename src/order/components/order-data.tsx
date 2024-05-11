@@ -1,18 +1,30 @@
 import { Order } from "@/order/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
 import { formatPrice, localizeDate, paymentMethodToText } from "@/lib/utils";
 import { Printer } from "lucide-react";
 import { BlobProvider } from "@react-pdf/renderer";
 import Voucher from "@/order/components/voucher";
 import { buttonVariants } from "@/shared/components/ui/button";
+import { Company } from "@/company/types";
 
-export default function OrderData({ order }: { order: Order }) {
+export default function OrderData({
+  order,
+  company,
+}: {
+  order: Order;
+  company: Company;
+}) {
   return (
     <div className="h-full mt-8 flex justify-center">
       <Card className={"w-11/12"}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mb-4">
           <CardTitle>Pedido {order.id!.substring(0, 8)}</CardTitle>
-          <BlobProvider document={<Voucher order={order} />}>
+          <BlobProvider document={<Voucher order={order} company={company} />}>
             {({ url, loading }) =>
               loading ? (
                 <p>Cargando...</p>
