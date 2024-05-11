@@ -30,7 +30,7 @@ export const ProductSchema = z.object({
     })
     .optional(),
   stock: z.coerce
-    .number()
+    .number({ invalid_type_error: "Debe ingresar una cantidad", })
     .nonnegative({ message: "Stock no puede tener valores negativos" })
     .min(1, { message: "Valor mínimo de stock es 1" }),
   photos: z
