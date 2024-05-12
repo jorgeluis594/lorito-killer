@@ -80,6 +80,7 @@ export const removePhoto = async (
 export type GetManyParams = {
   q?: string | null;
   categoryId?: string | null;
+  limit?: number;
   sortBy?: SortKey;
 };
 
@@ -90,6 +91,7 @@ export const getMany = async (
   if (params.q) searchParams["param"] = params.q;
   if (params.categoryId) searchParams["categoryId"] = params.categoryId;
   if (params.sortBy) searchParams["sortBy"] = params.sortBy;
+  if (params.limit) searchParams["limit"] = params.limit;
   const queryString = new URLSearchParams(searchParams).toString();
 
   const res = await fetch(`/api/products?${queryString}`, {
