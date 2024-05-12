@@ -24,13 +24,12 @@ export const ProductSchema = z.object({
   description: z.string(),
   sku: z
     .string()
-    .min(3, { message: "El sku debe tener al menos 3 caracteres" })
     .regex(/^[a-zA-Z0-9_]*$/, {
       message: "SKU solo puede contener carácteres alfanuméricos y guión abajo",
     })
     .optional(),
   stock: z.coerce
-    .number({ invalid_type_error: "Debe ingresar una cantidad", })
+    .number({ invalid_type_error: "Debe ingresar una cantidad" })
     .nonnegative({ message: "Stock no puede tener valores negativos" })
     .min(1, { message: "Valor mínimo de stock es 1" }),
   photos: z

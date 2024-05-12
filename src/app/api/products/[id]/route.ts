@@ -23,17 +23,23 @@ export async function PUT(
     );
   }
 
-  const responsed = await findBy({ sku: productData.sku });
-  if (responsed.success && responsed.data.id !== productData.id) {
-    return NextResponse.json({
-      success: false,
-      message: "Ya existe un producto con el sku",
-    });
+  if (productData.sku && productData.sku.length) {
+    const response = await findBy({ sku: productData.sku });
+    if (response.success && response.data.id !== productData.id) {
+      return NextResponse.json({
+        success: false,
+        message: "Ya existe un producto con el sku",
+      });
+    }
+  } else if (productData.sku === "") {
+    productData.sku = undefined;
   }
 
-  const response = await UpdateProduct(productData);
+  const updateResponse = await UpdateProduct(productData);
   revalidatePath("/products/" + params.id);
-  return NextResponse.json(response, { status: response.success ? 200 : 400 });
+  return NextResponse.json(updateResponse, {
+    status: updateResponse.success ? 200 : 400,
+  });
 }
 
 export async function DELETE(

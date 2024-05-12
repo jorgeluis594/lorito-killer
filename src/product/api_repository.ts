@@ -18,7 +18,7 @@ export const update = async (product: Product): Promise<response<Product>> => {
 
   const res = await fetch(`/api/products/${product.id}`, {
     method: "PUT",
-    body: JSON.stringify(product),
+    body: JSON.stringify({ ...product, sku: product.sku || "" }),
     headers: {
       "Content-Type": "application/json",
     },

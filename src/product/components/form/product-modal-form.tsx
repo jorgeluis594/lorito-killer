@@ -50,7 +50,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
     companyId: data.companyId,
     name: data.name,
     price: data.price,
-    sku: data.sku,
+    sku: data.sku && data.sku.length > 0 ? data.sku : undefined,
     purchasePrice: data.purchasePrice,
     description: data.description,
     stock: data.stock,
@@ -80,8 +80,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
-  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
-
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
     defaultValues: formStore.isNew
@@ -89,29 +87,37 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
       : productData || EMPTY_PRODUCT,
   });
 
-  const productSku = form.watch('sku');
+  const productSku = form.watch("sku");
+
+  const skuSearch = async function (sku: string) {
+    if (!sku) return form.clearErrors("sku");
+
+    const res = await repository.findProduct(sku!);
+
+    console.log({ res }, { productData });
+    if (
+      !formStore.isNew &&
+      res.success &&
+      res.data.id !== formStore.product.id
+    ) {
+      form.setError("sku", {
+        type: "custom",
+        message: "Ya existe un producto con el mismo sku",
+      });
+    } else {
+      form.clearErrors("sku");
+    }
+  };
+
+  const skuDebounce = debounce(skuSearch, 200);
 
   useEffect(() => {
-    const skuSearch = async function () {
-      const res = await repository.findProduct(productSku!)
-      if(res.success){
-        form.setError("sku", {
-          type: "custom",
-          message: "Ya existe un producto con el mismo sku",
-        });
-      }else{
-        form.clearErrors('sku')
-      }
-    }
-
-    const skuDebounce = debounce(skuSearch, 200)
-
-    skuDebounce()
-  }, [productSku])
+    skuDebounce(productSku!).catch((error) => console.error("Error", error));
+  }, [productSku]);
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({...EMPTY_PRODUCT})
+      form.reset({ ...EMPTY_PRODUCT });
       getCompany().then((response) => {
         if (response.success) {
           form.setValue("companyId", response.data.id);
@@ -290,14 +296,15 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
-    if (isBarCodeValid(symbol, 3)) {
-      form.setValue("sku", symbol);
-    }
-  };
-
   return (
-    <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
+    <Dialog
+      open={formStore.open}
+      onOpenChange={(val) => {
+        formStore.resetProduct();
+        form.reset({ ...EMPTY_PRODUCT });
+        formStore.setOpen(val);
+      }}
+    >
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
