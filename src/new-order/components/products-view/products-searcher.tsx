@@ -39,7 +39,7 @@ export default function ProductsSearcher() {
     if (search.length || search !== "") {
       params["q"] = search;
     }
-    if (products.length === 0) {
+    if (search.length === 0) {
       params["limit"] = 20;
     }
     const response = await getMany(params);
