@@ -23,7 +23,7 @@ interface CellActionProps {
 export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const { setProduct } = useProductFormStore((store) => store);
+  const setProduct = useProductFormStore((store) => store.setProduct);
   const router = useRouter();
   const { toast } = useToast();
 
