@@ -39,6 +39,9 @@ export default function ProductsSearcher() {
     if (search.length || search !== "") {
       params["q"] = search;
     }
+    if (search.length === 0) {
+      params["limit"] = 20;
+    }
     const response = await getMany(params);
 
     if (response.success) {

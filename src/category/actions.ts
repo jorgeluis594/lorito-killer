@@ -29,6 +29,12 @@ export const addCategoryToProduct = async (
 
   if (!productResponse.success) return productResponse;
   if (!categoryResponse.success) return categoryResponse;
+  if (categoryResponse.data.companyId !== productResponse.data.companyId) {
+    return {
+      success: false,
+      message: "La categoría no pertenece a la misma empresa que el producto",
+    };
+  }
 
   revalidatePath(`/dashboard/products/${productId}`);
 

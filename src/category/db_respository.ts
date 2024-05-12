@@ -7,7 +7,7 @@ export const create = async (
   category: Category,
 ): Promise<response<Category>> => {
   try {
-    const foundResponse = await findByName(category.name);
+    const foundResponse = await findByName(category.companyId, category.name);
     if (foundResponse.success) {
       return foundResponse;
     }
@@ -101,10 +101,14 @@ export const removeCategoryFromProduct = async (
   }
 };
 
-const findByName = async (name: string): Promise<response<Category>> => {
+const findByName = async (
+  companyId: string,
+  name: string,
+): Promise<response<Category>> => {
   try {
     const categories = await prisma.category.findMany({
       where: {
+        companyId,
         name: {
           equals: name,
           mode: "insensitive",

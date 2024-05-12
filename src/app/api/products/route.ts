@@ -23,6 +23,8 @@ export async function GET(req: Request) {
   const param = searchParams.get("param");
   const categoryId = searchParams.get("categoryId");
   const sortKey = searchParams.get("sortBy") as SortKey | null;
+  const limit = searchParams.get("limit");
+
   let sortBy: ProductSortParams =
     sortKey && sortOptions[sortKey]
       ? sortOptions[sortKey]!.value
@@ -32,6 +34,7 @@ export async function GET(req: Request) {
     q: param,
     companyId: user.companyId,
     sortBy: sortBy,
+    limit: limit ? parseInt(limit) : undefined,
     categoryId,
   });
 

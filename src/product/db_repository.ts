@@ -65,11 +65,13 @@ export const getMany = async ({
   companyId,
   sortBy,
   categoryId,
+  limit,
   q,
 }: {
   companyId: string;
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
+  limit?: number;
   q?: string | null;
 }): Promise<response<Product[]>> => {
   try {
@@ -83,6 +85,7 @@ export const getMany = async ({
         ...query.where,
         categories: { some: { id: categoryId } },
       };
+    if (limit) query.take = limit;
     if (q)
       query.where = {
         ...query.where,
@@ -109,10 +112,13 @@ export const getMany = async ({
   }
 };
 
-export const find = async (id: string): Promise<response<Product>> => {
+export const find = async (
+  id: string,
+  companyId?: string,
+): Promise<response<Product>> => {
   try {
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id, companyId },
       include: { photos: true, categories: true },
     });
 

@@ -41,6 +41,7 @@ import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { debounce, isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
+import { getCompany } from "@/order/actions";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
 
@@ -90,34 +91,38 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   const productSku = form.watch('sku');
 
-  useEffect(() => {
-    const skuSearch = async function () {
-      const res = await repository.findProduct(productSku!)
+  const skuSearch = async function (sku: string) {
+    const res = await repository.findProduct(sku!)
 
-      if (res.success) {
-        if (!formStore.isNew && productSku === formStore.product.sku || productSku === "") {
-          form.clearErrors('sku');
-        } else if (formStore) {
-          form.setError("sku", {
-            type: "custom",
-            message: "Ya existe un producto con el mismo sku",
-          });
-        }
-      } else {
+    if (res.success) {
+      if (!formStore.isNew && sku === formStore.product.sku || sku === "") {
         form.clearErrors('sku');
+      } else if (formStore) {
+        form.setError("sku", {
+          type: "custom",
+          message: "Ya existe un producto con el mismo sku",
+        });
       }
+    } else {
+      form.clearErrors('sku');
     }
+  }
 
 
-    const skuDebounce = debounce(skuSearch, 200)
+  const skuDebounce = debounce(skuSearch, 200)
 
-    skuDebounce()
-
+  useEffect(() => {
+    skuDebounce(productSku)
   }, [productSku])
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({ ...EMPTY_PRODUCT, companyId: user!.companyId });
+      form.reset({...EMPTY_PRODUCT})
+      getCompany().then((response) => {
+        if (response.success) {
+          form.setValue("companyId", response.data.id);
+        }
+      });
     } else {
       form.reset(productData);
     }

@@ -2,10 +2,10 @@ import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { Order } from "@/order/types";
 import {
   formatPrice,
-  localizeDate,
   paymentMethodToText,
   shortLocalizeDate,
 } from "@/lib/utils";
+import { Company } from "@/company/types";
 
 const styles = StyleSheet.create({
   page: {
@@ -44,10 +44,11 @@ const styles = StyleSheet.create({
 
 interface voucherProps {
   order: Order;
+  company: Company;
 }
 
 // Create Document Component
-const Voucher = ({ order }: voucherProps) => (
+const Voucher = ({ order, company }: voucherProps) => (
   <Document>
     <Page
       size={{ width: 215, height: 595 }}
@@ -64,10 +65,8 @@ const Voucher = ({ order }: voucherProps) => (
           },
         ]}
       >
-        <Text style={styles.header}>Minimarket Chávez</Text>
-        <Text style={styles.description}>
-          Carretera Central Km 17, Manantay, Pucallpa, Ucayali
-        </Text>
+        <Text style={styles.header}>{company.name}</Text>
+        <Text style={styles.description}>{company.address}</Text>
       </View>
       <View style={styles.section}>
         <Text style={styles.textCenter}>
