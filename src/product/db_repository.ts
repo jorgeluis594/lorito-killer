@@ -112,10 +112,13 @@ export const getMany = async ({
   }
 };
 
-export const find = async (id: string): Promise<response<Product>> => {
+export const find = async (
+  id: string,
+  companyId?: string,
+): Promise<response<Product>> => {
   try {
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id, companyId },
       include: { photos: true, categories: true },
     });
 

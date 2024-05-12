@@ -39,9 +39,8 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { DialogClose } from "@/shared/components/ui/dialog";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { isBarCodeValid } from "@/lib/utils";
+import { debounce, isBarCodeValid } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
-import { findProductBySku } from "@/product/components/form/product-find-action";
 import { getCompany } from "@/order/actions";
 
 type ProductFormValues = z.infer<typeof ProductSchema>;
@@ -81,16 +80,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
 
-  useEffect(() => {
-    async function findProduct(companyId: string, sku: string) {
-      const response = await findProductBySku(companyId, sku);
-      console.log({ response });
-    }
-
-    if (formStore?.product?.sku)
-      findProduct(formStore.product.companyId, formStore.product.sku);
-  }, [formStore]);
-
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
@@ -99,6 +88,26 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
       ? { ...EMPTY_PRODUCT, stock: undefined }
       : productData || EMPTY_PRODUCT,
   });
+
+  const productSku = form.watch('sku');
+
+  useEffect(() => {
+    const skuSearch = async function () {
+      const res = await repository.findProduct(productSku!)
+      if(res.success){
+        form.setError("sku", {
+          type: "custom",
+          message: "Ya existe un producto con el mismo sku",
+        });
+      }else{
+        form.clearErrors('sku')
+      }
+    }
+
+    const skuDebounce = debounce(skuSearch, 200)
+
+    skuDebounce()
+  }, [productSku])
 
   useEffect(() => {
     if (formStore.isNew) {
