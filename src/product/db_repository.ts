@@ -8,6 +8,7 @@ import type {
 import { Category } from "@/category/types";
 import { addCategoryToProduct } from "@/category/db_respository";
 import { response, successResponse } from "@/lib/types";
+import { Category as CategoryPrisma } from "@prisma/client";
 
 interface searchParams {
   q: string;
@@ -78,7 +79,6 @@ export const getMany = async ({
     const query: any = {
       where: { companyId },
       orderBy: sortBy,
-      include: { photos: true, categories: true },
     };
     if (categoryId)
       query.where = {
@@ -92,17 +92,25 @@ export const getMany = async ({
         name: { contains: q, mode: "insensitive" },
       };
 
-    const result = await prisma.product.findMany(query);
+    const result = await prisma.product.findMany({
+      ...query,
+      include: { photos: true, categories: true },
+    });
     const products = await Promise.all(
-      result.map(async (p) => {
+      result.map(async (p): Promise<Product> => {
         const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
         const purchasePrice = p.purchasePrice.toNumber();
         return {
           ...p,
           companyId: p.companyId || "some_company_id",
           price,
+          sku: p.sku || undefined,
           purchasePrice,
-        } as Product;
+          categories: ((p as any).categories as CategoryPrisma[]).map((c) => ({
+            ...c,
+            companyId: c.companyId || "some_company_id",
+          })),
+        };
       }),
     );
 
