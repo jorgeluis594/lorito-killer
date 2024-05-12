@@ -50,7 +50,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
     companyId: data.companyId,
     name: data.name,
     price: data.price,
-    sku: data.sku,
+    sku: data.sku && data.sku.length > 0 ? data.sku : undefined,
     purchasePrice: data.purchasePrice,
     description: data.description,
     stock: data.stock,
@@ -79,8 +79,6 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   // The createdAt and updatedAt fields are not part of the form
   const { createdAt, updatedAt, ...productData } = formStore.product || {};
-
-  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(ProductSchema),
@@ -293,14 +291,15 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
-    if (isBarCodeValid(symbol, 3)) {
-      form.setValue("sku", symbol);
-    }
-  };
-
   return (
-    <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
+    <Dialog
+      open={formStore.open}
+      onOpenChange={(val) => {
+        formStore.resetProduct();
+        form.reset({ ...EMPTY_PRODUCT });
+        formStore.setOpen(val);
+      }}
+    >
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">

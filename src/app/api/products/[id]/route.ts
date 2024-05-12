@@ -23,12 +23,14 @@ export async function PUT(
     );
   }
 
-  const response = await findBy({ sku: productData.sku });
-  if (response.success && response.data.id !== productData.id) {
-    return NextResponse.json({
-      success: false,
-      message: "Ya existe un producto con el sku",
-    });
+  if (productData.sku && productData.sku.length) {
+    const response = await findBy({ sku: productData.sku });
+    if (response.success && response.data.id !== productData.id) {
+      return NextResponse.json({
+        success: false,
+        message: "Ya existe un producto con el sku",
+      });
+    }
   }
 
   const updateResponse = await UpdateProduct(productData);
