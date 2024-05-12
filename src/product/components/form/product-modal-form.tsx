@@ -94,7 +94,12 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
     const res = await repository.findProduct(sku!);
 
-    if (res.success) {
+    console.log({ res }, { productData });
+    if (
+      !formStore.isNew &&
+      res.success &&
+      res.data.id !== formStore.product.id
+    ) {
       form.setError("sku", {
         type: "custom",
         message: "Ya existe un producto con el mismo sku",
@@ -108,7 +113,7 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
 
   useEffect(() => {
     skuDebounce(productSku!).catch((error) => console.error("Error", error));
-  }, [productSku, skuDebounce]);
+  }, [productSku]);
 
   useEffect(() => {
     if (formStore.isNew) {

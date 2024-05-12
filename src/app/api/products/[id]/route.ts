@@ -31,6 +31,8 @@ export async function PUT(
         message: "Ya existe un producto con el sku",
       });
     }
+  } else if (productData.sku === "") {
+    productData.sku = undefined;
   }
 
   const updateResponse = await UpdateProduct(productData);
