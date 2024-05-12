@@ -109,8 +109,8 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
   const skuDebounce = debounce(skuSearch, 200);
 
   useEffect(() => {
-    skuDebounce(productSku!);
-  }, [productSku]);
+    skuDebounce(productSku!).catch((error) => console.error("Error", error));
+  }, [productSku, skuDebounce]);
 
   useEffect(() => {
     if (formStore.isNew) {
