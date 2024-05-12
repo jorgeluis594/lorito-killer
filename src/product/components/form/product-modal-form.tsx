@@ -89,35 +89,32 @@ const ProductModalForm: React.FC<ProductFormProps> = ({
       : productData || EMPTY_PRODUCT,
   });
 
-  const productSku = form.watch('sku');
+  const productSku = form.watch("sku");
 
   const skuSearch = async function (sku: string) {
-    const res = await repository.findProduct(sku!)
+    if (!sku) return form.clearErrors("sku");
+
+    const res = await repository.findProduct(sku!);
 
     if (res.success) {
-      if (!formStore.isNew && sku === formStore.product.sku || sku === "") {
-        form.clearErrors('sku');
-      } else if (formStore) {
-        form.setError("sku", {
-          type: "custom",
-          message: "Ya existe un producto con el mismo sku",
-        });
-      }
+      form.setError("sku", {
+        type: "custom",
+        message: "Ya existe un producto con el mismo sku",
+      });
     } else {
-      form.clearErrors('sku');
+      form.clearErrors("sku");
     }
-  }
+  };
 
-
-  const skuDebounce = debounce(skuSearch, 200)
+  const skuDebounce = debounce(skuSearch, 200);
 
   useEffect(() => {
-    skuDebounce(productSku)
-  }, [productSku])
+    skuDebounce(productSku!);
+  }, [productSku]);
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({...EMPTY_PRODUCT})
+      form.reset({ ...EMPTY_PRODUCT });
       getCompany().then((response) => {
         if (response.success) {
           form.setValue("companyId", response.data.id);
