@@ -15,7 +15,7 @@ export type ProductsStore = ProductsState & ProductsActions;
 
 export const defaultInitState: ProductsState = {
   products: [],
-  isLoading: false,
+  isLoading: true,
 };
 
 export const createProductsStore = (

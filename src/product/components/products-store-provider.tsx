@@ -14,8 +14,8 @@ import {
   createProductsStore,
 } from "@/product/components/store";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { getLastOpenCashShift } from "@/cash-shift/api_repository";
 import { getMany as getManyProducts } from "@/product/api_repository";
+import { Product, SingleProduct, SingleProductType } from "@/product/types";
 
 export const ProductsStoreContext =
   createContext<StoreApi<ProductsStore> | null>(null);
@@ -26,7 +26,9 @@ export interface ProductsStoreProviderProps {
 
 const ProductsLoader = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
-  const { isLoading, setProducts } = useProductsStore((store) => store);
+  const { isLoading, setProducts, setIsLoading } = useProductsStore(
+    (store) => store,
+  );
 
   useEffect(() => {
     if (isLoading) {
@@ -39,6 +41,7 @@ const ProductsLoader = ({ children }: { children: ReactNode }) => {
             description: "No se pudo obtener los productos",
           });
         }
+        setIsLoading(false);
       });
     }
   }, []);
@@ -71,4 +74,14 @@ export const useProductsStore = <T,>(
   }
 
   return useStore(productsStoreContext, selector);
+};
+
+export const useSingleProducts = (): SingleProduct[] => {
+  const products = useProductsStore((store) => store.products);
+
+  return products.filter(filterSingleProduct);
+};
+
+const filterSingleProduct = (product: Product): product is SingleProduct => {
+  return product.type === SingleProductType;
 };
