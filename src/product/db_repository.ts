@@ -50,11 +50,18 @@ export const create = async (product: Product): Promise<response<Product>> => {
 
 export const update = async (product: Product): Promise<response<Product>> => {
   const { photos, categories, ...productData } = product;
+  let sku: string | null;
+
+  if (product.sku === undefined) {
+    sku = null;
+  } else {
+    sku = product.sku;
+  }
 
   try {
     await prisma.product.update({
       where: { id: product.id },
-      data: productData,
+      data: { ...productData, sku },
     });
     return { success: true, data: product };
   } catch (error: any) {
