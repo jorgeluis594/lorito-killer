@@ -44,7 +44,10 @@ export const ProductItemSchema = z.object({
   id: z.string(),
   productId: z.string(),
   productName: z.string(),
-  quantity: z.number(),
+  quantity: z
+    .number()
+    .int()
+    .min(1, { message: "La cantidad debe ser mayor a 0" }),
 });
 
 export const PackageProductSchema = z.object({
