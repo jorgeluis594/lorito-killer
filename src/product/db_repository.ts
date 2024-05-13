@@ -10,7 +10,11 @@ import {
   SingleProductType,
 } from "./types";
 import { response } from "@/lib/types";
-import { Prisma } from "@prisma/client";
+import {
+  Category as PrismaCategory,
+  Prisma,
+  Product as PrismaProduct,
+} from "@prisma/client";
 
 interface searchParams {
   q: string;
@@ -155,6 +159,53 @@ export const update = async (
   }
 };
 
+const prismaToProduct = async (
+  prismaProduct: PrismaProduct & { categories: PrismaCategory[] },
+): Promise<Product> => {
+  if (prismaProduct.isPackage) {
+    const productItems = await prisma.packageItem.findMany({
+      where: { parentProductId: prismaProduct.id },
+      include: { parentProduct: true },
+    });
+
+    return {
+      ...prismaProduct,
+      companyId: prismaProduct.companyId || "some_company_id",
+      type: PackageProductType,
+      sku: prismaProduct.sku || undefined,
+      price: prismaProduct.price.toNumber(),
+      productItems: productItems.map((item) => ({
+        id: item.childProductId,
+        productId: item.childProductId,
+        productName: item.parentProduct!.name,
+        quantity: item.quantity,
+      })),
+      categories: prismaProduct.categories.map((c) => ({
+        ...c,
+        companyId: c.companyId || "some_company_id",
+      })),
+    };
+  } else {
+    const price = prismaProduct.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
+    const purchasePrice = !!prismaProduct.purchasePrice
+      ? prismaProduct.purchasePrice.toNumber()
+      : undefined;
+    return {
+      ...prismaProduct,
+      companyId: prismaProduct.companyId || "some_company_id",
+      type: SingleProductType,
+      sku: prismaProduct.sku || undefined,
+      stock: prismaProduct.stock!,
+      price,
+      categories: prismaProduct.categories.map((c) => ({
+        ...c,
+        companyId: c.companyId || "some_company_id",
+      })),
+      purchasePrice,
+    };
+  }
+};
+
 export const getMany = async ({
   companyId,
   sortBy,
@@ -165,10 +216,10 @@ export const getMany = async ({
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
   q?: string | null;
-}): Promise<response<SingleProduct[]>> => {
+}): Promise<response<Product[]>> => {
   try {
     const query: Prisma.ProductFindManyArgs = {
-      where: { companyId, isPackage: false },
+      where: { companyId },
       orderBy: sortBy,
     };
     if (categoryId)
@@ -184,29 +235,9 @@ export const getMany = async ({
 
     const result = await prisma.product.findMany({
       ...query,
-      include: { photos: true, categories: true },
+      include: { photos: true, categories: true, childPackageItems: true },
     });
-    const products = await Promise.all(
-      result.map(async (p) => {
-        const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-        const purchasePrice = !!p.purchasePrice
-          ? p.purchasePrice.toNumber()
-          : undefined;
-        const result: SingleProduct = {
-          ...p,
-          companyId: p.companyId || "some_company_id",
-          type: SingleProductType,
-          sku: p.sku || undefined,
-          price,
-          categories: p.categories.map((c) => ({
-            ...c,
-            companyId: c.companyId || "some_company_id",
-          })),
-          purchasePrice,
-        };
-        return result;
-      }),
-    );
+    const products = await Promise.all(result.map(prismaToProduct));
 
     return { success: true, data: products };
   } catch (error: any) {
