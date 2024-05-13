@@ -117,14 +117,7 @@ const createPackageProduct = async (
       type: PackageProductType,
       sku: createdResponse.sku || undefined,
       price: createdResponse.price.toNumber(),
-      productItems: packageItems.map((packageItem) => ({
-        id: packageItem.id,
-        productId: packageItem.childProductId,
-        productName: product.productItems.find(
-          (productItem) => productItem.id === packageItem.childProductId,
-        )!.productName,
-        quantity: packageItem.quantity,
-      })),
+      productItems: [...product.productItems],
       categories: productCategories.map((c) => ({
         ...c,
         companyId: c.companyId || "some_company_id",
