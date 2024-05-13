@@ -9,7 +9,7 @@ import {
   initOrderFormStore,
   Actions,
 } from "./store";
-import { Product } from "@/product/types";
+import { PackageProductType, Product } from "@/product/types";
 import { Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
@@ -72,6 +72,9 @@ export const useOrderFormActions = (): Actions => {
       if (!response.success) {
         return;
       }
+
+      // TODO: Handle the logic of stock discount on package products
+      if (response.data.type === PackageProductType) return;
 
       if (response.data.stock === 0) {
         toast({

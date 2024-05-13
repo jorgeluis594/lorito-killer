@@ -11,7 +11,7 @@ import {
   update as updateProduct,
 } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
-import { Product } from "@/product/types";
+import { PackageProductType, Product, SingleProduct } from "@/product/types";
 import { Company } from "@/company/types";
 
 export const create = async (data: Order): Promise<response<Order>> => {
@@ -68,13 +68,33 @@ async function updateProductsStocks(order: Order) {
     .filter((r) => r.success)
     .map((r) => (r.success && r.data) as Product);
 
-  Promise.all(
-    products.map((product) =>
-      updateProduct({
+  await Promise.all(
+    products.map(async (product) => {
+      // TODO: Handle the logic of stock discount on package products
+      if (product.type === PackageProductType) {
+        await Promise.all(
+          product.productItems.map(async (pi) => {
+            const childProductResponse = await findProduct(pi.productId);
+            if (!childProductResponse.success) return;
+
+            const childProduct = childProductResponse.data as SingleProduct;
+            await updateProduct({
+              ...childProduct,
+              stock:
+                childProduct.stock -
+                orderItemsByProductMapper[product.id!].quantity * pi.quantity,
+            });
+          }),
+        );
+
+        return;
+      }
+
+      await updateProduct({
         ...product,
         stock: product.stock - orderItemsByProductMapper[product.id!].quantity,
-      }),
-    ),
+      });
+    }),
   );
 }
 

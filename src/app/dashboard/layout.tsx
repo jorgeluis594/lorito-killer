@@ -2,6 +2,7 @@ import { OrderFormProvider } from "@/new-order/order-form-provider";
 import { CategoryStoreProvider } from "@/category/components/category-store-provider";
 import { CashShiftStoreProvider } from "@/cash-shift/components/cash-shift-store-provider";
 import CategoriesLoader from "@/category/components/categories-loader";
+import { ProductsStoreProvider } from "@/product/components/products-store-provider";
 
 export default function DashboardLayout({
   children,
@@ -11,9 +12,11 @@ export default function DashboardLayout({
   return (
     <OrderFormProvider>
       <CategoryStoreProvider>
-        <CashShiftStoreProvider>
-          <CategoriesLoader>{children}</CategoriesLoader>
-        </CashShiftStoreProvider>
+        <ProductsStoreProvider>
+          <CashShiftStoreProvider>
+            <CategoriesLoader>{children}</CategoriesLoader>
+          </CashShiftStoreProvider>
+        </ProductsStoreProvider>
       </CategoryStoreProvider>
     </OrderFormProvider>
   );

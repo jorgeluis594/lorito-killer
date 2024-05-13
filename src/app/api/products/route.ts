@@ -7,7 +7,7 @@ import { sortOptions } from "@/product/constants";
 import { getSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  const data = (await req.json()) as Product;
+  const data: Product = await req.json();
 
   const response = await productCreator({ create, findBy }, data);
   if (response.success) {
@@ -23,6 +23,8 @@ export async function GET(req: Request) {
   const param = searchParams.get("param");
   const categoryId = searchParams.get("categoryId");
   const sortKey = searchParams.get("sortBy") as SortKey | null;
+  const limit = searchParams.get("limit");
+
   let sortBy: ProductSortParams =
     sortKey && sortOptions[sortKey]
       ? sortOptions[sortKey]!.value
@@ -32,6 +34,7 @@ export async function GET(req: Request) {
     q: param,
     companyId: user.companyId,
     sortBy: sortBy,
+    limit: limit ? parseInt(limit) : undefined,
     categoryId,
   });
 

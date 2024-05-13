@@ -10,19 +10,40 @@ export type Photo = {
   createdAt?: Date;
 };
 
-export type Product = {
+type ProductBase = {
   id?: string;
   companyId: string;
   name: string;
   price: number;
   sku?: string;
-  stock: number;
-  purchasePrice: number;
   description: string;
   photos?: Photo[];
   categories: Category[];
   updatedAt?: Date;
   createdAt?: Date;
+};
+
+export const SingleProductType = "SingleProduct";
+
+export type SingleProduct = ProductBase & {
+  purchasePrice: number;
+  type: typeof SingleProductType;
+  stock: number;
+};
+
+export const PackageProductType = "PackageProduct";
+export type PackageProduct = ProductBase & {
+  type: typeof PackageProductType;
+  productItems: ProductItem[];
+};
+
+export type Product = SingleProduct | PackageProduct;
+
+export type ProductItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
 };
 
 export type ProductSearchParams = {
@@ -31,8 +52,11 @@ export type ProductSearchParams = {
   categories?: { id?: string };
 };
 
+// TODO: Add sort params for package product
 export type ProductSortParams = {
-  [P in keyof Omit<Product, "id" | "photos" | "categories">]?: "asc" | "desc";
+  [P in keyof Omit<SingleProduct, "id" | "photos" | "categories">]?:
+    | "asc"
+    | "desc";
 };
 
 export type SortOptions = {

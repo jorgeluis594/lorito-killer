@@ -2,14 +2,18 @@
 import { DataTable } from "@/shared/components/ui/data-table";
 import { Heading } from "@/shared/components/ui/heading";
 import { Separator } from "@/shared/components/ui/separator";
-import { Plus } from "lucide-react";
+import { Plus, Boxes } from "lucide-react";
 import { columns } from "./columns";
-import { Product } from "@/product/types";
+import {
+  PackageProductType,
+  Product,
+  SingleProductType,
+} from "@/product/types";
 import { Button } from "@/shared/components/ui/button";
-import ProductModalForm from "@/product/components/form/product-modal-form";
-import { SyntheticEvent, useState } from "react";
+import { SyntheticEvent } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import ProductModalForm from "@/product/components/form/product-modal-form";
 
 interface ProductsClientProps {
   data: Product[] | null;
@@ -28,7 +32,13 @@ export default function ProductsClient({
 
   const onNewProductClick = (e: SyntheticEvent) => {
     e.preventDefault();
-    resetProduct();
+    resetProduct(SingleProductType);
+    setOpen(true);
+  };
+
+  const onNewPackageClick = (e: SyntheticEvent) => {
+    e.preventDefault();
+    resetProduct(PackageProductType);
     setOpen(true);
   };
 
@@ -42,24 +52,39 @@ export default function ProductsClient({
           title={data ? `Productos (${data.length})` : ""}
           description="Gestiona tus productos!"
         />
-        <Button
-          type="button"
-          variant="outline"
-          className="text-xs md:text-sm"
-          disabled={performingAction}
-          onClick={onNewProductClick}
-        >
-          {performingAction ? (
-            <>
-              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Guardando
-              product
-            </>
-          ) : (
-            <>
-              <Plus className="mr-2 h-4 w-4" /> Agregar producto
-            </>
-          )}
-        </Button>
+        <div className="flex flex-col">
+          <Button
+            type="button"
+            variant="outline"
+            className="text-xs md:text-sm mb-2 justify-start"
+            disabled={performingAction}
+            onClick={onNewProductClick}
+          >
+            {performingAction ? (
+              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" /> Agregar producto
+              </>
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="text-xs md:text-sm justify-start"
+            disabled={performingAction}
+            onClick={onNewPackageClick}
+          >
+            {performingAction ? (
+              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Boxes className="mr-2 h-5 w-5" /> Agregar Pack
+              </>
+            )}
+          </Button>
+        </div>
       </div>
       <Separator />
       <DataTable
