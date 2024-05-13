@@ -245,33 +245,15 @@ export const getMany = async ({
   }
 };
 
-export const find = async (id: string): Promise<response<SingleProduct>> => {
+export const find = async (id: string): Promise<response<Product>> => {
   try {
     const product = await prisma.product.findUnique({
-      where: { id, isPackage: false },
+      where: { id },
       include: { photos: true, categories: true },
     });
 
     if (product) {
-      const price = product.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-      const purchasePrice = !!product.purchasePrice
-        ? product.purchasePrice.toNumber()
-        : undefined;
-      return {
-        success: true,
-        data: {
-          ...product,
-          price,
-          purchasePrice,
-          companyId: product.companyId || "some_company_id",
-          sku: product.sku || undefined,
-          type: SingleProductType,
-          categories: product.categories.map((c) => ({
-            ...c,
-            companyId: c.companyId || "some_company_id",
-          })),
-        },
-      };
+      return { success: true, data: await prismaToProduct(product) };
     } else {
       return { success: false, message: "Product not found" };
     }
@@ -282,7 +264,7 @@ export const find = async (id: string): Promise<response<SingleProduct>> => {
 
 export const findBy = async (
   params: ProductSearchParams,
-): Promise<response<SingleProduct>> => {
+): Promise<response<Product>> => {
   try {
     const { categories, ...rest } = params;
     const searchParams: any = { ...rest };
@@ -291,27 +273,14 @@ export const findBy = async (
     }
 
     const product = await prisma.product.findFirst({
-      where: { ...searchParams, isPackage: false },
+      where: { ...searchParams },
       include: { photos: true, categories: true },
     });
     if (!product) return { success: false, message: "Product not found" };
 
     return {
       success: true,
-      data: {
-        ...product,
-        companyId: product.companyId || "some_company_id",
-        type: SingleProductType,
-        price: product.price.toNumber(),
-        sku: product.sku || undefined,
-        purchasePrice: !!product.purchasePrice
-          ? product.purchasePrice.toNumber()
-          : undefined,
-        categories: product.categories.map((c) => ({
-          ...c,
-          companyId: c.companyId || "some_company_id",
-        })),
-      },
+      data: await prismaToProduct(product),
     };
   } catch (error: any) {
     return { success: false, message: error.message };
@@ -319,11 +288,11 @@ export const findBy = async (
 };
 
 export const deleteProduct = async (
-  product: SingleProduct,
-): Promise<response<SingleProduct>> => {
+  product: Product,
+): Promise<response<Product>> => {
   try {
     const deletedProduct = await prisma.product.delete({
-      where: { id: product.id, isPackage: false },
+      where: { id: product.id },
     });
     return { success: true, data: product };
   } catch (error: any) {
@@ -405,7 +374,7 @@ export const removePhoto = async (
 export const search = async ({
   q,
   categoryId,
-}: searchParams): Promise<response<SingleProduct[]>> => {
+}: searchParams): Promise<response<Product[]>> => {
   try {
     const query: Prisma.ProductWhereInput = {
       name: { contains: q, mode: "insensitive" },
@@ -417,28 +386,10 @@ export const search = async ({
       where: query,
       include: { photos: true, categories: true },
     });
-    const products = await Promise.all(
-      result.map(async (p) => {
-        const price = p.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
-        const purchasePrice = !!p.purchasePrice
-          ? p.purchasePrice.toNumber()
-          : undefined;
-        return { ...p, price, purchasePrice };
-      }),
-    );
 
     return {
       success: true,
-      data: products.map((p) => ({
-        ...p,
-        companyId: p.companyId || "some_company_id",
-        sku: p.sku || undefined,
-        type: SingleProductType,
-        categories: p.categories.map((c) => ({
-          ...c,
-          companyId: c.companyId || "some_company_id",
-        })),
-      })),
+      data: await Promise.all(result.map(prismaToProduct)),
     };
   } catch (error: any) {
     return { success: false, message: error.message } as response;
