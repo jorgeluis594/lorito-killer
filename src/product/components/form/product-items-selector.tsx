@@ -82,6 +82,7 @@ export default function ProductItemsSelector({
                 onValueChange={(productId) =>
                   onProductChange(productItem.id, productId)
                 }
+                value={productItem.productId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Escoja un producto" />
@@ -99,6 +100,7 @@ export default function ProductItemsSelector({
               <Input
                 placeholder="Cantidad"
                 type="number"
+                value={productItem.quantity}
                 required
                 onChange={(e) =>
                   onQuantityChange(productItem.id, parseInt(e.target.value))
