@@ -136,7 +136,7 @@ export const create = async (product: Product): Promise<response<Product>> => {
     : createPackageProduct(product);
 };
 
-export const update = async (
+const updateSingleProduct = async (
   product: SingleProduct,
 ): Promise<response<SingleProduct>> => {
   const { photos, categories, type, ...productData } = product;
@@ -144,12 +144,63 @@ export const update = async (
   try {
     await prisma.product.update({
       where: { id: product.id },
-      data: productData,
+      data: singleProductToPrisma(product),
     });
     return { success: true, data: product };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
+};
+
+const updatePackageProduct = async (
+  product: PackageProduct,
+): Promise<response<PackageProduct>> => {
+  const { photos, categories, type, productItems, ...productData } = product;
+
+  try {
+    await prisma.product.update({
+      where: { id: product.id },
+      data: packageProductToPrisma(product),
+    });
+
+    const previewItems = await prisma.packageItem.findMany({
+      where: { parentProductId: product.id },
+    });
+
+    const itemsToDelete = previewItems.filter(
+      (item) =>
+        !product.productItems.find((i) => i.productId === item.childProductId),
+    );
+
+    await prisma.packageItem.deleteMany({
+      where: { id: { in: itemsToDelete.map((i) => i.id) } },
+    });
+
+    await Promise.all(
+      product.productItems.map((item) =>
+        prisma.packageItem.upsert({
+          where: { id: item.id },
+          create: {
+            id: item.id,
+            parentProductId: product.id!,
+            childProductId: item.productId,
+            quantity: item.quantity,
+          },
+          update: { quantity: item.quantity, childProductId: item.productId },
+        }),
+      ),
+    );
+
+    return { success: true, data: { ...product } };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
+export const update = async (product: Product): Promise<response<Product>> => {
+  return product.type === SingleProductType
+    ? updateSingleProduct(product)
+    : updatePackageProduct(product);
 };
 
 const prismaToProduct = async (
