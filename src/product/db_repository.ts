@@ -219,7 +219,7 @@ const prismaToProduct = async (
       sku: prismaProduct.sku || undefined,
       price: prismaProduct.price.toNumber(),
       productItems: productItems.map((item) => ({
-        id: item.childProductId,
+        id: item.id,
         productId: item.childProductId,
         productName: item.parentProduct!.name,
         quantity: item.quantity,
@@ -279,7 +279,7 @@ export const getMany = async ({
 
     const result = await prisma.product.findMany({
       ...query,
-      include: { photos: true, categories: true, childPackageItems: true },
+      include: { photos: true, categories: true },
     });
     const products = await Promise.all(result.map(prismaToProduct));
 
