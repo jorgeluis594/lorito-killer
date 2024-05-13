@@ -168,8 +168,7 @@ const updatePackageProduct = async (
     });
 
     const itemsToDelete = previewItems.filter(
-      (item) =>
-        !product.productItems.find((i) => i.productId === item.childProductId),
+      (item) => !product.productItems.find((i) => i.id === item.id),
     );
 
     await prisma.packageItem.deleteMany({
