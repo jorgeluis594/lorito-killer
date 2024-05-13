@@ -1,18 +1,13 @@
 import { create, findBy, getMany } from "@/product/db_repository";
 import productCreator from "@/product/use-cases/product-creator";
-import {
-  Product,
-  ProductSortParams,
-  SingleProduct,
-  SortKey,
-} from "@/product/types";
+import { Product, ProductSortParams, SortKey } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { sortOptions } from "@/product/constants";
 import { getSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  const data = (await req.json()) as SingleProduct;
+  const data: Product = await req.json();
 
   const response = await productCreator({ create, findBy }, data);
   if (response.success) {
