@@ -1,17 +1,26 @@
-import { ProductSearchParams, SingleProduct } from "@/product/types";
-import { SingleProductSchema } from "@/product/schema";
+import {
+  Product,
+  ProductSearchParams,
+  SingleProduct,
+  SingleProductType,
+} from "@/product/types";
+import { PackageProductSchema, SingleProductSchema } from "@/product/schema";
 import { response } from "@/lib/types";
 
 interface Repository {
-  create: (product: SingleProduct) => Promise<response<SingleProduct>>;
-  findBy: (params: ProductSearchParams) => Promise<response<SingleProduct>>;
+  create: (product: Product) => Promise<response<Product>>;
+  findBy: (params: ProductSearchParams) => Promise<response<Product>>;
 }
 
 export default async function productCreator(
   repository: Repository,
-  product: SingleProduct,
-): Promise<response<SingleProduct>> {
-  const parsedProduct = SingleProductSchema.safeParse(product);
+  product: Product,
+): Promise<response<Product>> {
+  const parsedProduct =
+    product.type === SingleProductType
+      ? SingleProductSchema.safeParse(product)
+      : PackageProductSchema.safeParse(product);
+
   if (!parsedProduct.success) {
     return { success: false, message: parsedProduct.error.message };
   }
