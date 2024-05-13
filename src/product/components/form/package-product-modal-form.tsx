@@ -40,6 +40,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
+import ProductItemsSelector from "@/product/components/form/product-items-selector";
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
 
@@ -343,6 +344,21 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
                           rows={4}
                           placeholder="Escribe la descripción del producto aqui."
                           {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="productItems"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <ProductItemsSelector
+                          value={field.value || []}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />
