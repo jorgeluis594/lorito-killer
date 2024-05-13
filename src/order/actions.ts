@@ -10,7 +10,7 @@ import {
   update as updateProduct,
 } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
-import { PackageProductType, Product } from "@/product/types";
+import { PackageProductType, Product, SingleProduct } from "@/product/types";
 
 export const create = async (data: Order): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
@@ -67,11 +67,28 @@ async function updateProductsStocks(order: Order) {
     .map((r) => (r.success && r.data) as Product);
 
   await Promise.all(
-    products.map((product) => {
+    products.map(async (product) => {
       // TODO: Handle the logic of stock discount on package products
-      if (product.type === PackageProductType) return;
+      if (product.type === PackageProductType) {
+        await Promise.all(
+          product.productItems.map(async (pi) => {
+            const childProductResponse = await findProduct(pi.productId);
+            if (!childProductResponse.success) return;
 
-      updateProduct({
+            const childProduct = childProductResponse.data as SingleProduct;
+            await updateProduct({
+              ...childProduct,
+              stock:
+                childProduct.stock -
+                orderItemsByProductMapper[product.id!].quantity * pi.quantity,
+            });
+          }),
+        );
+
+        return;
+      }
+
+      await updateProduct({
         ...product,
         stock: product.stock - orderItemsByProductMapper[product.id!].quantity,
       });
