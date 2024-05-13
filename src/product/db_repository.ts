@@ -53,8 +53,9 @@ const createSingleProduct = async (
     const createdResponse = await prisma.product.create({
       data: singleProductToPrisma(product),
     });
-    const purchasePrice =
-      createdResponse.purchasePrice && createdResponse.purchasePrice.toNumber();
+    const purchasePrice = !!createdResponse.purchasePrice
+      ? createdResponse.purchasePrice.toNumber()
+      : 0;
 
     const productCategories = await prisma.category.findMany({
       where: { id: { in: categories.map((c) => c.id!) } },
@@ -67,7 +68,7 @@ const createSingleProduct = async (
       sku: createdResponse.sku || undefined,
       stock: createdResponse.stock!,
       price: createdResponse.price.toNumber(),
-      purchasePrice: purchasePrice || undefined,
+      purchasePrice: purchasePrice,
       categories: productCategories.map((c) => ({
         ...c,
         companyId: c.companyId || "some_company_id",
@@ -251,7 +252,7 @@ const prismaToProduct = async (
     const price = prismaProduct.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
     const purchasePrice = !!prismaProduct.purchasePrice
       ? prismaProduct.purchasePrice.toNumber()
-      : undefined;
+      : 0;
     return {
       ...prismaProduct,
       companyId: prismaProduct.companyId || "some_company_id",
@@ -341,9 +342,7 @@ export const findBy = async (
     }
 
     const product = await prisma.product.findFirst({
-      where: { ...searchParams,
-      include: { categories: true },
-    },
+      where: { ...searchParams, include: { categories: true } },
       include: { photos: true, categories: true },
     });
     if (!product) return { success: false, message: "Product not found" };
