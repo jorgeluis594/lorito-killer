@@ -8,7 +8,7 @@ export const navItems: NavItem[] = [
     label: "nuevo pedido",
   },
   {
-    title: "Lista de pedidos",
+    title: "Notas de venta",
     href: "/dashboard/orders",
     icon: "receipt",
     label: "pedidos",

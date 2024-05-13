@@ -15,6 +15,7 @@ import {
   Prisma,
   Product as PrismaProduct,
 } from "@prisma/client";
+import { Category as CategoryPrisma } from "@prisma/client";
 
 interface searchParams {
   q: string;
@@ -25,9 +26,18 @@ const singleProductToPrisma = (
   product: SingleProduct,
 ): Prisma.ProductCreateInput => {
   const { type, ...data } = product;
+  let sku: string | null;
+
+  if (product.sku === undefined) {
+    sku = null;
+  } else {
+    sku = product.sku;
+  }
+
   return {
     ...data,
     photos: product.photos ? { create: product.photos } : undefined,
+    sku,
     categories: product.categories
       ? { connect: product.categories.map((c) => ({ id: c.id })) }
       : undefined,
@@ -74,9 +84,18 @@ const packageProductToPrisma = (
   product: PackageProduct,
 ): Prisma.ProductCreateInput => {
   const { type, productItems, ...data } = product;
+  let sku: string | null;
+
+  if (product.sku === undefined) {
+    sku = null;
+  } else {
+    sku = product.sku;
+  }
+
   return {
     ...data,
     photos: product.photos ? { create: product.photos } : undefined,
+    sku,
     isPackage: true,
     categories: product.categories
       ? { connect: product.categories.map((c) => ({ id: c.id })) }
@@ -253,11 +272,13 @@ export const getMany = async ({
   companyId,
   sortBy,
   categoryId,
+  limit,
   q,
 }: {
   companyId: string;
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
+  limit?: number;
   q?: string | null;
 }): Promise<response<Product[]>> => {
   try {
@@ -270,6 +291,7 @@ export const getMany = async ({
         ...query.where,
         categories: { some: { id: categoryId } },
       };
+    if (limit) query.take = limit;
     if (q)
       query.where = {
         ...query.where,
@@ -288,10 +310,13 @@ export const getMany = async ({
   }
 };
 
-export const find = async (id: string): Promise<response<Product>> => {
+export const find = async (
+  id: string,
+  companyId?: string,
+): Promise<response<Product>> => {
   try {
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id, companyId },
       include: { photos: true, categories: true },
     });
 
@@ -316,7 +341,9 @@ export const findBy = async (
     }
 
     const product = await prisma.product.findFirst({
-      where: { ...searchParams },
+      where: { ...searchParams,
+      include: { categories: true },
+    },
       include: { photos: true, categories: true },
     });
     if (!product) return { success: false, message: "Product not found" };

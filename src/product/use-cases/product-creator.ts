@@ -29,13 +29,15 @@ export default async function productCreator(
     return repository.create(product);
   }
 
-  const { success: productFound } = await repository.findBy({
-    sku: product.sku,
-    companyId: product.companyId,
-  });
+  if (product.sku && product.sku.length) {
+    const { success: productFound } = await repository.findBy({
+      sku: product.sku,
+      companyId: product.companyId,
+    });
 
-  if (productFound) {
-    return { success: false, message: "Ya existe un producto con el sku" };
+    if (productFound) {
+      return { success: false, message: "Ya existe un producto con el sku" };
+    }
   }
 
   return repository.create(product);

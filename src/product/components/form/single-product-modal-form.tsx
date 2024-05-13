@@ -14,7 +14,7 @@ import * as z from "zod";
 import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Photo, SingleProduct, SingleProductType } from "@/product/types";
+import { Photo, Product, SingleProductType } from "@/product/types";
 import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
@@ -39,11 +39,13 @@ import {
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import { debounce } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
+import { getCompany } from "@/order/actions";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
-const transformToProduct = (data: ProductFormValues): SingleProduct => {
+const transformToProduct = (data: ProductFormValues): Product => {
   return {
     companyId: data.companyId,
     name: data.name,
@@ -86,9 +88,42 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
       : productData || EMPTY_SINGLE_PRODUCT,
   });
 
+  const productSku = form.watch("sku");
+
+  const skuSearch = async function (sku: string) {
+    if (!sku) return form.clearErrors("sku");
+
+    const res = await repository.findProduct(sku!);
+
+    console.log({ res }, { productData });
+    if (
+      !formStore.isNew &&
+      res.success &&
+      res.data.id !== formStore.product.id
+    ) {
+      form.setError("sku", {
+        type: "custom",
+        message: "Ya existe un producto con el mismo sku",
+      });
+    } else {
+      form.clearErrors("sku");
+    }
+  };
+
+  const skuDebounce = debounce(skuSearch, 200);
+
   useEffect(() => {
-    if (user && formStore.isNew) {
-      form.reset({ ...EMPTY_SINGLE_PRODUCT, companyId: user.companyId });
+    skuDebounce(productSku!).catch((error) => console.error("Error", error));
+  }, [productSku]);
+
+  useEffect(() => {
+    if (formStore.isNew) {
+      form.reset({ ...EMPTY_SINGLE_PRODUCT });
+      getCompany().then((response) => {
+        if (response.success) {
+          form.setValue("companyId", response.data.id);
+        }
+      });
     } else {
       form.reset(productData);
     }
@@ -134,9 +169,10 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
 
   const addCategoryToProduct = async (category: Category) => {
     const productCategories = form.getValues("categories") || [];
+    if (formStore.isNew) return;
     if (productCategories.find((c) => c.id === category.id)) return;
 
-    await onCategoryAdded(category);
+    await handleCategoriesUpdated([...productCategories, category]);
   };
 
   const handlePhotosUpdated = async (newPhotos: Photo[]) => {
@@ -197,57 +233,79 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const onCategoryAdded = async (category: Category) => {
-    const currentValues = form.getValues("categories") || [];
-    form.setValue("categories", [...currentValues, category]);
-    if (formStore.isNew) return;
-
-    const attachCategoryResponse = await attachCategoryToProduct(
-      formStore.product.id!,
-      category.id!,
-    );
-    if (attachCategoryResponse.success) {
-      toast({
-        description: `Categoria ${category.name} agregada con exito`,
-      });
-    } else {
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: `Error al agregar la categoria ${category.name}`,
-      });
-      form.setValue("categories", currentValues);
-    }
-  };
-
-  const onCategoryRemoved = async (category: Category) => {
+  const handleCategoriesUpdated = async (categories: Category[]) => {
     const currentCategories = form.getValues("categories") || [];
-    const newCategories = currentCategories.filter(
-      (c: Category) => c.id !== category.id,
-    );
-    form.setValue("categories", newCategories);
+    // If the product is new, there is no need to remove the category from the server
+    if (formStore.isNew) return form.setValue("categories", categories);
 
-    if (formStore.isNew) return;
-
-    const removeCategoryResponse = await removeCategoryFromProduct(
-      formStore.product.id!,
-      category.id!,
+    const categoriesToRemove = currentCategories.filter(
+      (category: Category) =>
+        !categories.find(
+          (newCategory: Category) => newCategory.id === category.id,
+        ),
     );
-    if (removeCategoryResponse.success) {
-      toast({
-        description: `Categoria ${category.name} eliminada del producto con exito`,
-      });
-    } else {
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: `Error al eliminar la categoria ${category.name}`,
-      });
+    const categoriesToAppend = categories.filter(
+      (category: Category) =>
+        !currentCategories.find(
+          (currentCategory: Category) => currentCategory.id === category.id,
+        ),
+    );
+
+    if (categoriesToRemove.length) {
+      form.setValue("categories", categories);
+      for (const category of categoriesToRemove) {
+        const removeCategoryReponse = await removeCategoryFromProduct(
+          formStore.product.id!,
+          category.id!,
+        );
+        if (removeCategoryReponse.success) {
+          toast({
+            description: `Categoria ${category.name} eliminada del producto con exito`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: `Error al eliminar la categoria ${category.name}`,
+          });
+        }
+      }
+    }
+
+    if (categoriesToAppend.length) {
+      form.setValue("categories", [
+        ...currentCategories,
+        ...categoriesToAppend,
+      ]);
+      for (const category of categoriesToAppend) {
+        const attachCategoryResponse = await attachCategoryToProduct(
+          formStore.product.id!,
+          category.id!,
+        );
+        if (attachCategoryResponse.success) {
+          toast({
+            description: `Categoria ${category.name} agregada con exito`,
+          });
+        } else {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: `Error al agregar la categoria ${category.name}`,
+          });
+        }
+      }
     }
   };
 
   return (
-    <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
+    <Dialog
+      open={formStore.open}
+      onOpenChange={(val) => {
+        formStore.resetProduct(SingleProductType);
+        form.reset({ ...EMPTY_SINGLE_PRODUCT });
+        formStore.setOpen(val);
+      }}
+    >
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
@@ -356,8 +414,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                       <div className="flex justify-between items-center gap-4">
                         <CategoriesSelector
                           value={field.value || []}
-                          onCategoryAdded={onCategoryAdded}
-                          onCategoryRemoved={onCategoryRemoved}
+                          onChange={handleCategoriesUpdated}
                         />
                         <NewCategoryDialog addCategory={addCategoryToProduct} />
                       </div>

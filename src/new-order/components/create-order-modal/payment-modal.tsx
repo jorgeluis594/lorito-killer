@@ -20,13 +20,14 @@ import {
   CombinedPayment,
   WalletPayment,
 } from "./payment_views";
-import { create } from "@/order/actions";
+import { create, getCompany } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import PdfVoucherRedirection from "@/order/components/pdf-voucher-redirection";
 import { Order } from "@/order/types";
+import { Company } from "@/company/types";
 
 const PaymentViews = {
   none: NonePayment,
@@ -47,6 +48,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
   const { getPaidAmount, reset, resetPayment } = useOrderFormActions();
+  const [company, setCompany] = useState<Company | null>(null);
   const { addOrder } = useCashShiftStore((state) => state);
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
@@ -72,6 +74,20 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     }
     setCreatingOrder(false);
   };
+
+  useEffect(() => {
+    getCompany().then((response) => {
+      if (response.success) {
+        setCompany(response.data);
+      } else {
+        toast({
+          variant: "destructive",
+          description:
+            "Error al cargar la información de la empresa, comuniquese con nostros para solucionar el problema",
+        });
+      }
+    });
+  }, []);
 
   const CreateOrderButton = ({ amountIsValid }: { amountIsValid: boolean }) => {
     if (creatingOrder) {
@@ -128,6 +144,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           {orderCreated ? (
             <PdfVoucherRedirection
               order={orderCreated}
+              company={company!}
               onPdfCreated={() => {
                 onOpenChange(false);
                 reset();

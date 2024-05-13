@@ -18,7 +18,7 @@ export const update = async (product: Product): Promise<response<Product>> => {
 
   const res = await fetch(`/api/products/${product.id}`, {
     method: "PUT",
-    body: JSON.stringify(product),
+    body: JSON.stringify({ ...product, sku: product.sku || "" }),
     headers: {
       "Content-Type": "application/json",
     },
@@ -80,6 +80,7 @@ export const removePhoto = async (
 export type GetManyParams = {
   q?: string | null;
   categoryId?: string | null;
+  limit?: number;
   sortBy?: SortKey;
 };
 
@@ -90,6 +91,7 @@ export const getMany = async (
   if (params.q) searchParams["param"] = params.q;
   if (params.categoryId) searchParams["categoryId"] = params.categoryId;
   if (params.sortBy) searchParams["sortBy"] = params.sortBy;
+  if (params.limit) searchParams["limit"] = params.limit;
   const queryString = new URLSearchParams(searchParams).toString();
 
   const res = await fetch(`/api/products?${queryString}`, {
@@ -137,6 +139,7 @@ export const search = async (
   return await res.json();
 };
 
+// acepta id o sku
 export const findProduct = async (id: string): Promise<response<Product>> => {
   const res = await fetch(`/api/products/${id}`, {
     method: "GET",

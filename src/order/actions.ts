@@ -5,12 +5,14 @@ import { response } from "@/lib/types";
 import { create as createOrder } from "./db_repository";
 import { revalidatePath } from "next/cache";
 import { getLastOpenCashShift } from "@/cash-shift/db_repository";
+import { getCompany as findCompany } from "@/company/db_repository";
 import {
   find as findProduct,
   update as updateProduct,
 } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
 import { PackageProductType, Product, SingleProduct } from "@/product/types";
+import { Company } from "@/company/types";
 
 export const create = async (data: Order): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
@@ -95,3 +97,8 @@ async function updateProductsStocks(order: Order) {
     }),
   );
 }
+
+export const getCompany = async (): Promise<response<Company>> => {
+  const session = await getSession();
+  return await findCompany(session.user.companyId);
+};
