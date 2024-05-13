@@ -66,6 +66,10 @@ export default function ProductItemsSelector({
     onChange(updatedValue);
   };
 
+  const removeProductItem = (productItemId: string) => {
+    onChange(value.filter((productItem) => productItem.id !== productItemId));
+  };
+
   return (
     <>
       <div className="flex items-center">
@@ -76,7 +80,7 @@ export default function ProductItemsSelector({
       </div>
       <div className="min-h-20 ">
         {value.map((productItem) => (
-          <div key={productItem.id} className="grid grid-cols-12 gap-4">
+          <div key={productItem.id} className="grid grid-cols-12 gap-4 mb-2">
             <div className="col-span-8">
               <Select
                 onValueChange={(productId) =>
@@ -108,7 +112,11 @@ export default function ProductItemsSelector({
               />
             </div>
             <div className="col-span-1">
-              <Button variant="destructive" size="icon">
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => removeProductItem(productItem.id)}
+              >
                 <Trash className="h-4 w-4" />
               </Button>
             </div>
