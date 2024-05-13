@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
 import {
+  PackageProduct,
+  PackageProductType,
   Photo,
   Product,
   ProductSearchParams,
@@ -49,8 +51,76 @@ const createSingleProduct = async (
       companyId: createdResponse.companyId || "some_company_id",
       type: SingleProductType,
       sku: createdResponse.sku || undefined,
+      stock: createdResponse.stock!,
       price: createdResponse.price.toNumber(),
       purchasePrice: purchasePrice || undefined,
+      categories: productCategories.map((c) => ({
+        ...c,
+        companyId: c.companyId || "some_company_id",
+      })),
+    };
+
+    return { success: true, data: createdProduct };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
+const packageProductToPrisma = (
+  product: PackageProduct,
+): Prisma.ProductCreateInput => {
+  const { type, productItems, ...data } = product;
+  return {
+    ...data,
+    photos: product.photos ? { create: product.photos } : undefined,
+    isPackage: true,
+    categories: product.categories
+      ? { connect: product.categories.map((c) => ({ id: c.id })) }
+      : undefined,
+  };
+};
+
+const createPackageProduct = async (
+  product: PackageProduct,
+): Promise<response<PackageProduct>> => {
+  try {
+    const { photos, categories, ...productData } = product;
+
+    const createdResponse = await prisma.product.create({
+      data: packageProductToPrisma(product),
+    });
+
+    const packageItems = await Promise.all(
+      product.productItems.map((item) =>
+        prisma.packageItem.create({
+          data: {
+            id: item.id,
+            parentProductId: createdResponse.id,
+            childProductId: item.productId,
+            quantity: item.quantity,
+          },
+        }),
+      ),
+    );
+
+    const productCategories = await prisma.category.findMany({
+      where: { id: { in: categories.map((c) => c.id!) } },
+    });
+
+    const createdProduct: PackageProduct = {
+      ...createdResponse,
+      companyId: createdResponse.companyId || "some_company_id",
+      type: PackageProductType,
+      sku: createdResponse.sku || undefined,
+      price: createdResponse.price.toNumber(),
+      productItems: packageItems.map((packageItem) => ({
+        id: packageItem.id,
+        productId: packageItem.childProductId,
+        productName: product.productItems.find(
+          (productItem) => productItem.id === packageItem.childProductId,
+        )!.productName,
+        quantity: packageItem.quantity,
+      })),
       categories: productCategories.map((c) => ({
         ...c,
         companyId: c.companyId || "some_company_id",
@@ -66,7 +136,7 @@ const createSingleProduct = async (
 export const create = async (product: Product): Promise<response<Product>> => {
   return product.type === SingleProductType
     ? createSingleProduct(product)
-    : { success: false, message: "Package products are not supported" };
+    : createPackageProduct(product);
 };
 
 export const update = async (
