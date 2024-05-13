@@ -1,13 +1,10 @@
 "use client";
 
-import { Product } from "@/product/types";
+import { Product, SingleProductType } from "@/product/types";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
-import {
-  useOrderFormActions,
-  useOrderFormStore,
-} from "@/new-order/order-form-provider";
+import { useOrderFormActions } from "@/new-order/order-form-provider";
 
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
@@ -29,7 +26,9 @@ export default function ProductItem({ product }: { product: Product }) {
         <p className="text-lg text-center font-medium mt-2">
           {formatPrice(product.price)}
         </p>
-        <p className="text-sm text-center mt-1">{product.stock} unid</p>
+        <p className="text-sm text-center mt-1">
+          {product.type == SingleProductType ? product.stock : "Paquete"} unid
+        </p>
       </CardContent>
     </Card>
   );

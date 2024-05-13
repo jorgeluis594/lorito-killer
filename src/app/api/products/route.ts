@@ -7,7 +7,7 @@ import { sortOptions } from "@/product/constants";
 import { getSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  const data = (await req.json()) as Product;
+  const data: Product = await req.json();
 
   const response = await productCreator({ create, findBy }, data);
   if (response.success) {

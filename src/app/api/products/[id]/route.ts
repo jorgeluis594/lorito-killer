@@ -4,7 +4,7 @@ import {
   deleteProduct,
   findBy,
 } from "@/product/db_repository";
-import { Product } from "@/product/types";
+import { SingleProduct } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
@@ -13,10 +13,10 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   const session = await getSession();
-  const productData = (await req.json()) as Product;
+  const productData: SingleProduct = await req.json();
 
-  const { success } = await findProduct(params.id, session.user.companyId);
-  if (!success) {
+  const findProductResponse = await findProduct(params.id, session.user.companyId);
+  if (!findProductResponse.success) {
     return NextResponse.json(
       { success: false, message: "Product not found" },
       { status: 404 },

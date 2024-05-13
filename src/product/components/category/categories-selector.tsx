@@ -7,11 +7,15 @@ import React, { useEffect } from "react";
 import { FormControl, FormLabel } from "@/shared/components/ui/form";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import MultipleSelector, { Option } from "@/shared/components/ui/multiple-selector";
+import MultipleSelector, {
+  Option,
+} from "@/shared/components/ui/multiple-selector";
 
 interface SelectCategoriesProps {
   value: Category[];
-  onChange: (categories: Category[]) => void;
+  onChange?: (categories: Category[]) => void;
+  onCategoryAdded?: (category: Category) => void;
+  onCategoryRemoved?: (category: Category) => void;
 }
 
 const CategoriesSkeleton = () => {
@@ -76,14 +80,32 @@ const categoryToOption = (category: Category): Option => ({
 const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   value,
   onChange,
+  onCategoryAdded,
+  onCategoryRemoved,
 }) => {
   const { categories, isLoading } = useCategoryStore((store) => store);
 
   const handelSelectedCategories = (options: Option[]) => {
-    const selectedCategories = options.map((option) =>
-      categories.find((c) => c.id === option.value),
-    );
-    onChange(selectedCategories as Category[]);
+    if (onCategoryAdded) {
+      options
+        .filter((option) => !value.some((c) => c.id === option.value))
+        .forEach((option) =>
+          onCategoryAdded(categories.find((c) => c.id === option.value)!),
+        );
+    }
+
+    if (onCategoryRemoved) {
+      value
+        .filter((c) => !options.some((option) => option.value === c.id))
+        .forEach((c) => onCategoryRemoved(c));
+    }
+
+    if (onChange) {
+      const selectedCategories = options.map(
+        (option) => categories.find((c) => c.id === option.value)!,
+      );
+      onChange(selectedCategories);
+    }
   };
 
   return (
