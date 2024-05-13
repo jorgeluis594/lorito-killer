@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import {
   Photo,
+  Product,
   ProductSearchParams,
   ProductSortParams,
   SingleProduct,
@@ -27,7 +28,7 @@ const singleProductToPrisma = (
   };
 };
 
-export const create = async (
+const createSingleProduct = async (
   product: SingleProduct,
 ): Promise<response<SingleProduct>> => {
   try {
@@ -60,6 +61,12 @@ export const create = async (
   } catch (error: any) {
     return { success: false, message: error.message };
   }
+};
+
+export const create = async (product: Product): Promise<response<Product>> => {
+  return product.type === SingleProductType
+    ? createSingleProduct(product)
+    : { success: false, message: "Package products are not supported" };
 };
 
 export const update = async (
