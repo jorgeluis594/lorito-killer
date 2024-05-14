@@ -25,7 +25,7 @@ interface searchParams {
 const singleProductToPrisma = (
   product: SingleProduct,
 ): Prisma.ProductCreateInput => {
-  const { type, ...data } = product;
+  const { type, id, photos, categories, ...data } = product;
   let sku: string | null;
 
   if (product.sku === undefined) {
@@ -36,11 +36,7 @@ const singleProductToPrisma = (
 
   return {
     ...data,
-    photos: product.photos ? { create: product.photos } : undefined,
     sku,
-    categories: product.categories
-      ? { connect: product.categories.map((c) => ({ id: c.id })) }
-      : undefined,
   };
 };
 
@@ -83,7 +79,7 @@ const createSingleProduct = async (
 const packageProductToPrisma = (
   product: PackageProduct,
 ): Prisma.ProductCreateInput => {
-  const { type, productItems, ...data } = product;
+  const { type, productItems, categories, photos, ...data } = product;
   let sku: string | null;
 
   if (product.sku === undefined) {
@@ -94,12 +90,8 @@ const packageProductToPrisma = (
 
   return {
     ...data,
-    photos: product.photos ? { create: product.photos } : undefined,
     sku,
     isPackage: true,
-    categories: product.categories
-      ? { connect: product.categories.map((c) => ({ id: c.id })) }
-      : undefined,
   };
 };
 
@@ -150,9 +142,23 @@ const createPackageProduct = async (
 };
 
 export const create = async (product: Product): Promise<response<Product>> => {
-  return product.type === SingleProductType
+  const response = await (product.type === SingleProductType
     ? createSingleProduct(product)
-    : createPackageProduct(product);
+    : createPackageProduct(product));
+
+  if (!response.success) return response;
+
+  await prisma.product.update({
+    where: { id: response.data.id },
+    data: {
+      photos: product.photos ? { create: product.photos } : undefined,
+      categories: product.categories
+        ? { connect: product.categories.map((c) => ({ id: c.id })) }
+        : undefined,
+    },
+  });
+
+  return { success: true, data: { ...product } };
 };
 
 const updateSingleProduct = async (
@@ -341,9 +347,7 @@ export const findBy = async (
     }
 
     const product = await prisma.product.findFirst({
-      where: { ...searchParams,
-      include: { categories: true },
-    },
+      where: { ...searchParams, include: { categories: true } },
       include: { photos: true, categories: true },
     });
     if (!product) return { success: false, message: "Product not found" };
