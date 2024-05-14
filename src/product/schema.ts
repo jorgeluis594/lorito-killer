@@ -60,7 +60,6 @@ export const PackageProductSchema = z.object({
   description: z.string(),
   sku: z
     .string()
-    .min(3, { message: "El sku debe tener al menos 3 caracteres" })
     .regex(/^[a-zA-Z0-9_]*$/, {
       message: "SKU solo puede contener carácteres alfanuméricos y guión abajo",
     })

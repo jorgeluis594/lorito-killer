@@ -41,6 +41,7 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
 import ProductItemsSelector from "@/product/components/form/product-items-selector";
+import { debounce } from "@/lib/utils";
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
 
@@ -88,6 +89,30 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
       ? { ...EMPTY_PACKAGE_PRODUCT }
       : productData || EMPTY_PACKAGE_PRODUCT,
   });
+
+  const productSku = form.watch("sku");
+
+  const skuSearch = async function (sku: string) {
+    if (!sku) return form.clearErrors("sku");
+    const res = await repository.findProduct(sku!);
+
+    if (
+      (formStore.isNew && res.success) || (!formStore.isNew && res.success && res.data.id !== formStore.product.id!)
+    ) {
+      form.setError("sku", {
+        type: "custom",
+        message: "Ya existe un producto con el mismo sku",
+      });
+    } else {
+      form.clearErrors("sku");
+    }
+  };
+
+  const skuDebounce = debounce(skuSearch, 200);
+
+  useEffect(() => {
+    skuDebounce(productSku!).catch((error) => console.error("Error", error));
+  }, [productSku]);
 
   // Setting the companyId to the product
   useEffect(() => {
