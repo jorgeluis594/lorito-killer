@@ -92,14 +92,10 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
 
   const skuSearch = async function (sku: string) {
     if (!sku) return form.clearErrors("sku");
-
     const res = await repository.findProduct(sku!);
 
-    console.log({ res }, { productData });
     if (
-      !formStore.isNew &&
-      res.success &&
-      res.data.id !== formStore.product.id
+      (formStore.isNew && res.success) || (!formStore.isNew && res.success && res.data.id !== formStore.product.id!)
     ) {
       form.setError("sku", {
         type: "custom",
