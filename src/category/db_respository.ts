@@ -25,6 +25,19 @@ export const create = async (
   }
 };
 
+export const deleteCategory = async (
+  category: Category,
+): Promise<response<Category>> => {
+  try {
+    const deleteCategory = await prisma.category.delete({
+      where: { id: category.id },
+    });
+    return { success: true, data: category };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
 export const getMany = async (
   companyId: string,
 ): Promise<response<Category[]>> => {
