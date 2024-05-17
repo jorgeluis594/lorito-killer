@@ -14,6 +14,7 @@ import { SyntheticEvent } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import ProductModalForm from "@/product/components/form/product-modal-form";
+import CategoryModal from "@/category/components/category-modal/category-modal";
 
 interface ProductsClientProps {
   data: Product[] | null;
@@ -53,6 +54,7 @@ export default function ProductsClient({
           description="Gestiona tus productos!"
         />
         <div className="flex flex-col">
+          <CategoryModal/>
           <Button
             type="button"
             variant="outline"

@@ -1,5 +1,5 @@
 import BreadCrumb from "@/shared/breadcrumb";
-import ListCategories from "@/category/components/view-category/category";
+import ListCategories from "@/category/components/category-modal/category";
 
 const breadcrumbItems = [{ title: "Categorias", link: "/categories" }];
 
