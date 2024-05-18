@@ -1,18 +1,25 @@
-import { Category } from '@/category/types'
-import React from 'react'
+"use client";
 
+import { DataTable } from "./data-table";
+import { columns } from "./columns";
+import { Category } from "@/category/types";
 interface CategoriesClientProps {
   data: Category[] | null,
   isLoading: boolean,
-  onUpsertProductPerformed: () => void
+  onUpsertCategoryPerformed: () => void
 }
 
 export default function CategoriesClient({
   data,
   isLoading,
-  onUpsertProductPerformed
+  onUpsertCategoryPerformed,
 }: CategoriesClientProps) {
   return (
-    <div>client Cate</div>
+    <DataTable
+      searchKey="name"
+      columns={columns}
+      data={data ?? []}
+      isLoading={isLoading}
+    />
   )
 }

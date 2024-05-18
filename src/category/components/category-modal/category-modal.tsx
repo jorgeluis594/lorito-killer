@@ -12,10 +12,8 @@ export default function CategoryModal() {
         <DialogTrigger asChild>
           <Button variant="outline" className="text-xs md:text-sm"><Plus className="mr-2 h-4 w-4" />Mostrar Categorías</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
-          <ScrollArea className="p-6">
-            <ListCategories/>
-          </ScrollArea>
+        <DialogContent className="sm:max-w-[350px] sm:h-[350px] w-full flex flex-col justify-center items-center p-0">
+          <ListCategories/>
         </DialogContent>
       </Dialog>
   )

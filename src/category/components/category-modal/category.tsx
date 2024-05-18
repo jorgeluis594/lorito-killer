@@ -37,7 +37,7 @@ const Categories = () => {
       <CategoriesClient
         data={categories}
         isLoading={isLoading}
-        onUpsertProductPerformed={reloadCategories} />
+        onUpsertCategoryPerformed={reloadCategories} />
     </>
   )
 }

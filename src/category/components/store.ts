@@ -5,11 +5,15 @@ import { Category } from "@/category/types";
 export type CategoryState = {
   categories: Category[];
   isLoading: boolean;
+  open: boolean;
+  performingAction: boolean
 };
 
 export type CategoryActions = {
   setCategories: (categories: Category[]) => void;
   setIsLoading: (isLoading: boolean) => void;
+  setOpen: (open: boolean) => void;
+  setPerformingAction: (performingAction: boolean) => void;
 };
 
 export type CategoryStore = CategoryState & CategoryActions;
@@ -17,6 +21,8 @@ export type CategoryStore = CategoryState & CategoryActions;
 export const defaultInitState: CategoryState = {
   categories: [],
   isLoading: false,
+  open: false,
+  performingAction: false,
 };
 
 function sortCategories(categories: Category[]) {
@@ -30,6 +36,8 @@ function sortCategories(categories: Category[]) {
 export const iniCategoriesParams = (): CategoryState => ({
   categories: [],
   isLoading: false,
+  open: false,
+  performingAction: false,
 });
 
 export const createCategoryStore = (
@@ -41,5 +49,8 @@ export const createCategoryStore = (
     setCategories: (categories: Category[]) =>
       set({ categories: [...sortCategories(categories)] }),
     setIsLoading: (isLoading: boolean) => set({ isLoading }),
+    setOpen: (open) => set({ open }),
+    setPerformingAction: (performingAction: boolean) =>
+      set({ performingAction }),
   }));
 };
