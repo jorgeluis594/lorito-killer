@@ -86,3 +86,6 @@ export const mul = (a: number) => (b: number) =>
 
 export const plus = (a: number) => (b: number) =>
   new Decimal(a).add(b).toNumber();
+
+export const sub = (a: number) => (b: number) =>
+  new Decimal(a).sub(b).toNumber();
