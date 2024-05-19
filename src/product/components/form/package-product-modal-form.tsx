@@ -41,6 +41,7 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
 import ProductItemsSelector from "@/product/components/form/product-items-selector";
+import { useProductsStore } from "@/product/components/products-store-provider";
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
 
@@ -67,6 +68,10 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
 }) => {
   const formStore = useProductFormStore((store) => store);
   const user = useUserSession();
+  const { addProduct, updateProduct } = useProductsStore((store) => ({
+    addProduct: store.addProduct,
+    updateProduct: store.updateProduct,
+  }));
   if (formStore.productType !== PackageProductType)
     throw new Error("Invalid product type");
 
@@ -109,6 +114,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Pack actualizado con exito",
         });
+        updateProduct(res.data);
         onActionPerformed();
       } else {
         toast({
@@ -125,6 +131,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Pack creado con exito",
         });
+        addProduct(res.data);
         onActionPerformed();
       } else {
         toast({
