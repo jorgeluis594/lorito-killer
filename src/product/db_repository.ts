@@ -159,7 +159,7 @@ export const create = async (product: Product): Promise<response<Product>> => {
     },
   });
 
-  return { success: true, data: { ...product } };
+  return { success: true, data: { ...response.data, ...product } };
 };
 
 const updateSingleProduct = async (
@@ -172,7 +172,7 @@ const updateSingleProduct = async (
       where: { id: product.id },
       data: singleProductToPrisma(product),
     });
-    return { success: true, data: product };
+    return { success: true, data: { ...product } };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
