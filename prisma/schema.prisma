@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UnitType {
+  UNIT
+  KG
+}
+
 model Product {
   id        String   @id @default(uuid())
   companyId String?
@@ -21,6 +26,7 @@ model Product {
   price     Decimal
   sku       String?
   stock     Int?
+  unitType  UnitType?
   purchasePrice Decimal?
   description String
   createdAt DateTime @default(now())
