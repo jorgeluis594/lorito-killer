@@ -104,6 +104,7 @@ export function DataTable<TData, TValue>({
           <>
             {searchKey.map((key) => (
               <Input
+              key={key}
                 placeholder={`Buscar por ${key}...`}
                 value={
                   (table.getColumn(key)?.getFilterValue() as string) ?? ""
