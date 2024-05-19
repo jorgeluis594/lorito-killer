@@ -18,12 +18,21 @@ export const defaultInitState: ProductsState = {
   isLoading: true,
 };
 
+function sortProducts(products: Product[]) {
+  return products.sort((a, b) => {
+    if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+    if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+    return 0;
+  });
+}
+
 export const createProductsStore = (
   initState: ProductsState = defaultInitState,
 ) => {
   return createStore<ProductsStore>()((set) => ({
     ...initState,
-    setProducts: (products) => set((state) => ({ products })),
+    setProducts: (products) =>
+      set((state) => ({ products: sortProducts(products) })),
     setIsLoading: (loading) => set((state) => ({ isLoading: loading })),
   }));
 };
