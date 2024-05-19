@@ -14,6 +14,8 @@ import { Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
+import { mul, plus } from "@/lib/utils";
+
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
 );
@@ -93,7 +95,7 @@ export const useOrderFormActions = (): Actions => {
           variant: "destructive",
         });
         orderItem.quantity = response.data.stock;
-        orderItem.total = orderItem.productPrice * orderItem.quantity;
+        orderItem.total = mul(orderItem.productPrice)(orderItem.quantity);
 
         orderFormStoreContext.setState({
           order: { ...order, orderItems: [...order.orderItems] },
@@ -106,7 +108,10 @@ export const useOrderFormActions = (): Actions => {
 
   const updateTotal = () => {
     const { order } = orderFormStoreContext.getState();
-    order.total = order.orderItems.reduce((acc, item) => acc + item.total, 0);
+    order.total = order.orderItems.reduce(
+      (acc, item) => plus(acc)(item.total),
+      0,
+    );
     orderFormStoreContext.setState(() => {
       return { order: { ...order, total: order.total } };
     });
@@ -180,7 +185,7 @@ export const useOrderFormActions = (): Actions => {
     }
 
     orderItem.quantity += 1;
-    orderItem.total = orderItem.productPrice * orderItem.quantity;
+    orderItem.total = mul(orderItem.productPrice)(orderItem.quantity);
     orderFormStoreContext.setState(() => {
       return { order: { ...order, orderItems: [...order.orderItems] } };
     });
@@ -211,7 +216,7 @@ export const useOrderFormActions = (): Actions => {
       removeOrderItem(orderItemId);
     } else {
       orderItem.quantity--;
-      orderItem.total = orderItem.productPrice * orderItem.quantity;
+      orderItem.total = mul(orderItem.productPrice)(orderItem.quantity);
       orderFormStoreContext.setState(() => {
         return { order: { ...order, orderItems: [...order.orderItems] } };
       });
@@ -224,7 +229,7 @@ export const useOrderFormActions = (): Actions => {
   const getPaidAmount = (): number => {
     const { order } = orderFormStoreContext.getState();
     return (order.payments || []).reduce(
-      (acc, payment) => acc + payment.amount,
+      (acc, payment) => plus(acc)(payment.amount),
       0,
     );
   };
