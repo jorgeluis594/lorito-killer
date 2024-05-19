@@ -13,6 +13,7 @@ export const EMPTY_SINGLE_PRODUCT: Omit<SingleProduct, "stock"> = {
   type: SingleProductType,
   name: "",
   price: 0,
+  purchasePrice: 0,
   description: "",
   photos: [],
   categories: [],

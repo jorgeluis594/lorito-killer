@@ -26,7 +26,7 @@ type ProductBase = {
 export const SingleProductType = "SingleProduct";
 
 export type SingleProduct = ProductBase & {
-  purchasePrice?: number;
+  purchasePrice: number;
   type: typeof SingleProductType;
   stock: number;
 };

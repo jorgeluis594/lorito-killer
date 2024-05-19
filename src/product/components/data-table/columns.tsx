@@ -33,7 +33,6 @@ export const columns: ColumnDef<Product>[] = [
     header: "PRECIO DE COMPRA",
     cell: ({ row }) =>
       row.original.type === SingleProductType &&
-      row.original.purchasePrice &&
       formatPrice(row.original.purchasePrice),
   },
   {
