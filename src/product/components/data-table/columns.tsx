@@ -4,6 +4,11 @@ import { CellAction } from "./cell-action";
 import { Product, SingleProductType } from "@/product/types";
 import { formatPrice } from "@/lib/utils";
 
+const unitTypeMapper = {
+  kg: "kg",
+  unit: "und",
+} as const;
+
 export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "name",
@@ -22,6 +27,9 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "stock",
     header: "CANTIDAD",
+    cell: ({ row }) =>
+      row.original.type === SingleProductType &&
+      `${row.original.stock} ${unitTypeMapper[row.original.unitType]}`,
   },
   {
     accessorKey: "purchasePrice",
