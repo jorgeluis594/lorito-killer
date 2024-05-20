@@ -10,7 +10,7 @@ import {
   Actions,
 } from "./store";
 import { PackageProductType, Product } from "@/product/types";
-import { Payment, PaymentMethod } from "@/order/types";
+import { OrderItem, Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
@@ -130,6 +130,29 @@ export const useOrderFormActions = (): Actions => {
     orderFormStoreContext.setState({
       order: { ...order, payments: [...order.payments] },
     });
+  };
+
+  const addOrderItem = (orderItem: OrderItem): void => {
+    const { order } = orderFormStoreContext.getState();
+    order.orderItems.push(orderItem);
+    orderFormStoreContext.setState({
+      order: { ...order, orderItems: [...order.orderItems] },
+    });
+
+    updateTotal();
+  };
+
+  const updateOrderItem = (orderItem: OrderItem): void => {
+    const { order } = orderFormStoreContext.getState();
+    const index = order.orderItems.findIndex(
+      (item) => item.id === orderItem.id,
+    );
+    order.orderItems[index] = orderItem;
+    orderFormStoreContext.setState({
+      order: { ...order, orderItems: [...order.orderItems] },
+    });
+
+    updateTotal();
   };
 
   const addProduct = (product: Product) => {
