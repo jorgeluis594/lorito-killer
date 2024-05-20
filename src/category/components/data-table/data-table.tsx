@@ -3,30 +3,29 @@
 import { useState } from "react";
 
 import {
-    ColumnDef,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    useReactTable,
-    VisibilityState,
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  useReactTable,
+  VisibilityState,
 } from "@tanstack/react-table";
 
 import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent
 } from "@/shared/components/ui/dropdown-menu";
 
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/shared/components/ui/table";
-import { Input } from "@/shared/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/shared/components/ui/scroll-area";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 

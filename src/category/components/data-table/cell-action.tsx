@@ -1,22 +1,12 @@
 "use client";
 import { AlertModal } from "@/shared/components/modal/alert-modal";
 import { Button } from "@/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { Edit, MoreHorizontal, Trash } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Product } from "@/product/types";
-import { deleteProduct } from "@/product/api_repository";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { useCategoryStore } from "../category-store-provider";
-import { deleteCategory } from "@/category/db_respository";
+import { deleteCategory } from "@/category/actions";
 import { Category } from "@/category/types";
 
 interface CellActionProps {
@@ -45,7 +35,7 @@ export const CellAction: React.FC<CellActionProps> = ({ category }) => {
 
     setOpen(false);
     toast({
-      title: "Categoría eliminado",
+      title: "Categoría eliminada",
     });
     router.refresh();
   };

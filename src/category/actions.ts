@@ -6,6 +6,7 @@ import {
   find as findCategory,
   addCategoryToProduct as attachCategoryToProduct,
   removeCategoryFromProduct as detachCategoryFromProduct,
+  deleteCategory as deleted,
 } from "./db_respository";
 import { find as findProduct } from "@/product/db_repository";
 import { response } from "@/lib/types";
@@ -16,6 +17,11 @@ export const createCategory = async (
   category: Category,
 ): Promise<response<Category>> => {
   return await create(category);
+};
+export const deleteCategory = async (
+  category: Category,
+): Promise<response<Category>> => {
+  return await deleted(category);
 };
 
 export const addCategoryToProduct = async (
