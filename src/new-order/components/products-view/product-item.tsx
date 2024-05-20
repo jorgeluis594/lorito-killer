@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import Image from "next/image";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
+import { UNIT_TYPE_MAPPER } from "@/product/constants";
 
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
@@ -27,7 +28,9 @@ export default function ProductItem({ product }: { product: Product }) {
           {formatPrice(product.price)}
         </p>
         <p className="text-sm text-center mt-1">
-          {product.type == SingleProductType ? product.stock : "Paquete"} unid
+          {product.type == SingleProductType
+            ? `${product.stock} ${UNIT_TYPE_MAPPER[product.unitType]}`
+            : "Paquete"}
         </p>
       </CardContent>
     </Card>

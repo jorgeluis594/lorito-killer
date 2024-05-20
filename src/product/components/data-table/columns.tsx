@@ -3,11 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { Product, SingleProductType } from "@/product/types";
 import { formatPrice } from "@/lib/utils";
-
-const unitTypeMapper = {
-  kg: "kg",
-  unit: "und",
-} as const;
+import { UNIT_TYPE_MAPPER } from "@/product/constants";
 
 export const columns: ColumnDef<Product>[] = [
   {
@@ -29,7 +25,7 @@ export const columns: ColumnDef<Product>[] = [
     header: "CANTIDAD",
     cell: ({ row }) =>
       row.original.type === SingleProductType &&
-      `${row.original.stock} ${unitTypeMapper[row.original.unitType]}`,
+      `${row.original.stock} ${UNIT_TYPE_MAPPER[row.original.unitType]}`,
   },
   {
     accessorKey: "purchasePrice",
