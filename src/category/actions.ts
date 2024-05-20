@@ -7,6 +7,7 @@ import {
   addCategoryToProduct as attachCategoryToProduct,
   removeCategoryFromProduct as detachCategoryFromProduct,
   deleteCategory as deleted,
+  update,
 } from "./db_respository";
 import { find as findProduct } from "@/product/db_repository";
 import { response } from "@/lib/types";
@@ -18,6 +19,13 @@ export const createCategory = async (
 ): Promise<response<Category>> => {
   return await create(category);
 };
+
+export const updateCategory = async (
+  category: Category,
+): Promise<response<Category>> => {
+  return await update(category);
+};
+
 export const deleteCategory = async (
   category: Category,
 ): Promise<response<Category>> => {
