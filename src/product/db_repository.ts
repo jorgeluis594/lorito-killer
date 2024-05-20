@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import {
+  KG_UNIT_TYPE,
   PackageProduct,
   PackageProductType,
   Photo,
@@ -8,19 +9,36 @@ import {
   ProductSortParams,
   SingleProduct,
   SingleProductType,
+  UNIT_UNIT_TYPE,
 } from "./types";
 import { response } from "@/lib/types";
 import {
+  $Enums,
   Category as PrismaCategory,
   Prisma,
   Product as PrismaProduct,
 } from "@prisma/client";
-import { Category as CategoryPrisma } from "@prisma/client";
 
 interface searchParams {
   q: string;
   categoryId?: string | null;
 }
+
+const UNIT_TYPE_MAPPER: Record<
+  $Enums.UnitType,
+  typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE
+> = {
+  KG: KG_UNIT_TYPE,
+  UNIT: UNIT_UNIT_TYPE,
+} as const;
+
+const PRISMA_UNIT_TYPE_MAPPER: Record<
+  typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE,
+  $Enums.UnitType
+> = {
+  kg: "KG",
+  unit: "UNIT",
+} as const;
 
 const singleProductToPrisma = (
   product: SingleProduct,
@@ -36,6 +54,7 @@ const singleProductToPrisma = (
 
   return {
     ...data,
+    unitType: PRISMA_UNIT_TYPE_MAPPER[product.unitType],
     sku,
   };
 };
@@ -65,6 +84,9 @@ const createSingleProduct = async (
       stock: createdResponse.stock!,
       price: createdResponse.price.toNumber(),
       purchasePrice: purchasePrice,
+      unitType: createdResponse.unitType
+        ? UNIT_TYPE_MAPPER[createdResponse.unitType]
+        : UNIT_UNIT_TYPE, // Created single product is expected to have a unit type by default
       categories: productCategories.map((c) => ({
         ...c,
         companyId: c.companyId || "some_company_id",
@@ -265,6 +287,9 @@ const prismaToProduct = async (
       type: SingleProductType,
       sku: prismaProduct.sku || undefined,
       stock: prismaProduct.stock!,
+      unitType: prismaProduct.unitType
+        ? UNIT_TYPE_MAPPER[prismaProduct.unitType]
+        : UNIT_UNIT_TYPE, // Single product is expected to have a unit type by default
       price,
       categories: prismaProduct.categories.map((c) => ({
         ...c,
