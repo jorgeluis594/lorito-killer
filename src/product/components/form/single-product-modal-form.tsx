@@ -14,7 +14,12 @@ import * as z from "zod";
 import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Photo, Product, SingleProductType } from "@/product/types";
+import {
+  Photo,
+  Product,
+  SingleProductType,
+  UNIT_UNIT_TYPE,
+} from "@/product/types";
 import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
@@ -53,6 +58,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
     price: data.price,
     sku: data.sku,
     type: SingleProductType,
+    unitType: UNIT_UNIT_TYPE,
     purchasePrice: data.purchasePrice,
     description: data.description,
     stock: data.stock,
