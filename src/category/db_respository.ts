@@ -2,6 +2,10 @@ import prisma from "@/lib/prisma";
 import { Category } from "./types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
+import {
+  Category as PrismaCategory,
+  Prisma,
+} from "@prisma/client";
 
 export const create = async (
   category: Category,
@@ -24,6 +28,35 @@ export const create = async (
     return { success: false, message: error.message };
   }
 };
+
+export const categoryToPrisma = (
+  category: Category,
+): Prisma.CategoryCreateInput => {
+  const { id, companyId, name, ...data } = category;
+ 
+  return {
+    ...data,
+    id,
+    name,
+  };
+};
+
+export const update = async (
+  category: Category,
+): Promise<response<Category>> => {
+  const {  companyId, ...categoryData } = category;
+
+  try {
+    await prisma.category.update({
+      where: { id: category.id },
+      data: categoryToPrisma(category),
+    });
+    return { success: true, data: category };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
 
 export const deleteCategory = async (
   category: Category,
