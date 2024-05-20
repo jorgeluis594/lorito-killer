@@ -8,6 +8,7 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { useCategoryStore } from "../category-store-provider";
 import { deleteCategory } from "@/category/actions";
 import { Category } from "@/category/types";
+import EditCategoryModal from "../category-modal/edit-category-modal";
 
 interface CellActionProps {
   category: Category;
@@ -16,7 +17,7 @@ interface CellActionProps {
 export const CellAction: React.FC<CellActionProps> = ({ category }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const setCategory = useCategoryStore((store) => store.setCategories);
+  const setCategory = useCategoryStore((store) => store.setCategory);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -49,9 +50,7 @@ export const CellAction: React.FC<CellActionProps> = ({ category }) => {
         loading={loading}
       />
       <div >
-      <Button onClick={() => setCategory([category])}>
-        <Edit className="mr-2 h-4 w-4" /> Editar
-      </Button>
+      <EditCategoryModal editCategory={setCategory}/>
       <Button onClick={() => setOpen(true)}>
         <Trash className="mr-2 h-4 w-4" /> Eliminar
         </Button>

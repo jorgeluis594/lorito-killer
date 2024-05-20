@@ -34,6 +34,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   isLoading?: boolean;
   searchKey?: string;
+  onActionPerformed: () => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -41,6 +42,7 @@ export function DataTable<TData, TValue>({
   data,
   isLoading,
   searchKey,
+  onActionPerformed,
 }: DataTableProps<TData, TValue>) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
@@ -95,30 +97,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      <div className="flex justify-between">
-        <DropdownMenu>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.columnDef.header as any}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
       <ScrollArea className="rounded-md border h-[calc(80vh-220px)]">
         <Table className="relative">
           <TableHeader>

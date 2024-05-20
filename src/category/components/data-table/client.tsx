@@ -20,6 +20,7 @@ export default function CategoriesClient({
       columns={columns}
       data={data ?? []}
       isLoading={isLoading}
+      onActionPerformed={onUpsertCategoryPerformed}
     />
   )
 }
