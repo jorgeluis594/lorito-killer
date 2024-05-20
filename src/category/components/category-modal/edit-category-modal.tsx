@@ -30,6 +30,7 @@ import { useCategoryStore } from "@/category/components/category-store-provider"
 import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { Edit } from "lucide-react";
+import { EMPTY_CATEGORY } from "@/category/constants";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -50,10 +51,15 @@ export default function editCategoryModal({
   const user = useUserSession();
   const formStore = useCategoryStore((store) => store);
   const [open, setOpen] = useState(false);
-  const { categories, setCategory } = useCategoryStore((store) => store);
+  const { categories, setCategories } = useCategoryStore((store) => store);
+
+  const { createdAt, updatedAt, ...categoryData } = formStore.categories || {};
+
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(CategorySchema),
-    defaultValues: { name: "" },
+    defaultValues: formStore.isNew
+    ? { ...EMPTY_CATEGORY}
+    : categoryData || EMPTY_CATEGORY,
   });
 
   const { toast } = useToast();
@@ -64,7 +70,7 @@ export default function editCategoryModal({
 
   const onSubmit = async (data: CategoryFormValues) => {
     const res = await updateCategory({
-        category: formStore.categories,
+        id: formStore.categories,
         ...transformToCategory(data),
     });
       if (res.success) {
