@@ -272,6 +272,8 @@ export const useOrderFormActions = (): Actions => {
   return {
     addProduct,
     removeOrderItem,
+    addOrderItem,
+    updateOrderItem,
     resetPayment: () => {
       const { order } = orderFormStoreContext.getState();
       orderFormStoreContext.setState({

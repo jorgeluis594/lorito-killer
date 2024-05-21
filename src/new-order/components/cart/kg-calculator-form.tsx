@@ -30,7 +30,7 @@ interface KgStockSetterFormProps {
   onOpenChange: (open: boolean) => void;
   defaultValue: number;
   product: Product;
-  onChange: (value: number) => void;
+  onSubmit: (kg: number) => void;
 }
 
 const kgCalculatorSchema = z.object({
@@ -47,7 +47,7 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
   onOpenChange,
   defaultValue,
   product,
-  onChange,
+  onSubmit,
 }) => {
   const form = useForm<KgCalculatorFormValues>({
     resolver: zodResolver(kgCalculatorSchema),
@@ -57,7 +57,7 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
     },
   });
 
-  const kgInputHandler = async (e: ChangeEvent<HTMLInputElement>) => {
+  const kgInputHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const kg = Number(e.target.value);
     const amount = mul(kg)(product.price);
     form.setValue("amount", amount);
@@ -67,6 +67,10 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
     const amount = Number(e.target.value);
     const kg = div(amount)(product.price);
     form.setValue("kg", parseFloat(kg.toFixed(3)));
+  };
+
+  const onFormSubmit = (data: KgCalculatorFormValues) => {
+    onSubmit(data.kg);
   };
 
   return (
@@ -134,16 +138,13 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
               />
             </div>
             <DialogFooter>
-              {
-                // button submit form
-              }
-              {/*<Button
+              <Button
                 type="button"
                 size="sm"
-                onClick={form.handleSubmit(onSubmit)}
+                onClick={form.handleSubmit(onFormSubmit)}
               >
-                Agregar categoría
-              </Button>*/}
+                Agregar producto
+              </Button>
             </DialogFooter>
           </form>
         </Form>
