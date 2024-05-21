@@ -96,7 +96,7 @@ model CashShift {
 
 model OrderItem {
   id           String   @id @default(uuid())
-  quantity     Int
+  quantity     Decimal
   total        Decimal
   productId    String
   orderId      String
