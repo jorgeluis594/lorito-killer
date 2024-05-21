@@ -220,6 +220,7 @@ export async function transformOrdersData(
             UNIT_TYPE_MAPPER[
               prismaProductsMap[oi.productId].unitType || "UNIT"
             ],
+          quantity: oi.quantity.toNumber(),
           productName: prismaProductsMap[oi.productId].name,
           productPrice: prismaProductsMap[oi.productId].price.toNumber(),
           total: oi.total.toNumber(),

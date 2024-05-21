@@ -81,7 +81,7 @@ const createSingleProduct = async (
       companyId: createdResponse.companyId || "some_company_id",
       type: SingleProductType,
       sku: createdResponse.sku || undefined,
-      stock: createdResponse.stock!,
+      stock: createdResponse.stock!.toNumber(),
       price: createdResponse.price.toNumber(),
       purchasePrice: purchasePrice,
       unitType: createdResponse.unitType
@@ -286,7 +286,7 @@ const prismaToProduct = async (
       companyId: prismaProduct.companyId || "some_company_id",
       type: SingleProductType,
       sku: prismaProduct.sku || undefined,
-      stock: prismaProduct.stock!,
+      stock: prismaProduct.stock!.toNumber(),
       unitType: prismaProduct.unitType
         ? UNIT_TYPE_MAPPER[prismaProduct.unitType]
         : UNIT_UNIT_TYPE, // Single product is expected to have a unit type by default
