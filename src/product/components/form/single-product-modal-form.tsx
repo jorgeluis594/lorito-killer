@@ -14,7 +14,13 @@ import * as z from "zod";
 import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Photo, Product, SingleProductType } from "@/product/types";
+import {
+  KG_UNIT_TYPE,
+  Photo,
+  Product,
+  SingleProductType,
+  UNIT_UNIT_TYPE,
+} from "@/product/types";
 import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
@@ -42,6 +48,14 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { debounce } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 import { getCompany } from "@/order/actions";
+import { useProductsStore } from "@/product/components/products-store-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
@@ -52,6 +66,7 @@ const transformToProduct = (data: ProductFormValues): Product => {
     price: data.price,
     sku: data.sku,
     type: SingleProductType,
+    unitType: data.unitType,
     purchasePrice: data.purchasePrice,
     description: data.description,
     stock: data.stock,
@@ -73,6 +88,11 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   const description = formStore.isNew
     ? "Registra un nuevo producto"
     : "Editar producto.";
+
+  const { addProduct, updateProduct } = useProductsStore((store) => ({
+    addProduct: store.addProduct,
+    updateProduct: store.updateProduct,
+  }));
 
   const action = formStore.isNew ? "Agregar Producto" : "Guardar cambios";
 
@@ -140,6 +160,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Producto actualizado con exito",
         });
+        updateProduct(res.data);
         onActionPerformed();
       } else {
         toast({
@@ -155,6 +176,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Producto creado con exito",
         });
+        addProduct(res.data);
         onActionPerformed();
       } else {
         toast({
@@ -330,12 +352,12 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-12 gap-4">
                   <FormField
                     control={form.control}
                     name="sku"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="col-span-6">
                         <FormLabel>Código de barras</FormLabel>
                         <FormControl>
                           <Input
@@ -352,7 +374,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     control={form.control}
                     name="stock"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="col-span-4">
                         <FormLabel>Cantidad</FormLabel>
                         <FormControl>
                           <Input
@@ -362,6 +384,30 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="unitType"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Unidad</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione unidad" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={UNIT_UNIT_TYPE}>und</SelectItem>
+                            <SelectItem value={KG_UNIT_TYPE}>kg</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

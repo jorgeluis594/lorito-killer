@@ -1,9 +1,12 @@
+import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
+
 export type OrderItem = {
   id?: string;
   productId: string;
   productName: string;
   productPrice: number;
   quantity: number;
+  unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
   total: number;
   createdAt?: Date;
   updatedAt?: Date;

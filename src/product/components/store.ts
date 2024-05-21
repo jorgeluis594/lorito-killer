@@ -9,6 +9,8 @@ export type ProductsState = {
 export type ProductsActions = {
   setProducts: (products: Product[]) => void;
   setIsLoading: (isLoading: boolean) => void;
+  addProduct: (product: Product) => void;
+  updateProduct: (product: Product) => void;
 };
 
 export type ProductsStore = ProductsState & ProductsActions;
@@ -18,12 +20,31 @@ export const defaultInitState: ProductsState = {
   isLoading: true,
 };
 
+function sortProducts(products: Product[]) {
+  return products.sort((a, b) => {
+    if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+    if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+    return 0;
+  });
+}
+
 export const createProductsStore = (
   initState: ProductsState = defaultInitState,
 ) => {
-  return createStore<ProductsStore>()((set) => ({
-    ...initState,
-    setProducts: (products) => set((state) => ({ products })),
-    setIsLoading: (loading) => set((state) => ({ isLoading: loading })),
-  }));
+  return createStore<ProductsStore>()((set, getState) => {
+    const setProducts = (products: Product[]) => {
+      set((state) => ({ products: sortProducts(products) }));
+    };
+
+    return {
+      ...initState,
+      setProducts,
+      setIsLoading: (loading) => set((state) => ({ isLoading: loading })),
+      addProduct: (product) => setProducts([...getState().products, product]),
+      updateProduct: (product) =>
+        setProducts(
+          getState().products.map((p) => (p.id === product.id ? product : p)),
+        ),
+    };
+  });
 };

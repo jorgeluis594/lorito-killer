@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { PaymentMethod } from "@/order/types";
 import { format } from "date-fns";
+import Decimal from "decimal.js";
 
 const formater = new Intl.NumberFormat("es-PE", {
   style: "currency",
@@ -79,3 +80,15 @@ const paymentMethodMap = {
 export const paymentMethodToText = (method: PaymentMethod) => {
   return paymentMethodMap[method];
 };
+
+export const mul = (a: number) => (b: number) =>
+  new Decimal(a).mul(b).toNumber();
+
+export const plus = (a: number) => (b: number) =>
+  new Decimal(a).add(b).toNumber();
+
+export const sub = (a: number) => (b: number) =>
+  new Decimal(a).sub(b).toNumber();
+
+export const div = (a: number) => (b: number) =>
+  new Decimal(a).div(b).toNumber();

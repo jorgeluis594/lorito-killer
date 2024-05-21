@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { IMG_MAX_LIMIT } from "@/product/constants";
 import { CategorySchema } from "@/category/schema";
+import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
 
 export const PhotoSchema = z.object({
   id: z.string().optional(),
@@ -19,7 +20,7 @@ export const SingleProductSchema = z.object({
     message: "El nombre del producto debe tener al menos 3 caracteres",
   }),
   price: z.coerce.number().gt(0, "El producto debe tener un precio"),
-  purchasePrice: z.coerce.number().optional(),
+  purchasePrice: z.coerce.number().default(0),
   description: z.string(),
   sku: z
     .string()
@@ -35,6 +36,7 @@ export const SingleProductSchema = z.object({
     .array(PhotoSchema)
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
     .optional(),
+  unitType: z.enum([KG_UNIT_TYPE, UNIT_UNIT_TYPE]),
   categories: z.array(CategorySchema),
   updatedAt: z.date().optional(),
   createdAt: z.date().optional(),

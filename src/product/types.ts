@@ -25,9 +25,13 @@ type ProductBase = {
 
 export const SingleProductType = "SingleProduct";
 
+export const KG_UNIT_TYPE = "kg";
+export const UNIT_UNIT_TYPE = "unit";
+
 export type SingleProduct = ProductBase & {
-  purchasePrice?: number;
+  purchasePrice: number;
   type: typeof SingleProductType;
+  unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
   stock: number;
 };
 

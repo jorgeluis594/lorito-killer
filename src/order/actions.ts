@@ -13,6 +13,7 @@ import {
 import { getSession } from "@/lib/auth";
 import { PackageProductType, Product, SingleProduct } from "@/product/types";
 import { Company } from "@/company/types";
+import { mul, sub } from "@/lib/utils";
 
 export const create = async (data: Order): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
@@ -80,9 +81,11 @@ async function updateProductsStocks(order: Order) {
             const childProduct = childProductResponse.data as SingleProduct;
             await updateProduct({
               ...childProduct,
-              stock:
-                childProduct.stock -
-                orderItemsByProductMapper[product.id!].quantity * pi.quantity,
+              stock: sub(childProduct.stock)(
+                mul(orderItemsByProductMapper[product.id!].quantity)(
+                  pi.quantity,
+                ),
+              ),
             });
           }),
         );
@@ -92,7 +95,9 @@ async function updateProductsStocks(order: Order) {
 
       await updateProduct({
         ...product,
-        stock: product.stock - orderItemsByProductMapper[product.id!].quantity,
+        stock: sub(product.stock)(
+          orderItemsByProductMapper[product.id!].quantity,
+        ),
       });
     }),
   );

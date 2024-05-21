@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import {
+  KG_UNIT_TYPE,
   PackageProduct,
   PackageProductType,
   Photo,
@@ -8,19 +9,36 @@ import {
   ProductSortParams,
   SingleProduct,
   SingleProductType,
+  UNIT_UNIT_TYPE,
 } from "./types";
 import { response } from "@/lib/types";
 import {
+  $Enums,
   Category as PrismaCategory,
   Prisma,
   Product as PrismaProduct,
 } from "@prisma/client";
-import { Category as CategoryPrisma } from "@prisma/client";
 
 interface searchParams {
   q: string;
   categoryId?: string | null;
 }
+
+export const UNIT_TYPE_MAPPER: Record<
+  $Enums.UnitType,
+  typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE
+> = {
+  KG: KG_UNIT_TYPE,
+  UNIT: UNIT_UNIT_TYPE,
+} as const;
+
+export const PRISMA_UNIT_TYPE_MAPPER: Record<
+  typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE,
+  $Enums.UnitType
+> = {
+  kg: "KG",
+  unit: "UNIT",
+} as const;
 
 const singleProductToPrisma = (
   product: SingleProduct,
@@ -36,6 +54,7 @@ const singleProductToPrisma = (
 
   return {
     ...data,
+    unitType: PRISMA_UNIT_TYPE_MAPPER[product.unitType],
     sku,
   };
 };
@@ -49,8 +68,9 @@ const createSingleProduct = async (
     const createdResponse = await prisma.product.create({
       data: singleProductToPrisma(product),
     });
-    const purchasePrice =
-      createdResponse.purchasePrice && createdResponse.purchasePrice.toNumber();
+    const purchasePrice = !!createdResponse.purchasePrice
+      ? createdResponse.purchasePrice.toNumber()
+      : 0;
 
     const productCategories = await prisma.category.findMany({
       where: { id: { in: categories.map((c) => c.id!) } },
@@ -61,9 +81,12 @@ const createSingleProduct = async (
       companyId: createdResponse.companyId || "some_company_id",
       type: SingleProductType,
       sku: createdResponse.sku || undefined,
-      stock: createdResponse.stock!,
+      stock: createdResponse.stock!.toNumber(),
       price: createdResponse.price.toNumber(),
-      purchasePrice: purchasePrice || undefined,
+      purchasePrice: purchasePrice,
+      unitType: createdResponse.unitType
+        ? UNIT_TYPE_MAPPER[createdResponse.unitType]
+        : UNIT_UNIT_TYPE, // Created single product is expected to have a unit type by default
       categories: productCategories.map((c) => ({
         ...c,
         companyId: c.companyId || "some_company_id",
@@ -158,7 +181,7 @@ export const create = async (product: Product): Promise<response<Product>> => {
     },
   });
 
-  return { success: true, data: { ...product } };
+  return { success: true, data: { ...response.data, ...product } };
 };
 
 const updateSingleProduct = async (
@@ -171,7 +194,7 @@ const updateSingleProduct = async (
       where: { id: product.id },
       data: singleProductToPrisma(product),
     });
-    return { success: true, data: product };
+    return { success: true, data: { ...product } };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
@@ -257,13 +280,16 @@ const prismaToProduct = async (
     const price = prismaProduct.price.toNumber(); // Prisma (DB) returns decimal and Product model expects number
     const purchasePrice = !!prismaProduct.purchasePrice
       ? prismaProduct.purchasePrice.toNumber()
-      : undefined;
+      : 0;
     return {
       ...prismaProduct,
       companyId: prismaProduct.companyId || "some_company_id",
       type: SingleProductType,
       sku: prismaProduct.sku || undefined,
-      stock: prismaProduct.stock!,
+      stock: prismaProduct.stock!.toNumber(),
+      unitType: prismaProduct.unitType
+        ? UNIT_TYPE_MAPPER[prismaProduct.unitType]
+        : UNIT_UNIT_TYPE, // Single product is expected to have a unit type by default
       price,
       categories: prismaProduct.categories.map((c) => ({
         ...c,

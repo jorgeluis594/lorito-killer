@@ -4,15 +4,23 @@ import {
   SingleProduct,
   SingleProductType,
   SortOptions,
+  UNIT_UNIT_TYPE,
 } from "@/product/types";
 
 export const IMG_MAX_LIMIT = 1;
+
+export const UNIT_TYPE_MAPPER = {
+  kg: "kg",
+  unit: "und",
+} as const;
 
 export const EMPTY_SINGLE_PRODUCT: Omit<SingleProduct, "stock"> = {
   companyId: "",
   type: SingleProductType,
   name: "",
   price: 0,
+  purchasePrice: 0,
+  unitType: UNIT_UNIT_TYPE,
   description: "",
   photos: [],
   categories: [],
