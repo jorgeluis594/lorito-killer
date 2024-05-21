@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Product" ALTER COLUMN "stock" SET DATA TYPE DECIMAL(65,30);
