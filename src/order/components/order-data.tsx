@@ -11,6 +11,7 @@ import { BlobProvider } from "@react-pdf/renderer";
 import Voucher from "@/order/components/voucher";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { Company } from "@/company/types";
+import { UNIT_TYPE_MAPPER } from "@/product/constants";
 
 export default function OrderData({
   order,
@@ -97,7 +98,9 @@ export default function OrderData({
                   <td className="pl-2 border py-1">
                     {formatPrice(orderItem.productPrice)}
                   </td>
-                  <td className="pl-2 border py-1">{orderItem.quantity}</td>
+                  <td className="pl-2 border py-1">
+                    {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
+                  </td>
                   <td className="pl-2 border py-1">
                     {formatPrice(orderItem.total)}
                   </td>

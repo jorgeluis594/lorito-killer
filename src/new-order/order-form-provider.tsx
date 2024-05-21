@@ -9,8 +9,13 @@ import {
   initOrderFormStore,
   Actions,
 } from "./store";
-import { PackageProductType, Product } from "@/product/types";
-import { Payment, PaymentMethod } from "@/order/types";
+import {
+  PackageProductType,
+  Product,
+  SingleProductType,
+  UNIT_UNIT_TYPE,
+} from "@/product/types";
+import { OrderItem, Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
@@ -132,7 +137,42 @@ export const useOrderFormActions = (): Actions => {
     });
   };
 
-  const addProduct = (product: Product) => {
+  const updateOrderItem = (orderItem: OrderItem): void => {
+    const { order } = orderFormStoreContext.getState();
+    const index = order.orderItems.findIndex(
+      (item) => item.id === orderItem.id,
+    );
+    order.orderItems[index] = orderItem;
+    orderFormStoreContext.setState({
+      order: { ...order, orderItems: [...order.orderItems] },
+    });
+
+    updateTotal();
+  };
+
+  const addOrderItem = (orderItem: OrderItem): void => {
+    const { order } = orderFormStoreContext.getState();
+    const index = order.orderItems.findIndex(
+      (item) => item.productId === orderItem.productId,
+    );
+
+    if (index !== -1) {
+      order.orderItems[index] = orderItem;
+      orderFormStoreContext.setState({
+        order: { ...order, orderItems: [...order.orderItems] },
+      });
+      return;
+    }
+
+    order.orderItems.push(orderItem);
+    orderFormStoreContext.setState({
+      order: { ...order, orderItems: [...order.orderItems] },
+    });
+
+    updateTotal();
+  };
+
+  const addProduct = (product: Product, stock?: number) => {
     const { order } = orderFormStoreContext.getState();
 
     const orderItem = order.orderItems.find(
@@ -148,8 +188,10 @@ export const useOrderFormActions = (): Actions => {
         productId: product.id!,
         productName: product.name,
         productPrice: product.price,
-        quantity: 1,
-        total: product.price,
+        unitType:
+          product.type == SingleProductType ? product.unitType : UNIT_UNIT_TYPE,
+        quantity: stock || 1,
+        total: mul(stock || 1)(product.price),
       };
 
       order.orderItems.push(oi);
@@ -237,6 +279,12 @@ export const useOrderFormActions = (): Actions => {
   return {
     addProduct,
     removeOrderItem,
+    addOrderItem,
+    updateOrderItem,
+    getOrderItemByProduct: (productId: string) => {
+      const { order } = orderFormStoreContext.getState();
+      return order.orderItems.find((item) => item.productId === productId);
+    },
     resetPayment: () => {
       const { order } = orderFormStoreContext.getState();
       orderFormStoreContext.setState({

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "OrderItem" ALTER COLUMN "quantity" SET DATA TYPE DECIMAL(65,30);
