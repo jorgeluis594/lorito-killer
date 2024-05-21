@@ -3,6 +3,7 @@ import { Plus, Minus } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Trash } from "lucide-react";
+import KgQuantity from "@/new-order/components/cart/kg-quantity";
 
 interface CartItemProps {
   item: OrderItem;
@@ -20,6 +21,18 @@ export default function CartItem({
   const onIncreaseIncreaseQuantity = () => increaseQuantity(item.id!);
   const onDecreaseIncreaseQuantity = () => decreaseQuantity(item.id!);
 
+  const UnitQuantityComponent = () => (
+    <div className="flex justify-around items-center">
+      <Button variant="secondary" onClick={onDecreaseIncreaseQuantity}>
+        <Minus className="h-2 w-2 cursor-pointer" />
+      </Button>
+      <p className="text-small">{item.quantity}</p>
+      <Button variant="secondary" onClick={onIncreaseIncreaseQuantity}>
+        <Plus className="h-2 w-2 cursor-pointer" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="py-2 border-b grid grid-cols-[270px,1fr,140px] transition animate-move-from-left-to-right hover:bg-accent group">
       <div className="pl-4 ">
@@ -28,15 +41,11 @@ export default function CartItem({
           {formatPrice(item.productPrice)}
         </p>
       </div>
-      <div className="flex justify-around items-center">
-        <Button variant="secondary" onClick={onDecreaseIncreaseQuantity}>
-          <Minus className="h-2 w-2 cursor-pointer" />
-        </Button>
-        <p className="text-small">{item.quantity}</p>
-        <Button variant="secondary" onClick={onIncreaseIncreaseQuantity}>
-          <Plus className="h-2 w-2 cursor-pointer" />
-        </Button>
-      </div>
+      {item.unitType === "kg" ? (
+        <KgQuantity orderItem={item} />
+      ) : (
+        <UnitQuantityComponent />
+      )}
       <div>
         <p className="text-end text-xl font-medium group-hover:hidden">
           {formatPrice(item.total)}
