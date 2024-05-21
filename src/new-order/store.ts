@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 
-import { Order, Payment, PaymentMethod } from "@/order/types";
+import { Order, OrderItem, Payment, PaymentMethod } from "@/order/types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
 import { CashShift } from "@/cash-shift/types";
@@ -13,6 +13,8 @@ export type OrderFormStore = {
 export type Actions = {
   addProduct: (product: Product) => void;
   removeOrderItem: (orderItemId: string) => void;
+  addOrderItem: (orderItem: OrderItem) => void;
+  updateOrderItem: (orderItem: OrderItem) => void;
   reset: () => void;
   increaseQuantity: (productId: string) => void;
   decreaseQuantity: (productId: string) => void;
