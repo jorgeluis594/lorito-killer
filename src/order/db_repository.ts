@@ -11,13 +11,17 @@ import {
 } from "@prisma/client";
 import { Payment } from "@/order/types";
 import PaymentMethod = $Enums.PaymentMethod;
-import { UNIT_TYPE_MAPPER } from "@/product/db_repository";
+import {
+  PRISMA_UNIT_TYPE_MAPPER,
+  UNIT_TYPE_MAPPER,
+} from "@/product/db_repository";
 
 async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { productName, ...orderItemData } = orderItem;
+  const { productName, unitType, ...orderItemData } = orderItem;
+
   try {
     const persistedOrderItem = await prisma.orderItem.create({
       data: {
