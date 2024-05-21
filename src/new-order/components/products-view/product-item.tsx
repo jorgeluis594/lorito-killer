@@ -3,7 +3,7 @@
 import { KG_UNIT_TYPE, type Product, SingleProductType } from "@/product/types";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, mul } from "@/lib/utils";
 import Image from "next/image";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
 import { useState } from "react";
@@ -12,7 +12,8 @@ import KgCalculatorForm from "@/new-order/components/cart/kg-calculator-form";
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
   const [openKgCalculator, setOpenKgCalculator] = useState(false);
-  const { addProduct } = useOrderFormActions();
+  const { addProduct, updateOrderItem, getOrderItemByProduct } =
+    useOrderFormActions();
 
   const onAddProductToCart = () => {
     if (
@@ -26,6 +27,22 @@ export default function ProductItem({ product }: { product: Product }) {
     addProduct(product);
   };
 
+  const onKgCalculatorSubmit = (kg: number) => {
+    const orderItem = getOrderItemByProduct(product.id!);
+    if (orderItem) {
+      updateOrderItem({
+        ...orderItem,
+        quantity: kg,
+        total: mul(kg)(product.price),
+      });
+      setOpenKgCalculator(false);
+      return;
+    }
+
+    addProduct(product, kg);
+    setOpenKgCalculator(false);
+  };
+
   return (
     <>
       {openKgCalculator && (
@@ -34,9 +51,7 @@ export default function ProductItem({ product }: { product: Product }) {
           onOpenChange={setOpenKgCalculator}
           defaultValue={1}
           product={product}
-          onChange={(val) => {
-            console.log(val);
-          }}
+          onSubmit={onKgCalculatorSubmit}
         />
       )}
       <Card onClick={onAddProductToCart}>
