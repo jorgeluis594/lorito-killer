@@ -22,7 +22,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChangeEvent } from "react";
 import { Product } from "@/product/types";
-import { mul } from "@/lib/utils";
+import { div, mul } from "@/lib/utils";
+import { Label } from "@/shared/components/ui/label";
 
 interface KgStockSetterFormProps {
   open: boolean;
@@ -50,17 +51,26 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
 }) => {
   const form = useForm<KgCalculatorFormValues>({
     resolver: zodResolver(kgCalculatorSchema),
-    defaultValues: { kg: defaultValue, amount: 1 },
+    defaultValues: {
+      kg: defaultValue,
+      amount: mul(defaultValue)(product.price),
+    },
   });
 
-  const kgInputHandler = (e: ChangeEvent<HTMLInputElement>) => {
+  const kgInputHandler = async (e: ChangeEvent<HTMLInputElement>) => {
     const kg = Number(e.target.value);
     const amount = mul(kg)(product.price);
     form.setValue("amount", amount);
   };
 
+  const amountInputHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    const amount = Number(e.target.value);
+    const kg = div(amount)(product.price);
+    form.setValue("kg", parseFloat(kg.toFixed(3)));
+  };
+
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
           <form id="kg-calculator-form">
@@ -70,17 +80,18 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
                 Cálcula el costo de tus productos por KG
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4 grid-cols-2">
+            <div className="flex flex-wrap gap-4 py-4 justify-between">
               <FormField
                 control={form.control}
                 name="kg"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-5/12">
                     <FormControl>
                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="col-span-1 text-right">KG</Label>
                         <Input
                           id="kg-calculator-input"
-                          className="col-span-4"
+                          className="col-span-3"
                           type="number"
                           {...{
                             ...field,
@@ -100,13 +111,20 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="w-5/12">
                     <FormControl>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <MoneyInput
+                        <Label className="col-span-1 text-right">S/</Label>
+                        <Input
                           id="kg-calculator-amount-input"
-                          className="col-span-4"
-                          {...field}
+                          className="col-span-3"
+                          {...{
+                            ...field,
+                            onChange: (e) => {
+                              field.onChange(e);
+                              amountInputHandler(e);
+                            },
+                          }}
                         />
                         <FormMessage className="col-span-4" />
                       </div>

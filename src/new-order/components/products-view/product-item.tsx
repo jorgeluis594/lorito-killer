@@ -32,7 +32,7 @@ export default function ProductItem({ product }: { product: Product }) {
         <KgCalculatorForm
           open={openKgCalculator}
           onOpenChange={setOpenKgCalculator}
-          defaultValue={0}
+          defaultValue={1}
           product={product}
           onChange={(val) => {
             console.log(val);
