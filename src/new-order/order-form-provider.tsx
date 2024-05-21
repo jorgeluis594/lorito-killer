@@ -167,7 +167,7 @@ export const useOrderFormActions = (): Actions => {
     updateTotal();
   };
 
-  const addProduct = (product: Product) => {
+  const addProduct = (product: Product, stock?: number) => {
     const { order } = orderFormStoreContext.getState();
 
     const orderItem = order.orderItems.find(
@@ -183,8 +183,8 @@ export const useOrderFormActions = (): Actions => {
         productId: product.id!,
         productName: product.name,
         productPrice: product.price,
-        quantity: 1,
-        total: product.price,
+        quantity: stock || 1,
+        total: mul(stock || 1)(product.price),
       };
 
       order.orderItems.push(oi);
@@ -274,6 +274,10 @@ export const useOrderFormActions = (): Actions => {
     removeOrderItem,
     addOrderItem,
     updateOrderItem,
+    getOrderItemByProduct: (productId: string) => {
+      const { order } = orderFormStoreContext.getState();
+      return order.orderItems.find((item) => item.productId === productId);
+    },
     resetPayment: () => {
       const { order } = orderFormStoreContext.getState();
       orderFormStoreContext.setState({
