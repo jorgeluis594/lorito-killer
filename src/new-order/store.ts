@@ -11,7 +11,8 @@ export type OrderFormStore = {
 };
 
 export type Actions = {
-  addProduct: (product: Product) => void;
+  addProduct: (product: Product, stock?: number) => void;
+  getOrderItemByProduct: (productId: string) => OrderItem | undefined;
   removeOrderItem: (orderItemId: string) => void;
   addOrderItem: (orderItem: OrderItem) => void;
   updateOrderItem: (orderItem: OrderItem) => void;
