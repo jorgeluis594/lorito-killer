@@ -9,7 +9,12 @@ import {
   initOrderFormStore,
   Actions,
 } from "./store";
-import { PackageProductType, Product } from "@/product/types";
+import {
+  PackageProductType,
+  Product,
+  SingleProductType,
+  UNIT_UNIT_TYPE,
+} from "@/product/types";
 import { OrderItem, Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
@@ -183,6 +188,8 @@ export const useOrderFormActions = (): Actions => {
         productId: product.id!,
         productName: product.name,
         productPrice: product.price,
+        unitType:
+          product.type == SingleProductType ? product.unitType : UNIT_UNIT_TYPE,
         quantity: stock || 1,
         total: mul(stock || 1)(product.price),
       };

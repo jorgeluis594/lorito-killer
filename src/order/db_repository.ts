@@ -1,7 +1,7 @@
 import type { Order, OrderItem } from "@/order/types";
 import { response, successResponse } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import { Product } from "@/product/types";
+
 import {
   $Enums,
   type Payment as PrismaPayment,
@@ -11,6 +11,7 @@ import {
 } from "@prisma/client";
 import { Payment } from "@/order/types";
 import PaymentMethod = $Enums.PaymentMethod;
+import { UNIT_TYPE_MAPPER } from "@/product/db_repository";
 
 async function addOrderItem(
   orderId: string,
@@ -211,6 +212,10 @@ export async function transformOrdersData(
         const { orderId, ...orderItemData } = oi;
         return {
           ...oi,
+          unitType:
+            UNIT_TYPE_MAPPER[
+              prismaProductsMap[oi.productId].unitType || "UNIT"
+            ],
           productName: prismaProductsMap[oi.productId].name,
           productPrice: prismaProductsMap[oi.productId].price.toNumber(),
           total: oi.total.toNumber(),

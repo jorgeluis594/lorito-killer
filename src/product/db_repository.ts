@@ -24,7 +24,7 @@ interface searchParams {
   categoryId?: string | null;
 }
 
-const UNIT_TYPE_MAPPER: Record<
+export const UNIT_TYPE_MAPPER: Record<
   $Enums.UnitType,
   typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE
 > = {
@@ -32,7 +32,7 @@ const UNIT_TYPE_MAPPER: Record<
   UNIT: UNIT_UNIT_TYPE,
 } as const;
 
-const PRISMA_UNIT_TYPE_MAPPER: Record<
+export const PRISMA_UNIT_TYPE_MAPPER: Record<
   typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE,
   $Enums.UnitType
 > = {
