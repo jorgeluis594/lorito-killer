@@ -21,7 +21,6 @@ import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChangeEvent } from "react";
-import { Product } from "@/product/types";
 import { div, mul } from "@/lib/utils";
 import { Label } from "@/shared/components/ui/label";
 
@@ -29,7 +28,7 @@ interface KgStockSetterFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultValue: number;
-  product: Product;
+  productPrice: number;
   onSubmit: (kg: number) => void;
 }
 
@@ -46,26 +45,26 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
   open,
   onOpenChange,
   defaultValue,
-  product,
+  productPrice,
   onSubmit,
 }) => {
   const form = useForm<KgCalculatorFormValues>({
     resolver: zodResolver(kgCalculatorSchema),
     defaultValues: {
       kg: defaultValue,
-      amount: mul(defaultValue)(product.price),
+      amount: mul(defaultValue)(productPrice),
     },
   });
 
   const kgInputHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const kg = Number(e.target.value);
-    const amount = mul(kg)(product.price);
+    const amount = mul(kg)(productPrice);
     form.setValue("amount", amount);
   };
 
   const amountInputHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const amount = Number(e.target.value);
-    const kg = div(amount)(product.price);
+    const kg = div(amount)(productPrice);
     form.setValue("kg", parseFloat(kg.toFixed(3)));
   };
 

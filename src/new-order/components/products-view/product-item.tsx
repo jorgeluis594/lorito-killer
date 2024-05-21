@@ -50,7 +50,7 @@ export default function ProductItem({ product }: { product: Product }) {
           open={openKgCalculator}
           onOpenChange={setOpenKgCalculator}
           defaultValue={1}
-          product={product}
+          productPrice={product.price}
           onSubmit={onKgCalculatorSubmit}
         />
       )}
