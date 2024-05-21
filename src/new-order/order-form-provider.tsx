@@ -132,9 +132,12 @@ export const useOrderFormActions = (): Actions => {
     });
   };
 
-  const addOrderItem = (orderItem: OrderItem): void => {
+  const updateOrderItem = (orderItem: OrderItem): void => {
     const { order } = orderFormStoreContext.getState();
-    order.orderItems.push(orderItem);
+    const index = order.orderItems.findIndex(
+      (item) => item.id === orderItem.id,
+    );
+    order.orderItems[index] = orderItem;
     orderFormStoreContext.setState({
       order: { ...order, orderItems: [...order.orderItems] },
     });
@@ -142,12 +145,21 @@ export const useOrderFormActions = (): Actions => {
     updateTotal();
   };
 
-  const updateOrderItem = (orderItem: OrderItem): void => {
+  const addOrderItem = (orderItem: OrderItem): void => {
     const { order } = orderFormStoreContext.getState();
     const index = order.orderItems.findIndex(
-      (item) => item.id === orderItem.id,
+      (item) => item.productId === orderItem.productId,
     );
-    order.orderItems[index] = orderItem;
+
+    if (index !== -1) {
+      order.orderItems[index] = orderItem;
+      orderFormStoreContext.setState({
+        order: { ...order, orderItems: [...order.orderItems] },
+      });
+      return;
+    }
+
+    order.orderItems.push(orderItem);
     orderFormStoreContext.setState({
       order: { ...order, orderItems: [...order.orderItems] },
     });
