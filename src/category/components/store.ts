@@ -11,6 +11,7 @@ export type CategoryState = {
 
 export type CategoryActions = {
   setCategories: (categories: Category[]) => void;
+  updateCategory: (category: Category) => void;
   setIsLoading: (isLoading: boolean) => void;
   setOpen: (open: boolean) => void;
   setPerformingAction: (performingAction: boolean) => void;
@@ -46,6 +47,7 @@ export const createCategoryStore = (
   return createStore<CategoryStore>()((set) => ({
     ...initState,
     categories: sortCategories(initState.categories),
+    updateCategory: (category: Category) => set(state => ({ categories: state.categories.map(c => c.id === category.id ? category : c) })),
     setCategories: (categories: Category[]) =>
       set({ categories: [...sortCategories(categories)] }),
     setIsLoading: (isLoading: boolean) => set({ isLoading }),

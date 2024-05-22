@@ -5,7 +5,7 @@ import { Category } from "@/category/types"
 import { getMany } from "@/category/api_repository"
 import CategoriesClient from "@/category/components/data-table/client"
 
-const Categories = () => {
+export const Categories = () => {
   const [categories, setCategories] = useState<null | Category[]>(null)
   const [error, setError] = useState<null | string>();
   const [isLoading, setIsLoading] = useState(true);

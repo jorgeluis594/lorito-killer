@@ -29,18 +29,6 @@ export const create = async (
   }
 };
 
-export const categoryToPrisma = (
-  category: Category,
-): Prisma.CategoryCreateInput => {
-  const { id, companyId, name, ...data } = category;
- 
-  return {
-    ...data,
-    id,
-    name,
-  };
-};
-
 export const update = async (
   category: Category,
 ): Promise<response<Category>> => {
@@ -49,7 +37,7 @@ export const update = async (
   try {
     await prisma.category.update({
       where: { id: category.id },
-      data: categoryToPrisma(category),
+      data: category,
     });
     return { success: true, data: category };
   } catch (error: any) {

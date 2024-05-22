@@ -42,24 +42,21 @@ const transformToCategory = (data: CategoryFormValues): Category => {
 };
 
 interface editCategoryModalProps {
-  editCategory: (categories: Category[]) => void
+  onCategoryUpdated: (category: Category) => void
+  category: Category;
 }
 
-export default function editCategoryModal({
-  editCategory,
+export default function EditCategoryModal({
+  onCategoryUpdated,
+  category
 }: editCategoryModalProps) {
   const user = useUserSession();
-  const formStore = useCategoryStore((store) => store);
   const [open, setOpen] = useState(false);
-  const { categories, setCategories } = useCategoryStore((store) => store);
 
-  const { createdAt, updatedAt, ...categoryData } = formStore.categories || {};
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(CategorySchema),
-    defaultValues: formStore.isNew
-    ? { ...EMPTY_CATEGORY}
-    : categoryData || EMPTY_CATEGORY,
+    defaultValues: {...category},
   });
 
   const { toast } = useToast();
@@ -69,23 +66,20 @@ export default function editCategoryModal({
   }, [user]);
 
   const onSubmit = async (data: CategoryFormValues) => {
-    const res = await updateCategory({
-        id: formStore.categories,
-        ...transformToCategory(data),
-    });
-      if (res.success) {
-        toast({
-          description: "Producto actualizado con exito",
-        });
-        onActionPerformed();
-      } else {
-        toast({
-          title: "Error",
-          variant: "destructive",
-          description: "Error al actualizar el producto, " + res.message,
-        });
-        formStore.resetProduct(SingleProductType);
-      }
+    const res = await updateCategory(data);
+    if (res.success) {
+      toast({
+        description: "Categoría actualizada con exito",
+      });
+      setOpen(false)
+      onCategoryUpdated(res.data)
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Error al actualizar el producto, " + res.message,
+      });
+    }
   };
 
   return (

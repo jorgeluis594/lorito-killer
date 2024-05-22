@@ -8,7 +8,7 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { useCategoryStore } from "../category-store-provider";
 import { deleteCategory } from "@/category/actions";
 import { Category } from "@/category/types";
-import EditCategoryModal from "../category-modal/edit-category-modal";
+import EditCategoryModal from "../category-list-model/edit-category-modal";
 
 interface CellActionProps {
   category: Category;
