@@ -11,8 +11,19 @@ export const authConfig: NextAuthOptions = {
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user?.id) token.userId = user.id;
+      const persistedUser = await getUserByEmail(user.email!);
 
-      return token;
+      if (!persistedUser.success) return token;
+      return {
+        ...token,
+        user: {
+          ...user,
+          id: persistedUser.data.id,
+          name: persistedUser.data.name,
+          email: persistedUser.data.email,
+          companyId: persistedUser.data.companyId,
+        },
+      };
     },
     session: async ({ session, token, user }) => {
       if (!session.user) return session;
