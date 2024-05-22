@@ -31,6 +31,7 @@ import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { Edit } from "lucide-react";
 import { EMPTY_CATEGORY } from "@/category/constants";
+import { div } from '../../../lib/utils';
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -56,7 +57,7 @@ export default function EditCategoryModal({
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(CategorySchema),
-    defaultValues: {...category},
+    defaultValues: { ...category },
   });
 
   const { toast } = useToast();
@@ -85,9 +86,9 @@ export default function EditCategoryModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-        <Edit className="mr-2 h-4 w-4" /> Editar
-        </Button>
+        <div>
+          <Edit className="mr-2 h-4 w-4" /> Editar
+        </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
