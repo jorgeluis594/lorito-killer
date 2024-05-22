@@ -52,11 +52,11 @@ export default function ProductsClient({
           title={data ? `Productos (${data.length})` : ""}
           description="Gestiona tus productos!"
         />
-        <div className="flex flex-col">
+        <div className="flex">
           <Button
             type="button"
             variant="outline"
-            className="text-xs md:text-sm mb-2 justify-start"
+            className="text-xs mr-2 md:text-sm mb-2 justify-start"
             disabled={performingAction}
             onClick={onNewProductClick}
           >
@@ -64,7 +64,8 @@ export default function ProductsClient({
               <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <>
-                <Plus className="mr-2 h-4 w-4" /> Agregar producto
+                <Plus className="mr-2 h-4 w-4" />
+                <span>Agregar producto</span>
               </>
             )}
           </Button>
@@ -80,7 +81,8 @@ export default function ProductsClient({
               <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <>
-                <Boxes className="mr-2 h-5 w-5" /> Agregar Pack
+                <Boxes className="mr-2 h-5 w-5" />
+                <span>Agregar Pack</span>
               </>
             )}
           </Button>
