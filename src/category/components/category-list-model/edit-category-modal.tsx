@@ -18,20 +18,15 @@ import {
   Form,
   FormControl,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  FormItem, FormMessage
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
 import { Category } from "@/category/types";
-import { createCategory, updateCategory } from "@/category/actions";
+import { updateCategory } from "@/category/actions";
 import { CategorySchema } from "@/category/schema";
-import { useCategoryStore } from "@/category/components/category-store-provider";
 import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { Edit } from "lucide-react";
-import { EMPTY_CATEGORY } from "@/category/constants";
-import { div } from '../../../lib/utils';
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 

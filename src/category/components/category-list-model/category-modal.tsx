@@ -1,19 +1,11 @@
 "use client"
 
-import ListCategories from "./category";
 import { Dialog, DialogContent, DialogTrigger } from "@/shared/components/ui/dialog";
 import EditCategoryModal from "./edit-category-modal";
 import { Button } from "@/shared/components/ui/button";
-import { useCategoryStore } from "@/category/components/category-store-provider"
-import { useRouter } from "next/navigation";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
-import { Plus, Trash } from "lucide-react";
-import { useState } from "react";
-import { useToast } from "@/shared/components/ui/use-toast";
-import { deleteCategory } from "@/category/actions";
-import { AlertModal } from "@/shared/components/modal/alert-modal";
+import { useCategoryStore } from "@/category/components/category-store-provider";
+import { Plus } from "lucide-react";
 import DeleteCategoryModal from "./delete-category-modal";
-import { div } from '../../../lib/utils';
 
 export default function CategoriesModal() {
   const { categories, updateCategory } = useCategoryStore(store => ({ categories: store.categories, updateCategory: store.updateCategory }))
