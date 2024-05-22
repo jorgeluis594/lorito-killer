@@ -400,7 +400,13 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
               className="btn-success"
               type="button"
               disabled={formStore.performingAction}
-              onClick={form.handleSubmit(onSubmit)}
+              onClick={(e) => {
+                console.log({
+                  errors: form.formState.errors,
+                  values: form.getValues(),
+                });
+                form.handleSubmit(onSubmit)();
+              }}
             >
               {formStore.performingAction ? (
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
