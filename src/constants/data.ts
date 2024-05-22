@@ -25,10 +25,4 @@ export const navItems: NavItem[] = [
     icon: "blocks",
     label: "productos",
   },
-  {
-    title: "Categorías",
-    href: "/dashboard/categories",
-    icon: "receipt",
-    label: "categorias",
-  },
 ];
