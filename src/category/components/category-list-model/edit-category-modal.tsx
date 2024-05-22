@@ -87,7 +87,7 @@ export default function EditCategoryModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <div>
-          <Edit className="mr-2 h-4 w-4" /> Editar
+          <Edit className="mr-2 h-4 w-4" />
         </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

@@ -77,7 +77,7 @@ export default function DeleteCategoryModal({
         loading={loading}
       />
       <div>
-        <Trash onClick={() => setOpen(true)} className="mr-2 h-4 w-4" /> Eliminar
+        <Trash onClick={() => setOpen(true)} className="mr-2 h-4 w-4" />
       </div>
     </>
   );
