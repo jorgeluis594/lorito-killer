@@ -72,6 +72,24 @@ model Category {
   updatedAt DateTime @updatedAt
 }
 
+enum StockTransferType {
+  ORDER
+  PRODUCT
+}
+
+model StockTransfer {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  fromProductId String?
+  toProductId String?
+  orderItemId    String?
+  type      StockTransferType
+  value     Decimal
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum ShiftStatus {
   OPEN
   CLOSED
@@ -132,6 +150,7 @@ model Company {
   cashShifts CashShift[]
   orders Order[]
   categories Category[]
+  stockTransfers StockTransfer[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
