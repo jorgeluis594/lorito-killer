@@ -6,9 +6,13 @@ import { Button } from "@/shared/components/ui/button";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { Plus } from "lucide-react";
 import DeleteCategoryModal from "./delete-category-modal";
+import CategoryContent from "./category-content";
 
 export default function CategoriesModal() {
-  const { categories, updateCategory } = useCategoryStore(store => ({ categories: store.categories, updateCategory: store.updateCategory }))
+  const { categories, updateCategory} = useCategoryStore(store => ({
+    categories: store.categories,
+    updateCategory: store.updateCategory,
+  }))
 
   return (
     <Dialog>
@@ -20,22 +24,11 @@ export default function CategoriesModal() {
           <thead>
             <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
               <th className="py-3 px-6 text-left">Categoria</th>
-              <th className="py-3 px-6 text-center">Accion</th>
             </tr>
           </thead>
           <tbody className="text-sm">
             {categories.map(category => (
-              <tr key={category.id} className="border-b  text-black border-gray-200 hover:bg-gray-100">
-                <td className="py-3 px-6 text-left whitespace-nowrap">
-                  {category.name}
-                </td>
-                <td className="py-3 px-6 text-center">
-                  <div className="flex justify-center space-x-4">
-                    <EditCategoryModal category={category} onCategoryUpdated={(category) => updateCategory(category)} />
-                    <DeleteCategoryModal category={category} />
-                  </div>
-                </td>
-              </tr>
+              <CategoryContent category={category} onCategoryUpdated={(category) => updateCategory(category)} />
             ))}
           </tbody>
         </table>
