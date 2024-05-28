@@ -15,6 +15,7 @@ export type CategoryActions = {
   setIsLoading: (isLoading: boolean) => void;
   setOpen: (open: boolean) => void;
   setPerformingAction: (performingAction: boolean) => void;
+  deleteCategory: (categoryId: string) => void;
 };
 
 export type CategoryStore = CategoryState & CategoryActions;
@@ -47,6 +48,7 @@ export const createCategoryStore = (
   return createStore<CategoryStore>()((set) => ({
     ...initState,
     categories: sortCategories(initState.categories),
+    deleteCategory: (categoryId) => set(state => ({categories: state.categories.filter(c => c.id !== categoryId)})),
     updateCategory: (category: Category) => set(state => ({ categories: state.categories.map(c => c.id === category.id ? category : c) })),
     setCategories: (categories: Category[]) =>
       set({ categories: [...sortCategories(categories)] }),

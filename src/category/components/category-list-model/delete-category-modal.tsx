@@ -6,20 +6,20 @@ import { deleteCategory } from "@/category/actions";
 import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { AlertModal } from "@/shared/components/modal/alert-modal";
+import { useCategoryStore } from "../category-store-provider";
 
 interface deleteCategoryModalProps {
   category: Category;
 }
 
 export default function DeleteCategoryModal({
-  category
+  category,
 }: deleteCategoryModalProps) {
   const user = useUserSession();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const deleteCategoryFromStore = useCategoryStore(store => store.deleteCategory)
   const { toast } = useToast();
 
   const onConfirm = async () => {
@@ -39,7 +39,7 @@ export default function DeleteCategoryModal({
     toast({
       title: "Categoría eliminada",
     });
-    router.refresh();
+    deleteCategoryFromStore(category.id!)
   };
 
   return (
