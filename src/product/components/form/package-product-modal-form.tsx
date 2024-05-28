@@ -15,7 +15,10 @@ import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { PackageProduct, PackageProductType, Photo } from "@/product/types";
-import { EMPTY_PACKAGE_PRODUCT } from "@/product/constants";
+import {
+  EMPTY_PACKAGE_PRODUCT,
+  EMPTY_SINGLE_PRODUCT,
+} from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
@@ -42,6 +45,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
 import ProductItemsSelector from "@/product/components/form/product-items-selector";
 import { useProductsStore } from "@/product/components/products-store-provider";
+import { getCompany } from "@/order/actions";
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
 
@@ -97,7 +101,12 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
   // Setting the companyId to the product
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({ ...EMPTY_PACKAGE_PRODUCT, companyId: user!.companyId });
+      form.reset({ ...EMPTY_SINGLE_PRODUCT });
+      getCompany().then((response) => {
+        if (response.success) {
+          form.setValue("companyId", response.data.id);
+        }
+      });
     } else {
       form.reset(productData);
     }

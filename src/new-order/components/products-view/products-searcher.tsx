@@ -137,8 +137,8 @@ export default function ProductsSearcher() {
   }, []);
 
   return (
-    <div className="h-full w-100 p-5 pb-0 grid grid-rows-[70px_1fr]">
-      <div className="w-full mb-4">
+    <div className="h-full w-100 p-5 pb-0 grid grid-rows-[7rem_1fr]">
+      <div className="w-full border-b">
         <div className="w-1/2 md:grid md:grid-cols-2 gap-4 mb-2">
           <Select onValueChange={handleCategoryChange}>
             <SelectTrigger>
