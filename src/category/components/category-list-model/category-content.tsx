@@ -1,6 +1,6 @@
 import { Category } from "@/category/types";
 import DeleteCategoryModal from "./delete-category-modal";
-import { Edit } from "lucide-react";
+import { Edit, Save } from "lucide-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CategorySchema } from "@/category/schema";
@@ -11,8 +11,15 @@ import { useUserSession } from "@/lib/use-user-session";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import * as z from "zod";
 import { div } from '@/lib/utils';
+import { Icon } from "@radix-ui/react-select";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -67,8 +74,9 @@ export default function CategoryContent({
       <tr key={category.id} className="border-b  text-black border-gray-200 hover:bg-gray-100">
         <td className="py-3 px-6 text-left whitespace-nowrap">
           {isEditing ? (
-            <div className="flex items-center space-x-4">
-              <Form {...form}>
+            <div className="flex justify-between items-center">
+              <div className="flex text-left">
+                <Form {...form}>
                   <FormField
                     control={form.control}
                     name="name"
@@ -87,21 +95,30 @@ export default function CategoryContent({
                       </FormItem>
                     )}
                   />
-              </Form>
-              <div>
-                <Button
-                  type="button"
-                  size="xs"
-                  onClick={form.handleSubmit(onSubmit)}
-                >
-                  Guardar cambios
-                </Button>
+                </Form>
+              </div>
+              <div className="flex justify-center space-x-4 mr-6">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Save
+                        type="button"
+                        size={16}
+                        onClick={form.handleSubmit(onSubmit)}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Guardar cambio</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
               </div>
             </div>
           ) : (
             <>
               <div className="flex justify-between items-center">
-                <div className="flex-1 text-left">{category.name}</div>
+                <div className="flex text-left">{category.name}</div>
                 <div className="flex justify-center space-x-4">
                   <div onClick={handleEditClick} className="cursor-pointer">
                     <Edit className="h-4 w-4 text-gray-600" />
