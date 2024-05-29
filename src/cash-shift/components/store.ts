@@ -40,7 +40,7 @@ export const createCashShiftStore = (
           return {
             cashShift: {
               ...state.cashShift,
-              orders: [...state.cashShift.orders, order].sort(
+              orders: [...state.cashShift.orders].sort(
                 (a, b) => b.createdAt!.getTime() - a.createdAt!.getTime(),
               ),
             },
