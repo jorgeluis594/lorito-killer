@@ -12,8 +12,8 @@ export default function SignOut() {
     const response = await getLastOpenCashShift();
     if (response.success) {
       toast({
-        title: "Tiene una caja abierta",
-        description: "Necesita cerrar la caja antes de cerrar sesion",
+        title: "Caja chica abierta",
+        description: "Debe cerrar caja anter de finalizar sesión",
         variant: "destructive",
       });
     } else {
