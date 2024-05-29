@@ -1,25 +1,22 @@
 import { Category } from "@/category/types";
 import DeleteCategoryModal from "./delete-category-modal";
-import { Edit, Save } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Ban, Edit, Save } from "lucide-react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CategorySchema } from "@/category/schema";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { updateCategory } from "@/category/actions";
 import { useUserSession } from "@/lib/use-user-session";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
-import { Button } from "@/shared/components/ui/button";
+import { Form, FormControl, FormField, FormItem } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 import * as z from "zod";
-import { div } from '@/lib/utils';
-import { Icon } from "@radix-ui/react-select";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -71,7 +68,7 @@ export default function CategoryContent({
   };
   return (
     <>
-      <tr key={category.id} className="border-b  text-black border-gray-200 hover:bg-gray-100">
+      <tr key={category.id} className=" text-black hover:bg-gray-100">
         <td className="py-3 px-6 text-left whitespace-nowrap">
           {isEditing ? (
             <div className="flex justify-between items-center">
@@ -97,22 +94,37 @@ export default function CategoryContent({
                   />
                 </Form>
               </div>
-              <div className="flex justify-center space-x-4 mr-6">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Save
-                        type="button"
-                        size={16}
-                        onClick={form.handleSubmit(onSubmit)}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Guardar cambio</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
+              <div className="flex justify-center space-x-4 pr-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Save
+                          type="button"
+                          className="text-gray-600"
+                          size={16}
+                          onClick={form.handleSubmit(onSubmit)}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Guardar cambio</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Ban
+                          type="button"
+                          color="red"
+                          size={16}
+                          onClick={() => setIsEditing(false)}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Cancelar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
               </div>
             </div>
           ) : (
@@ -121,7 +133,16 @@ export default function CategoryContent({
                 <div className="flex text-left">{category.name}</div>
                 <div className="flex justify-center space-x-4">
                   <div onClick={handleEditClick} className="cursor-pointer">
-                    <Edit className="h-4 w-4 text-gray-600" />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                      <Edit className="h-4 w-4 text-gray-600" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Editar</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   </div>
                   <DeleteCategoryModal category={category} />
                 </div>

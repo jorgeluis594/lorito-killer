@@ -54,11 +54,10 @@ export default function ProductsClient({
           description="Gestiona tus productos!"
         />
         <div className="flex flex-col">
-          <CategoriesModal/>
           <Button
             type="button"
             variant="outline"
-            className="text-xs mr-2 md:text-sm mb-2 justify-start"
+            className="text-xs md:text-sm mb-2 justify-start"
             disabled={performingAction}
             onClick={onNewProductClick}
           >
@@ -75,7 +74,7 @@ export default function ProductsClient({
           <Button
             type="button"
             variant="outline"
-            className="text-xs md:text-sm justify-start"
+            className="text-xs mb-2 md:text-sm justify-start"
             disabled={performingAction}
             onClick={onNewPackageClick}
           >
@@ -88,6 +87,7 @@ export default function ProductsClient({
               </>
             )}
           </Button>
+          <CategoriesModal/>
         </div>
       </div>
       <Separator />
