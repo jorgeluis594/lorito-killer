@@ -9,19 +9,19 @@ export type StockUpdate = {
   quantity: number;
 };
 
-export type StockTransferBase = {
+export type StockTransfer = {
   id: string;
   value: number;
   productId: string;
   type: OrderStockTransferType | ProductStockTransferType;
 };
 
-export type OrderStockTransfer = StockTransferBase & {
+export type OrderStockTransfer = StockTransfer & {
   orderItemId: string;
   type: OrderStockTransferType;
 };
 
-export type ProductStockTransfer = StockTransferBase & {
+export type ProductStockTransfer = StockTransfer & {
   fromProductId: string;
   toProductId: string;
   type: ProductStockTransferType;
