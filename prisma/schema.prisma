@@ -35,6 +35,7 @@ model Product {
   photos    Photo[]
   childPackageItems PackageItem[] @relation("ChildProducts")
   parentPackageItems PackageItem[] @relation("ParentProducts")
+  stockTransfers StockTransfer[]
   categories Category[]
   orderItems OrderItem[]
 }
@@ -79,12 +80,10 @@ enum StockTransferType {
 
 model StockTransfer {
   id        String   @id @default(uuid())
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  fromProductId String?
-  toProductId String?
-  orderItemId    String?
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   type      StockTransferType
+  data      Json
   value     Decimal
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,7 +149,6 @@ model Company {
   cashShifts CashShift[]
   orders Order[]
   categories Category[]
-  stockTransfers StockTransfer[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
