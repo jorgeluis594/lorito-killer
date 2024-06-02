@@ -10,6 +10,9 @@ import {
 interface Repository {
   findProduct: (productId: string) => Promise<response<Product>>;
   updateStock: (stockTransfer: StockTransfer) => Promise<response<undefined>>;
+  createStockTransfer: (
+    stockTransfer: StockTransfer,
+  ) => Promise<response<StockTransfer>>;
 }
 
 export const updateStock = async (
@@ -39,7 +42,10 @@ export const updateStock = async (
 
   await Promise.all(
     stockTransfers.map((stockTransfer) =>
-      repository.updateStock(stockTransfer),
+      Promise.all([
+        repository.createStockTransfer(stockTransfer),
+        repository.updateStock(stockTransfer),
+      ]),
     ),
   );
 

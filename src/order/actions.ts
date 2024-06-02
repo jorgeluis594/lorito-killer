@@ -7,7 +7,10 @@ import { revalidatePath } from "next/cache";
 import { getLastOpenCashShift } from "@/cash-shift/db_repository";
 import { getCompany as findCompany } from "@/company/db_repository";
 import { find as findProduct } from "@/product/db_repository";
-import { updateStock as UpdateStockFromStocktransfer } from "@/stock-transfer/db_repository";
+import {
+  updateStock as UpdateStockFromStockTransfer,
+  create as createStockTransfer,
+} from "@/stock-transfer/db_repository";
 import { updateStock } from "@/order/use-cases/update-stock";
 import { getSession } from "@/lib/auth";
 import { Company } from "@/company/types";
