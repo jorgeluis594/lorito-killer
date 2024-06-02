@@ -7,6 +7,7 @@ import {
   SingleProduct,
 } from "@/product/types";
 import { response, successResponse } from "@/lib/types";
+import { mul } from "@/lib/utils";
 
 type FindProduct = (productId: string) => Promise<response<Product>>;
 
@@ -69,8 +70,8 @@ const generatePackageProductStockTransfers = (
   return product.productItems.map((productItem) => ({
     id: crypto.randomUUID(),
     orderItemId: orderItem.id!,
-    value: -1 * (orderItem.quantity * productItem.quantity),
-    productId: productItem.id!,
+    value: -1 * mul(orderItem.quantity)(productItem.quantity),
+    productId: productItem.productId,
     type: OrderStockTransfer,
   }));
 };

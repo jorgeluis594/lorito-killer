@@ -41,15 +41,21 @@ export const create = async (data: Order): Promise<response<Order>> => {
     cashShiftId: openCashShift.id,
     companyId: session.user.companyId,
   });
-  if (createOrderResponse.success) {
-    revalidatePath("/api/orders");
-    await updateStock(createOrderResponse.data, {
-      findProduct,
-      updateStock: UpdateStockFromStocktransfer,
-    });
+  if (!createOrderResponse.success) {
+    return createOrderResponse;
   }
 
-  return createOrderResponse;
+  revalidatePath("/api/orders");
+  const updateStockResponse = await updateStock(createOrderResponse.data, {
+    findProduct,
+    updateStock: UpdateStockFromStocktransfer,
+  });
+
+  if (!updateStockResponse.success) {
+    return updateStockResponse;
+  }
+
+  return { success: true, data: createOrderResponse.data };
 };
 
 export const getCompany = async (): Promise<response<Company>> => {
