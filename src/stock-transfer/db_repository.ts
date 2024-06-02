@@ -21,19 +21,6 @@ const prismaToStockTransferTypeMapper: Record<
   [$Enums.StockTransferType.PRODUCT]: ProductStockTransfer,
 };
 
-const buildPrismaData = (stockTransfer: StockTransfer) => {
-  if (stockTransfer.type === OrderStockTransfer) {
-    return {
-      orderItemId: stockTransfer.orderItemId,
-    };
-  } else {
-    return {
-      fromProductId: stockTransfer.fromProductId,
-      toProductId: stockTransfer.toProductId,
-    };
-  }
-};
-
 export const create = async (
   stockTransfer: StockTransfer,
 ): Promise<response<StockTransfer>> => {
@@ -77,5 +64,18 @@ export const updateStock = async (
     return { success: true, data: undefined };
   } catch (error: any) {
     return { success: false, message: "Not implemented" };
+  }
+};
+
+const buildPrismaData = (stockTransfer: StockTransfer) => {
+  if (stockTransfer.type === OrderStockTransfer) {
+    return {
+      orderItemId: stockTransfer.orderItemId,
+    };
+  } else {
+    return {
+      fromProductId: stockTransfer.fromProductId,
+      toProductId: stockTransfer.toProductId,
+    };
   }
 };
