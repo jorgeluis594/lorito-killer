@@ -8,31 +8,58 @@ import {
 } from "@/product/types";
 import { response, successResponse } from "@/lib/types";
 
-interface Repository {
-  findProduct: (productId: string) => Promise<response<Product>>;
-  updateProduct: (product: Product) => Promise<response<Product>>;
-}
+type FindProduct = (productId: string) => Promise<response<Product>>;
 
-export const orderStockTransferGenerator = async (
-  orderItem: OrderItem,
-  repository: Repository,
+export const generateOrderStocksTransfers = async (
+  order: Order,
+  findProduct: FindProduct,
 ): Promise<response<OrderStockTransfer[]>> => {
-  const productFoundResponse = await repository.findProduct(
-    orderItem.productId,
+  const stockTransfersResponse = await Promise.all(
+    order.orderItems.map((oi) =>
+      generateOrderItemStockTransfer(oi, findProduct),
+    ),
   );
+
+  if (stockTransfersResponse.some((r) => !r.success)) {
+    return { success: false, message: "Cannot create orderStockTransfer" };
+  }
+
+  const stockTransfers = stockTransfersResponse
+    .map(
+      (orderItemStockTransferResponse) =>
+        (
+          orderItemStockTransferResponse as successResponse<
+            OrderStockTransfer[]
+          >
+        ).data,
+    )
+    .flat();
+
+  return {
+    success: true,
+    data: stockTransfers,
+  };
+};
+
+const generateOrderItemStockTransfer = async (
+  orderItem: OrderItem,
+  findProduct: FindProduct,
+): Promise<response<OrderStockTransfer[]>> => {
+  const productFoundResponse = await findProduct(orderItem.productId);
   if (!productFoundResponse.success) {
     return productFoundResponse;
   }
 
   const product = productFoundResponse.data;
-  let stockTransfers: OrderStockTransfer[] = [];
+  let stockTransfers: OrderStockTransfer[];
+
   if (product.type == PackageProductType) {
     stockTransfers = generatePackageProductStockTransfers(orderItem, product);
   } else {
     stockTransfers = generateSingleProductStockTransfers(orderItem, product);
   }
 
-  return { success: false, message: "Not implemented" };
+  return { success: true, data: stockTransfers };
 };
 
 const generatePackageProductStockTransfers = (
@@ -43,7 +70,7 @@ const generatePackageProductStockTransfers = (
     id: crypto.randomUUID(),
     orderItemId: orderItem.id!,
     value: -1 * (orderItem.quantity * productItem.quantity),
-    fromProductId: productItem.id!,
+    productId: productItem.id!,
     type: OrderStockTransfer,
   }));
 };
@@ -57,18 +84,18 @@ const generateSingleProductStockTransfers = (
       id: crypto.randomUUID(),
       orderItemId: orderItem.id!,
       value: -1 * orderItem.quantity,
-      fromProductId: product.id!,
+      productId: product.id!,
       type: OrderStockTransfer,
     },
   ];
 };
 
-const performStockTransfers = async (
+export const validateStockTransfers = async (
   stockTransfers: OrderStockTransfer[],
-  repository: Repository,
+  findProduct: FindProduct,
 ): Promise<response<undefined>> => {
   const productFoundResponses = await Promise.all(
-    stockTransfers.map((st) => repository.findProduct(st.fromProductId)),
+    stockTransfers.map((st) => findProduct(st.productId)),
   );
 
   if (productFoundResponses.some((r) => !r.success)) {
@@ -98,7 +125,7 @@ const stockCheckerCreator = (products: SingleProduct[]) => {
   );
 
   return (stockTransfer: OrderStockTransfer): boolean => {
-    const product = productsMapper[stockTransfer.fromProductId];
+    const product = productsMapper[stockTransfer.productId];
     return product.stock >= stockTransfer.value;
   };
 };
