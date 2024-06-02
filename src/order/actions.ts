@@ -6,14 +6,11 @@ import { create as createOrder } from "./db_repository";
 import { revalidatePath } from "next/cache";
 import { getLastOpenCashShift } from "@/cash-shift/db_repository";
 import { getCompany as findCompany } from "@/company/db_repository";
-import {
-  find as findProduct,
-  update as updateProduct,
-} from "@/product/db_repository";
+import { find as findProduct } from "@/product/db_repository";
+import { updateStock as UpdateStockFromStocktransfer } from "@/stock-transfer/db_repository";
+import { updateStock } from "@/order/use-cases/update-stock";
 import { getSession } from "@/lib/auth";
-import { PackageProductType, Product, SingleProduct } from "@/product/types";
 import { Company } from "@/company/types";
-import { mul, sub } from "@/lib/utils";
 
 export const create = async (data: Order): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
@@ -46,62 +43,14 @@ export const create = async (data: Order): Promise<response<Order>> => {
   });
   if (createOrderResponse.success) {
     revalidatePath("/api/orders");
-    await updateProductsStocks(createOrderResponse.data);
+    await updateStock(createOrderResponse.data, {
+      findProduct,
+      updateStock: UpdateStockFromStocktransfer,
+    });
   }
 
   return createOrderResponse;
 };
-
-async function updateProductsStocks(order: Order) {
-  const productsIds = order.orderItems.map((oi) => oi.productId);
-  const productsResponse = await Promise.all(
-    productsIds.map((id) => findProduct(id)),
-  );
-  const orderItemsByProductMapper = order.orderItems.reduce(
-    (acc: Record<string, OrderItem>, oi) => {
-      acc[oi.productId] = oi;
-      return acc;
-    },
-    {},
-  );
-
-  const products = productsResponse
-    .filter((r) => r.success)
-    .map((r) => (r.success && r.data) as Product);
-
-  await Promise.all(
-    products.map(async (product) => {
-      // TODO: Handle the logic of stock discount on package products
-      if (product.type === PackageProductType) {
-        await Promise.all(
-          product.productItems.map(async (pi) => {
-            const childProductResponse = await findProduct(pi.productId);
-            if (!childProductResponse.success) return;
-
-            const childProduct = childProductResponse.data as SingleProduct;
-            await updateProduct({
-              ...childProduct,
-              stock: sub(childProduct.stock)(
-                mul(orderItemsByProductMapper[product.id!].quantity)(
-                  pi.quantity,
-                ),
-              ),
-            });
-          }),
-        );
-
-        return;
-      }
-
-      await updateProduct({
-        ...product,
-        stock: sub(product.stock)(
-          orderItemsByProductMapper[product.id!].quantity,
-        ),
-      });
-    }),
-  );
-}
 
 export const getCompany = async (): Promise<response<Company>> => {
   const session = await getSession();
