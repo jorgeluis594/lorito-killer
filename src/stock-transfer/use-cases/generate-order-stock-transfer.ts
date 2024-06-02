@@ -1,4 +1,7 @@
-import { OrderStockTransfer, StockUpdate } from "@/stock-transfer/types";
+import {
+  OrderStockTransfer,
+  OrderStockTransferName,
+} from "@/stock-transfer/types";
 import { Order, OrderItem } from "@/order/types";
 import {
   PackageProduct,
@@ -72,7 +75,7 @@ const generatePackageProductStockTransfers = (
     orderItemId: orderItem.id!,
     value: mul(-1)(mul(orderItem.quantity)(productItem.quantity)),
     productId: productItem.productId,
-    type: OrderStockTransfer,
+    type: OrderStockTransferName,
   }));
 };
 
@@ -86,7 +89,7 @@ const generateSingleProductStockTransfers = (
       orderItemId: orderItem.id!,
       value: mul(-1)(orderItem.quantity),
       productId: product.id!,
-      type: OrderStockTransfer,
+      type: OrderStockTransferName,
     },
   ];
 };
