@@ -7,7 +7,7 @@ import {
   SingleProduct,
 } from "@/product/types";
 import { response, successResponse } from "@/lib/types";
-import { mul } from "@/lib/utils";
+import { mul, plus } from "@/lib/utils";
 
 type FindProduct = (productId: string) => Promise<response<Product>>;
 
@@ -70,7 +70,7 @@ const generatePackageProductStockTransfers = (
   return product.productItems.map((productItem) => ({
     id: crypto.randomUUID(),
     orderItemId: orderItem.id!,
-    value: -1 * mul(orderItem.quantity)(productItem.quantity),
+    value: mul(-1)(mul(orderItem.quantity)(productItem.quantity)),
     productId: productItem.productId,
     type: OrderStockTransfer,
   }));
@@ -84,7 +84,7 @@ const generateSingleProductStockTransfers = (
     {
       id: crypto.randomUUID(),
       orderItemId: orderItem.id!,
-      value: -1 * orderItem.quantity,
+      value: mul(-1)(orderItem.quantity),
       productId: product.id!,
       type: OrderStockTransfer,
     },
@@ -127,6 +127,7 @@ const stockCheckerCreator = (products: SingleProduct[]) => {
 
   return (stockTransfer: OrderStockTransfer): boolean => {
     const product = productsMapper[stockTransfer.productId];
-    return product.stock >= stockTransfer.value;
+
+    return plus(product.stock)(stockTransfer.value) >= 0;
   };
 };
