@@ -4,6 +4,10 @@ export type OrderStockTransferType = typeof OrderStockTransfer;
 export const ProductStockTransfer = "ProductStockTransfer";
 export type ProductStockTransferType = typeof ProductStockTransfer;
 
+export type StockTransferType =
+  | OrderStockTransferType
+  | ProductStockTransferType;
+
 export type StockUpdate = {
   productId: string;
   quantity: number;
