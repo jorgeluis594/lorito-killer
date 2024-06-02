@@ -93,7 +93,7 @@ const generateSingleProductStockTransfers = (
 export const validateStockTransfers = async (
   stockTransfers: OrderStockTransfer[],
   findProduct: FindProduct,
-): Promise<response<undefined>> => {
+): Promise<response<boolean>> => {
   const productFoundResponses = await Promise.all(
     stockTransfers.map((st) => findProduct(st.productId)),
   );
@@ -109,10 +109,10 @@ export const validateStockTransfers = async (
   );
 
   if (stockTransfers.some((st) => !stockChecker(st))) {
-    return { success: false, message: "Insufficient stock" };
+    return { success: true, data: false };
   }
 
-  return { success: false, message: "not implemented" };
+  return { success: true, data: true };
 };
 
 const stockCheckerCreator = (products: SingleProduct[]) => {
