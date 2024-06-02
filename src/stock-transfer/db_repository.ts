@@ -34,7 +34,7 @@ const buildPrismaData = (stockTransfer: StockTransfer) => {
   }
 };
 
-const create = async (
+export const create = async (
   stockTransfer: StockTransfer,
 ): Promise<response<StockTransfer>> => {
   try {
@@ -58,5 +58,24 @@ const create = async (
     };
   } catch (error: any) {
     return { success: false, message: error.message };
+  }
+};
+
+export const updateStock = async (
+  stockTransfer: StockTransfer,
+): Promise<response<undefined>> => {
+  try {
+    await prisma.product.update({
+      where: { id: stockTransfer.productId },
+      data: {
+        stock: {
+          increment: stockTransfer.value,
+        },
+      },
+    });
+
+    return { success: true, data: undefined };
+  } catch (error: any) {
+    return { success: false, message: "Not implemented" };
   }
 };
