@@ -36,6 +36,7 @@ export default function ProductsSearcher() {
 
   const searchProduct = async () => {
     const params: GetManyParams = { categoryId, sortBy: sortValue };
+    console.log(categoryId)
     if (search.length || search !== "") {
       params["q"] = search;
     }
@@ -70,7 +71,11 @@ export default function ProductsSearcher() {
   }, []);
 
   const handleCategoryChange = (categoryId: string) => {
-    setCategoryId(categoryId);
+    if (categoryId === "all") {
+      setCategoryId("");
+    } else {
+      setCategoryId(categoryId);
+    }
   };
 
   const handleSortChange = (sortKey: keyof SortOptions) => {
@@ -145,6 +150,9 @@ export default function ProductsSearcher() {
               <SelectValue placeholder="Seleccione categoría" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem key="all" value="all">
+                Todos los productos
+              </SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id!}>
                   {category.name}
