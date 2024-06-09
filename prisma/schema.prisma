@@ -149,6 +149,7 @@ model Company {
   cashShifts CashShift[]
   orders Order[]
   categories Category[]
+  subdomain String? @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
