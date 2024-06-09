@@ -51,7 +51,8 @@ export const create = async (data: Order): Promise<response<Order>> => {
   revalidatePath("/api/orders");
   const updateStockResponse = await updateStock(createOrderResponse.data, {
     findProduct,
-    updateStock: UpdateStockFromStocktransfer,
+    createStockTransfer,
+    updateStock: UpdateStockFromStockTransfer,
   });
 
   if (!updateStockResponse.success) {

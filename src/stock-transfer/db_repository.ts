@@ -66,6 +66,18 @@ export const create = async (
   }
 };
 
+/**
+ * Updates the stock of a product in the database.
+ *
+ * This function takes a `StockTransfer` object as an argument, which contains the `productId` and the `value` to increment the stock by.
+ * It uses the Prisma client to update the product's stock in the database.
+ * If the operation is successful, it returns a response object with `success` set to `true` and `data` set to `undefined`.
+ * If an error occurs during the operation, it returns a response object with `success` set to `false` and `message` set to the error message.
+ *
+ * @param {StockTransfer} stockTransfer - The stock transfer object containing the product ID and the value to increment the stock by.
+ * @returns {Promise<response<undefined>>} - A promise that resolves to a response object.
+ * @throws {Error} - Throws an error if the operation fails.
+ */
 export const updateStock = async (
   stockTransfer: StockTransfer,
 ): Promise<response<undefined>> => {
