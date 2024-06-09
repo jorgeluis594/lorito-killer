@@ -25,4 +25,10 @@ export const navItems: NavItem[] = [
     icon: "blocks",
     label: "productos",
   },
+  {
+    title: "Ajuste de stock",
+    href: "/dashboard/stock_adjustments",
+    icon: "stock_adjustments",
+    label: "ajuste de stock",
+  },
 ];
