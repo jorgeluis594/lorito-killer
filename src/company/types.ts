@@ -4,4 +4,5 @@ export type Company = {
   phone: string;
   email: string;
   address: string;
+  subdomain: string;
 };
