@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Modal } from "../ui/modal";
 import { Button } from "../ui/button";
+import { getCompany } from "@/order/actions";
+import { Company } from "@/company/types";
 
-export const AdvertenceModal: React.FC = () => {
+const ModalMessage = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -22,13 +24,13 @@ export const AdvertenceModal: React.FC = () => {
   };
 
   const handleConfirm = () => {
-      setShowModal(false);
+    setShowModal(false);
   };
 
   return (
     <Modal
       title="Advertencia de suscripcion en la nube"
-      description="Suscripción de servidor en la nube está por caducar, por favor realizar el pago, fecha límite 09/06/2024."
+      description="Suscripción de servidor en la nube está por caducar, por favor realizar el pago, fecha límite 14/06/2024."
       isOpen={showModal}
       onClose={handleClose}
     >
@@ -39,4 +41,24 @@ export const AdvertenceModal: React.FC = () => {
       </div>
     </Modal>
   );
+};
+
+export const AdvertenceModal: React.FC = () => {
+  const [company, setCompany] = useState<Company | null>(null);
+
+  useEffect(() => {
+    if (!company) {
+      getCompany().then((response) => {
+        if (response.success) {
+          setCompany(response.data);
+        }
+      });
+    }
+  }, [company]);
+
+  if (company && company.id === "b7fe382c-61a4-42b5-bdb4-4af5f209b4c2") {
+    return <ModalMessage />;
+  } else {
+    return null;
+  }
 };
