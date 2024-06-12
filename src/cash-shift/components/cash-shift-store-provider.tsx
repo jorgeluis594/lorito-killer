@@ -17,7 +17,7 @@ import {
 } from "@/cash-shift/components/store";
 import { getLastOpenCashShift } from "@/cash-shift/api_repository";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
-import { signOut } from "next-auth/react";
+import useSignOut from "@/lib/use-sign-out";
 
 export const CashShiftStoreContext =
   createContext<StoreApi<CashShiftStore> | null>(null);
@@ -30,6 +30,7 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { isLoading, setCashShift } = useCashShiftStore((store) => store);
   const { setCashShift: setCashShiftToOrder } = useOrderFormActions();
+  const signOut = useSignOut();
 
   useEffect(() => {
     if (isLoading) {
@@ -42,7 +43,7 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
           setCashShiftToOrder(response.data);
         } else {
           if (response.type === "AuthError") {
-            signOut({ callbackUrl: "/login" });
+            signOut();
             return;
           }
           setCashShift(null);
