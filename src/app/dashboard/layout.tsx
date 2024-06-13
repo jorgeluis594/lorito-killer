@@ -12,7 +12,6 @@ export default function DashboardLayout({
 }) {
   return (
     <OrderFormProvider>
-      <AdvertenceModal/>
       <CategoryStoreProvider>
         <ProductsStoreProvider>
           <CashShiftStoreProvider>
