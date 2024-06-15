@@ -73,8 +73,10 @@ const generatePackageProductStockTransfers = (
   return product.productItems.map((productItem) => ({
     id: crypto.randomUUID(),
     orderItemId: orderItem.id!,
+    companyId: product.companyId,
     value: mul(-1)(mul(orderItem.quantity)(productItem.quantity)),
     productId: productItem.productId,
+    createdAt: new Date(),
     type: OrderStockTransferName,
   }));
 };
@@ -87,6 +89,8 @@ const generateSingleProductStockTransfers = (
     {
       id: crypto.randomUUID(),
       orderItemId: orderItem.id!,
+      companyId: product.companyId,
+      createdAt: new Date(),
       value: mul(-1)(orderItem.quantity),
       productId: product.id!,
       type: OrderStockTransferName,
