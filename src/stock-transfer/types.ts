@@ -14,6 +14,7 @@ export type StockTransferBase = {
   value: number;
   productId: string;
   type: OrderStockTransferType | ProductStockTransferType;
+  productName: string;
   createdAt: Date;
 };
 
