@@ -125,3 +125,7 @@ export const getMany = async (
     return { success: false, message: "Error" };
   }
 };
+
+export const total = async (companyId: string): Promise<number> => {
+  return prisma.stockTransfer.count({ where: { companyId } });
+};
