@@ -26,7 +26,7 @@ const prismaToStockTransferTypeMapper: Record<
 const orderStockTransferPrismaDataBuilder = (
   stockTransfer: OrderStockTransfer,
 ): StockTransferCreateArgs => {
-  const { orderItemId, ...stockTransferData } = stockTransfer;
+  const { orderItemId, productName, ...stockTransferData } = stockTransfer;
   return {
     data: {
       ...stockTransferData,
@@ -40,8 +40,6 @@ export const create = async (
   stockTransfer: StockTransfer,
 ): Promise<response<StockTransfer>> => {
   try {
-    const { ...stockTransferData } = stockTransfer;
-
     if (stockTransfer.type !== OrderStockTransferName) {
       throw new Error("Not implemented");
     }
@@ -56,6 +54,7 @@ export const create = async (
         ...storedStockTransfer,
         value: storedStockTransfer.value.toNumber(),
         type: OrderStockTransferName,
+        productName: stockTransfer.productName,
         orderItemId: (storedStockTransfer.data as Record<string, string>)[
           "orderItemId"
         ],
@@ -107,6 +106,7 @@ export const getMany = async (
       where: { companyId },
       skip: (page - 1) * pageLimit,
       take: pageLimit,
+      include: { product: true },
     });
 
     return {
@@ -115,6 +115,7 @@ export const getMany = async (
         ...prismaStockTransfer,
         value: prismaStockTransfer.value.toNumber(),
         type: "OrderStockTransfer",
+        productName: prismaStockTransfer.product.name,
         orderItemId: (prismaStockTransfer.data as Record<string, string>)[
           "orderItemId"
         ],
