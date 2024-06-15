@@ -96,3 +96,31 @@ export const updateStock = async (
     return { success: false, message: "Not implemented" };
   }
 };
+
+export const getMany = async (
+  companyId: string,
+  page: number,
+  pageLimit: number,
+): Promise<response<StockTransfer[]>> => {
+  try {
+    const result = await prisma.stockTransfer.findMany({
+      where: { companyId },
+      skip: (page - 1) * pageLimit,
+      take: pageLimit,
+    });
+
+    return {
+      success: true,
+      data: result.map((prismaStockTransfer) => ({
+        ...prismaStockTransfer,
+        value: prismaStockTransfer.value.toNumber(),
+        type: "OrderStockTransfer",
+        orderItemId: (prismaStockTransfer.data as Record<string, string>)[
+          "orderItemId"
+        ],
+      })),
+    };
+  } catch (error: any) {
+    return { success: false, message: "Error" };
+  }
+};
