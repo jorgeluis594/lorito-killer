@@ -2,13 +2,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export const config = {
+  // The root path "/" is not matched by the matcher, so it's not included here
   matcher: [
-    "/((?!api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).*)",
+    "/((?!api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).+)",
     "/dashboard/:path*",
   ],
 };
-
-const subdomains = [{ subdomain: "fantastidog" }];
 
 export default async function middleware(req: NextRequest) {
   const url = req.nextUrl;
@@ -25,13 +24,5 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const subdomainData = subdomains.find((d) => d.subdomain === subdomain);
-
-  if (subdomainData) {
-    return NextResponse.rewrite(
-      new URL(`/${subdomain}${url.pathname}`, req.url),
-    );
-  }
-
-  return new Response(null, { status: 404 });
+  return NextResponse.rewrite(new URL(`/${subdomain}${url.pathname}`, req.url));
 }
