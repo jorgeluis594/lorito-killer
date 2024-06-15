@@ -10,6 +10,7 @@ export type StockTransferType =
 
 export type StockTransferBase = {
   id: string;
+  companyId: string;
   value: number;
   productId: string;
   type: OrderStockTransferType | ProductStockTransferType;
