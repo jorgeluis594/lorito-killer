@@ -5,6 +5,7 @@ import { DataTable } from "@/stock-transfer/components/table/client";
 import { columns } from "@/stock-transfer/components/table/columns";
 import { getMany, total } from "@/stock-transfer/db_repository";
 import { getSession } from "@/lib/auth";
+import AddStockAdjustmentModal from "@/stock-transfer/components/add-stock-adjustment-modal";
 
 const breadcrumbItems = [
   { title: "Ajustes de stock", link: "/stock_adjustments" },
@@ -40,12 +41,17 @@ export default async function Page({ searchParams }: paramsProps) {
         />
       </div>
       <Separator />
-      <div className="w-3/4 mx-auto">
-        <DataTable
-          data={resultStockTransfers.data}
-          columns={columns}
-          pageCount={totalCount / pageLimit}
-        />
+      <div className="flex flex-row space-x-12 space-y-0 mt-8">
+        <aside className="w-1/5">
+          <AddStockAdjustmentModal />
+        </aside>
+        <div className="flex-1 lg:max-w-4xl mt-6">
+          <DataTable
+            data={resultStockTransfers.data}
+            columns={columns}
+            pageCount={totalCount / pageLimit}
+          />
+        </div>
       </div>
     </div>
   );
