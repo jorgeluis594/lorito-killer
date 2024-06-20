@@ -1,7 +1,7 @@
 "use client";
 
-import { InferProductType, ProductType } from "@/product/types";
-import { useState } from "react";
+import { InferProductType, Product, ProductType } from "@/product/types";
+import { useEffect, useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -9,26 +9,61 @@ import {
 } from "@/shared/components/ui/popover";
 import { Button } from "@/shared/components/ui/button";
 import { CaretSortIcon } from "@radix-ui/react-icons";
+import { getMany, type GetManyParams } from "@/product/api_repository";
 
 import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandItem,
   CommandList,
 } from "@/shared/components/ui/command";
+import { Input } from "@/shared/components/ui/input";
+import { useToast } from "@/shared/components/ui/use-toast";
+import { debounce } from "@/lib/utils";
 
 export interface ProductSelectorProps<T extends ProductType> {
-  value: InferProductType<T> | undefined;
-  onSelect: (product: InferProductType<T> | undefined) => void;
+  value?: InferProductType<T>;
+  onSelect?: (product: InferProductType<T> | undefined) => void;
   productType: T;
 }
 
-export default function ProductSelectorProps<T extends ProductType>({
+export default function ProductSelector<T extends ProductType>({
   value,
   onSelect,
   productType,
 }: ProductSelectorProps<T>) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const { toast } = useToast();
+
+  const searchProducts = async () => {
+    const params: GetManyParams = { sortBy: "name_asc" };
+    if (search.length || search !== "") {
+      params["q"] = search;
+    }
+    if (search.length === 0) {
+      params["limit"] = 20;
+    }
+    const response = await getMany(params);
+
+    if (response.success) {
+      setProducts(response.data);
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: response.message,
+      });
+    }
+  };
+
+  const onSearchSubmit = debounce(searchProducts, 200);
+
+  useEffect(() => {
+    onSearchSubmit();
+  }, [search]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -46,9 +81,20 @@ export default function ProductSelectorProps<T extends ProductType>({
       </PopoverTrigger>
       <PopoverContent>
         <Command>
+          <Input
+            value={search}
+            onChange={(ev) => setSearch(ev.target.value)}
+            placeholder="Busque su producto"
+          ></Input>
           <CommandList>
             <CommandEmpty>No se encontro ningun producto</CommandEmpty>
-            <CommandGroup></CommandGroup>
+            <CommandGroup>
+              {products.map((product) => (
+                <CommandItem key={product.id}>
+                  <span>{product.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
