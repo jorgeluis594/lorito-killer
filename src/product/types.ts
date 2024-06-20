@@ -46,6 +46,14 @@ export type PackageProduct = ProductBase & {
 
 export type Product = SingleProduct | PackageProduct;
 
+type ProductTypeMap = {
+  [SingleProductType]: SingleProduct;
+  [PackageProductType]: PackageProduct;
+};
+
+export type ProductType = keyof ProductTypeMap;
+export type InferProductType<T extends ProductType> = ProductTypeMap[T];
+
 export type ProductItem = {
   id: string;
   productId: string;
