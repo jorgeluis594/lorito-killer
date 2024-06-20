@@ -318,12 +318,17 @@ export const getMany = async ({
   productType?: TypeSingleProductType | TypePackageProductType;
 }): Promise<response<Product[]>> => {
   try {
-    const isPackage = productType === PackageProductType;
-
     const query: Prisma.ProductFindManyArgs = {
-      where: { companyId, isPackage },
+      where: { companyId },
       orderBy: sortBy,
     };
+
+    if (productType)
+      query.where = {
+        ...query.where,
+        isPackage: productType === PackageProductType,
+      };
+
     if (categoryId)
       query.where = {
         ...query.where,
