@@ -36,11 +36,14 @@ export default function ProductSelector<T extends ProductType | undefined>({
 }: ProductSelectorProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<InferProductType<T>[]>([]);
   const { toast } = useToast();
 
   const searchProducts = async (q: string) => {
-    const params: GetManyParams = { sortBy: "name_asc" };
+    const params: GetManyParams<T> = {
+      sortBy: "name_asc",
+      productType,
+    };
     if (q.length || q !== "") {
       params["q"] = q;
     }
@@ -67,6 +70,14 @@ export default function ProductSelector<T extends ProductType | undefined>({
     onSearchSubmit(search);
   }, [search]);
 
+  const onProductSelect = (productId: string) => {
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      onSelect && onSelect(product);
+      setOpen(false);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -92,7 +103,11 @@ export default function ProductSelector<T extends ProductType | undefined>({
             <CommandEmpty>No se encontro ningun producto</CommandEmpty>
             <CommandGroup>
               {products.map((product) => (
-                <CommandItem key={product.id} value={product.id}>
+                <CommandItem
+                  key={product.id}
+                  value={product.id}
+                  onSelect={onProductSelect}
+                >
                   <span>{product.name}</span>
                 </CommandItem>
               ))}
