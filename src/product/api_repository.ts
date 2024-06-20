@@ -1,9 +1,9 @@
 import type {
+  InferProductType,
   Photo,
   Product,
+  ProductType,
   SortKey,
-  TypePackageProductType,
-  TypeSingleProductType,
 } from "./types";
 import { response } from "@/lib/types";
 
@@ -83,17 +83,17 @@ export const removePhoto = async (
   return await res.json();
 };
 
-export type GetManyParams = {
+export type GetManyParams<T extends ProductType | undefined = undefined> = {
   q?: string | null;
   categoryId?: string | null;
   limit?: number;
   sortBy?: SortKey;
-  productType?: TypeSingleProductType | TypePackageProductType;
+  productType?: T;
 };
 
-export const getMany = async (
-  params: GetManyParams = {},
-): Promise<response<Product[]>> => {
+export const getMany = async <T extends ProductType | undefined>(
+  params: GetManyParams<T> = {},
+): Promise<response<InferProductType<T>[]>> => {
   const searchParams: any = {};
   if (params.q) searchParams["param"] = params.q;
   if (params.categoryId) searchParams["categoryId"] = params.categoryId;
@@ -116,15 +116,18 @@ export const getMany = async (
 
   return {
     ...data,
-    data: data.data.map((product) => ({
-      ...product,
-      createdAt: new Date(product.createdAt!),
-      updatedAt: new Date(product.updatedAt!),
-      photos: (product.photos || []).map((photo) => ({
-        ...photo,
-        createdAt: new Date(photo.createdAt!),
-      })),
-    })),
+    data: data.data.map(
+      (product): InferProductType<T> =>
+        ({
+          ...product,
+          createdAt: new Date(product.createdAt!),
+          updatedAt: new Date(product.updatedAt!),
+          photos: (product.photos || []).map((photo) => ({
+            ...photo,
+            createdAt: new Date(photo.createdAt!),
+          })),
+        }) as InferProductType<T>,
+    ),
   };
 };
 
