@@ -19,7 +19,8 @@ import { Separator } from "@/shared/components/ui/separator";
 import StockAdjustmentFields from "@/stock-transfer/components/form/stock-adjustment-fields";
 
 const StockAdjustmentSchema = z.object({
-  productId: z.string(),
+  id: z.string(),
+  productId: z.string().optional(),
   type: z.enum(["INCREASE", "DECREASE"]),
   quantity: z.number(),
 });
@@ -95,7 +96,10 @@ export default function StockAdjustmentForm() {
               <FormControl>
                 <StockAdjustmentFields
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(value) => {
+                    console.log({ value });
+                    field.onChange(value);
+                  }}
                 />
               </FormControl>
             </FormItem>

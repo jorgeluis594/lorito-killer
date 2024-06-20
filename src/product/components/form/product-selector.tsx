@@ -53,7 +53,6 @@ export default function ProductSelector<T extends ProductType | undefined>({
     const response = await getMany(params);
 
     if (response.success) {
-      console.log({ response: response.data });
       setProducts(response.data);
     } else {
       toast({
