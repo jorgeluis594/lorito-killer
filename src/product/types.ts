@@ -52,7 +52,8 @@ type ProductTypeMap = {
 };
 
 export type ProductType = keyof ProductTypeMap;
-export type InferProductType<T extends ProductType> = ProductTypeMap[T];
+export type InferProductType<T extends ProductType | undefined> =
+  T extends ProductType ? ProductTypeMap[T] : Product;
 
 export type ProductItem = {
   id: string;

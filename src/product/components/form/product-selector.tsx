@@ -15,20 +15,21 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
 } from "@/shared/components/ui/command";
-import { Input } from "@/shared/components/ui/input";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { debounce } from "@/lib/utils";
+import * as React from "react";
 
-export interface ProductSelectorProps<T extends ProductType> {
+export interface ProductSelectorProps<T extends ProductType | undefined> {
   value?: InferProductType<T>;
-  onSelect?: (product: InferProductType<T> | undefined) => void;
-  productType: T;
+  onSelect?: (product: InferProductType<T>) => void;
+  productType?: T;
 }
 
-export default function ProductSelector<T extends ProductType>({
+export default function ProductSelector<T extends ProductType | undefined>({
   value,
   onSelect,
   productType,
@@ -38,17 +39,18 @@ export default function ProductSelector<T extends ProductType>({
   const [products, setProducts] = useState<Product[]>([]);
   const { toast } = useToast();
 
-  const searchProducts = async () => {
+  const searchProducts = async (q: string) => {
     const params: GetManyParams = { sortBy: "name_asc" };
-    if (search.length || search !== "") {
-      params["q"] = search;
+    if (q.length || q !== "") {
+      params["q"] = q;
     }
-    if (search.length === 0) {
+    if (q.length === 0) {
       params["limit"] = 20;
     }
     const response = await getMany(params);
 
     if (response.success) {
+      console.log({ response: response.data });
       setProducts(response.data);
     } else {
       toast({
@@ -62,7 +64,7 @@ export default function ProductSelector<T extends ProductType>({
   const onSearchSubmit = debounce(searchProducts, 200);
 
   useEffect(() => {
-    onSearchSubmit();
+    onSearchSubmit(search);
   }, [search]);
 
   return (
@@ -80,17 +82,17 @@ export default function ProductSelector<T extends ProductType>({
         </Button>
       </PopoverTrigger>
       <PopoverContent>
-        <Command>
-          <Input
+        <Command shouldFilter={false}>
+          <CommandInput
             value={search}
-            onChange={(ev) => setSearch(ev.target.value)}
             placeholder="Busque su producto"
-          ></Input>
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>No se encontro ningun producto</CommandEmpty>
             <CommandGroup>
               {products.map((product) => (
-                <CommandItem key={product.id}>
+                <CommandItem key={product.id} value={product.id}>
                   <span>{product.name}</span>
                 </CommandItem>
               ))}
