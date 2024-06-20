@@ -66,7 +66,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
           onSelect={(d) => handleSelect(d)}
           initialFocus
         />
-        <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border flex justify-center">
           <TimePicker setDate={onChange} date={value} />
         </div>
       </PopoverContent>

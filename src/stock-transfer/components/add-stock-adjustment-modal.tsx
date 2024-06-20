@@ -27,6 +27,7 @@ export default function AddStockAdjustmentModal() {
               description="Controla las cantidades de tu inventario registrando Aumentos o Disminuciones."
             />
           </div>
+          <StockAdjustmentForm />
         </ScrollArea>
       </DialogContent>
     </Dialog>
