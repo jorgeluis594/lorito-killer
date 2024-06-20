@@ -8,7 +8,7 @@ import React from "react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Button } from "@/shared/components/ui/button";
 import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
-import StockAdjustmentForm from "@/stock-transfer/components/stock-adjustment-form";
+import StockAdjustmentForm from "@/stock-transfer/components/form/stock-adjustment-form";
 
 export default function AddStockAdjustmentModal() {
   return (

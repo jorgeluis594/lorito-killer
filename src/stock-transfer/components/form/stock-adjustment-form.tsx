@@ -16,7 +16,6 @@ import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
 import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Separator } from "@/shared/components/ui/separator";
-import { labelVariants } from "@/shared/components/ui/label";
 import StockAdjustmentFields from "@/stock-transfer/components/form/stock-adjustment-fields";
 
 const StockAdjustmentSchema = z.object({
