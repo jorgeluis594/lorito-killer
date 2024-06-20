@@ -7,13 +7,8 @@ import { Heading } from "@/shared/components/ui/heading";
 import React from "react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Button } from "@/shared/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
+import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
+import StockAdjustmentForm from "@/stock-transfer/components/stock-adjustment-form";
 
 export default function AddStockAdjustmentModal() {
   return (
@@ -21,16 +16,7 @@ export default function AddStockAdjustmentModal() {
       <DialogTrigger asChild>
         <Button variant="outline">
           Agregar ajuste de stock
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-4 w-4 ml-1" />
-              </TooltipTrigger>
-              <TooltipContent>
-                Registra aumentos o disminuciones en el inventario.
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <HelpTooltip text="Registra aumentos o disminuciones en el inventario." />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-5xl sm:h-[750px] w-full flex justify-center p-0">
