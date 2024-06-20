@@ -9,6 +9,8 @@ import {
   ProductSortParams,
   SingleProduct,
   SingleProductType,
+  TypePackageProductType,
+  TypeSingleProductType,
   UNIT_UNIT_TYPE,
 } from "./types";
 import { response } from "@/lib/types";
@@ -306,16 +308,20 @@ export const getMany = async ({
   categoryId,
   limit,
   q,
+  productType,
 }: {
   companyId: string;
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
   limit?: number;
   q?: string | null;
+  productType?: TypeSingleProductType | TypePackageProductType;
 }): Promise<response<Product[]>> => {
   try {
+    const isPackage = productType === PackageProductType;
+
     const query: Prisma.ProductFindManyArgs = {
-      where: { companyId },
+      where: { companyId, isPackage },
       orderBy: sortBy,
     };
     if (categoryId)
