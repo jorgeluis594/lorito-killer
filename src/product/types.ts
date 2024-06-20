@@ -24,6 +24,7 @@ type ProductBase = {
 };
 
 export const SingleProductType = "SingleProduct";
+export type TypeSingleProductType = typeof SingleProductType;
 
 export const KG_UNIT_TYPE = "kg";
 export const UNIT_UNIT_TYPE = "unit";
@@ -36,6 +37,8 @@ export type SingleProduct = ProductBase & {
 };
 
 export const PackageProductType = "PackageProduct";
+export type TypePackageProductType = typeof PackageProductType;
+
 export type PackageProduct = ProductBase & {
   type: typeof PackageProductType;
   productItems: ProductItem[];
