@@ -14,19 +14,24 @@ interface TimePickerProps {
 }
 
 export function TimePicker({ date, setDate }: TimePickerProps) {
-  const [period, setPeriod] = React.useState<Period>("PM");
+  const period = date ? (date.getHours() >= 12 ? "PM" : "AM") : "AM";
 
   const minuteRef = React.useRef<HTMLInputElement>(null);
   const hourRef = React.useRef<HTMLInputElement>(null);
   const secondRef = React.useRef<HTMLInputElement>(null);
   const periodRef = React.useRef<HTMLButtonElement>(null);
 
+  const handlePeriodChange = (value: Period) => {
+    if (date) {
+      const tempDate = new Date(date);
+      const hours = tempDate.getHours();
+      setDate(new Date(tempDate.setHours(hours + (value === "AM" ? -12 : 12))));
+    }
+  };
+
   return (
     <div className="flex items-end gap-2">
       <div className="grid gap-1 text-center">
-        <Label htmlFor="hours" className="text-xs">
-          Hours
-        </Label>
         <TimePickerInput
           picker="12hours"
           period={period}
@@ -37,9 +42,6 @@ export function TimePicker({ date, setDate }: TimePickerProps) {
         />
       </div>
       <div className="grid gap-1 text-center">
-        <Label htmlFor="minutes" className="text-xs">
-          Minutes
-        </Label>
         <TimePickerInput
           picker="minutes"
           id="minutes12"
@@ -47,34 +49,17 @@ export function TimePicker({ date, setDate }: TimePickerProps) {
           setDate={setDate}
           ref={minuteRef}
           onLeftFocus={() => hourRef.current?.focus()}
-          onRightFocus={() => secondRef.current?.focus()}
-        />
-      </div>
-      <div className="grid gap-1 text-center">
-        <Label htmlFor="seconds" className="text-xs">
-          Seconds
-        </Label>
-        <TimePickerInput
-          picker="seconds"
-          id="seconds12"
-          date={date}
-          setDate={setDate}
-          ref={secondRef}
-          onLeftFocus={() => minuteRef.current?.focus()}
           onRightFocus={() => periodRef.current?.focus()}
         />
       </div>
       <div className="grid gap-1 text-center">
-        <Label htmlFor="period" className="text-xs">
-          Period
-        </Label>
         <TimePeriodSelect
           period={period}
-          setPeriod={setPeriod}
+          setPeriod={handlePeriodChange}
           date={date}
           setDate={setDate}
           ref={periodRef}
-          onLeftFocus={() => secondRef.current?.focus()}
+          onLeftFocus={() => minuteRef.current?.focus()}
         />
       </div>
     </div>
