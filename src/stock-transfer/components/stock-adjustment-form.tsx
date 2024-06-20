@@ -14,6 +14,7 @@ import {
 import { useForm } from "react-hook-form";
 import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
 import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
+import { Textarea } from "@/shared/components/ui/textarea";
 
 const StockAdjustmentSchema = z.object({
   productId: z.string(),
@@ -68,6 +69,20 @@ export default function StockAdjustmentForm() {
               </FormItem>
             )}
           />
+          <div className="w-1/2">
+            <FormField
+              name="observation"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observación</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       </form>
     </Form>
