@@ -19,7 +19,7 @@ export default function AddStockAdjustmentModal() {
           <HelpTooltip text="Registra aumentos o disminuciones en el inventario." />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-5xl sm:h-[750px] w-full flex justify-center p-0">
+      <DialogContent className="sm:max-w-6xl sm:h-[750px] w-full flex justify-center p-0">
         <ScrollArea className="p-6 w-full">
           <div className="flex">
             <Heading
