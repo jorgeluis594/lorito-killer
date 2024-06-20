@@ -15,6 +15,9 @@ import { useForm } from "react-hook-form";
 import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
 import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { Separator } from "@/shared/components/ui/separator";
+import { labelVariants } from "@/shared/components/ui/label";
+import StockAdjustmentFields from "@/stock-transfer/components/form/stock-adjustment-fields";
 
 const StockAdjustmentSchema = z.object({
   productId: z.string(),
@@ -84,6 +87,21 @@ export default function StockAdjustmentForm() {
             />
           </div>
         </div>
+        <Separator className="my-6" />
+        <FormField
+          name="adjustments"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <StockAdjustmentFields
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
       </form>
     </Form>
   );
