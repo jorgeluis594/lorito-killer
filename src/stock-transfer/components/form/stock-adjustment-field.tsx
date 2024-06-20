@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
-import { plus } from "@/lib/utils";
+import { mul, plus } from "@/lib/utils";
 
 interface StockAdjustmentFieldProps {
   adjustment: Adjustment;
@@ -38,18 +38,18 @@ export default function StockAdjustmentField({
   }, [currentProduct, type, quantity]);
 
   return (
-    <div key={adjustment.id} className="grid grid-cols-12 gap-2 my-2">
-      <div className="col-span-3">
+    <div key={adjustment.id} className="grid grid-cols-12 gap-4 my-2">
+      <div className="col-span-3 flex items-center">
         <ProductSelector
           value={currentProduct}
           onSelect={setCurrentProduct}
           productType="SingleProduct"
         />
       </div>
-      <div className="col-span-2">
+      <div className="col-span-2 flex items-center">
         <span>{currentProduct && currentProduct.stock}</span>
       </div>
-      <div className="col-span-2">
+      <div className="col-span-2 flex items-center">
         <Select value={type} onValueChange={onTypeChange}>
           <SelectTrigger>
             <SelectValue />
@@ -60,11 +60,22 @@ export default function StockAdjustmentField({
           </SelectContent>
         </Select>
       </div>
-      <div className="col-span-2">
-        <Input value={quantity} onChange={onQuantityChange}></Input>
+      <div className="col-span-2 flex items-center">
+        <Input
+          value={quantity}
+          min={0}
+          step={1}
+          onChange={onQuantityChange}
+        ></Input>
       </div>
-      <div className="col-span-2">
-        <span>{currentProduct && plus(quantity)(currentProduct.stock)}</span>
+      <div className="col-span-2 flex items-center">
+        <span>
+          {currentProduct &&
+            quantity > 0 &&
+            plus(currentProduct.stock)(
+              mul(quantity)(type === "INCREASE" ? 1 : -1),
+            )}
+        </span>
       </div>
     </div>
   );
