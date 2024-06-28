@@ -9,7 +9,6 @@ export type CashShiftState =
 export type CashShiftActions = {
   setCashShift: (cashShift: OpenCashShift | null) => void;
   setIsLoading: () => void;
-  // setCashShiftStatus: (status: string) => void;
   removeCashShift: () => void;
   addOrder: (order: Order) => void;
 };
@@ -30,7 +29,6 @@ export const createCashShiftStore = (
       set({ cashShift, isLoading: false }),
     removeCashShift: () => set({ cashShift: null, isLoading: false }),
     setIsLoading: () => set({ isLoading: true, cashShift: null }),
-    // setCashShiftStatus: (status) => set(state => ({ states: state.cashShift.map(s => s.)})),
     addOrder: (order: Order) => {
       set((state) => {
         if (state.cashShift) {
