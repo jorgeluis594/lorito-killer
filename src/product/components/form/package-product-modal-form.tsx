@@ -268,6 +268,11 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>
+  ) => {
+    e.preventDefault();
+  };
+
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
@@ -280,7 +285,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="mx-auto space-y-8"
             >
-              <div className="space-y-4 p-2">
+              <div className="space-y-4 p-2" onDrop={handleDrop}>
                 <FormField
                   control={form.control}
                   name="name"

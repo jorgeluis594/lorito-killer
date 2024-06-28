@@ -319,6 +319,11 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>
+  ) => {
+    e.preventDefault();
+  };
+
   return (
     <Dialog
       open={formStore.open}
@@ -338,7 +343,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="mx-auto space-y-8"
             >
-              <div className="space-y-4 p-2">
+              <div className="space-y-4 p-2" onDrop={handleDrop}>
                 <FormField
                   control={form.control}
                   name="name"
@@ -346,7 +351,10 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     <FormItem>
                       <FormLabel>Nombre</FormLabel>
                       <FormControl>
-                        <Input autoComplete="off" {...field} />
+                        <Input
+                          autoComplete="off"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
