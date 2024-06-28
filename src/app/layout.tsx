@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "@/shared/components/ui/toaster";
-import { getServerSession } from "next-auth";
+import { getSession } from "@/lib/auth";
 import Providers from "@/shared/components/layout/providers";
 
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession();
+  const session = await getSession();
 
   return (
     <html lang="en">
@@ -31,7 +31,7 @@ export default async function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers session={session}>{children}</Providers>
+        <Providers session={session as any}>{children}</Providers>
         <Toaster />
       </body>
     </html>
