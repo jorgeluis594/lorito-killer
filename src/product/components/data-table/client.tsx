@@ -14,6 +14,7 @@ import { SyntheticEvent } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import ProductModalForm from "@/product/components/form/product-modal-form";
+import CategoriesModal from "@/category/components/category-list-model/category-modal";
 
 interface ProductsClientProps {
   data: Product[] | null;
@@ -56,7 +57,7 @@ export default function ProductsClient({
           <Button
             type="button"
             variant="outline"
-            className="text-xs mr-2 md:text-sm mb-2 justify-start"
+            className="text-xs md:text-sm mr-2 justify-start"
             disabled={performingAction}
             onClick={onNewProductClick}
           >
@@ -73,7 +74,7 @@ export default function ProductsClient({
           <Button
             type="button"
             variant="outline"
-            className="text-xs md:text-sm justify-start"
+            className="text-xs mr-2 md:text-sm justify-start"
             disabled={performingAction}
             onClick={onNewPackageClick}
           >
@@ -86,6 +87,7 @@ export default function ProductsClient({
               </>
             )}
           </Button>
+          <CategoriesModal/>
         </div>
       </div>
       <Separator />
