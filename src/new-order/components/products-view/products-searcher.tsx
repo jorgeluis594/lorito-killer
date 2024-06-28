@@ -36,7 +36,6 @@ export default function ProductsSearcher() {
 
   const searchProduct = async () => {
     const params: GetManyParams = { categoryId, sortBy: sortValue };
-    console.log(categoryId)
     if (search.length || search !== "") {
       params["q"] = search;
     }
