@@ -31,6 +31,10 @@ export default function StockAdjustmentFields({
     onChange(value.map((a) => (a.id === adjustment.id ? adjustment : a)));
   };
 
+  const onAdjustmentRemove = (adjustment: Adjustment) => {
+    onChange(value.filter((a) => a.id !== adjustment.id));
+  };
+
   return (
     <div>
       <div className="grid grid-cols-12 gap-2 bg-accent p-3">
@@ -52,16 +56,17 @@ export default function StockAdjustmentFields({
         <div></div>
       </div>
       {value.map((adjustment, idx) => (
-        <>
+        <div key={adjustment.id}>
           {idx > 0 && <Separator />}
           <StockAdjustmentField
             adjustment={adjustment}
             onChange={onAdjustmentChange}
+            onRemove={onAdjustmentRemove}
             skipProductIds={value
               .filter((a) => a.productId)
               .map((a) => a.productId!)}
           />
-        </>
+        </div>
       ))}
       <Button
         variant="outline"

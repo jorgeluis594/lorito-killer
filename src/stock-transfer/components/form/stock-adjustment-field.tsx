@@ -11,16 +11,20 @@ import {
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
 import { mul, plus } from "@/lib/utils";
+import { Button } from "@/shared/components/ui/button";
+import { Trash } from "lucide-react";
 
 interface StockAdjustmentFieldProps {
   adjustment: Adjustment;
   onChange: (adjustment: Adjustment) => void;
+  onRemove: (adjustment: Adjustment) => void;
   skipProductIds?: string[];
 }
 
 export default function StockAdjustmentField({
   adjustment,
   onChange,
+  onRemove,
   skipProductIds = [],
 }: StockAdjustmentFieldProps) {
   const [currentProduct, setCurrentProduct] = useState<
@@ -33,6 +37,10 @@ export default function StockAdjustmentField({
 
   const onTypeChange = (value: string) => {
     if (value !== type) setType(value as "INCREASE" | "DECREASE");
+  };
+
+  const onRemoveClick = () => {
+    onRemove(adjustment);
   };
 
   useEffect(() => {
@@ -79,6 +87,16 @@ export default function StockAdjustmentField({
               mul(quantity)(type === "INCREASE" ? 1 : -1),
             )}
         </span>
+      </div>
+      <div className="col-span-1 flex items-center justify-center">
+        <Button
+          variant="destructive"
+          size="icon"
+          type="button"
+          onClick={onRemoveClick}
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
