@@ -71,13 +71,20 @@ export default function StockAdjustmentField({
           </SelectContent>
         </Select>
       </div>
-      <div className="col-span-2 flex items-center">
+      <div className="col-span-2 flex items-center flex-wrap">
         <Input
           value={quantity}
           min={0}
           step={1}
+          type="number"
           onChange={onQuantityChange}
-        ></Input>
+          className="w-full"
+        />
+        {quantity <= 0 && (
+          <p className="text-xs font-medium text-destructive">
+            Debe ser mayor a 0
+          </p>
+        )}
       </div>
       <div className="col-span-2 flex items-center">
         <span>

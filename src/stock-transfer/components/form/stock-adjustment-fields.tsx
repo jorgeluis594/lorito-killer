@@ -21,7 +21,7 @@ export default function StockAdjustmentFields({
       ...value,
       {
         id: crypto.randomUUID(),
-        quantity: 0,
+        quantity: 1,
         type: "INCREASE",
       },
     ]);

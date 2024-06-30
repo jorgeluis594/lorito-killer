@@ -17,12 +17,21 @@ import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Separator } from "@/shared/components/ui/separator";
 import StockAdjustmentFields from "@/stock-transfer/components/form/stock-adjustment-fields";
+import { Button } from "@/shared/components/ui/button";
+import { Save } from "lucide-react";
+import {
+  type TypeAdjustmentStockTransfer,
+  AdjustmentStockTransfer,
+} from "@/stock-transfer/types";
+import { mul } from "@/lib/utils";
+import { useUserSession } from "@/lib/use-user-session";
 
 const StockAdjustmentSchema = z.object({
   id: z.string(),
   productId: z.string().optional(),
+  productName: z.string().optional(), // We add product Name to avoid fetching the product again
   type: z.enum(["INCREASE", "DECREASE"]),
-  quantity: z.number(),
+  quantity: z.number().positive(),
 });
 
 const BatchStockAdjustmentSchema = z.object({
