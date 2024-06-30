@@ -4,6 +4,9 @@ export type OrderStockTransferType = typeof OrderStockTransferName;
 export const ProductStockTransfer = "ProductStockTransfer";
 export type ProductStockTransferType = typeof ProductStockTransfer;
 
+export const AdjustmentStockTransfer = "AdjustmentStockTransfer";
+export type AdjustmentStockTransferType = typeof AdjustmentStockTransfer;
+
 export type StockTransferType =
   | OrderStockTransferType
   | ProductStockTransferType;
@@ -13,7 +16,10 @@ export type StockTransferBase = {
   companyId: string;
   value: number;
   productId: string;
-  type: OrderStockTransferType | ProductStockTransferType;
+  type:
+    | OrderStockTransferType
+    | ProductStockTransferType
+    | AdjustmentStockTransferType;
   productName: string;
   createdAt: Date;
 };
@@ -29,4 +35,12 @@ export type ProductStockTransfer = StockTransferBase & {
   type: ProductStockTransferType;
 };
 
-export type StockTransfer = OrderStockTransfer | ProductStockTransfer;
+export type TypeAdjustmentStockTransfer = StockTransferBase & {
+  batchId?: string;
+  type: AdjustmentStockTransferType;
+};
+
+export type StockTransfer =
+  | OrderStockTransfer
+  | ProductStockTransfer
+  | TypeAdjustmentStockTransfer;
