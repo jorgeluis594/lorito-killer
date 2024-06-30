@@ -26,6 +26,7 @@ import * as React from "react";
 export interface ProductSelectorProps<T extends ProductType | undefined> {
   value?: InferProductType<T>;
   onSelect?: (product: InferProductType<T>) => void;
+  skipProductIds?: string[];
   productType?: T;
 }
 
@@ -33,11 +34,14 @@ export default function ProductSelector<T extends ProductType | undefined>({
   value,
   onSelect,
   productType,
+  skipProductIds = [],
 }: ProductSelectorProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState<InferProductType<T>[]>([]);
   const { toast } = useToast();
+
+  const setSkipProductIds = new Set(skipProductIds);
 
   const searchProducts = async (q: string) => {
     const params: GetManyParams<T> = {
@@ -53,7 +57,7 @@ export default function ProductSelector<T extends ProductType | undefined>({
     const response = await getMany(params);
 
     if (response.success) {
-      setProducts(response.data);
+      setProducts(response.data.filter((p) => !setSkipProductIds.has(p.id!)));
     } else {
       toast({
         title: "Error",
@@ -85,7 +89,7 @@ export default function ProductSelector<T extends ProductType | undefined>({
           role="combobox"
           type="button"
           aria-expanded={open}
-          className="justify-between"
+          className="justify-between w-full"
         >
           {value ? value.name : "Seleccione un producto"}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
