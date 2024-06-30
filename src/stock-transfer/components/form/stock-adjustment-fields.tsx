@@ -4,7 +4,6 @@ import { labelVariants } from "@/shared/components/ui/label";
 import { Button } from "@/shared/components/ui/button";
 import { Plus } from "lucide-react";
 import { Separator } from "@/shared/components/ui/separator";
-import { Product } from "@/product/types";
 import type { Adjustment } from "./types";
 import StockAdjustmentField from "@/stock-transfer/components/form/stock-adjustment-field";
 
@@ -58,6 +57,9 @@ export default function StockAdjustmentFields({
           <StockAdjustmentField
             adjustment={adjustment}
             onChange={onAdjustmentChange}
+            skipProductIds={value
+              .filter((a) => a.productId)
+              .map((a) => a.productId!)}
           />
         </>
       ))}

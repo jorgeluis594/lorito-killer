@@ -1,6 +1,6 @@
 import type { Adjustment } from "./types";
 import ProductSelector from "@/product/components/form/product-selector";
-import { Product, SingleProduct } from "@/product/types";
+import { SingleProduct } from "@/product/types";
 import React, { useEffect, useState } from "react";
 import {
   Select,
@@ -15,11 +15,13 @@ import { mul, plus } from "@/lib/utils";
 interface StockAdjustmentFieldProps {
   adjustment: Adjustment;
   onChange: (adjustment: Adjustment) => void;
+  skipProductIds?: string[];
 }
 
 export default function StockAdjustmentField({
   adjustment,
   onChange,
+  skipProductIds = [],
 }: StockAdjustmentFieldProps) {
   const [currentProduct, setCurrentProduct] = useState<
     SingleProduct | undefined
@@ -44,6 +46,7 @@ export default function StockAdjustmentField({
           value={currentProduct}
           onSelect={setCurrentProduct}
           productType="SingleProduct"
+          skipProductIds={skipProductIds}
         />
       </div>
       <div className="col-span-2 flex items-center">
