@@ -127,6 +127,7 @@ model Company {
   email     String
   phone     String
   address   String
+  logos    Logo[]
   users     User[]
   products Product[]
   cashShifts CashShift[]
@@ -134,6 +135,18 @@ model Company {
   categories Category[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Logo {
+  id        String   @id @default(uuid())
+  url       String
+  name      String
+  key       String
+  type      String
+  size      Int
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model User {

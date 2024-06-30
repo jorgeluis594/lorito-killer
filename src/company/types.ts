@@ -4,4 +4,15 @@ export type Company = {
   phone: string;
   email: string;
   address: string;
+  logo?: Logo;
+};
+
+export type Logo = {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  key: string;
+  url: string;
+  createdAt?: Date;
 };
