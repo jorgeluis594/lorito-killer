@@ -9,7 +9,8 @@ export type AdjustmentStockTransferType = typeof AdjustmentStockTransfer;
 
 export type StockTransferType =
   | OrderStockTransferType
-  | ProductStockTransferType;
+  | ProductStockTransferType
+  | AdjustmentStockTransferType;
 
 export type StockTransferBase = {
   id: string;
@@ -36,7 +37,7 @@ export type ProductStockTransfer = StockTransferBase & {
 };
 
 export type TypeAdjustmentStockTransfer = StockTransferBase & {
-  batchId?: string;
+  batchId: string;
   type: AdjustmentStockTransferType;
 };
 
