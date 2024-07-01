@@ -1,9 +1,9 @@
 export const OrderStockTransferName = "OrderStockTransfer";
 export type OrderStockTransferType = typeof OrderStockTransferName;
 
-export const ProductMovementStockTransfer = "ProductMovementStockTransfer";
+export const ProductMovementStockTransferName = "ProductMovementStockTransfer";
 export type ProductMovementStockTransferType =
-  typeof ProductMovementStockTransfer;
+  typeof ProductMovementStockTransferName;
 
 export const AdjustmentStockTransfer = "AdjustmentStockTransfer";
 export type AdjustmentStockTransferType = typeof AdjustmentStockTransfer;
@@ -33,6 +33,7 @@ export type OrderStockTransfer = StockTransferBase & {
 
 export type ProductMovementStockTransfer = StockTransferBase & {
   fromProductId: string;
+  toProductId: string;
   type: ProductMovementStockTransferType;
 };
 

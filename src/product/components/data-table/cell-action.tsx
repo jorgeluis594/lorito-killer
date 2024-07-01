@@ -16,6 +16,7 @@ import { deleteProduct, findProduct } from "@/product/api_repository";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
+import { performProductMovementStockTransfer } from "@/stock-transfer/components/actions";
 
 interface CellActionProps {
   product: Product;
@@ -65,7 +66,26 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
     router.refresh();
   };
 
-  const onConfirmStockMovement = async () => {};
+  const onConfirmStockMovement = () => {
+    performProductMovementStockTransfer(product as SingleProduct).then(
+      (response) => {
+        if (!response.success) {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: response.message,
+          });
+          return;
+        } else {
+          toast({
+            title: "Stock actualizado con éxito",
+          });
+          setMovementStockModalOpen(false);
+          router.refresh();
+        }
+      },
+    );
+  };
 
   return (
     <>
@@ -100,11 +120,13 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
           <DropdownMenuItem onClick={() => setProduct(product)}>
             <Edit className="mr-2 h-4 w-4" /> Editar
           </DropdownMenuItem>
-          {product.type === SingleProductType && product.stockConfig && (
-            <DropdownMenuItem onClick={() => setMovementStockModalOpen(true)}>
-              <PackageOpen className="mr-2 h-4 w-4" /> Mover stock
-            </DropdownMenuItem>
-          )}
+          {product.type === SingleProductType &&
+            product.stock > 0 &&
+            product.stockConfig && (
+              <DropdownMenuItem onClick={() => setMovementStockModalOpen(true)}>
+                <PackageOpen className="mr-2 h-4 w-4" /> Mover stock
+              </DropdownMenuItem>
+            )}
           <DropdownMenuItem onClick={() => setOpen(true)}>
             <Trash className="mr-2 h-4 w-4" /> Eliminar
           </DropdownMenuItem>
