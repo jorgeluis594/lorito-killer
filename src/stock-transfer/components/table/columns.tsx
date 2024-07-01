@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import {
   AdjustmentStockTransfer,
   OrderStockTransferName,
-  ProductStockTransfer,
+  ProductMovementStockTransferName,
   StockTransfer,
 } from "@/stock-transfer/types";
 import { format } from "date-fns";
@@ -13,7 +13,7 @@ import { es } from "date-fns/locale";
 const typeSpanishMapper = {
   [OrderStockTransferName]: "Venta POS",
   [AdjustmentStockTransfer]: "Ajuste de stock",
-  [ProductStockTransfer]: "Producto",
+  [ProductMovementStockTransferName]: "Movimiento de producto",
 };
 
 export const columns: ColumnDef<StockTransfer & { productName: string }>[] = [
