@@ -1,11 +1,12 @@
 import {
   OrderStockTransfer,
-  ProductMovementStockTransfer,
+  ProductMovementStockTransferName,
   StockTransfer,
   StockTransferType,
   OrderStockTransferName,
   TypeAdjustmentStockTransfer,
   AdjustmentStockTransfer,
+  ProductMovementStockTransfer,
 } from "@/stock-transfer/types";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
@@ -14,7 +15,7 @@ import StockTransferCreateArgs = Prisma.StockTransferCreateArgs;
 
 const stockTransferTypeToPrismaMapper = {
   [OrderStockTransferName]: $Enums.StockTransferType.ORDER,
-  [ProductMovementStockTransfer]: $Enums.StockTransferType.PRODUCT_MOVEMENT,
+  [ProductMovementStockTransferName]: $Enums.StockTransferType.PRODUCT_MOVEMENT,
   [AdjustmentStockTransfer]: $Enums.StockTransferType.ADJUSTMENT,
 };
 
@@ -23,7 +24,7 @@ const prismaToStockTransferTypeMapper: Record<
   StockTransferType
 > = {
   [$Enums.StockTransferType.ORDER]: OrderStockTransferName,
-  [$Enums.StockTransferType.PRODUCT_MOVEMENT]: ProductMovementStockTransfer,
+  [$Enums.StockTransferType.PRODUCT_MOVEMENT]: ProductMovementStockTransferName,
   [$Enums.StockTransferType.ADJUSTMENT]: AdjustmentStockTransfer,
 };
 
@@ -53,6 +54,20 @@ const adjustmentStockTransferPrismaDataBuilder = (
   };
 };
 
+const productMovementStockTransferPrismaDataBuilder = (
+  stockTransfer: ProductMovementStockTransfer,
+): StockTransferCreateArgs => {
+  const { fromProductId, toProductId, productName, ...stockTransferData } =
+    stockTransfer;
+  return {
+    data: {
+      ...stockTransferData,
+      data: { fromProductId, toProductId },
+      type: stockTransferTypeToPrismaMapper[stockTransferData.type],
+    },
+  };
+};
+
 const buildStockTransferData = (
   stockTransfer: StockTransfer,
 ): StockTransferCreateArgs => {
@@ -60,6 +75,8 @@ const buildStockTransferData = (
     return orderStockTransferPrismaDataBuilder(stockTransfer);
   } else if (stockTransfer.type === AdjustmentStockTransfer) {
     return adjustmentStockTransferPrismaDataBuilder(stockTransfer);
+  } else if (stockTransfer.type === ProductMovementStockTransferName) {
+    return productMovementStockTransferPrismaDataBuilder(stockTransfer);
   }
 
   throw new Error("Builder not implemented");
@@ -96,8 +113,25 @@ export const create = async (
           "batchId"
         ],
       };
+    } else if (
+      storedStockTransfer.type === $Enums.StockTransferType.PRODUCT_MOVEMENT
+    ) {
+      persistedStockTransfer = {
+        ...storedStockTransfer,
+        value: storedStockTransfer.value.toNumber(),
+        type: ProductMovementStockTransferName,
+        productName: stockTransfer.productName,
+        fromProductId: (storedStockTransfer.data as Record<string, string>)[
+          "fromProductId"
+        ],
+        toProductId: (storedStockTransfer.data as Record<string, string>)[
+          "toProductId"
+        ],
+      };
     } else {
-      throw new Error("Not implemented");
+      throw new Error(
+        `Prisma type not implemented: ${storedStockTransfer.type}`,
+      );
     }
 
     return {
