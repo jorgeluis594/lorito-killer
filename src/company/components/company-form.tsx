@@ -23,7 +23,7 @@ import FileUpload from "@/product/components/file-upload/file-upload";
 const IMG_MAX_LIMIT = 1;
 
 const LogoSchema = zod.object({
-  id: zod.string().optional(),
+  id: zod.string(),
   name: zod.string(),
   size: zod.number(),
   key: zod.string(),
@@ -43,9 +43,9 @@ const CompanyFormSchema = zod.object({
   address: zod
     .string()
     .min(6, { message: "La dirección debe tener al menos 6 caracteres" }),
-  logo: zod
+  logos: zod
     .array(LogoSchema)
-    .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
+    .max(IMG_MAX_LIMIT)
     .optional(),
 });
 
@@ -60,7 +60,7 @@ export default function CompanyForm({ company }: { company: Company }) {
   });
 
   const handleSubmit = async (data: CompanyFormValues) => {
-    const response = await updateCompany({ ...company, ...data });
+    const response = await updateCompany({ ...company, ...data, logo: data.logos ? data.logos![0] : undefined });
 
     if (!response.success) {
       toast({
@@ -75,64 +75,6 @@ export default function CompanyForm({ company }: { company: Company }) {
         title: "Empresa actualizada",
         description: "Los datos de la empresa han sido actualizados",
       });
-    }
-  };
-
-  const handleLogosUpdated = async (newLogos: Logo[]) => {
-    const currentLogos = form.getValues("logo") || [];
-
-    // If the product is new, there is no need to remove the photo from the server
-    if (form) return form.setValue("logo", newLogos);
-
-    const logosToRemove = currentLogos.filter(
-      (logo: Logo) =>
-        !newLogos.find((newLogo: Logo) => newLogo.key === logo.key),
-    );
-    const logosToAppend = newLogos.filter(
-      (logo: Logo) =>
-        !currentLogos.find(
-          (currentLogo: Logo) => currentLogo.key === logo.key,
-        ),
-    );
-    
-    if (logosToRemove.length) {
-      form.setValue("logos", newLogos);
-      for (const logo of logosToRemove) {
-        const removeLogoResponse = await repository.removeLogo(
-          formStore.company.id!,
-          logo.id!,
-        );
-        if (removeLogoResponse.success) {
-          toast({
-            description: "Photo eliminada con exito",
-          });
-        } else {
-          toast({
-            title: "Error",
-            variant: "destructive",
-            description: removeLogoResponse.message,
-          });
-        }
-      }
-    }
-
-    if (logosToAppend.length) {
-      const storeLogoResponse = await repository.storeLogos(
-        formStore.company.id!,
-        logosToAppend,
-      );
-      if (storeLogoResponse.success) {
-        form.setValue("logos", [...currentLogo, ...storeLogoResponse.data]);
-        toast({
-          description: "Logos subidas con exito",
-        });
-      } else {
-        toast({
-          title: "Error",
-          variant: "destructive",
-          description: storeLogoResponse.message,
-        });
-      }
     }
   };
 
@@ -200,12 +142,12 @@ export default function CompanyForm({ company }: { company: Company }) {
             />
             <FormField
               control={form.control}
-              name="logo"
+              name="logos"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <FileUpload
-                      onChange={handleLogosUpdated}
+                      onChange={ field.onChange }
                       value={field.value || []}
                     />
                   </FormControl>
