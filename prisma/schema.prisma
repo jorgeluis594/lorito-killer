@@ -79,6 +79,7 @@ enum StockTransferType {
   ORDER
   PRODUCT
   ADJUSTMENT
+  PRODUCT_MOVEMENT
 }
 
 model StockTransfer {
