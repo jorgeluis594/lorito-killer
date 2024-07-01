@@ -11,18 +11,20 @@ import {
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
   KG_UNIT_TYPE,
   Photo,
   Product,
+  SingleProduct,
   SingleProductType,
   UNIT_UNIT_TYPE,
 } from "@/product/types";
 import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
+import { findProduct } from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
   Form,
@@ -56,23 +58,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import ProductSelector from "@/product/components/form/product-selector";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
-const transformToProduct = (data: ProductFormValues): Product => {
-  return {
-    companyId: data.companyId,
-    name: data.name,
-    price: data.price,
-    sku: data.sku,
-    type: SingleProductType,
-    unitType: data.unitType,
-    purchasePrice: data.purchasePrice,
-    description: data.description,
-    stock: data.stock,
-    photos: data.photos,
+const transformToProduct = (data: ProductFormValues): SingleProduct => {
+  const {
+    targetMovementProductId,
+    targetMovementProductQuantity,
+    ...productData
+  } = data;
+  const product: SingleProduct = {
+    ...productData,
     categories: data.categories || [],
+    type: SingleProductType,
   };
+
+  if (
+    targetMovementProductId &&
+    targetMovementProductQuantity &&
+    targetMovementProductQuantity > 0
+  ) {
+    product.stockConfig = {
+      productId: targetMovementProductId,
+      quantity: targetMovementProductQuantity,
+    };
+  }
+
+  return product;
 };
 
 interface ProductFormProps {
@@ -94,12 +107,17 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     updateProduct: store.updateProduct,
   }));
 
+  const [targetMovementProduct, setTargetMovementProduct] = useState<
+    SingleProduct | undefined
+  >();
+
   const action = formStore.isNew ? "Agregar Producto" : "Guardar cambios";
 
   const { toast } = useToast();
 
   // The createdAt and updatedAt fields are not part of the form
-  const { createdAt, updatedAt, ...productData } = formStore.product || {};
+  const { createdAt, updatedAt, ...productData } =
+    (formStore.product as SingleProduct) || {};
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(SingleProductSchema),
@@ -114,8 +132,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     if (!sku) return form.clearErrors("sku");
 
     const res = await repository.findProduct(sku!);
-
-    console.log({ res }, { productData });
     if (
       !formStore.isNew &&
       res.success &&
@@ -145,7 +161,22 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         }
       });
     } else {
-      form.reset(productData);
+      form.reset({
+        ...productData,
+        targetMovementProductId:
+          productData.stockConfig && productData.stockConfig.productId,
+        targetMovementProductQuantity:
+          productData.stockConfig && productData.stockConfig.quantity,
+      });
+      const targetMovementProductId = form.getValues("targetMovementProductId");
+
+      if (targetMovementProductId) {
+        findProduct(targetMovementProductId).then((response) => {
+          if (response.success && response.data.type === SingleProductType) {
+            setTargetMovementProduct(response.data);
+          }
+        });
+      }
     }
   }, [formStore, form, user]);
 
@@ -485,6 +516,52 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     </FormItem>
                   )}
                 />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    name="targetMovementProductId"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Producto de traspaso de stock</FormLabel>
+                        <FormControl>
+                          <ProductSelector
+                            value={targetMovementProduct}
+                            onSelect={(product) => {
+                              setTargetMovementProduct(product);
+                              form.setValue(
+                                "targetMovementProductId",
+                                product.id!,
+                              );
+                            }}
+                            productType="SingleProduct"
+                            skipProductIds={
+                              !formStore.isNew
+                                ? [formStore.product.id!]
+                                : undefined
+                            }
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="targetMovementProductQuantity"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cantidad a traspasar</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Ingrese cantidad"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
                   name="photos"
