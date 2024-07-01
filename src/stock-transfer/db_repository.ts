@@ -189,15 +189,48 @@ export const getMany = async (
 
     return {
       success: true,
-      data: result.map((prismaStockTransfer) => ({
-        ...prismaStockTransfer,
-        value: prismaStockTransfer.value.toNumber(),
-        type: "OrderStockTransfer",
-        productName: prismaStockTransfer.product.name,
-        orderItemId: (prismaStockTransfer.data as Record<string, string>)[
-          "orderItemId"
-        ],
-      })),
+      data: result.map((prismaStockTransfer) => {
+        const { product, ...stockTransferData } = prismaStockTransfer;
+        switch (stockTransferData.type) {
+          case $Enums.StockTransferType.ORDER:
+            return {
+              ...stockTransferData,
+              value: stockTransferData.value.toNumber(),
+              type: OrderStockTransferName,
+              productName: product.name,
+              orderItemId: (stockTransferData.data as Record<string, string>)[
+                "orderItemId"
+              ],
+            } as OrderStockTransfer;
+          case $Enums.StockTransferType.ADJUSTMENT:
+            return {
+              ...stockTransferData,
+              value: stockTransferData.value.toNumber(),
+              type: AdjustmentStockTransfer,
+              productName: product.name,
+              batchId: (stockTransferData.data as Record<string, string>)[
+                "batchId"
+              ],
+            } as TypeAdjustmentStockTransfer;
+          case $Enums.StockTransferType.PRODUCT_MOVEMENT:
+            return {
+              ...stockTransferData,
+              value: stockTransferData.value.toNumber(),
+              type: ProductMovementStockTransferName,
+              productName: product.name,
+              fromProductId: (stockTransferData.data as Record<string, string>)[
+                "fromProductId"
+              ],
+              toProductId: (stockTransferData.data as Record<string, string>)[
+                "toProductId"
+              ],
+            } as ProductMovementStockTransfer;
+          default:
+            throw new Error(
+              `Prisma type not implemented: ${stockTransferData.type}`,
+            );
+        }
+      }),
     };
   } catch (error: any) {
     return { success: false, message: "Error" };
