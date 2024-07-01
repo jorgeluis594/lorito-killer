@@ -25,13 +25,15 @@ import {
 } from "@/stock-transfer/types";
 import { mul } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
+import { createAndProcessStockTransfers } from "@/stock-transfer/components/actions";
+import { useToast } from "@/shared/components/ui/use-toast";
 
 const StockAdjustmentSchema = z.object({
   id: z.string(),
   productId: z.string().optional(),
   productName: z.string().optional(), // We add product Name to avoid fetching the product again
   type: z.enum(["INCREASE", "DECREASE"]),
-  quantity: z.number().positive(),
+  quantity: z.coerce.number().positive(),
 });
 
 const BatchStockAdjustmentSchema = z.object({
@@ -40,11 +42,30 @@ const BatchStockAdjustmentSchema = z.object({
   adjustments: z.array(StockAdjustmentSchema),
 });
 
+type StockAdjustmentFormValues = z.infer<typeof StockAdjustmentSchema>;
+
 type BatchStockAdjustmentFormValues = z.infer<
   typeof BatchStockAdjustmentSchema
 >;
 
+const adjustmentToStockTransfer = (
+  adjustment: StockAdjustmentFormValues,
+  companyId: string,
+  batchId: string,
+): TypeAdjustmentStockTransfer => ({
+  id: adjustment.id!,
+  companyId: companyId,
+  productId: adjustment.productId!,
+  productName: adjustment.productName || "DUMMY_PRODUCT_NAME",
+  type: AdjustmentStockTransfer,
+  batchId: batchId,
+  value: mul(adjustment.quantity)(adjustment.type === "INCREASE" ? 1 : -1),
+  createdAt: new Date(),
+});
+
 export default function StockAdjustmentForm() {
+  const session = useUserSession();
+  const { toast } = useToast();
   const form = useForm<BatchStockAdjustmentFormValues>({
     resolver: zodResolver(BatchStockAdjustmentSchema),
     defaultValues: {
@@ -54,12 +75,32 @@ export default function StockAdjustmentForm() {
     },
   });
 
+  const onSubmit = async (data: BatchStockAdjustmentFormValues) => {
+    const batchId = crypto.randomUUID();
+
+    const stockTransfers = data.adjustments.map((adjustment) =>
+      adjustmentToStockTransfer(adjustment, session!.companyId, batchId),
+    );
+
+    const responses = await createAndProcessStockTransfers(stockTransfers);
+    if (responses.some((r) => !r.success)) {
+      toast({
+        description: "Algunos ajustes no pudieron ser procesados",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        description: "Ajustes procesados correctamente",
+      });
+    }
+  };
+
+  const adjustments = form.watch("adjustments");
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(() => {
-          console.log("hello world");
-        })}
+        onSubmit={form.handleSubmit(onSubmit)}
         className="mx-auto space-y-8 my-4"
       >
         <div className="space-y-4 p-2">
@@ -105,15 +146,19 @@ export default function StockAdjustmentForm() {
               <FormControl>
                 <StockAdjustmentFields
                   value={field.value}
-                  onChange={(value) => {
-                    console.log({ value });
-                    field.onChange(value);
-                  }}
+                  onChange={field.onChange}
                 />
               </FormControl>
             </FormItem>
           )}
         />
+        {adjustments.length > 0 && (
+          <div className="flex justify-end">
+            <Button>
+              <Save className="h-4 w-4 mr-2" /> Guardar
+            </Button>
+          </div>
+        )}
       </form>
     </Form>
   );

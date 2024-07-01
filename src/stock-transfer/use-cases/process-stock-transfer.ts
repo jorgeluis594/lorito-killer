@@ -38,7 +38,7 @@ export const processStockTransfer = async ({
 }: {
   repository: Repository;
   stockTransfer: StockTransfer;
-}): Promise<response<boolean>> => {
+}): Promise<response<StockTransfer>> => {
   if (
     stockTransfer.value < 0 &&
     !(await validateStockTransfer(repository.findProduct, stockTransfer))
@@ -59,7 +59,7 @@ export const processStockTransfer = async ({
     return updateStockResponse;
   }
 
-  return { success: true, data: true };
+  return { success: true, data: { ...stockTransfer } };
 };
 
 /**
