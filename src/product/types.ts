@@ -31,6 +31,7 @@ export const UNIT_UNIT_TYPE = "unit";
 
 export type SingleProduct = ProductBase & {
   purchasePrice: number;
+  stockConfig?: { productId: string; quantity: number };
   type: typeof SingleProductType;
   unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
   stock: number;
