@@ -10,10 +10,10 @@ export const createCompany = async (
   try {
     const { logo, ...companyData } = company
     const storedCompany = await prisma.company.create({
-      data: {...companyData} ,
+      data: { ...companyData },
     });
 
-    await prisma.logo.create({ data:logo! })
+    if (logo) await prisma.logo.create({ data: { ...logo, companyId: storedCompany.id } })
 
     return { success: true, data: storedCompany };
   } catch (e: any) {
@@ -25,12 +25,31 @@ export const updateCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
+    const { logo, ...companyData } = company
+
     const updatedCompany = await prisma.company.update({
       where: { id: company.id },
-      data: company,
+      data: companyData,
     });
 
-    return { success: true, data: updatedCompany };
+    const [foundLogo] = await prisma.logo.findMany({
+      where: { companyId: updatedCompany.id },
+      orderBy: { createdAt: "desc" },
+      take: 1
+    })
+
+    if (foundLogo?.id === logo?.id) return { success: true, data: updatedCompany };
+    else {
+      await prisma.logo.deleteMany({
+        where: { companyId: updatedCompany.id },
+      })
+
+      await prisma.logo.create({
+        data: {...logo!, companyId: company.id},
+      })
+
+      return { success: true, data: company };
+    }
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -52,7 +71,7 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
   }
 };
 
-export const deleteCompnay = async (
+export const deleteCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
@@ -65,18 +84,7 @@ export const deleteCompnay = async (
   }
 };
 
-const prismaToCompany = async (
-  prismaCompany: PrismaCompany,
-): Promise<Company> => {
 
-    return {
-      ...prismaCompany,
-      name: prismaCompany.name,
-      phone: prismaCompany.phone,
-      email: prismaCompany.email,
-      address: prismaCompany.address,
-    };
-};
 
 export const find = async (
   id?: string,
@@ -84,11 +92,11 @@ export const find = async (
   try {
     const company = await prisma.company.findUnique({
       where: { id },
-      include: { logo: true },
+      include: { logos: true },
     });
 
     if (company) {
-      return { success: true, data: await prismaToCompany( company ) };
+      return { success: true, data: {...company, logo: company.logos[0]} };
     } else {
       return { success: false, message: "Company not found" };
     }
