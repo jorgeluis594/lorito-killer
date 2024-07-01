@@ -1,12 +1,30 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { StockTransfer } from "@/stock-transfer/types";
+import {
+  AdjustmentStockTransfer,
+  OrderStockTransferName,
+  ProductStockTransfer,
+  StockTransfer,
+} from "@/stock-transfer/types";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+const typeSpanishMapper = {
+  [OrderStockTransferName]: "Venta POS",
+  [AdjustmentStockTransfer]: "Ajuste de stock",
+  [ProductStockTransfer]: "Producto",
+};
 
 export const columns: ColumnDef<StockTransfer & { productName: string }>[] = [
   {
     accessorKey: "productName",
-    header: "NOMBRE",
+    header: "NOMBRE DE PRODUCTO",
+  },
+  {
+    accessorKey: "type",
+    header: "TIPO DE MOVIMIENTO DE STOCK",
+    cell: ({ row }) => typeSpanishMapper[row.original.type],
   },
   {
     accessorKey: "value",
@@ -15,5 +33,7 @@ export const columns: ColumnDef<StockTransfer & { productName: string }>[] = [
   {
     accessorKey: "createdAt",
     header: "FECHA",
+    cell: ({ row }) =>
+      format(row.original.createdAt, "PPP h:mm a", { locale: es }),
   },
 ];

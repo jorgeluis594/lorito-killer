@@ -49,7 +49,7 @@ export default async function Page({ searchParams }: paramsProps) {
           <DataTable
             data={resultStockTransfers.data}
             columns={columns}
-            pageCount={totalCount / pageLimit}
+            pageCount={Math.ceil(totalCount / pageLimit)}
           />
         </div>
       </div>
