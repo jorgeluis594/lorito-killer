@@ -1,6 +1,6 @@
 import {
   OrderStockTransfer,
-  ProductStockTransfer,
+  ProductMovementStockTransfer,
   StockTransfer,
   StockTransferType,
   OrderStockTransferName,
@@ -14,7 +14,7 @@ import StockTransferCreateArgs = Prisma.StockTransferCreateArgs;
 
 const stockTransferTypeToPrismaMapper = {
   [OrderStockTransferName]: $Enums.StockTransferType.ORDER,
-  [ProductStockTransfer]: $Enums.StockTransferType.PRODUCT,
+  [ProductMovementStockTransfer]: $Enums.StockTransferType.PRODUCT_MOVEMENT,
   [AdjustmentStockTransfer]: $Enums.StockTransferType.ADJUSTMENT,
 };
 
@@ -23,7 +23,7 @@ const prismaToStockTransferTypeMapper: Record<
   StockTransferType
 > = {
   [$Enums.StockTransferType.ORDER]: OrderStockTransferName,
-  [$Enums.StockTransferType.PRODUCT]: ProductStockTransfer,
+  [$Enums.StockTransferType.PRODUCT_MOVEMENT]: ProductMovementStockTransfer,
   [$Enums.StockTransferType.ADJUSTMENT]: AdjustmentStockTransfer,
 };
 
