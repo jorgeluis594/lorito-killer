@@ -4,6 +4,8 @@ import {
   StockTransfer,
   StockTransferType,
   OrderStockTransferName,
+  TypeAdjustmentStockTransfer,
+  AdjustmentStockTransfer,
 } from "@/stock-transfer/types";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
@@ -13,6 +15,7 @@ import StockTransferCreateArgs = Prisma.StockTransferCreateArgs;
 const stockTransferTypeToPrismaMapper = {
   [OrderStockTransferName]: $Enums.StockTransferType.ORDER,
   [ProductStockTransfer]: $Enums.StockTransferType.PRODUCT,
+  [AdjustmentStockTransfer]: $Enums.StockTransferType.ADJUSTMENT,
 };
 
 const prismaToStockTransferTypeMapper: Record<
@@ -21,6 +24,7 @@ const prismaToStockTransferTypeMapper: Record<
 > = {
   [$Enums.StockTransferType.ORDER]: OrderStockTransferName,
   [$Enums.StockTransferType.PRODUCT]: ProductStockTransfer,
+  [$Enums.StockTransferType.ADJUSTMENT]: AdjustmentStockTransfer,
 };
 
 const orderStockTransferPrismaDataBuilder = (
@@ -36,21 +40,42 @@ const orderStockTransferPrismaDataBuilder = (
   };
 };
 
+const adjustmentStockTransferPrismaDataBuilder = (
+  stockTransfer: TypeAdjustmentStockTransfer,
+): StockTransferCreateArgs => {
+  const { batchId, productName, ...stockTransferData } = stockTransfer;
+  return {
+    data: {
+      ...stockTransferData,
+      data: { batchId },
+      type: stockTransferTypeToPrismaMapper[stockTransferData.type],
+    },
+  };
+};
+
+const buildStockTransferData = (
+  stockTransfer: StockTransfer,
+): StockTransferCreateArgs => {
+  if (stockTransfer.type === OrderStockTransferName) {
+    return orderStockTransferPrismaDataBuilder(stockTransfer);
+  } else if (stockTransfer.type === AdjustmentStockTransfer) {
+    return adjustmentStockTransferPrismaDataBuilder(stockTransfer);
+  }
+
+  throw new Error("Builder not implemented");
+};
+
 export const create = async (
   stockTransfer: StockTransfer,
 ): Promise<response<StockTransfer>> => {
   try {
-    if (stockTransfer.type !== OrderStockTransferName) {
-      throw new Error("Not implemented");
-    }
-
     const storedStockTransfer = await prisma.stockTransfer.create(
-      orderStockTransferPrismaDataBuilder(stockTransfer),
+      buildStockTransferData(stockTransfer),
     );
+    let persistedStockTransfer: StockTransfer;
 
-    return {
-      success: true,
-      data: {
+    if (storedStockTransfer.type === $Enums.StockTransferType.ORDER) {
+      persistedStockTransfer = {
         ...storedStockTransfer,
         value: storedStockTransfer.value.toNumber(),
         type: OrderStockTransferName,
@@ -58,7 +83,26 @@ export const create = async (
         orderItemId: (storedStockTransfer.data as Record<string, string>)[
           "orderItemId"
         ],
-      },
+      };
+    } else if (
+      storedStockTransfer.type === $Enums.StockTransferType.ADJUSTMENT
+    ) {
+      persistedStockTransfer = {
+        ...storedStockTransfer,
+        value: storedStockTransfer.value.toNumber(),
+        type: AdjustmentStockTransfer,
+        productName: stockTransfer.productName,
+        batchId: (storedStockTransfer.data as Record<string, string>)[
+          "batchId"
+        ],
+      };
+    } else {
+      throw new Error("Not implemented");
+    }
+
+    return {
+      success: true,
+      data: persistedStockTransfer,
     };
   } catch (error: any) {
     return { success: false, message: error.message };
