@@ -13,7 +13,10 @@ export default async function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get("host")!;
 
-  const subdomain = hostname.split(".")[0];
+  const subdomain =
+    process.env.PREVIEW === "true" ? "fantastidog" : hostname.split(".")[0];
+
+  console.log({ subdomain });
 
   const token = await getToken({ req });
   if (
