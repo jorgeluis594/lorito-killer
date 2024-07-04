@@ -45,7 +45,7 @@ export default async function Page({ searchParams }: paramsProps) {
         <aside className="w-1/5">
           <AddStockAdjustmentModal />
         </aside>
-        <div className="flex-1 lg:max-w-4xl mt-6">
+        <div className="flex-1 lg:max-w-5xl mt-6">
           <DataTable
             data={resultStockTransfers.data}
             columns={columns}

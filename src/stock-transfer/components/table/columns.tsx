@@ -18,6 +18,10 @@ const typeSpanishMapper = {
 
 export const columns: ColumnDef<StockTransfer & { productName: string }>[] = [
   {
+    accessorKey: "userName",
+    header: "USUARIO",
+  },
+  {
     accessorKey: "productName",
     header: "NOMBRE DE PRODUCTO",
   },
