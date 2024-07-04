@@ -38,6 +38,8 @@ export const SingleProductSchema = z.object({
     .optional(),
   unitType: z.enum([KG_UNIT_TYPE, UNIT_UNIT_TYPE]),
   categories: z.array(CategorySchema),
+  targetMovementProductId: z.string().optional(),
+  targetMovementProductQuantity: z.coerce.number().positive().optional(),
   updatedAt: z.date().optional(),
   createdAt: z.date().optional(),
 });

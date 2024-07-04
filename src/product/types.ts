@@ -24,24 +24,37 @@ type ProductBase = {
 };
 
 export const SingleProductType = "SingleProduct";
+export type TypeSingleProductType = typeof SingleProductType;
 
 export const KG_UNIT_TYPE = "kg";
 export const UNIT_UNIT_TYPE = "unit";
 
 export type SingleProduct = ProductBase & {
   purchasePrice: number;
+  stockConfig?: { productId: string; quantity: number };
   type: typeof SingleProductType;
   unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
   stock: number;
 };
 
 export const PackageProductType = "PackageProduct";
+export type TypePackageProductType = typeof PackageProductType;
+
 export type PackageProduct = ProductBase & {
   type: typeof PackageProductType;
   productItems: ProductItem[];
 };
 
 export type Product = SingleProduct | PackageProduct;
+
+type ProductTypeMap = {
+  [SingleProductType]: SingleProduct;
+  [PackageProductType]: PackageProduct;
+};
+
+export type ProductType = keyof ProductTypeMap;
+export type InferProductType<T extends ProductType | undefined> =
+  T extends ProductType ? ProductTypeMap[T] : Product;
 
 export type ProductItem = {
   id: string;

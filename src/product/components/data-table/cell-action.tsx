@@ -8,13 +8,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Edit, MoreHorizontal, Trash } from "lucide-react";
-import { useState } from "react";
+import { Edit, MoreHorizontal, PackageOpen, Trash } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Product } from "@/product/types";
-import { deleteProduct } from "@/product/api_repository";
+import { Product, SingleProduct, SingleProductType } from "@/product/types";
+import { deleteProduct, findProduct } from "@/product/api_repository";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
+import { UNIT_TYPE_MAPPER } from "@/product/constants";
+import { performProductMovementStockTransfer } from "@/stock-transfer/components/actions";
+import { useUserSession } from "@/lib/use-user-session";
 
 interface CellActionProps {
   product: Product;
@@ -23,9 +26,27 @@ interface CellActionProps {
 export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [movementStockModalOpen, setMovementStockModalOpen] = useState(false);
+  const [targetMovementProduct, setTargetMovementProduct] =
+    useState<SingleProduct | null>(null);
   const setProduct = useProductFormStore((store) => store.setProduct);
   const router = useRouter();
   const { toast } = useToast();
+  const user = useUserSession();
+
+  useEffect(() => {
+    if (
+      product.type === SingleProductType &&
+      product.stockConfig &&
+      movementStockModalOpen
+    ) {
+      findProduct(product.stockConfig.productId).then((response) => {
+        if (response.success) {
+          setTargetMovementProduct(response.data as SingleProduct);
+        }
+      });
+    }
+  }, [product, movementStockModalOpen]);
 
   const onConfirm = async () => {
     setLoading(true);
@@ -47,6 +68,28 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
     router.refresh();
   };
 
+  const onConfirmStockMovement = () => {
+    performProductMovementStockTransfer(
+      user!.id,
+      product as SingleProduct,
+    ).then((response) => {
+      if (!response.success) {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: response.message,
+        });
+        return;
+      } else {
+        toast({
+          title: "Stock actualizado con éxito",
+        });
+        setMovementStockModalOpen(false);
+        router.refresh();
+      }
+    });
+  };
+
   return (
     <>
       <AlertModal
@@ -55,6 +98,18 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
         onConfirm={onConfirm}
         loading={loading}
       />
+
+      <AlertModal
+        isOpen={movementStockModalOpen}
+        onClose={() => setMovementStockModalOpen(false)}
+        onConfirm={onConfirmStockMovement}
+        loading={loading}
+      >
+        <>
+          {`Se agregara ${(product as SingleProduct).stockConfig?.quantity || ""} ${targetMovementProduct ? UNIT_TYPE_MAPPER[targetMovementProduct.unitType] : ""} al producto `}
+          <span className="font-semibold">{targetMovementProduct?.name}</span>
+        </>
+      </AlertModal>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -68,6 +123,13 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
           <DropdownMenuItem onClick={() => setProduct(product)}>
             <Edit className="mr-2 h-4 w-4" /> Editar
           </DropdownMenuItem>
+          {product.type === SingleProductType &&
+            product.stock > 0 &&
+            product.stockConfig && (
+              <DropdownMenuItem onClick={() => setMovementStockModalOpen(true)}>
+                <PackageOpen className="mr-2 h-4 w-4" /> Mover stock
+              </DropdownMenuItem>
+            )}
           <DropdownMenuItem onClick={() => setOpen(true)}>
             <Trash className="mr-2 h-4 w-4" /> Eliminar
           </DropdownMenuItem>

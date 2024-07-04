@@ -60,7 +60,6 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
       const signInResponse = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        callbackUrl: callbackUrl || "/",
       });
 
       console.log({ signInResponse });
@@ -68,8 +67,9 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
       await signIn("credentials", {
         email: data.email,
         password: data.password,
-        callbackUrl: callbackUrl || "/",
+        redirect: false,
       });
+      window.location.href = callbackUrl || window.location.origin;
     }
   };
 

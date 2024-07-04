@@ -9,6 +9,8 @@ import {
   ProductSortParams,
   SingleProduct,
   SingleProductType,
+  TypePackageProductType,
+  TypeSingleProductType,
   UNIT_UNIT_TYPE,
 } from "./types";
 import { response } from "@/lib/types";
@@ -43,19 +45,22 @@ export const PRISMA_UNIT_TYPE_MAPPER: Record<
 const singleProductToPrisma = (
   product: SingleProduct,
 ): Prisma.ProductCreateInput => {
-  const { type, id, photos, categories, ...data } = product;
-  let sku: string | null;
-
-  if (product.sku === undefined) {
-    sku = null;
-  } else {
-    sku = product.sku;
-  }
+  const { type, id, photos, categories, stockConfig, ...data } = product;
 
   return {
     ...data,
+    sku: product.sku || null,
+    isPackage: false,
+    price: new Prisma.Decimal(product.price),
     unitType: PRISMA_UNIT_TYPE_MAPPER[product.unitType],
-    sku,
+    purchasePrice: product.purchasePrice
+      ? new Prisma.Decimal(product.purchasePrice)
+      : null,
+    stock: new Prisma.Decimal(product.stock),
+    targetMovementProductId: stockConfig ? stockConfig.productId : null,
+    targetMovementProductStock: stockConfig
+      ? new Prisma.Decimal(stockConfig.quantity)
+      : null,
   };
 };
 
@@ -295,6 +300,14 @@ const prismaToProduct = async (
         ...c,
         companyId: c.companyId || "some_company_id",
       })),
+      stockConfig:
+        prismaProduct.targetMovementProductId &&
+        prismaProduct.targetMovementProductStock
+          ? {
+              productId: prismaProduct.targetMovementProductId,
+              quantity: prismaProduct.targetMovementProductStock.toNumber(),
+            }
+          : undefined,
       purchasePrice,
     };
   }
@@ -306,18 +319,27 @@ export const getMany = async ({
   categoryId,
   limit,
   q,
+  productType,
 }: {
   companyId: string;
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
   limit?: number;
   q?: string | null;
+  productType?: TypeSingleProductType | TypePackageProductType;
 }): Promise<response<Product[]>> => {
   try {
     const query: Prisma.ProductFindManyArgs = {
       where: { companyId },
       orderBy: sortBy,
     };
+
+    if (productType)
+      query.where = {
+        ...query.where,
+        isPackage: productType === PackageProductType,
+      };
+
     if (categoryId)
       query.where = {
         ...query.where,

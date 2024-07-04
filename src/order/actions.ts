@@ -6,16 +6,19 @@ import { create as createOrder } from "./db_repository";
 import { revalidatePath } from "next/cache";
 import { getLastOpenCashShift } from "@/cash-shift/db_repository";
 import { getCompany as findCompany } from "@/company/db_repository";
+import { find as findProduct } from "@/product/db_repository";
 import {
-  find as findProduct,
-  update as updateProduct,
-} from "@/product/db_repository";
+  updateStock as UpdateStockFromStockTransfer,
+  create as createStockTransfer,
+} from "@/stock-transfer/db_repository";
+import { updateStock } from "@/order/use-cases/update-stock";
 import { getSession } from "@/lib/auth";
-import { PackageProductType, Product, SingleProduct } from "@/product/types";
 import { Company } from "@/company/types";
-import { mul, sub } from "@/lib/utils";
 
-export const create = async (data: Order): Promise<response<Order>> => {
+export const create = async (
+  userId: string,
+  order: Order,
+): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
@@ -25,7 +28,7 @@ export const create = async (data: Order): Promise<response<Order>> => {
 
   const openCashShift = openCashShiftResponse.data;
 
-  if (openCashShift.id !== data.cashShiftId) {
+  if (openCashShift.id !== order.cashShiftId) {
     return {
       success: false,
       message: "La caja abierta no coincide con la caja de la venta",
@@ -40,68 +43,31 @@ export const create = async (data: Order): Promise<response<Order>> => {
   }
 
   const createOrderResponse = await createOrder({
-    ...data,
+    ...order,
     cashShiftId: openCashShift.id,
     companyId: session.user.companyId,
   });
-  if (createOrderResponse.success) {
-    revalidatePath("/api/orders");
-    await updateProductsStocks(createOrderResponse.data);
+  if (!createOrderResponse.success) {
+    return createOrderResponse;
   }
 
-  return createOrderResponse;
-};
-
-async function updateProductsStocks(order: Order) {
-  const productsIds = order.orderItems.map((oi) => oi.productId);
-  const productsResponse = await Promise.all(
-    productsIds.map((id) => findProduct(id)),
-  );
-  const orderItemsByProductMapper = order.orderItems.reduce(
-    (acc: Record<string, OrderItem>, oi) => {
-      acc[oi.productId] = oi;
-      return acc;
+  revalidatePath("/api/orders");
+  const updateStockResponse = await updateStock(
+    userId,
+    createOrderResponse.data,
+    {
+      findProduct,
+      createStockTransfer,
+      updateStock: UpdateStockFromStockTransfer,
     },
-    {},
   );
 
-  const products = productsResponse
-    .filter((r) => r.success)
-    .map((r) => (r.success && r.data) as Product);
+  if (!updateStockResponse.success) {
+    return updateStockResponse;
+  }
 
-  await Promise.all(
-    products.map(async (product) => {
-      // TODO: Handle the logic of stock discount on package products
-      if (product.type === PackageProductType) {
-        await Promise.all(
-          product.productItems.map(async (pi) => {
-            const childProductResponse = await findProduct(pi.productId);
-            if (!childProductResponse.success) return;
-
-            const childProduct = childProductResponse.data as SingleProduct;
-            await updateProduct({
-              ...childProduct,
-              stock: sub(childProduct.stock)(
-                mul(orderItemsByProductMapper[product.id!].quantity)(
-                  pi.quantity,
-                ),
-              ),
-            });
-          }),
-        );
-
-        return;
-      }
-
-      await updateProduct({
-        ...product,
-        stock: sub(product.stock)(
-          orderItemsByProductMapper[product.id!].quantity,
-        ),
-      });
-    }),
-  );
-}
+  return { success: true, data: createOrderResponse.data };
+};
 
 export const getCompany = async (): Promise<response<Company>> => {
   const session = await getSession();

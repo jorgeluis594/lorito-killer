@@ -11,7 +11,13 @@ export const createCompany = async (
       data: company,
     });
 
-    return { success: true, data: storedCompany };
+    return {
+      success: true,
+      data: {
+        ...storedCompany,
+        subdomain: storedCompany.subdomain || "some_subdomain",
+      },
+    };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -26,7 +32,13 @@ export const updateCompany = async (
       data: company,
     });
 
-    return { success: true, data: updatedCompany };
+    return {
+      success: true,
+      data: {
+        ...updatedCompany,
+        subdomain: company.subdomain || "some_subdomain",
+      },
+    };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -42,7 +54,10 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
       return { success: false, message: "Company not found" };
     }
 
-    return { success: true, data: company };
+    return {
+      success: true,
+      data: { ...company, subdomain: company.subdomain || "some_subdomain" },
+    };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
