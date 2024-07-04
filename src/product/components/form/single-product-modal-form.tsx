@@ -411,6 +411,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                           <Input
                             autoComplete="off"
                             type="number"
+                            disabled={!formStore.isNew}
                             placeholder="Ingrese cantidad"
                             {...field}
                           />
