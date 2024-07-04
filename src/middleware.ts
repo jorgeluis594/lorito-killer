@@ -16,9 +16,8 @@ export default async function middleware(req: NextRequest) {
   const subdomain =
     process.env.PREVIEW === "true" ? "fantastidog" : hostname.split(".")[0];
 
-  console.log({ subdomain });
-
   const token = await getToken({ req });
+
   if (
     !token &&
     url.pathname.startsWith("/dashboard") &&
