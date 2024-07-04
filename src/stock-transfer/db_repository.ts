@@ -183,38 +183,47 @@ export const getMany = async (
     const result = await prisma.stockTransfer.findMany({
       where: { companyId },
       skip: (page - 1) * pageLimit,
+      orderBy: { createdAt: "desc" },
       take: pageLimit,
-      include: { product: true },
+      include: { product: true, user: true },
     });
 
     return {
       success: true,
       data: result.map((prismaStockTransfer) => {
         const { product, ...stockTransferData } = prismaStockTransfer;
+        const userData = {
+          userId: prismaStockTransfer.userId,
+          userName: prismaStockTransfer.user?.name || undefined,
+        };
+
         switch (stockTransferData.type) {
           case $Enums.StockTransferType.ORDER:
             return {
               ...stockTransferData,
+              ...userData,
               value: stockTransferData.value.toNumber(),
               type: OrderStockTransferName,
               productName: product.name,
               orderItemId: (stockTransferData.data as Record<string, string>)[
                 "orderItemId"
               ],
-            } as OrderStockTransfer;
+            };
           case $Enums.StockTransferType.ADJUSTMENT:
             return {
               ...stockTransferData,
+              ...userData,
               value: stockTransferData.value.toNumber(),
               type: AdjustmentStockTransfer,
               productName: product.name,
               batchId: (stockTransferData.data as Record<string, string>)[
                 "batchId"
               ],
-            } as TypeAdjustmentStockTransfer;
+            };
           case $Enums.StockTransferType.PRODUCT_MOVEMENT:
             return {
               ...stockTransferData,
+              ...userData,
               value: stockTransferData.value.toNumber(),
               type: ProductMovementStockTransferName,
               productName: product.name,
@@ -224,7 +233,7 @@ export const getMany = async (
               toProductId: (stockTransferData.data as Record<string, string>)[
                 "toProductId"
               ],
-            } as ProductMovementStockTransfer;
+            };
           default:
             throw new Error(
               `Prisma type not implemented: ${stockTransferData.type}`,
