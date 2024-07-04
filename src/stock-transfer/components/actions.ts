@@ -32,6 +32,7 @@ export const createAndProcessStockTransfers = async (
 };
 
 export const performProductMovementStockTransfer = async (
+  userId: string,
   parentProduct: SingleProduct,
 ): Promise<response<StockTransfer[]>> => {
   if (!parentProduct.stockConfig) {
@@ -50,6 +51,7 @@ export const performProductMovementStockTransfer = async (
     // Remove stock from parent product
     {
       id: crypto.randomUUID(),
+      userId,
       productId: parentProduct.id!,
       companyId: parentProduct.companyId!,
       value: -1,
@@ -62,6 +64,7 @@ export const performProductMovementStockTransfer = async (
     // Add stock to receiver product
     {
       id: crypto.randomUUID(),
+      userId,
       productId: receiverProductResponse.data.id!,
       companyId: receiverProductResponse.data.companyId!,
       value: parentProduct.stockConfig.quantity,
@@ -76,7 +79,6 @@ export const performProductMovementStockTransfer = async (
   const performStockTransferResponses =
     await createAndProcessStockTransfers(stockTransfers);
 
-  console.log(performStockTransferResponses);
   if (performStockTransferResponses.some((response) => !response.success)) {
     return { success: false, message: "Error" };
   }

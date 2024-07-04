@@ -15,12 +15,13 @@ import { mul, plus } from "@/lib/utils";
 type FindProduct = (productId: string) => Promise<response<Product>>;
 
 export const generateOrderStocksTransfers = async (
+  userId: string,
   order: Order,
   findProduct: FindProduct,
 ): Promise<response<OrderStockTransfer[]>> => {
   const stockTransfersResponse = await Promise.all(
     order.orderItems.map((oi) =>
-      generateOrderItemStockTransfer(oi, findProduct),
+      generateOrderItemStockTransfer(userId, oi, findProduct),
     ),
   );
 
@@ -46,6 +47,7 @@ export const generateOrderStocksTransfers = async (
 };
 
 const generateOrderItemStockTransfer = async (
+  userId: string,
   orderItem: OrderItem,
   findProduct: FindProduct,
 ): Promise<response<OrderStockTransfer[]>> => {
@@ -58,9 +60,17 @@ const generateOrderItemStockTransfer = async (
   let stockTransfers: OrderStockTransfer[];
 
   if (product.type == PackageProductType) {
-    stockTransfers = generatePackageProductStockTransfers(orderItem, product);
+    stockTransfers = generatePackageProductStockTransfers(
+      orderItem,
+      userId,
+      product,
+    );
   } else {
-    stockTransfers = generateSingleProductStockTransfers(orderItem, product);
+    stockTransfers = generateSingleProductStockTransfers(
+      orderItem,
+      userId,
+      product,
+    );
   }
 
   return { success: true, data: stockTransfers };
@@ -68,10 +78,12 @@ const generateOrderItemStockTransfer = async (
 
 const generatePackageProductStockTransfers = (
   orderItem: OrderItem,
+  userId: string,
   product: PackageProduct,
 ): OrderStockTransfer[] => {
   return product.productItems.map((productItem) => ({
     id: crypto.randomUUID(),
+    userId,
     orderItemId: orderItem.id!,
     companyId: product.companyId,
     productName: productItem.productName,
@@ -84,11 +96,13 @@ const generatePackageProductStockTransfers = (
 
 const generateSingleProductStockTransfers = (
   orderItem: OrderItem,
+  userId: string,
   product: SingleProduct,
 ): OrderStockTransfer[] => {
   return [
     {
       id: crypto.randomUUID(),
+      userId,
       orderItemId: orderItem.id!,
       companyId: product.companyId,
       createdAt: new Date(),

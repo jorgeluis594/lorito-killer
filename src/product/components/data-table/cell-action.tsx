@@ -17,6 +17,7 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { performProductMovementStockTransfer } from "@/stock-transfer/components/actions";
+import { useUserSession } from "@/lib/use-user-session";
 
 interface CellActionProps {
   product: Product;
@@ -31,6 +32,7 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const setProduct = useProductFormStore((store) => store.setProduct);
   const router = useRouter();
   const { toast } = useToast();
+  const user = useUserSession();
 
   useEffect(() => {
     if (
@@ -67,24 +69,25 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   };
 
   const onConfirmStockMovement = () => {
-    performProductMovementStockTransfer(product as SingleProduct).then(
-      (response) => {
-        if (!response.success) {
-          toast({
-            title: "Error",
-            variant: "destructive",
-            description: response.message,
-          });
-          return;
-        } else {
-          toast({
-            title: "Stock actualizado con éxito",
-          });
-          setMovementStockModalOpen(false);
-          router.refresh();
-        }
-      },
-    );
+    performProductMovementStockTransfer(
+      user!.id,
+      product as SingleProduct,
+    ).then((response) => {
+      if (!response.success) {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: response.message,
+        });
+        return;
+      } else {
+        toast({
+          title: "Stock actualizado con éxito",
+        });
+        setMovementStockModalOpen(false);
+        router.refresh();
+      }
+    });
   };
 
   return (

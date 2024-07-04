@@ -15,6 +15,8 @@ export type StockTransferType =
 
 export type StockTransferBase = {
   id: string;
+  userId: string;
+  userName?: string;
   companyId: string;
   value: number;
   productId: string;

@@ -28,6 +28,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import PdfVoucherRedirection from "@/order/components/pdf-voucher-redirection";
 import { Order } from "@/order/types";
 import { Company } from "@/company/types";
+import { useUserSession } from "@/lib/use-user-session";
 
 const PaymentViews = {
   none: NonePayment,
@@ -54,10 +55,11 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const { toast } = useToast();
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderCreated, setOrderCreated] = useState<Order | null>(null);
+  const user = useUserSession();
 
   const handleOrderCreation = async () => {
     setCreatingOrder(true);
-    const response = await create({ ...order, status: "completed" });
+    const response = await create(user!.id, { ...order, status: "completed" });
     if (response.success) {
       toast({
         title: "En hora buena!",

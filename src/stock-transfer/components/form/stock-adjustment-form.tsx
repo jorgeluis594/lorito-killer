@@ -27,6 +27,7 @@ import { mul } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 import { createAndProcessStockTransfers } from "@/stock-transfer/components/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
+import { User } from "@/user/types";
 
 const StockAdjustmentSchema = z.object({
   id: z.string(),
@@ -50,11 +51,12 @@ type BatchStockAdjustmentFormValues = z.infer<
 
 const adjustmentToStockTransfer = (
   adjustment: StockAdjustmentFormValues,
-  companyId: string,
+  user: User,
   batchId: string,
 ): TypeAdjustmentStockTransfer => ({
   id: adjustment.id!,
-  companyId: companyId,
+  userId: user.id,
+  companyId: user.companyId,
   productId: adjustment.productId!,
   productName: adjustment.productName || "DUMMY_PRODUCT_NAME",
   type: AdjustmentStockTransfer,
@@ -79,7 +81,7 @@ export default function StockAdjustmentForm() {
     const batchId = crypto.randomUUID();
 
     const stockTransfers = data.adjustments.map((adjustment) =>
-      adjustmentToStockTransfer(adjustment, session!.companyId, batchId),
+      adjustmentToStockTransfer(adjustment, session!, batchId),
     );
 
     const responses = await createAndProcessStockTransfers(stockTransfers);

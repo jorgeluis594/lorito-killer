@@ -15,7 +15,10 @@ import { updateStock } from "@/order/use-cases/update-stock";
 import { getSession } from "@/lib/auth";
 import { Company } from "@/company/types";
 
-export const create = async (data: Order): Promise<response<Order>> => {
+export const create = async (
+  userId: string,
+  order: Order,
+): Promise<response<Order>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
@@ -25,7 +28,7 @@ export const create = async (data: Order): Promise<response<Order>> => {
 
   const openCashShift = openCashShiftResponse.data;
 
-  if (openCashShift.id !== data.cashShiftId) {
+  if (openCashShift.id !== order.cashShiftId) {
     return {
       success: false,
       message: "La caja abierta no coincide con la caja de la venta",
@@ -40,7 +43,7 @@ export const create = async (data: Order): Promise<response<Order>> => {
   }
 
   const createOrderResponse = await createOrder({
-    ...data,
+    ...order,
     cashShiftId: openCashShift.id,
     companyId: session.user.companyId,
   });
@@ -49,11 +52,15 @@ export const create = async (data: Order): Promise<response<Order>> => {
   }
 
   revalidatePath("/api/orders");
-  const updateStockResponse = await updateStock(createOrderResponse.data, {
-    findProduct,
-    createStockTransfer,
-    updateStock: UpdateStockFromStockTransfer,
-  });
+  const updateStockResponse = await updateStock(
+    userId,
+    createOrderResponse.data,
+    {
+      findProduct,
+      createStockTransfer,
+      updateStock: UpdateStockFromStockTransfer,
+    },
+  );
 
   if (!updateStockResponse.success) {
     return updateStockResponse;

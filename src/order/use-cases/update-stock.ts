@@ -16,10 +16,12 @@ interface Repository {
 }
 
 export const updateStock = async (
+  userId: string,
   order: Order,
   repository: Repository,
 ): Promise<response<undefined>> => {
   const stockTransfersResponse = await generateOrderStocksTransfers(
+    userId,
     order,
     repository.findProduct,
   );
