@@ -36,8 +36,8 @@ export default async function Page({ searchParams }: paramsProps) {
 
       <div className="flex items-start justify-between">
         <Heading
-          title="Ajustes de Stock"
-          description="Agregar o regulaiza el stock de tus productos"
+          title="Movimientos de Stock"
+          description="Agrega o regulariza el stock de tus productos"
         />
       </div>
       <Separator />

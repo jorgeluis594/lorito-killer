@@ -26,9 +26,9 @@ export const navItems: NavItem[] = [
     label: "productos",
   },
   {
-    title: "Ajuste de stock",
+    title: "Movimientos de stock",
     href: "/dashboard/stock_adjustments",
     icon: "stock_adjustments",
-    label: "ajuste de stock",
+    label: "movimientos de stock",
   },
 ];
