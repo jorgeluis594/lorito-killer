@@ -34,18 +34,19 @@ export const updateCompany = async (
 
     const [foundLogo] = await prisma.logo.findMany({
       where: { companyId: updatedCompany.id },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
       take: 1
     })
 
-    if (foundLogo?.id === logo?.id) return { success: true, data: updatedCompany };
-    else {
+    if (foundLogo?.id === logo?.id) {
+      return { success: true, data: updatedCompany };
+    } else {
       await prisma.logo.deleteMany({
         where: { companyId: updatedCompany.id },
       })
 
       await prisma.logo.create({
-        data: {...logo!, companyId: company.id},
+        data: { ...logo!, companyId: company.id },
       })
 
       return { success: true, data: company };
@@ -71,21 +72,6 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
   }
 };
 
-export const deleteCompany = async (
-  company: Company,
-): Promise<response<Company>> => {
-  try {
-    const deletedCompany = await prisma.company.delete({
-      where: { id: company.id },
-    });
-    return { success: true, data: deletedCompany };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
-};
-
-
-
 export const find = async (
   id?: string,
 ): Promise<response<Company>> => {
@@ -96,7 +82,7 @@ export const find = async (
     });
 
     if (company) {
-      return { success: true, data: {...company, logo: company.logos[0]} };
+      return { success: true, data: { ...company, logo: company.logos[0] } };
     } else {
       return { success: false, message: "Company not found" };
     }
