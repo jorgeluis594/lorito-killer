@@ -28,6 +28,7 @@ import { useUserSession } from "@/lib/use-user-session";
 import { createAndProcessStockTransfers } from "@/stock-transfer/components/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { User } from "@/user/types";
+import { useRouter } from "next/navigation";
 
 const StockAdjustmentSchema = z.object({
   id: z.string(),
@@ -65,8 +66,15 @@ const adjustmentToStockTransfer = (
   createdAt: new Date(),
 });
 
-export default function StockAdjustmentForm() {
+interface StockAdjustmentFormProps {
+  onSubmit?: (data: BatchStockAdjustmentFormValues) => void;
+}
+
+export default function StockAdjustmentForm({
+  onSubmit: onFormSubmit,
+}: StockAdjustmentFormProps) {
   const session = useUserSession();
+  const router = useRouter();
   const { toast } = useToast();
   const form = useForm<BatchStockAdjustmentFormValues>({
     resolver: zodResolver(BatchStockAdjustmentSchema),
@@ -91,6 +99,8 @@ export default function StockAdjustmentForm() {
         variant: "destructive",
       });
     } else {
+      onFormSubmit && onFormSubmit(data);
+      router.refresh();
       toast({
         description: "Ajustes procesados correctamente",
       });
