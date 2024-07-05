@@ -50,7 +50,6 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { debounce } from "@/lib/utils";
 import { useUserSession } from "@/lib/use-user-session";
 import { getCompany } from "@/order/actions";
-import { useProductsStore } from "@/product/components/products-store-provider";
 import {
   Select,
   SelectContent,
@@ -101,11 +100,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   const description = formStore.isNew
     ? "Registra un nuevo producto"
     : "Editar producto.";
-
-  const { addProduct, updateProduct } = useProductsStore((store) => ({
-    addProduct: store.addProduct,
-    updateProduct: store.updateProduct,
-  }));
 
   const [targetMovementProduct, setTargetMovementProduct] = useState<
     SingleProduct | undefined
@@ -191,7 +185,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Producto actualizado con exito",
         });
-        updateProduct(res.data);
         onActionPerformed();
       } else {
         toast({
@@ -207,7 +200,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Producto creado con exito",
         });
-        addProduct(res.data);
         onActionPerformed();
       } else {
         toast({

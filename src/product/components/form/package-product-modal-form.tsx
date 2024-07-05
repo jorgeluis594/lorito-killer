@@ -72,10 +72,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
 }) => {
   const formStore = useProductFormStore((store) => store);
   const user = useUserSession();
-  const { addProduct, updateProduct } = useProductsStore((store) => ({
-    addProduct: store.addProduct,
-    updateProduct: store.updateProduct,
-  }));
+
   if (formStore.productType !== PackageProductType)
     throw new Error("Invalid product type");
 
@@ -123,7 +120,6 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Pack actualizado con exito",
         });
-        updateProduct(res.data);
         onActionPerformed();
       } else {
         toast({
@@ -140,7 +136,6 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
         toast({
           description: "Pack creado con exito",
         });
-        addProduct(res.data);
         onActionPerformed();
       } else {
         toast({

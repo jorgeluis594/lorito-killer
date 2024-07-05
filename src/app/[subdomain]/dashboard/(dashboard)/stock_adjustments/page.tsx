@@ -21,10 +21,11 @@ export default async function Page({ searchParams }: paramsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
   const session = await getSession();
-  const [resultStockTransfers, totalCount] = await Promise.all([
-    getMany(session.user.companyId, page, pageLimit),
-    total(session.user.companyId),
-  ]);
+  const resultStockTransfers = await getMany(
+    session.user.companyId,
+    page,
+    pageLimit,
+  );
 
   if (!resultStockTransfers.success) {
     return;
@@ -49,7 +50,7 @@ export default async function Page({ searchParams }: paramsProps) {
           <DataTable
             data={resultStockTransfers.data}
             columns={columns}
-            pageCount={Math.ceil(totalCount / pageLimit)}
+            pageCount={1}
           />
         </div>
       </div>

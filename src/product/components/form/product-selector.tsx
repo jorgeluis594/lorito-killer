@@ -24,7 +24,7 @@ import { debounce } from "@/lib/utils";
 import * as React from "react";
 
 export interface ProductSelectorProps<T extends ProductType | undefined> {
-  value?: InferProductType<T>;
+  value?: InferProductType<T> | string;
   onSelect?: (product: InferProductType<T>) => void;
   skipProductIds?: string[];
   productType?: T;

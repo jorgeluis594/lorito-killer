@@ -13,11 +13,9 @@ export default function DashboardLayout({
   return (
     <OrderFormProvider>
       <CategoryStoreProvider>
-        <ProductsStoreProvider>
-          <CashShiftStoreProvider>
-            <CategoriesLoader>{children}</CategoriesLoader>
-          </CashShiftStoreProvider>
-        </ProductsStoreProvider>
+        <CashShiftStoreProvider>
+          <CategoriesLoader>{children}</CategoriesLoader>
+        </CashShiftStoreProvider>
       </CategoryStoreProvider>
     </OrderFormProvider>
   );
