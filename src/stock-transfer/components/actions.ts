@@ -13,11 +13,12 @@ import {
 } from "@/stock-transfer/types";
 import { response } from "@/lib/types";
 import { SingleProduct } from "@/product/types";
+import { revalidatePath } from "next/cache";
 
 export const createAndProcessStockTransfers = async (
   stockTransfers: StockTransfer[],
 ): Promise<response<StockTransfer>[]> => {
-  return await Promise.all(
+  const responses = await Promise.all(
     stockTransfers.map((stockTransfer) =>
       processStockTransfer({
         repository: {
@@ -29,6 +30,10 @@ export const createAndProcessStockTransfers = async (
       }),
     ),
   );
+
+  revalidatePath("/[subdomain]/dashboard/stock_adjustments");
+
+  return responses;
 };
 
 export const performProductMovementStockTransfer = async (
