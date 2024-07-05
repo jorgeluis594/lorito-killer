@@ -1,6 +1,6 @@
 "use client";
 
-import { InferProductType, Product, ProductType } from "@/product/types";
+import { InferProductType, ProductType } from "@/product/types";
 import { useEffect, useState } from "react";
 import {
   Popover,
@@ -24,7 +24,7 @@ import { debounce } from "@/lib/utils";
 import * as React from "react";
 
 export interface ProductSelectorProps<T extends ProductType | undefined> {
-  value?: InferProductType<T> | string;
+  value?: InferProductType<T>;
   onSelect?: (product: InferProductType<T>) => void;
   skipProductIds?: string[];
   productType?: T;
