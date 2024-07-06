@@ -14,10 +14,10 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import React from "react";
-import { updateCompany } from "@/company/components/actions";
+import { updateCompany, removeLogo, storeLogos } from "@/company/components/actions";
 import { Company, Logo } from "@/company/types";
 import { useToast } from "@/shared/components/ui/use-toast";
-import FileUpload from "@/product/components/file-upload/file-upload";
+import LogoUpload from "@/company/components/file-upload/file-upload-logo";
 
 const IMG_MAX_LIMIT = 1;
 
@@ -59,6 +59,7 @@ export default function CompanyForm({ company }: { company: Company }) {
   });
 
   const handleSubmit = async (data: CompanyFormValues) => {
+    
     const response = await updateCompany({ ...company, ...data, logo: data.logos ? data.logos![0] : undefined });
 
     if (!response.success) {
@@ -74,6 +75,61 @@ export default function CompanyForm({ company }: { company: Company }) {
         title: "Empresa actualizada",
         description: "Los datos de la empresa han sido actualizados",
       });
+    }
+  };
+
+  const handleLogosUpdated = async (newLogos: Logo[]) => {
+    const currentLogos = form.getValues("logos") || [];
+
+    const logosToRemove = currentLogos.filter(
+      (logo: Logo) =>
+        !newLogos.find((newLogo: Logo) => newLogo.key === logo.key),
+    );
+    const logosToAppend = newLogos.filter(
+      (logo: Logo) =>
+        !currentLogos.find(
+          (currentLogo: Logo) => currentLogo.key === logo.key,
+        ),
+    );
+
+    if (logosToRemove.length) {
+      form.setValue("logos", newLogos);
+      for (const logo of logosToRemove) {
+        const removeLogoResponse = await removeLogo(
+          company.id!,
+          logo.id!,
+        );
+        if (removeLogoResponse.success) {
+          toast({
+            description: "Logo eliminada con exito",
+          });
+        } else {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: removeLogoResponse.message,
+          });
+        }
+      }
+    }
+
+    if (logosToAppend.length) {
+      const storeLogoResponse = await storeLogos(
+        company.id!,
+        logosToAppend,
+      );
+      if (storeLogoResponse.success) {
+        form.setValue("logos", [...currentLogos, ...storeLogoResponse.data]);
+        toast({
+          description: "Logos subidas con exito",
+        });
+      } else {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: storeLogoResponse.message,
+        });
+      }
     }
   };
 
@@ -145,7 +201,7 @@ export default function CompanyForm({ company }: { company: Company }) {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <FileUpload
+                    <LogoUpload
                       onChange={ field.onChange }
                       value={field.value || []}
                     />

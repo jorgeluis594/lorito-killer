@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 
 import { Company, Logo } from "@/company/types";
 import { response } from "@/lib/types";
-import { Company as PrismaCompany } from "@prisma/client";
 
 export const createCompany = async (
   company: Company,
@@ -26,7 +25,7 @@ export const updateCompany = async (
 ): Promise<response<Company>> => {
   try {
     const { logo, ...companyData } = company
-
+    
     const updatedCompany = await prisma.company.update({
       where: { id: company.id },
       data: companyData,
@@ -73,7 +72,7 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
 };
 
 export const find = async (
-  id?: string,
+  id: string,
 ): Promise<response<Company>> => {
   try {
     const company = await prisma.company.findUnique({
