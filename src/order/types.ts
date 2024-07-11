@@ -20,6 +20,8 @@ export type Order = {
   total: number;
   status: "pending" | "completed" | "cancelled";
   payments: Payment[];
+  documentType?: "invoice" | "receipt" | "ticket";
+  documentNumeral?: string;
   createdAt?: Date;
   updatedAt?: Date;
 };
