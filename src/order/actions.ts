@@ -14,6 +14,8 @@ import {
 import { updateStock } from "@/order/use-cases/update-stock";
 import { getSession } from "@/lib/auth";
 import { Company } from "@/company/types";
+import {createDocument} from "@/document/use_cases/create-document";
+import {createInvoice, createReceipt} from "@/document/factpro_repository";
 
 export const create = async (
   userId: string,
@@ -66,7 +68,15 @@ export const create = async (
     return updateStockResponse;
   }
 
-  return { success: true, data: createOrderResponse.data };
+  const documentResponse = await createDocument(
+      { createReceipt, createInvoice},
+      createOrderResponse.data,
+  );
+  if (!documentResponse.success) {
+    return documentResponse;
+  }
+
+  return { success: true, data: documentResponse.data };
 };
 
 export const getCompany = async (): Promise<response<Company>> => {
