@@ -1,3 +1,5 @@
+"use server";
+
 import {response} from "@/lib/types";
 import {Order} from "@/order/types";
 

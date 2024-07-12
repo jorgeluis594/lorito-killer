@@ -48,6 +48,7 @@ export const create = async (
     ...order,
     cashShiftId: openCashShift.id,
     companyId: session.user.companyId,
+    documentType: order.documentType,
   });
   if (!createOrderResponse.success) {
     return createOrderResponse;

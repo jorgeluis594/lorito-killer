@@ -1,9 +1,10 @@
 import {Order} from "@/order/types";
 import {response} from "@/lib/types";
+import {BodyDocument} from "@/document/types";
 
 export const createInvoice = async ( order: Order):Promise<response<Order>> => {
-    const body= {
-        tipo_documento: order.documentType === "invoice" ? "01" : "02",
+    const body: BodyDocument= {
+        tipo_documento: "01",
         serie: "",
         numero: "",
         tipo_operacion: "0101",
@@ -16,7 +17,7 @@ export const createInvoice = async ( order: Order):Promise<response<Order>> => {
             codigo_establecimiento: "0000"
         },
         cliente: {
-            cliente_tipo_documento: "6",
+            cliente_tipo_documento: "1",
             cliente_numero_documento: "20605577246",
             cliente_denominacion: "CORPORACION VEL PERU S.A.C.",
             codigo_pais: "",

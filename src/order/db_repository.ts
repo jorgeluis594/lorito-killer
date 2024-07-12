@@ -110,6 +110,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       data: {
         ...orderData,
         payments: { create: mapPaymentsToPrisma(payments) as any },
+        documentType: order.documentType,
       },
       include: { payments: true },
     });
@@ -122,6 +123,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
+      documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
     };
