@@ -37,7 +37,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   isLoading?: boolean;
-  searchKey?: string;
+  searchKey?: string[];
 }
 
 export function DataTable<TData, TValue>({
@@ -101,16 +101,22 @@ export function DataTable<TData, TValue>({
     <>
       <div className="flex justify-between">
         {searchKey && (
-          <Input
-            placeholder={`Buscar por ${searchKey}...`}
-            value={
-              (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+          <>
+            {searchKey.map((key) => (
+              <Input
+              key={key}
+                placeholder={`Buscar por ${key}...`}
+                value={
+                  (table.getColumn(key)?.getFilterValue() as string) ?? ""
+                }
+                onChange={(event) =>
+                  table.getColumn(key)?.setFilterValue(event.target.value)
+                }
+                className="w-full md:max-w-xs mr-6 "
+              />
+            ))
             }
-            onChange={(event) =>
-              table.getColumn(searchKey)?.setFilterValue(event.target.value)
-            }
-            className="w-full md:max-w-sm"
-          />
+          </>
         )}
 
         <DropdownMenu>
@@ -153,9 +159,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}
