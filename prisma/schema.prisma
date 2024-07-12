@@ -140,6 +140,8 @@ model Order {
   status    String
   cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   payments  Payment[]
+  documentType String
+  documentNumeral String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   orderItems     OrderItem[]
