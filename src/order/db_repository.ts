@@ -110,7 +110,6 @@ export const create = async (order: Order): Promise<response<Order>> => {
       data: {
         ...orderData,
         payments: { create: mapPaymentsToPrisma(payments) as any },
-        documentType: order.documentType,
       },
       include: { payments: true },
     });
@@ -213,6 +212,10 @@ export async function transformOrdersData(
       throw new Error(`Invalid order status: ${prismaOrder.status}`);
     }
 
+    if(!isOrderDocumentType(prismaOrder.documentType)) {
+      throw new Error(`Invalid order documentType: ${prismaOrder.documentType}`);
+    }
+
     const parsedOrderItems = (prismaOrderItemsMap[prismaOrder.id] || []).map(
       (oi: PrismaOrderItem) => {
         const { orderId, ...orderItemData } = oi;
@@ -239,6 +242,7 @@ export async function transformOrdersData(
       ),
       total: prismaOrder.total.toNumber(),
       status: prismaOrder.status,
+      documentType: prismaOrder.documentType,
     };
   });
 }
@@ -248,5 +252,13 @@ function isOrderStatus(
 ): status is "pending" | "completed" | "cancelled" {
   return (
     status === "pending" || status === "completed" || status === "cancelled"
+  );
+}
+
+function isOrderDocumentType(
+    documentType: any,
+): documentType is "invoice" | "receipt" | "ticket" {
+  return (
+      documentType === "invoice" || documentType === "receipt" || documentType === "ticket"
   );
 }

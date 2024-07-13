@@ -59,7 +59,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
 
   const handleOrderCreation = async () => {
     setCreatingOrder(true);
-    const response = await create(user!.id, { ...order, status: "completed" });
+    const response = await create(user!.id, { ...order, status: "completed",documentType: "invoice" });
     if (response.success) {
       toast({
         title: "En hora buena!",

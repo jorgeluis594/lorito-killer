@@ -2,8 +2,42 @@ type issuerData = {
     codigo_establecimiento: string;
 }
 
+export type clientDocumentType = "0" | "1" | "4" | "6" | "7" | "A";
+
+export type rucDocument = Customer & {
+    cliente_tipo_documento: "0";
+}
+
+export type dniDocument = Customer & {
+    cliente_tipo_documento: "1";
+}
+
+export type carnetDocument = Customer & {
+    cliente_tipo_documento: "4";
+}
+
+export type passportDocument = Customer & {
+    cliente_tipo_documento: "6";
+}
+
+export type cedulaDocument = Customer & {
+    cliente_tipo_documento: "7";
+}
+
+export type sinRucDocument = Customer & {
+    cliente_tipo_documento: "A";
+}
+
+export type documentCustomer =
+    | rucDocument
+    | dniDocument
+    | carnetDocument
+    | passportDocument
+    | cedulaDocument
+    | sinRucDocument
+
 export type Customer = {
-    cliente_tipo_documento: string;
+    cliente_tipo_documento:  clientDocumentType;
     cliente_numero_documento: string;
     cliente_denominacion: string;
     codigo_pais?: string;
@@ -32,7 +66,7 @@ type totalPay = {
 
 export type items = {
     unidad: string;
-    codigo?: string;
+    codigo: string;
     descripcion: string;
     codigo_producto_sunat?: string;
     codigo_producto_gsl?: string;
@@ -55,16 +89,16 @@ type format = {
 
 export type BodyDocument = {
     tipo_documento: string;
-    serie: string;
+    serie?: string;
     numero: string;
     tipo_operacion: string;
     fecha_de_emision: string;
-    hora_de_emision?: string;
+    hora_de_emision: string;
     moneda: string;
     fecha_de_vencimiento?: string;
     enviar_automaticamente_al_cliente?: boolean;
     datos_del_emisor: issuerData;
-    cliente: Customer;
+    cliente: documentCustomer;
     totales: totalPay;
     items: [items];
     acciones: format;
