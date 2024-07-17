@@ -141,7 +141,6 @@ model Order {
   cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   payments  Payment[]
   documentType String
-  documentNumeral String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   orderItems     OrderItem[]
@@ -159,7 +158,6 @@ model Company {
   orders Order[]
   categories Category[]
   stockTransfers StockTransfer[]
-
   subdomain String? @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

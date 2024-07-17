@@ -22,7 +22,6 @@ export type Order = {
   status: "pending" | "completed" | "cancelled";
   payments: Payment[];
   documentType: "invoice" | "receipt" | "ticket";
-  documentNumeral: string;
   customer?: DomainCustomer;
   createdAt?: Date;
   updatedAt?: Date;

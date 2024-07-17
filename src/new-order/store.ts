@@ -49,7 +49,6 @@ const defaultInitState: OrderFormStore = {
     payments: [],
     status: "pending",
     documentType: "invoice",
-    documentNumeral: "F001",
     total: 0,
   },
   paymentMode: "none",

@@ -70,7 +70,7 @@ export const createInvoice = async (order: OrderWithCustomer, company: Company):
 
     const body: BodyDocument = {
       documentType: "01",
-      series: order.documentNumeral,
+      series: "",
       number: "",
       operationType: "0101",
       dateOfIssue: format(order.createdAt!, "dd/MM/yyyy"),

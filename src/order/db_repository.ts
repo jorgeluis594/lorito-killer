@@ -123,7 +123,6 @@ export const create = async (order: Order): Promise<response<Order>> => {
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
       documentType: order.documentType,
-      documentNumeral: order.documentNumeral,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
     };
