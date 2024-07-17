@@ -21,8 +21,7 @@ export const authConfig: NextAuthOptions = {
 
       const persistedUser = await getUserByEmail(session.user.email!);
       if (!persistedUser.success) return session;
-
-      return {
+      const newSession = {
         ...session,
         user: {
           ...session.user,
@@ -32,6 +31,7 @@ export const authConfig: NextAuthOptions = {
           companyId: persistedUser.data.companyId,
         },
       };
+      return newSession;
     },
   },
   providers: [
