@@ -1,4 +1,5 @@
 import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
+import {DomainCustomer} from "@/document/types";
 
 export type OrderItem = {
   id?: string;
@@ -22,9 +23,12 @@ export type Order = {
   payments: Payment[];
   documentType: "invoice" | "receipt" | "ticket";
   documentNumeral: string;
+  customer?: DomainCustomer;
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+export type OrderWithCustomer = Omit<Order, 'customer'> & { customer: DomainCustomer }
 
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "wallet";
 
