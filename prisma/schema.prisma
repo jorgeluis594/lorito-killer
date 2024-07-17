@@ -146,6 +146,86 @@ model Order {
   orderItems     OrderItem[]
 }
 
+model Document {
+  id            String @id @default(uuid())
+  customerId    String
+  totalPayId    String
+  paymentTermId String
+  documentType  String
+  series        String
+  number        String
+  operationType String
+  dateOfIssue   String
+  broadcastTime String
+  currency      String
+  dueDate       String
+  automaticallySendToClient Boolean
+  issuerData    String
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  totals        TotalPay  @relation(fields: [totalPayId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  items         DocumentItem[]
+  actions       String
+  paymentTerm   PaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  paymentMethod String
+  salesChanel   String
+  purchaseOrder String
+  store         String
+  observations  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model DocumentItem {
+  id            String @id @default(uuid())
+  documentId    String
+  unite         String
+  item_code     String
+  description   String
+  sunatProductCode String
+  gslProductCode String
+  quantity      Decimal
+  unitValue     Decimal
+  priceType     String
+  unitPrice     Decimal
+  taxType       String
+  totalBaseTax  Decimal
+  taxPercentage Decimal
+  totalTax      Decimal
+  total         Decimal
+  document      Document      @relation(fields: [documentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+}
+
+model Customer {
+  id            String    @id @default(uuid())
+  documentType  String
+  documentNumber String
+  legalName     String
+  countyCode    String
+  address       String
+  email         String
+  phoneNumber   String
+  documents     Document[]
+}
+
+model TotalPay {
+  id            String @id @default(uuid())
+  totalExport   Decimal
+  totalTaxes    Decimal
+  totallyUnaffected Decimal
+  totalExonerated Decimal
+  totallyFree   Decimal
+  totalTax      Decimal
+  totalSale     Decimal
+  documents     Document[]
+}
+
+model PaymentTerm {
+  id            String @id @default(uuid())
+  description   String
+  type          String
+  documents      Document[]
+}
+
 model Company {
   id        String   @id @default(uuid())
   name      String

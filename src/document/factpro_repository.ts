@@ -91,15 +91,13 @@ export const createInvoice = async (order: OrderWithCustomer, company: Company):
         phoneNumber: order.customer.phoneNumber
       },
       totals: {
-        total_exportacion: 0.00,
-        total_gravadas: 0.00,
-        total_inafectas: 0.00,
-        total_exoneradas: 0.00,
-        total_gratuitas: 0.00,
-        total_tax: 0.00,
-        total_impuestos: 0.00,
-        total_valor: order.total,
-        total_venta: order.total,
+        totalExport: 0.00,
+        totalTaxes: 0.00,
+        totallyUnaffected: 0.00,
+        totalExonerated: 0.00,
+        totallyFree: 0.00,
+        totalTax: 0.00,
+        totalSale: 0.00,
       },
       items: order.orderItems.map(orderItem => orderItemToDocumentItem(orderItem)),
       actions: {
