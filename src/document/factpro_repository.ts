@@ -1,19 +1,19 @@
 import {Order, OrderItem, OrderWithCustomer} from "@/order/types";
 import {response} from "@/lib/types";
 import {
-  clientDocumentType,
+  CustomerDocumentType,
   DomainCustomer,
   DomainDocumentType,
-  formatPdf,
-  issuerData,
-  paymentTerm,
-  totalPay
+  FormatPdf,
+  IssuerData,
+  PaymentTerm,
+  TotalPay
 } from "@/document/types";
 import {format} from "date-fns";
 import axios from "axios";
 import {Company} from "@/company/types";
 
-const documentTypeMapper: Record<DomainDocumentType, clientDocumentType> = {
+const documentTypeMapper: Record<DomainDocumentType, CustomerDocumentType> = {
   'ruc': "6",
   'dni': "1",
   'foreign_card': "4",
@@ -49,12 +49,12 @@ interface BodyDocument {
   currency: string;
   dueDate?: string;
   automaticallySendToClient?: boolean;
-  issuerData: issuerData;
+  issuerData: IssuerData;
   customer: DomainCustomer;
-  totals: totalPay;
+  totals: TotalPay;
   items: [DocumentItem];
-  actions: formatPdf;
-  paymentTerm: paymentTerm;
+  actions: FormatPdf;
+  paymentTerm: PaymentTerm;
   paymentMethod?: string;
   salesChanel?: string;
   purchaseOrder?: string;
@@ -73,8 +73,8 @@ export const createInvoice = async (order: OrderWithCustomer, company: Company):
       series: order.documentNumeral,
       number: "",
       operationType: "0101",
-      dateOfIssue: format(order.createdAt!,"dd/MM/yyyy"),
-      broadcastTime: format(order.createdAt!,"hh:mm aa"),
+      dateOfIssue: format(order.createdAt!, "dd/MM/yyyy"),
+      broadcastTime: format(order.createdAt!, "hh:mm aa"),
       currency: "PEN",
       dueDate: "",
       automaticallySendToClient: false,
@@ -103,7 +103,7 @@ export const createInvoice = async (order: OrderWithCustomer, company: Company):
       },
       items: order.orderItems.map(orderItem => orderItemToDocumentItem(orderItem)),
       actions: {
-        formato_pdf: "80mm"
+        formatPdf: "a4" //Puedes elegir entre  a4 o ticket para mostrar automáticamente el formato del PDF
       },
       paymentTerm: {
         description: "Contado",
@@ -128,7 +128,8 @@ export const createReceipt = async (order: Order, company: Company): Promise<res
 }
 
 const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
-  {}
+  {
+  }
 }
 
 const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>> => {
