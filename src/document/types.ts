@@ -17,7 +17,7 @@ export type NaturalCustomer = {
   email?: string;
   name?: string;
   address?: string;
-  cellphone?: string;
+  phoneNumber?: string;
 }
 
 export type BusinessCustomer = {
@@ -25,9 +25,9 @@ export type BusinessCustomer = {
   documentType: RucType;
   documentNumber: string;
   email: string;
-  name: string;
+  legalName: string;
   address: string;
-  cellphone: string;
+  phoneNumber: string;
 }
 
 export type Customer = NaturalCustomer | BusinessCustomer
@@ -49,4 +49,8 @@ export type TotalPay = {
 
 export type FormatPdf = {
   formatPdf: string;
+}
+
+export type Document ={
+
 }

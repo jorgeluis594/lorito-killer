@@ -1,9 +1,6 @@
-import {Order, OrderItem, OrderWithCustomer} from "@/order/types";
+import {Order, OrderItem, OrderWithBusinessCustomer} from "@/order/types";
 import {response} from "@/lib/types";
 import {
-  CustomerDocumentType,
-  DomainCustomer,
-  DomainDocumentType,
   FormatPdf,
   IssuerData,
   PaymentTerm,
@@ -13,15 +10,6 @@ import {format} from "date-fns";
 import axios from "axios";
 import {Company} from "@/company/types";
 
-const documentTypeMapper: Record<DomainDocumentType, CustomerDocumentType> = {
-  'ruc': "6",
-  'dni': "1",
-  'foreign_card': "4",
-  'passport': "7",
-  "diplomatic_identity_card": "A",
-  "sin_ruc": "0",
-}
-
 interface DocumentItem {
   unite: string;
   item_code: string;
@@ -30,7 +18,6 @@ interface DocumentItem {
   gslProductCode?: string;
   quantity: number;
   unitValue: number;
-  priceType: string;
   unitPrice: number;
   taxType: string;
   totalBaseTax: number;
@@ -50,9 +37,9 @@ interface BodyDocument {
   dueDate?: string;
   automaticallySendToClient?: boolean;
   issuerData: IssuerData;
-  customer: DomainCustomer;
+  customer: {};
   totals: TotalPay;
-  items: [DocumentItem];
+  items: DocumentItem[];
   actions: FormatPdf;
   paymentTerm: PaymentTerm;
   paymentMethod?: string;
@@ -62,14 +49,17 @@ interface BodyDocument {
   observations?: string;
 }
 
-export const createInvoice = async (order: OrderWithCustomer, company: Company): Promise<response<Order>> => {
+const INVOICE_DOCUMENT_TYPE = "01"
+const RUC_CUSTOMER_DOCUMENT_TYPE = "6"
+
+export const createInvoice = async (order: OrderWithBusinessCustomer, company: Company): Promise<response<Order>> => {
   try {
     if (!company.invoiceCode) {
       throw new Error("Invoice Code is required");
     }
 
     const body: BodyDocument = {
-      documentType: "01",
+      documentType: INVOICE_DOCUMENT_TYPE,
       series: "",
       number: "",
       operationType: "0101",
@@ -82,7 +72,7 @@ export const createInvoice = async (order: OrderWithCustomer, company: Company):
         establishmentCode: company.invoiceCode,
       },
       customer: {
-        documentType: documentTypeMapper[order.customer.documentType],
+        documentType: RUC_CUSTOMER_DOCUMENT_TYPE,
         documentNumber: order.customer.documentNumber,
         legalName: order.customer.legalName,
         countyCode: "PE", // solo peru
@@ -91,13 +81,13 @@ export const createInvoice = async (order: OrderWithCustomer, company: Company):
         phoneNumber: order.customer.phoneNumber
       },
       totals: {
-        totalExport: 0.00,
-        totalTaxes: 0.00,
+        totalExport: 0.00, // Por el momento no se acepta exportaciones
+        totalTaxes: 0.00, // Por el momento no se acepta impuesto, por desarrollar TODO: link de la tarjeta
         totallyUnaffected: 0.00,
         totalExonerated: 0.00,
         totallyFree: 0.00,
-        totalTax: 0.00,
         totalSale: 0.00,
+        totalTax: 0.00,
       },
       items: order.orderItems.map(orderItem => orderItemToDocumentItem(orderItem)),
       actions: {
@@ -111,7 +101,7 @@ export const createInvoice = async (order: OrderWithCustomer, company: Company):
       purchaseOrder: order.id,
       store: "",
       observations: ""
-    }
+    };
 
     const response = sendDocument(body);
 
@@ -126,7 +116,20 @@ export const createReceipt = async (order: Order, company: Company): Promise<res
 }
 
 const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
-  {
+  return {
+    unite: "NIU", //NIU = PRODUCTO ZZ = SERVICIO
+    item_code: orderItem.productId,
+    description: "",
+    sunatProductCode: orderItem.productId,
+    gslProductCode: "",
+    quantity: orderItem.quantity,
+    unitValue: orderItem.productPrice,
+    unitPrice: 0.00,
+    taxType: "10",
+    totalBaseTax: 0.00,
+    taxPercentage: 0.00,
+    totalTax: 0.00,
+    total: orderItem.total,
   }
 }
 

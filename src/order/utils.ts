@@ -1,5 +1,6 @@
-import {Order, OrderWithCustomer} from "@/order/types";
+import {Order, OrderWithBusinessCustomer} from "@/order/types";
+import {RUC} from "@/document/types";
 
-export const hasCustomer = (order: Order): order is OrderWithCustomer => {
-  return !!order.customer;
+export const hasBusinessCustomer = (order: Order): order is OrderWithBusinessCustomer => {
+  return !!order.customer && order.customer.documentType == RUC;
 }

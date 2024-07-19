@@ -1,5 +1,5 @@
 import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
-import {Customer} from "@/document/types";
+import {Customer, BusinessCustomer} from "@/document/types";
 
 export type OrderItem = {
   id?: string;
@@ -27,7 +27,7 @@ export type Order = {
   updatedAt?: Date;
 };
 
-export type OrderWithCustomer = Omit<Order, 'customer'> & { customer: Customer }
+export type OrderWithBusinessCustomer = Omit<Order, 'customer'> & { customer: BusinessCustomer }
 
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "wallet";
 

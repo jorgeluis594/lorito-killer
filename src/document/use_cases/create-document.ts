@@ -1,31 +1,45 @@
 "use server";
 
 import {response} from "@/lib/types";
-import {Order, OrderWithCustomer} from "@/order/types";
+import {Order, OrderWithBusinessCustomer} from "@/order/types";
 import {Company} from "@/company/types";
-import {hasCustomer} from "@/order/utils";
+import {hasBusinessCustomer} from "@/order/utils";
+import { Document } from "@/document/types";
 
-interface DocumentRepository {
-  createInvoice: (order: OrderWithCustomer, company: Company) => Promise<response<Order>>;
-  createReceipt: (order: Order, company: Company) => Promise<response<Order>>;
+interface DocumentGateway {
+  createInvoice: (order: OrderWithBusinessCustomer, company: Company) => Promise<response<Document>>;
+  createReceipt: (order: Order, company: Company) => Promise<response<Document>>;
+}
+
+interface Repository {
+  create: (document: Document) => Promise<response<Document>>
 }
 
 export const createDocument = async (
-  repository: DocumentRepository,
+  documentGateway: DocumentGateway,
+  repository: Repository,
   order: Order,
   company: Company,
-): Promise<response<Order>> => {
+): Promise<response<Document>> => {
   if (order.documentType !== 'receipt' || 'invoice') {
     return {success: false, message: "not implemented"};
   }
 
+  let documentResponse: response<Document>;
+  // generar la factura o boleta
   if (order.documentType == 'receipt') {
-    return repository.createReceipt(order, company);
+    documentResponse = await documentGateway.createReceipt(order, company);
+  } else {
+    if (!hasBusinessCustomer(order)) {
+      return {success: false, message: "No customer found"}
+    }
+
+    documentResponse = await documentGateway.createInvoice(order, company);
   }
 
-  if (!hasCustomer(order)) {
-    return {success: false, message: "No customer found"}
+  if (!documentResponse.success) {
+    return documentResponse
   }
 
-  return repository.createInvoice(order, company);
+  return await repository.create(documentResponse.data)
 };
