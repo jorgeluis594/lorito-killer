@@ -17,7 +17,7 @@ enum UnitType {
   UNIT
   KG
 }
-
+// Categoria <-> Product
 model Product {
   id        String   @id @default(uuid())
   companyId String?
@@ -140,63 +140,39 @@ model Order {
   status    String
   cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   payments  Payment[]
+  documents Document[]
   documentType String
+  customers  Customer[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   orderItems     OrderItem[]
 }
 
+enum DocumentType {
+  INVOICE
+  RECEIPT
+}
+
 model Document {
   id            String @id @default(uuid())
+  orderId       String
   customerId    String
-  totalPayId    String
-  paymentTermId String
-  documentType  String
+  total         Decimal
+  documentType  DocumentType
   series        String
   number        String
-  operationType String
   dateOfIssue   String
   broadcastTime String
-  currency      String
-  dueDate       String
-  automaticallySendToClient Boolean
-  issuerData    String
+  order         Order @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   customer      Customer @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  totals        TotalPay  @relation(fields: [totalPayId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  items         DocumentItem[]
-  actions       String
-  paymentTerm   PaymentTerm @relation(fields: [paymentTermId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  paymentMethod String
-  salesChanel   String
-  purchaseOrder String
-  store         String
   observations  String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
 
-model DocumentItem {
-  id            String @id @default(uuid())
-  documentId    String
-  unite         String
-  item_code     String
-  description   String
-  sunatProductCode String
-  gslProductCode String
-  quantity      Decimal
-  unitValue     Decimal
-  priceType     String
-  unitPrice     Decimal
-  taxType       String
-  totalBaseTax  Decimal
-  taxPercentage Decimal
-  totalTax      Decimal
-  total         Decimal
-  document      Document      @relation(fields: [documentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-}
-
 model Customer {
   id            String    @id @default(uuid())
+  orderId    String
   documentType  String
   documentNumber String
   legalName     String
@@ -205,25 +181,7 @@ model Customer {
   email         String
   phoneNumber   String
   documents     Document[]
-}
-
-model TotalPay {
-  id            String @id @default(uuid())
-  totalExport   Decimal
-  totalTaxes    Decimal
-  totallyUnaffected Decimal
-  totalExonerated Decimal
-  totallyFree   Decimal
-  totalTax      Decimal
-  totalSale     Decimal
-  documents     Document[]
-}
-
-model PaymentTerm {
-  id            String @id @default(uuid())
-  description   String
-  type          String
-  documents      Document[]
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Company {
