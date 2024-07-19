@@ -2,19 +2,33 @@ export type IssuerData = {
   establishmentCode: string;
 }
 
-export type CustomerDocumentType = "1" | "0" | "4" | "6" | "7" | "A";
+export const DNI = "dni";
+export type DniType = typeof DNI;
 
-export type DomainDocumentType = 'ruc' | 'dni' | 'foreign_card' | 'passport' | 'diplomatic_identity_card' | 'sin_ruc'
+export const RUC = "ruc"
+export type RucType = typeof RUC
 
-export type DomainCustomer = {
-  documentType: DomainDocumentType;
-  documentNumber: string;
-  legalName: string;
-  countyCode: string;
-  address: string;
-  email: string;
-  phoneNumber: string;
+export type DocumentType = DniType | DocumentType;
+
+export type NaturalCustomer = {
+  documentType: DniType;
+  documentNumber?: string;
+  email?: string;
+  name?: string;
+  address?: string;
+  cellphone?: string;
 }
+
+export type BusinessCustomer = {
+  documentType: RucType;
+  documentNumber: string;
+  email: string;
+  name: string;
+  address: string;
+  cellphone: string;
+}
+
+export type Customer = NaturalCustomer | BusinessCustomer
 
 export type PaymentTerm = {
   description?: string;
