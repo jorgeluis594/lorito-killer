@@ -8,9 +8,10 @@ export type DniType = typeof DNI;
 export const RUC = "ruc"
 export type RucType = typeof RUC
 
-export type DocumentType = DniType | DocumentType;
+export type DocumentType = DniType | RucType;
 
 export type NaturalCustomer = {
+  id: string;
   documentType: DniType;
   documentNumber?: string;
   email?: string;
@@ -20,6 +21,7 @@ export type NaturalCustomer = {
 }
 
 export type BusinessCustomer = {
+  id: string;
   documentType: RucType;
   documentNumber: string;
   email: string;
