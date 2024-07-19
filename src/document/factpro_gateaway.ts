@@ -10,6 +10,18 @@ import {format} from "date-fns";
 import axios from "axios";
 import {Company} from "@/company/types";
 
+const url = process.env.FACTPRO_URL;
+const token = process.env.FACTPRO_TOKEN;
+const INVOICE_DOCUMENT_TYPE = "01"
+const RUC_CUSTOMER_DOCUMENT_TYPE = "6"
+const INVOICE_SERIES = "F001"
+const INTERNAL_SALES = "0101"
+const CURRENCY = "PEN"
+const COUNTRY_CODE = "PE"
+const PDF_FORMAT = "a4"
+const PAYMENT_TYPE = "0"
+const UNIT_OF_MEASUREMENT = "NIU"
+
 interface DocumentItem {
   unite: string;
   item_code: string;
@@ -49,9 +61,6 @@ interface BodyDocument {
   observations?: string;
 }
 
-const INVOICE_DOCUMENT_TYPE = "01"
-const RUC_CUSTOMER_DOCUMENT_TYPE = "6"
-
 export const createInvoice = async (order: OrderWithBusinessCustomer, company: Company): Promise<response<Order>> => {
   try {
     if (!company.invoiceCode) {
@@ -60,12 +69,12 @@ export const createInvoice = async (order: OrderWithBusinessCustomer, company: C
 
     const body: BodyDocument = {
       documentType: INVOICE_DOCUMENT_TYPE,
-      series: "",
-      number: "",
-      operationType: "0101",
+      series: INVOICE_SERIES,
+      number: order.customer.documentNumber,
+      operationType: INTERNAL_SALES,
       dateOfIssue: format(order.createdAt!, "dd/MM/yyyy"),
       broadcastTime: format(order.createdAt!, "hh:mm aa"),
-      currency: "PEN",
+      currency: CURRENCY,
       dueDate: "",
       automaticallySendToClient: false,
       issuerData: {
@@ -75,31 +84,30 @@ export const createInvoice = async (order: OrderWithBusinessCustomer, company: C
         documentType: RUC_CUSTOMER_DOCUMENT_TYPE,
         documentNumber: order.customer.documentNumber,
         legalName: order.customer.legalName,
-        countyCode: "PE", // solo peru
+        countryCode: COUNTRY_CODE,
         address: order.customer.address,
         email: order.customer.email,
         phoneNumber: order.customer.phoneNumber
       },
       totals: {
         totalExport: 0.00, // Por el momento no se acepta exportaciones
-        totalTaxes: 0.00, // Por el momento no se acepta impuesto, por desarrollar TODO: link de la tarjeta
+        totalTaxes: 0.00, // Por el momento no se acepta impuesto, por desarrollar TODO: https://trello.com/c/avRmC8Yq
         totallyUnaffected: 0.00,
         totalExonerated: 0.00,
         totallyFree: 0.00,
-        totalSale: 0.00,
         totalTax: 0.00,
+        totalSale: order.total,
       },
       items: order.orderItems.map(orderItem => orderItemToDocumentItem(orderItem)),
       actions: {
-        formatPdf: "a4" //Puedes elegir entre  a4 o ticket para mostrar automáticamente el formato del PDF
+        formatPdf: PDF_FORMAT
       },
       paymentTerm: {
-        description: "Contado",
-        type: "0" //0= Contado y 1 = Crédito
+        description: "",
+        type: PAYMENT_TYPE
       },
       paymentMethod: "",
       purchaseOrder: order.id,
-      store: "",
       observations: ""
     };
 
@@ -117,11 +125,9 @@ export const createReceipt = async (order: Order, company: Company): Promise<res
 
 const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
   return {
-    unite: "NIU", //NIU = PRODUCTO ZZ = SERVICIO
+    unite: UNIT_OF_MEASUREMENT,
     item_code: orderItem.productId,
     description: "",
-    sunatProductCode: orderItem.productId,
-    gslProductCode: "",
     quantity: orderItem.quantity,
     unitValue: orderItem.productPrice,
     unitPrice: 0.00,
@@ -134,12 +140,8 @@ const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
 }
 
 const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>> => {
-
-  const url = "https://dev.factpro.la/api/v2/documentos";
-  const token = "123456789"
-
   try {
-    const res = await axios.post(url, body, {
+    const res = await axios.post(url!, body, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
