@@ -1,3 +1,5 @@
+import {Order} from "@/order/types";
+
 export type IssuerData = {
   establishmentCode: string;
 }
@@ -15,10 +17,9 @@ export type NaturalCustomer = {
   documentType: DniType;
   documentNumber?: string;
   legalName: string;
-  countryCode: string;
-  email?: string;
-  name?: string;
+  countyCode: string;
   address?: string;
+  email?: string;
   phoneNumber?: string;
 }
 
@@ -55,5 +56,16 @@ export type FormatPdf = {
 }
 
 export type Document ={
-
+  id: string;
+  total: number;
+  documentType: String;
+  series: string;
+  number: string;
+  dateOfIssue: string;
+  broadcastTime: string;
+  order: Order;
+  customer: Customer;
+  observations: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
