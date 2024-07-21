@@ -1,21 +1,22 @@
 "use server";
 
-import { Order, OrderItem } from "./types";
-import { response } from "@/lib/types";
-import { create as createOrder } from "./db_repository";
-import { revalidatePath } from "next/cache";
-import { getLastOpenCashShift } from "@/cash-shift/db_repository";
-import { getCompany as findCompany } from "@/company/db_repository";
-import { find as findProduct } from "@/product/db_repository";
+import {Order, OrderItem} from "./types";
+import {response} from "@/lib/types";
+import {create as createOrder} from "./db_repository";
+import {revalidatePath} from "next/cache";
+import {getLastOpenCashShift} from "@/cash-shift/db_repository";
+import {getCompany as findCompany} from "@/company/db_repository";
+import {find as findProduct} from "@/product/db_repository";
 import {
   updateStock as UpdateStockFromStockTransfer,
   create as createStockTransfer,
 } from "@/stock-transfer/db_repository";
-import { updateStock } from "@/order/use-cases/update-stock";
-import { getSession } from "@/lib/auth";
-import { Company } from "@/company/types";
+import {updateStock} from "@/order/use-cases/update-stock";
+import {getSession} from "@/lib/auth";
+import {Company} from "@/company/types";
 import {createDocument} from "@/document/use_cases/create-document";
-import {createInvoice, createReceipt} from "@/document/factpro_repository";
+import {createInvoice, createReceipt} from "@/document/factpro_gateway";
+import {create as createdDocument} from "@/document/db_repository";
 
 export const create = async (
   userId: string,
@@ -25,7 +26,7 @@ export const create = async (
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
   if (!openCashShiftResponse.success) {
-    return { success: false, message: "No tienes una caja abierta" };
+    return {success: false, message: "No tienes una caja abierta"};
   }
 
   const openCashShift = openCashShiftResponse.data;
@@ -69,15 +70,34 @@ export const create = async (
     return updateStockResponse;
   }
 
+  const companyResponse = await findCompany(session.user.companyId);
+  if (!companyResponse.success) {
+    return {success: false, message: 'no se encontro empresa'}
+  }
+
   const documentResponse = await createDocument(
-      { createReceipt, createInvoice},
-      createOrderResponse.data,
+    {createReceipt, createInvoice},
+    {createdDocument},
+    {
+      ...order,
+      documentType: "invoice",
+      customer: {
+        documentType: "dni",
+        documentNumber: "74020992",
+        legalName: "negociable",
+        countyCode: "PE",
+        address: "mi casa",
+        email: "email@gmail.com",
+        phoneNumber: "123456789"
+      },
+    },
+    companyResponse.data
   );
   if (!documentResponse.success) {
     return documentResponse;
   }
 
-  return { success: true, data: documentResponse.data };
+  return {success: true, data: documentResponse.data};
 };
 
 export const getCompany = async (): Promise<response<Company>> => {
