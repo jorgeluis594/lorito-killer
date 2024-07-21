@@ -14,10 +14,11 @@ export type DocumentType = DniType | RucType;
 
 export type NaturalCustomer = {
   id: string;
+  orderId: string;
   documentType: DniType;
   documentNumber?: string;
   legalName: string;
-  countyCode: string;
+  countryCode: string;
   address?: string;
   email?: string;
   phoneNumber?: string;
@@ -25,6 +26,7 @@ export type NaturalCustomer = {
 
 export type BusinessCustomer = {
   id: string;
+  orderId: string;
   documentType: RucType;
   documentNumber: string;
   legalName: string;
@@ -64,8 +66,20 @@ export type Document ={
   dateOfIssue: string;
   broadcastTime: string;
   order: Order;
-  customer: Customer;
+  customer: CustomerCreateRepository;
   observations: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export type CustomerCreateRepository = {
+  id: string;
+  orderId: string;
+  documentType: string;
+  documentNumber: string;
+  legalName: string;
+  countryCode: string;
+  address: string;
+  email: string;
+  phoneNumber: string;
+};
