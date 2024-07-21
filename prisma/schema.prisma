@@ -151,6 +151,7 @@ model Order {
 enum DocumentType {
   INVOICE
   RECEIPT
+  TICKET
 }
 
 model Document {
@@ -176,7 +177,7 @@ model Customer {
   documentType  String
   documentNumber String
   legalName     String
-  countyCode    String
+  countryCode    String
   address       String
   email         String
   phoneNumber   String
