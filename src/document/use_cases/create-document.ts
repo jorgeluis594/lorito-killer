@@ -4,7 +4,7 @@ import {response} from "@/lib/types";
 import {Order, OrderWithBusinessCustomer} from "@/order/types";
 import {Company} from "@/company/types";
 import {hasBusinessCustomer} from "@/order/utils";
-import { Document } from "@/document/types";
+import {Customer, Document} from "@/document/types";
 
 interface DocumentGateway {
   createInvoice: (order: OrderWithBusinessCustomer, company: Company) => Promise<response<Document>>;
@@ -13,6 +13,7 @@ interface DocumentGateway {
 
 interface Repository {
   create: (document: Document) => Promise<response<Document>>
+  createCustomer: (customer: Customer) => Promise<response<Customer>>
 }
 
 export const createDocument = async (
