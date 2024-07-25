@@ -18,7 +18,6 @@ export type NaturalCustomer = {
   documentType: DniType;
   documentNumber?: string;
   legalName: string;
-  countryCode: string;
   address?: string;
   email?: string;
   phoneNumber?: string;
@@ -30,9 +29,8 @@ export type BusinessCustomer = {
   documentType: RucType;
   documentNumber: string;
   legalName: string;
-  countryCode: string;
-  email: string;
   address: string;
+  email: string;
   phoneNumber: string;
 }
 
@@ -66,20 +64,8 @@ export type Document ={
   dateOfIssue: string;
   broadcastTime: string;
   order: Order;
-  customer: CustomerCreateRepository;
+  customer: Customer;
   observations: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
-
-export type CustomerCreateRepository = {
-  id: string;
-  orderId: string;
-  documentType: string;
-  documentNumber: string;
-  legalName: string;
-  countryCode: string;
-  address: string;
-  email: string;
-  phoneNumber: string;
-};
