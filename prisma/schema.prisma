@@ -171,16 +171,20 @@ model Document {
   updatedAt DateTime  @updatedAt
 }
 
+enum CustomerDocumentType {
+  RUC
+  DNI
+}
+
 model Customer {
   id            String    @id @default(uuid())
   orderId    String
-  documentType  String
-  documentNumber String
+  documentType  CustomerDocumentType
+  documentNumber String?
   legalName     String
-  countryCode    String
-  address       String
-  email         String
-  phoneNumber   String
+  address       String?
+  email         String?
+  phoneNumber   String?
   documents     Document[]
   order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
