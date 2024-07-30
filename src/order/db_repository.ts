@@ -150,6 +150,22 @@ export const getOrders = async (): Promise<response<Order[]>> => {
   }
 };
 
+export const find = async (id: string): Promise<response<Order>> => {
+  try {
+    const prismaOrder = await prisma.order.findUnique({where: { id: id }});
+    if (!prismaOrder) {
+      return { success: false, message: "Order not found" }
+    }
+
+    const [order] = await transformOrdersData([prismaOrder])
+    if (!order) return { success: false, message: "Order not found" }
+
+    return { success: true, data: order }
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+}
+
 /**
  * Transforms Prisma Order data to the Order data used in the application.
  *
