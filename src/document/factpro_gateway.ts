@@ -9,6 +9,7 @@ import {
 import {format} from "date-fns";
 import axios from "axios";
 import {Company} from "@/company/types";
+import { Document } from "@/document/types"
 
 const url = process.env.FACTPRO_URL;
 const token = process.env.FACTPRO_TOKEN;
@@ -40,7 +41,7 @@ interface DocumentItem {
 
 interface BodyDocument {
   documentType: string;
-  series?: string;
+  series: string;
   number: string;
   operationType: string;
   dateOfIssue: string;
@@ -61,7 +62,7 @@ interface BodyDocument {
   observations?: string;
 }
 
-export const createInvoice = async (order: OrderWithBusinessCustomer, company: Company): Promise<response<Order>> => {
+export const createInvoice = async (order: OrderWithBusinessCustomer, company: Company): Promise<response<Document>> => {
   try {
     if (!company.invoiceCode) {
       throw new Error("Invoice Code is required");
@@ -108,18 +109,34 @@ export const createInvoice = async (order: OrderWithBusinessCustomer, company: C
       },
       paymentMethod: "",
       purchaseOrder: order.id,
-      observations: ""
+      observations: "",
     };
 
     const response = sendDocument(body);
 
-    return {success: true, data: order};
+    return {
+      success: true,
+      data: {
+        id: crypto.randomUUID(),
+        orderId: order.id!,
+        customerId: order.customer.id,
+        total: order.total,
+        documentType: order.documentType,
+        series: body.series,
+        number: body.number,
+        dateOfIssue: body.dateOfIssue,
+        broadcastTime: body.broadcastTime,
+        order: order,
+        customer: order.customer,
+        observations: body.observations!,
+      }
+    };
   } catch (e: any) {
     return {success: false, message: e.message};
   }
 }
 
-export const createReceipt = async (order: Order, company: Company): Promise<response<Order>> => {
+export const createReceipt = async (order: Order, company: Company): Promise<response<Document>> => {
   return {success: false, message: "createReceipt"};
 }
 
