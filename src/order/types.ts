@@ -20,9 +20,9 @@ export const RECEIPT = "receipt"
 export type ReceiptType = typeof RECEIPT
 
 export const TICKET = "ticket"
-export type TicketType = typeof RECEIPT
+export type TicketType = typeof TICKET
 
-type DocumentType = InvoiceType | ReceiptType | TicketType;
+export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
 export type Order = {
   id?: string;
