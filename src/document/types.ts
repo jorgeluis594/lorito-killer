@@ -1,4 +1,4 @@
-import {Order} from "@/order/types";
+import {Order, DocumentType} from "@/order/types";
 
 export type IssuerData = {
   establishmentCode: string;
@@ -10,7 +10,7 @@ export type DniType = typeof DNI;
 export const RUC = "ruc"
 export type RucType = typeof RUC
 
-export type DocumentType = DniType | RucType;
+export type CustomerDocumentType = DniType | RucType;
 
 export type NaturalCustomer = {
   id: string;
@@ -34,7 +34,7 @@ export type BusinessCustomer = {
   phoneNumber: string;
 }
 
-export type Customer = NaturalCustomer | BusinessCustomer
+export type   Customer = NaturalCustomer | BusinessCustomer
 
 export type PaymentTerm = {
   description?: string;
@@ -57,8 +57,10 @@ export type FormatPdf = {
 
 export type Document ={
   id: string;
+  orderId: string;
+  customerId: string;
   total: number;
-  documentType: String;
+  documentType: DocumentType;
   series: string;
   number: string;
   dateOfIssue: string;
