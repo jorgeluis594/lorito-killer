@@ -122,6 +122,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
+      documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
     };
@@ -148,6 +149,22 @@ export const getOrders = async (): Promise<response<Order[]>> => {
     return { success: false, message: e.message };
   }
 };
+
+export const find = async (id: string): Promise<response<Order>> => {
+  try {
+    const prismaOrder = await prisma.order.findUnique({where: { id: id }});
+    if (!prismaOrder) {
+      return { success: false, message: "Order not found" }
+    }
+
+    const [order] = await transformOrdersData([prismaOrder])
+    if (!order) return { success: false, message: "Order not found" }
+
+    return { success: true, data: order }
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+}
 
 /**
  * Transforms Prisma Order data to the Order data used in the application.
@@ -211,6 +228,10 @@ export async function transformOrdersData(
       throw new Error(`Invalid order status: ${prismaOrder.status}`);
     }
 
+    if(!isOrderDocumentType(prismaOrder.documentType)) {
+      throw new Error(`Invalid order documentType: ${prismaOrder.documentType}`);
+    }
+
     const parsedOrderItems = (prismaOrderItemsMap[prismaOrder.id] || []).map(
       (oi: PrismaOrderItem) => {
         const { orderId, ...orderItemData } = oi;
@@ -237,6 +258,7 @@ export async function transformOrdersData(
       ),
       total: prismaOrder.total.toNumber(),
       status: prismaOrder.status,
+      documentType: prismaOrder.documentType,
     };
   });
 }
@@ -246,5 +268,13 @@ function isOrderStatus(
 ): status is "pending" | "completed" | "cancelled" {
   return (
     status === "pending" || status === "completed" || status === "cancelled"
+  );
+}
+
+function isOrderDocumentType(
+    documentType: any,
+): documentType is "invoice" | "receipt" | "ticket" {
+  return (
+      documentType === "invoice" || documentType === "receipt" || documentType === "ticket"
   );
 }
