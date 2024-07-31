@@ -5,6 +5,7 @@ import {Order, OrderWithBusinessCustomer} from "@/order/types";
 import {Company} from "@/company/types";
 import {hasBusinessCustomer} from "@/order/utils";
 import {Customer, Document} from "@/document/types";
+import {createdDocument} from "@/document/db_repository";
 
 interface DocumentGateway {
   createInvoice: (order: OrderWithBusinessCustomer, company: Company) => Promise<response<Document>>;
@@ -12,7 +13,7 @@ interface DocumentGateway {
 }
 
 interface Repository {
-  create: (document: Document) => Promise<response<Document>>
+  createdDocument: (document: Document) => Promise<response<Document>>
   createCustomer: (customer: Customer) => Promise<response<Customer>>
 }
 
@@ -42,5 +43,5 @@ export const createDocument = async (
     return documentResponse
   }
 
-  return await repository.create(documentResponse.data)
+  return await repository.createdDocument(documentResponse.data)
 };

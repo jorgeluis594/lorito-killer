@@ -104,7 +104,7 @@ export const createCustomer = async (
   }
 };
 
-export const create = async (
+export const createdDocument = async (
   document: Document
 ): Promise<response<Document>> => {
   try {
