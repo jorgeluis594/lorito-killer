@@ -16,7 +16,7 @@ import {getSession} from "@/lib/auth";
 import {Company} from "@/company/types";
 import {createDocument} from "@/document/use_cases/create-document";
 import {createInvoice, createReceipt} from "@/document/factpro_gateway";
-import {create as createdDocument} from "@/document/db_repository";
+import {createdDocument, createCustomer} from "@/document/db_repository";
 
 export const create = async (
   userId: string,
@@ -77,27 +77,34 @@ export const create = async (
 
   const documentResponse = await createDocument(
     {createReceipt, createInvoice},
-    {createdDocument},
+    {createdDocument, createCustomer},
     {
-      ...order,
+      id: crypto.randomUUID(),
+      cashShiftId: openCashShift.id,
+      companyId: companyResponse.data.id,
+      orderItems: order.orderItems,
+      total: order.total,
+      status: order.status,
+      payments: order.payments,
       documentType: "invoice",
       customer: {
-        documentType: "dni",
-        documentNumber: "74020992",
-        legalName: "negociable",
-        countyCode: "PE",
+        id: crypto.randomUUID(),
+        orderId: order.id!,
+        documentType: "ruc",
+        documentNumber: "1234567890",
+        legalName: "Business COP",
         address: "mi casa",
         email: "email@gmail.com",
-        phoneNumber: "123456789"
+        phoneNumber: "123456789",
       },
     },
-    companyResponse.data
+    companyResponse.data,
   );
   if (!documentResponse.success) {
     return documentResponse;
   }
 
-  return {success: true, data: documentResponse.data};
+  return {success: true, data: documentResponse.data.order};
 };
 
 export const getCompany = async (): Promise<response<Company>> => {
