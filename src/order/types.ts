@@ -1,5 +1,5 @@
 import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
-import {Customer, BusinessCustomer, DniType, RucType} from "@/document/types";
+import type { BusinessCustomer, Customer } from "@/customer/types";
 
 export type OrderItem = {
   id?: string;
@@ -16,11 +16,11 @@ export type OrderItem = {
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
 
-export const RECEIPT = "receipt"
-export type ReceiptType = typeof RECEIPT
+export const RECEIPT = "receipt";
+export type ReceiptType = typeof RECEIPT;
 
-export const TICKET = "ticket"
-export type TicketType = typeof TICKET
+export const TICKET = "ticket";
+export type TicketType = typeof TICKET;
 
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
@@ -38,7 +38,9 @@ export type Order = {
   updatedAt?: Date;
 };
 
-export type OrderWithBusinessCustomer = Omit<Order, 'customer'> & { customer: BusinessCustomer }
+export type OrderWithBusinessCustomer = Omit<Order, "customer"> & {
+  customer: BusinessCustomer;
+};
 
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "wallet";
 
