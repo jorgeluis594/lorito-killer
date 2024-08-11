@@ -9,6 +9,7 @@ const execute = async () => {
       address: "Address 1",
       phone: "1234567890",
       email: "test@test.com",
+      subdomain: "fantastidog",
       createdAt: new Date(),
     },
   });
