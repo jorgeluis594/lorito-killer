@@ -12,6 +12,7 @@ export type NaturalCustomer = {
   id: string;
   documentType: DniType;
   documentNumber?: string;
+  geoCode?: string;
   fullName: string;
   address?: string;
   email?: string;
@@ -24,6 +25,7 @@ export type BusinessCustomer = {
   documentNumber: string;
   legalName: string;
   address: string;
+  geoCode: string;
   email: string;
   phoneNumber: string;
 };
