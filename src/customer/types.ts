@@ -10,10 +10,9 @@ export type CustomerDocumentType = DniType | RucType;
 
 export type NaturalCustomer = {
   id: string;
-  orderId: string;
   documentType: DniType;
   documentNumber?: string;
-  legalName: string;
+  fullName: string;
   address?: string;
   email?: string;
   phoneNumber?: string;
@@ -21,7 +20,6 @@ export type NaturalCustomer = {
 
 export type BusinessCustomer = {
   id: string;
-  orderId: string;
   documentType: RucType;
   documentNumber: string;
   legalName: string;
