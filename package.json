@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npm run prisma:deploy && next build",
+    "build:dev": "next build",
     "start": "next start",
     "build-and-start": "npm run build && npm run start",
     "prisma:deploy": "npx prisma migrate deploy && prisma generate",
@@ -24,7 +25,7 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
-    "@radix-ui/react-tabs": "^1.0.4",
+    "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-toast": "^1.1.5",
     "@radix-ui/react-toggle": "^1.0.3",
     "@radix-ui/react-toggle-group": "^1.0.4",
