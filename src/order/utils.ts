@@ -1,8 +1,10 @@
 import { Order, OrderWithBusinessCustomer } from "@/order/types";
-import { RUC } from "@/customer/types";
+import { isBusinessCustomer } from "@/customer/utils";
 
 export const hasBusinessCustomer = (
   order: Order,
 ): order is OrderWithBusinessCustomer => {
-  return !!order.customer && order.customer.documentType == RUC;
+  if (!order.customer) return false;
+
+  return isBusinessCustomer(order.customer);
 };

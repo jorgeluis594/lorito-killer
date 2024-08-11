@@ -7,9 +7,11 @@ import { $Enums } from "@prisma/client";
 import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
 import PrismaDocumentType = $Enums.DocumentType;
 import {
+  BusinessCustomer,
   type Customer,
   type CustomerDocumentType,
   DNI,
+  NaturalCustomer,
   RUC,
 } from "@/customer/types";
 
@@ -45,12 +47,17 @@ export const createCustomer = async (
   customer: Customer,
 ): Promise<response<Customer>> => {
   try {
+    const documentType =
+      CustomerDocumentTypeToPrismaMapper[customer.documentType];
     const customerResponse = await prisma.customer.create({
       data: {
         ...customer,
-        documentType: CustomerDocumentTypeToPrismaMapper[customer.documentType],
+        documentType: documentType,
         documentNumber: customer.documentNumber,
-        legalName: customer.legalName,
+        legalName:
+          documentType == "RUC"
+            ? (customer as BusinessCustomer).legalName
+            : (customer as NaturalCustomer).fullName,
         address: customer.address,
         email: customer.email,
         phoneNumber: customer.phoneNumber,
@@ -87,7 +94,6 @@ export const createCustomer = async (
 
     const createdCustomer: Customer = {
       id: customerResponse.id,
-      orderId: customer.orderId,
       documentType:
         PrismaCustomerDocumentTypeMapper[customerResponse.documentType],
       documentNumber: customerResponse.documentNumber!,
