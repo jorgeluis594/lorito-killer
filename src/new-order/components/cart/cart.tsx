@@ -30,7 +30,7 @@ export default function Cart() {
         <div className="p-5 border-b flex justify-between">
           <h2 className="text-xl font-semibold tracking-tight">Pedido</h2>
           <Button
-            variant="ghost"
+            variant="ghost_destructive"
             type="button"
             size="sm"
             onClick={() => reset()}
