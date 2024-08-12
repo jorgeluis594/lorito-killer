@@ -25,7 +25,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DNI, RUC } from "@/customer/types";
+import { type Customer, DNI, RUC } from "@/customer/types";
 import {
   Select,
   SelectContent,
@@ -45,6 +45,39 @@ const CustomerSchema = z.object({
 });
 
 type CustomerFormValues = z.infer<typeof CustomerSchema>;
+
+const formValuesToCustomer = (
+  values: CustomerFormValues,
+  companyId: string,
+): Customer => {
+  if (values.documentType === DNI) {
+    return {
+      _branch: "NaturalCustomer",
+      id: crypto.randomUUID(),
+      companyId: companyId,
+      documentType: DNI,
+      documentNumber: values.documentNumber.toString(),
+      geoCode: values.geoCode || "",
+      fullName: values.fullName,
+      address: values.address || "",
+      email: values.email || "",
+      phoneNumber: values.phoneNumber || "",
+    };
+  } else {
+    return {
+      _branch: "BusinessCustomer",
+      id: crypto.randomUUID(),
+      companyId: companyId,
+      documentType: RUC,
+      documentNumber: values.documentNumber.toString(),
+      legalName: values.fullName,
+      address: values.address || "",
+      geoCode: values.geoCode || "",
+      email: values.email || "",
+      phoneNumber: values.phoneNumber || "",
+    };
+  }
+};
 
 export default function NewCustomerModal() {
   const form = useForm<CustomerFormValues>({
@@ -170,7 +203,9 @@ export default function NewCustomerModal() {
           <DialogClose asChild>
             <Button variant="secondary">Cancelar</Button>
           </DialogClose>
-          <Button type="button">Guardar</Button>
+          <Button type="button" onClick={form.handleSubmit(onSubmit)}>
+            Guardar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
