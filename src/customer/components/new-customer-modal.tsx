@@ -2,8 +2,10 @@
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -24,10 +26,17 @@ import { Input } from "@/shared/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DNI, RUC } from "@/customer/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
-  documentNumber: z.string().optional(),
+  documentNumber: z.coerce.number(),
   geoCode: z.string().optional(),
   fullName: z.string(),
   address: z.string().optional(),
@@ -49,7 +58,7 @@ export default function NewCustomerModal() {
           <Plus />
         </Button>
       </DialogTrigger>
-      <DialogContent variant="right">
+      <DialogContent variant="right" className="flex flex-col max-w-[35rem]">
         <DialogHeader>
           <DialogTitle>Datos generales</DialogTitle>
           <DialogDescription>
@@ -57,40 +66,112 @@ export default function NewCustomerModal() {
           </DialogDescription>
         </DialogHeader>
 
-        {
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit()} className="mx-auto space-y-8">
-              <div className="">
-                <FormField
-                  control={form.control}
-                  name="documentNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Numero de documento</FormLabel>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(() => console.log("hola"))}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="documentNumber"
+                render={({ field }) => (
+                  <FormItem className="col-span-1">
+                    <FormLabel>Numero de documento</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="off" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="documentType"
+                render={({ field }) => (
+                  <FormItem className="col-span-1">
+                    <FormLabel>Tipo de Documento</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input autoComplete="off" {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="documentType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de documento</FormLabel>
-                      <FormControl>
-                        <Input autoComplete="off" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </form>
-          </Form>
-        }
+                      <SelectContent>
+                        <SelectItem value={DNI}>DNI</SelectItem>
+                        <SelectItem value={RUC}>RUC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre</FormLabel>
+                  <FormControl>
+                    <Input autoComplete="off" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dirección</FormLabel>
+                  <FormControl>
+                    <Input autoComplete="off" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Correo</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="off" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teléfono</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="off" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </form>
+        </Form>
+        <DialogFooter className="mt-auto">
+          <DialogClose asChild>
+            <Button variant="secondary">Cancelar</Button>
+          </DialogClose>
+          <Button type="button">Guardar</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
