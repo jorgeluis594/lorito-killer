@@ -179,9 +179,9 @@ enum CustomerDocumentType {
 
 model Customer {
   id            String    @id @default(uuid())
-  documentType  CustomerDocumentType
+  documentType  CustomerDocumentType?
   documentNumber String?
-  legalName     String
+  legalName     String?
   address       String?
   email         String?
   phoneNumber   String?
