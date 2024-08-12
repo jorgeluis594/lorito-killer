@@ -1,22 +1,23 @@
 "use server";
 
-import {Order, OrderItem} from "./types";
-import {response} from "@/lib/types";
-import {create as createOrder} from "./db_repository";
-import {revalidatePath} from "next/cache";
-import {getLastOpenCashShift} from "@/cash-shift/db_repository";
-import {getCompany as findCompany} from "@/company/db_repository";
-import {find as findProduct} from "@/product/db_repository";
+import { Order, OrderItem } from "./types";
+import { response } from "@/lib/types";
+import { create as createOrder } from "./db_repository";
+import { revalidatePath } from "next/cache";
+import { getLastOpenCashShift } from "@/cash-shift/db_repository";
+import { getCompany as findCompany } from "@/company/db_repository";
+import { find as findProduct } from "@/product/db_repository";
 import {
   updateStock as UpdateStockFromStockTransfer,
   create as createStockTransfer,
 } from "@/stock-transfer/db_repository";
-import {updateStock} from "@/order/use-cases/update-stock";
-import {getSession} from "@/lib/auth";
-import {Company} from "@/company/types";
-import {createDocument} from "@/document/use_cases/create-document";
-import {createInvoice, createReceipt} from "@/document/factpro_gateway";
-import {createdDocument, createCustomer} from "@/document/db_repository";
+import { updateStock } from "@/order/use-cases/update-stock";
+import { getSession } from "@/lib/auth";
+import { Company } from "@/company/types";
+import { createDocument } from "@/document/use_cases/create-document";
+import { createInvoice, createReceipt } from "@/document/factpro_gateway";
+import { createdDocument } from "@/document/db_repository";
+import { createCustomer } from "@/customer/db_repository";
 
 export const create = async (
   userId: string,
@@ -26,7 +27,7 @@ export const create = async (
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
   if (!openCashShiftResponse.success) {
-    return {success: false, message: "No tienes una caja abierta"};
+    return { success: false, message: "No tienes una caja abierta" };
   }
 
   const openCashShift = openCashShiftResponse.data;
@@ -72,12 +73,12 @@ export const create = async (
 
   const companyResponse = await findCompany(session.user.companyId);
   if (!companyResponse.success) {
-    return {success: false, message: 'no se encontro empresa'}
+    return { success: false, message: "no se encontro empresa" };
   }
 
   const documentResponse = await createDocument(
-    {createReceipt, createInvoice},
-    {createdDocument, createCustomer},
+    { createReceipt, createInvoice },
+    { createdDocument, createCustomer },
     {
       id: crypto.randomUUID(),
       cashShiftId: openCashShift.id,
@@ -87,16 +88,6 @@ export const create = async (
       status: order.status,
       payments: order.payments,
       documentType: "invoice",
-      customer: {
-        id: crypto.randomUUID(),
-        orderId: order.id!,
-        documentType: "ruc",
-        documentNumber: "1234567890",
-        legalName: "Business COP",
-        address: "mi casa",
-        email: "email@gmail.com",
-        phoneNumber: "123456789",
-      },
     },
     companyResponse.data,
   );
@@ -104,7 +95,7 @@ export const create = async (
     return documentResponse;
   }
 
-  return {success: true, data: documentResponse.data.order};
+  return { success: true, data: documentResponse.data.order };
 };
 
 export const getCompany = async (): Promise<response<Company>> => {
