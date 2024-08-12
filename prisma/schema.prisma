@@ -187,6 +187,7 @@ model Customer {
   address       String?
   email         String?
   phoneNumber   String?
+  geoCode       String?
   documents     Document[]
   orders        Order[]
 }
