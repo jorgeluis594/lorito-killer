@@ -11,6 +11,7 @@ export type CustomerDocumentType = DniType | RucType;
 export type NaturalCustomer = {
   _branch: "NaturalCustomer";
   id: string;
+  companyId: string;
   documentType?: DniType;
   documentNumber?: string;
   geoCode?: string;
@@ -23,6 +24,7 @@ export type NaturalCustomer = {
 export type BusinessCustomer = {
   _branch: "BusinessCustomer";
   id: string;
+  companyId: string;
   documentType: RucType;
   documentNumber: string;
   legalName: string;

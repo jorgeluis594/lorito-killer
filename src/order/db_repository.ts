@@ -105,10 +105,11 @@ function mapPaymentsToPrisma(payments: Payment[]): PaymentPrismaMatch[] {
 
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
-    const { orderItems, payments, ...orderData } = order;
+    const { orderItems, payments, customer, ...orderData } = order;
     const createdOrderResponse = await prisma.order.create({
       data: {
         ...orderData,
+        customerId: customer?.id,
         payments: { create: mapPaymentsToPrisma(payments) as any },
       },
       include: { payments: true },
@@ -152,19 +153,19 @@ export const getOrders = async (): Promise<response<Order[]>> => {
 
 export const find = async (id: string): Promise<response<Order>> => {
   try {
-    const prismaOrder = await prisma.order.findUnique({where: { id: id }});
+    const prismaOrder = await prisma.order.findUnique({ where: { id: id } });
     if (!prismaOrder) {
-      return { success: false, message: "Order not found" }
+      return { success: false, message: "Order not found" };
     }
 
-    const [order] = await transformOrdersData([prismaOrder])
-    if (!order) return { success: false, message: "Order not found" }
+    const [order] = await transformOrdersData([prismaOrder]);
+    if (!order) return { success: false, message: "Order not found" };
 
-    return { success: true, data: order }
+    return { success: true, data: order };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
-}
+};
 
 /**
  * Transforms Prisma Order data to the Order data used in the application.
@@ -228,8 +229,10 @@ export async function transformOrdersData(
       throw new Error(`Invalid order status: ${prismaOrder.status}`);
     }
 
-    if(!isOrderDocumentType(prismaOrder.documentType)) {
-      throw new Error(`Invalid order documentType: ${prismaOrder.documentType}`);
+    if (!isOrderDocumentType(prismaOrder.documentType)) {
+      throw new Error(
+        `Invalid order documentType: ${prismaOrder.documentType}`,
+      );
     }
 
     const parsedOrderItems = (prismaOrderItemsMap[prismaOrder.id] || []).map(
@@ -272,9 +275,11 @@ function isOrderStatus(
 }
 
 function isOrderDocumentType(
-    documentType: any,
+  documentType: any,
 ): documentType is "invoice" | "receipt" | "ticket" {
   return (
-      documentType === "invoice" || documentType === "receipt" || documentType === "ticket"
+    documentType === "invoice" ||
+    documentType === "receipt" ||
+    documentType === "ticket"
   );
 }

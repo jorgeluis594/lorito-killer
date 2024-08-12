@@ -77,6 +77,7 @@ export const createCustomer = async (
       const businessCustomer: BusinessCustomer = {
         _branch: "BusinessCustomer",
         id: customerCreatedResponse.id,
+        companyId: customerCreatedResponse.companyId,
         documentType: "ruc",
         documentNumber: customerCreatedResponse.documentNumber!,
         legalName: customerCreatedResponse.legalName!,
@@ -91,6 +92,7 @@ export const createCustomer = async (
       const naturalCustomer: NaturalCustomer = {
         _branch: "NaturalCustomer",
         id: customerCreatedResponse.id,
+        companyId: customerCreatedResponse.companyId,
         documentType: "dni",
         documentNumber: customerCreatedResponse.documentNumber!,
         geoCode: "",
