@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import NewCustomerModal from "@/customer/components/new-customer-modal";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
@@ -26,7 +27,7 @@ export default function Cart() {
 
   return (
     <>
-      <div className="h-full border-l grid grid-rows-[min-content_1fr_min-content]">
+      <div className="h-full border-l grid grid-rows-[min-content_min-content_1fr_min-content]">
         <div className="p-5 border-b flex justify-between">
           <h2 className="text-xl font-semibold tracking-tight">Pedido</h2>
           <Button
@@ -37,6 +38,9 @@ export default function Cart() {
           >
             Vaciar carrito
           </Button>
+        </div>
+        <div className="p-5 border-b flex justify-between">
+          <NewCustomerModal />
         </div>
         <ScrollArea className="border-b">
           <div className="py-3 h-full">
