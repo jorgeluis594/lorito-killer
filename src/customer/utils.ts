@@ -3,11 +3,11 @@ import { BusinessCustomer, Customer, NaturalCustomer } from "./types";
 export function isBusinessCustomer(
   customer: Customer,
 ): customer is BusinessCustomer {
-  return customer.documentType === "ruc";
+  return customer._branch === "BusinessCustomer";
 }
 
 export function isNaturalCustomer(
   customer: Customer,
 ): customer is NaturalCustomer {
-  return customer.documentType === "dni";
+  return customer._branch === "NaturalCustomer";
 }
