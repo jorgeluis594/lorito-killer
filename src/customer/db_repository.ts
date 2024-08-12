@@ -61,9 +61,15 @@ export const createCustomer = async (
       return { success: false, message: "Unknown customer type" };
     }
 
+    const { _branch, fullName, legalName, ...customerData } = {
+      fullName: undefined,
+      legalName: undefined,
+      ...customer,
+    };
+
     const customerCreatedResponse = await prisma.customer.create({
       data: {
-        ...customer,
+        ...customerData,
         documentType: documentType,
         documentNumber: customer.documentNumber,
         legalName: customerName,
