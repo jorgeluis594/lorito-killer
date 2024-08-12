@@ -33,6 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { createCustomer } from "@/customer/actions";
+import { useToast } from "@/shared/components/ui/use-toast";
+import { useUserSession } from "@/lib/use-user-session";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
@@ -83,6 +86,25 @@ export default function NewCustomerModal() {
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(CustomerSchema),
   });
+  const { toast } = useToast();
+  const user = useUserSession();
+
+  const onSubmit = async (data: CustomerFormValues) => {
+    const res = await createCustomer(
+      formValuesToCustomer(data, user!.companyId!),
+    );
+    if (res.success) {
+      toast({
+        description: "Cliente creado con éxito",
+      });
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Error al crear el cliente " + res.message,
+      });
+    }
+  };
 
   return (
     <Dialog>
@@ -100,10 +122,7 @@ export default function NewCustomerModal() {
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(() => console.log("hola"))}
-            className="space-y-4"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
