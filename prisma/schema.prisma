@@ -179,6 +179,8 @@ enum CustomerDocumentType {
 
 model Customer {
   id            String    @id @default(uuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   documentType  CustomerDocumentType?
   documentNumber String?
   legalName     String?
@@ -195,6 +197,7 @@ model Company {
   email     String
   phone     String
   address   String
+  customers Customer[]
   users     User[]
   products Product[]
   cashShifts CashShift[]
