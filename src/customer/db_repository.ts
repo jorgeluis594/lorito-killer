@@ -12,6 +12,7 @@ import prisma from "@/lib/prisma";
 import { $Enums } from "@prisma/client";
 import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
 import PrismaDocumentType = $Enums.DocumentType;
+import { isBusinessCustomer, isNaturalCustomer } from "@/customer/utils";
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   CustomerDocumentType,
@@ -47,69 +48,62 @@ export const createCustomer = async (
   customer: Customer,
 ): Promise<response<Customer>> => {
   try {
-    const documentType =
-      CustomerDocumentTypeToPrismaMapper[customer.documentType];
+    const documentType = customer.documentType
+      ? CustomerDocumentTypeToPrismaMapper[customer.documentType]
+      : undefined;
+
+    let customerName: string;
+    if (isBusinessCustomer(customer)) {
+      customerName = customer.legalName;
+    } else if (isNaturalCustomer(customer)) {
+      customerName = customer.fullName;
+    } else {
+      return { success: false, message: "Unknown customer type" };
+    }
+
     const customerCreatedResponse = await prisma.customer.create({
       data: {
         ...customer,
         documentType: documentType,
         documentNumber: customer.documentNumber,
-        legalName:
-          documentType == "RUC"
-            ? (customer as BusinessCustomer).legalName
-            : (customer as NaturalCustomer).fullName,
+        legalName: customerName,
         address: customer.address,
         email: customer.email,
         phoneNumber: customer.phoneNumber,
       },
     });
 
-    let createdCustomer: Customer;
-
-    if (
-      customerCreatedResponse.documentType === PrismaCustomerDocumentType.DNI
-    ) {
-      const naturalCustomer: NaturalCustomer = {
+    if (isBusinessCustomer(customer)) {
+      const businessCustomer: BusinessCustomer = {
+        _branch: "BusinessCustomer",
         id: customerCreatedResponse.id,
-        documentType: DNI,
-        documentNumber: customerCreatedResponse.documentNumber || undefined,
-        fullName: customerCreatedResponse.legalName,
-        address: customerCreatedResponse.address || undefined,
-        email: customerCreatedResponse.email || undefined,
-        phoneNumber: customerCreatedResponse.phoneNumber || undefined,
+        documentType: "ruc",
+        documentNumber: customerCreatedResponse.documentNumber!,
+        legalName: customerCreatedResponse.legalName!,
+        address: customerCreatedResponse.address!,
+        geoCode: "",
+        email: customerCreatedResponse.email!,
+        phoneNumber: customerCreatedResponse.phoneNumber!,
       };
-    } else if (
-      createdResponse.documentType === PrismaCustomerDocumentType.RUC
-    ) {
-      createdCustomer = {
-        id: createdResponse.id,
-        documentType: PrismaCustomerDocumentTypeMapper.RUC,
-        documentNumber: createdResponse.documentNumber!,
-        legalName: createdResponse.legalName,
-        address: createdResponse.address!,
-        email: createdResponse.email!,
-        phoneNumber: createdResponse.phoneNumber!,
+
+      return { success: true, data: businessCustomer };
+    } else if (isNaturalCustomer(customer)) {
+      const naturalCustomer: NaturalCustomer = {
+        _branch: "NaturalCustomer",
+        id: customerCreatedResponse.id,
+        documentType: "dni",
+        documentNumber: customerCreatedResponse.documentNumber!,
+        geoCode: "",
+        fullName: customerCreatedResponse.legalName!,
+        address: customerCreatedResponse.address!,
+        email: customerCreatedResponse.email!,
+        phoneNumber: customerCreatedResponse.phoneNumber!,
       };
+
+      return { success: true, data: naturalCustomer };
     } else {
-      throw new Error("Unknown document type");
+      return { success: false, message: "Unknown customer type" };
     }
-
-    /*    const createdCustomer: Customer = {
-      id: customerResponse.id,
-      documentType:
-        PrismaCustomerDocumentTypeMapper[customerResponse.documentType],
-      documentNumber: customerResponse.documentNumber!,
-      legalName: customerResponse.legalName,
-      address: customerResponse.address!,
-      email: customerResponse.email!,
-      phoneNumber: customerResponse.phoneNumber!,
-    };*/
-
-    if (!createdCustomer) {
-      throw new Error("Unknown document type");
-    }
-
-    return { success: true, data: createdCustomer };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
