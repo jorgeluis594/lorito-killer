@@ -1,117 +1,11 @@
 import { Document } from "@/document/types";
-import { DocumentType, INVOICE, RECEIPT, TICKET } from "@/order/types";
 import { find as findOrder } from "@/order/db_repository";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import { $Enums } from "@prisma/client";
-import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
-import PrismaDocumentType = $Enums.DocumentType;
 import {
-  BusinessCustomer,
-  type Customer,
-  type CustomerDocumentType,
-  DNI,
-  NaturalCustomer,
-  RUC,
-} from "@/customer/types";
-
-const CustomerDocumentTypeToPrismaMapper: Record<
-  CustomerDocumentType,
-  PrismaCustomerDocumentType
-> = {
-  [DNI]: PrismaCustomerDocumentType.DNI,
-  [RUC]: PrismaCustomerDocumentType.RUC,
-};
-
-const PrismaCustomerDocumentTypeMapper: Record<
-  PrismaCustomerDocumentType,
-  CustomerDocumentType
-> = {
-  [PrismaCustomerDocumentType.DNI]: DNI,
-  [PrismaCustomerDocumentType.RUC]: RUC,
-};
-
-const DocumentTypeToPrismaMapper: Record<DocumentType, PrismaDocumentType> = {
-  [INVOICE]: PrismaDocumentType.INVOICE,
-  [RECEIPT]: PrismaDocumentType.RECEIPT,
-  [TICKET]: PrismaDocumentType.TICKET,
-};
-
-const PrismaDocumentTypeMapper: Record<PrismaDocumentType, DocumentType> = {
-  [PrismaDocumentType.INVOICE]: INVOICE,
-  [PrismaDocumentType.RECEIPT]: RECEIPT,
-  [PrismaDocumentType.TICKET]: TICKET,
-};
-
-export const createCustomer = async (
-  customer: Customer,
-): Promise<response<Customer>> => {
-  try {
-    const documentType =
-      CustomerDocumentTypeToPrismaMapper[customer.documentType];
-    const customerResponse = await prisma.customer.create({
-      data: {
-        ...customer,
-        documentType: documentType,
-        documentNumber: customer.documentNumber,
-        legalName:
-          documentType == "RUC"
-            ? (customer as BusinessCustomer).legalName
-            : (customer as NaturalCustomer).fullName,
-        address: customer.address,
-        email: customer.email,
-        phoneNumber: customer.phoneNumber,
-      },
-    });
-
-    /*let createdCustomer: Customer;
-
-    if (createdResponse.documentType === PrismaCustomerDocumentType.DNI) {
-      createdCustomer = {
-        id: createdResponse.id,
-        orderId: customer.orderId,
-        documentType: PrismaCustomerDocumentTypeMapper.DNI,
-        documentNumber: createdResponse.documentNumber!,
-        legalName: createdResponse.legalName,
-        address: createdResponse.address!,
-        email: createdResponse.email!,
-        phoneNumber: createdResponse.phoneNumber!
-      }
-    } else if (createdResponse.documentType === PrismaCustomerDocumentType.RUC) {
-      createdCustomer = {
-        id: createdResponse.id,
-        orderId: customer.orderId,
-        documentType: PrismaCustomerDocumentTypeMapper.RUC,
-        documentNumber: createdResponse.documentNumber!,
-        legalName: createdResponse.legalName,
-        address: createdResponse.address!,
-        email: createdResponse.email!,
-        phoneNumber: createdResponse.phoneNumber!
-      }
-    } else {
-      throw new Error('Unknown document type');
-    }*/
-
-    const createdCustomer: Customer = {
-      id: customerResponse.id,
-      documentType:
-        PrismaCustomerDocumentTypeMapper[customerResponse.documentType],
-      documentNumber: customerResponse.documentNumber!,
-      legalName: customerResponse.legalName,
-      address: customerResponse.address!,
-      email: customerResponse.email!,
-      phoneNumber: customerResponse.phoneNumber!,
-    };
-
-    if (!createdCustomer) {
-      throw new Error("Unknown document type");
-    }
-
-    return { success: true, data: createdCustomer };
-  } catch (e: any) {
-    return { success: false, message: e.message };
-  }
-};
+  DocumentTypeToPrismaMapper,
+  PrismaDocumentTypeMapper,
+} from "@/customer/db_repository";
 
 export const createdDocument = async (
   document: Document,
@@ -131,7 +25,6 @@ export const createdDocument = async (
       },
       include: {
         order: true,
-        customer: true,
       },
     });
 
