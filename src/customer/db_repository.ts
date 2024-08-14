@@ -1,18 +1,20 @@
-import {DocumentType, INVOICE, RECEIPT, TICKET} from "@/order/types";
+import { DocumentType, INVOICE, RECEIPT, TICKET } from "@/order/types";
 import {
   BusinessCustomer,
-  CustomerDocumentType, CustomerSortParams,
+  CustomerDocumentType,
   type Customer,
   DNI,
   NaturalCustomer,
-  RUC, TypeBusinessCustomerType, TypeNaturalCustomerType,
+  RUC,
+  TypeBusinessCustomerType,
+  TypeNaturalCustomerType,
 } from "@/customer/types";
-import {response} from "@/lib/types";
+import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import {$Enums, Customer as PrismaCustomer, Prisma} from "@prisma/client";
+import { $Enums, Customer as PrismaCustomer, Prisma } from "@prisma/client";
 import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
 import PrismaDocumentType = $Enums.DocumentType;
-import {isBusinessCustomer, isNaturalCustomer} from "@/customer/utils";
+import { isBusinessCustomer, isNaturalCustomer } from "@/customer/utils";
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   CustomerDocumentType,
@@ -58,10 +60,10 @@ export const createCustomer = async (
     } else if (isNaturalCustomer(customer)) {
       customerName = customer.fullName;
     } else {
-      return {success: false, message: "Unknown customer type"};
+      return { success: false, message: "Unknown customer type" };
     }
 
-    const {_branch, fullName, legalName, ...customerData} = {
+    const { _branch, fullName, legalName, ...customerData } = {
       fullName: undefined,
       legalName: undefined,
       ...customer,
@@ -94,7 +96,7 @@ export const createCustomer = async (
         phoneNumber: customerCreatedResponse.phoneNumber!,
       };
 
-      return {success: true, data: businessCustomer};
+      return { success: true, data: businessCustomer };
     } else if (isNaturalCustomer(customer)) {
       const naturalCustomer: NaturalCustomer = {
         _branch: "NaturalCustomer",
@@ -109,12 +111,12 @@ export const createCustomer = async (
         phoneNumber: customerCreatedResponse.phoneNumber!,
       };
 
-      return {success: true, data: naturalCustomer};
+      return { success: true, data: naturalCustomer };
     } else {
-      return {success: false, message: "Unknown customer type"};
+      return { success: false, message: "Unknown customer type" };
     }
   } catch (e: any) {
-    return {success: false, message: e.message};
+    return { success: false, message: e.message };
   }
 };
 
@@ -124,7 +126,7 @@ export const find = async (
 ): Promise<response<Customer>> => {
   try {
     const customer = await prisma.customer.findUnique({
-      where: {id},
+      where: { id },
     });
 
     if (customer) {
@@ -133,33 +135,39 @@ export const find = async (
       return { success: false, message: "Product not found" };
     }
   } catch (error: any) {
-    return {success: false, message: error.message};
+    return { success: false, message: error.message };
   }
 };
 
 export const getMany = async ({
   companyId,
-  sortBy,
   limit,
   q,
   customerType,
-  }: {
+}: {
   companyId: string;
-  sortBy?: CustomerSortParams;
   limit?: number;
   q?: string | null;
   customerType?: TypeNaturalCustomerType | TypeBusinessCustomerType;
 }): Promise<response<Customer[]>> => {
   try {
     const query: Prisma.CustomerFindManyArgs = {
-      where: {companyId},
-      orderBy: sortBy,
+      where: { companyId },
+      orderBy: [{ legalName: "asc" }],
     };
 
-    if (limit) query.take = limit;
+    if (limit) query.take = 20;
     if (q)
       query.where = {
         ...query.where,
+        OR: [
+          {
+            legalName: { contains: q, mode: "insensitive" },
+          },
+          {
+            documentNumber: { contains: q, mode: "insensitive" },
+          },
+        ],
       };
 
     const result = await prisma.customer.findMany({
@@ -167,16 +175,15 @@ export const getMany = async ({
     });
     const customer = await Promise.all(result.map(prismaToCustomer));
 
-    return {success: true, data: customer};
+    return { success: true, data: customer };
   } catch (error: any) {
-    return {success: false, message: error.message};
+    return { success: false, message: error.message };
   }
 };
 
 const prismaToCustomer = async (
   prismaCustomer: PrismaCustomer,
 ): Promise<Customer> => {
-
   if (prismaCustomer.documentType === "RUC") {
     return {
       _branch: "BusinessCustomer",
