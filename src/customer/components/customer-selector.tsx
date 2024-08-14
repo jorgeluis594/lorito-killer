@@ -17,11 +17,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/shared/components/ui/command";
-import {
-  CustomerType,
-  InferCustomerType,
-  SortOptionsCustomer,
-} from "@/customer/types";
+import { CustomerType, InferCustomerType } from "@/customer/types";
 import { getMany } from "@/customer/api_repository";
 import * as React from "react";
 import { useEffect, useState } from "react";
