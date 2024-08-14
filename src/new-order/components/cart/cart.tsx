@@ -44,14 +44,19 @@ export default function Cart() {
             Vaciar carrito
           </Button>
         </div>
+
         <div className="p-5 border-b flex justify-between items-center space-x-4">
-          <CustomerSelector
-            value={currentCustomer}
-            onSelect={(customer) => {
-              setCurrentCustomer(customer);
-            }}
-          />
-          <NewCustomerModal />
+          <div>
+            <CustomerSelector
+              value={currentCustomer}
+              onSelect={(customer) => {
+                setCurrentCustomer(customer);
+              }}
+            />
+          </div>
+          <div>
+            <NewCustomerModal />
+          </div>
         </div>
         <ScrollArea className="border-b">
           <div className="py-3 h-full">

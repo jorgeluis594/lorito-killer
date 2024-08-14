@@ -1,6 +1,5 @@
 "use client";
 
-import {InferProductType} from "@/product/types";
 import {useToast} from "@/shared/components/ui/use-toast";
 import {debounce} from "@/lib/utils";
 import {Popover, PopoverContent, PopoverTrigger} from "@/shared/components/ui/popover";
@@ -80,7 +79,6 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        Cliente:
         <Button
           variant="outline"
           role="combobox"
