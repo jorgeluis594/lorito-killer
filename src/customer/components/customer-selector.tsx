@@ -1,24 +1,29 @@
 "use client";
 
-import {useToast} from "@/shared/components/ui/use-toast";
-import {debounce} from "@/lib/utils";
-import {Popover, PopoverContent, PopoverTrigger} from "@/shared/components/ui/popover";
-import {Button} from "@/shared/components/ui/button";
-import {CaretSortIcon} from "@radix-ui/react-icons";
+import { useToast } from "@/shared/components/ui/use-toast";
+import { debounce } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/components/ui/popover";
+import { Button } from "@/shared/components/ui/button";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
 } from "@/shared/components/ui/command";
-import {CustomerType, GetManyParamsCustomer, InferCustomerType} from "@/customer/types";
-import {getMany} from "@/customer/api_repository";
+import { CustomerType, InferCustomerType } from "@/customer/types";
+import { getMany } from "@/customer/api_repository";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
+import { fullName } from "@/customer/utils";
 
-export interface CustomerelectorProps<T extends CustomerType | undefined> {
+export interface CustomerSelectorProps<T extends CustomerType | undefined> {
   value?: InferCustomerType<T>;
   onSelect?: (customer: InferCustomerType<T>) => void;
   skipCustomerIds?: string[];
@@ -29,30 +34,17 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   value,
   onSelect,
   customerType,
-  skipCustomerIds = [],
-  }: CustomerelectorProps<T>) {
+}: CustomerSelectorProps<T>) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [customers, setCustomer] = useState<InferCustomerType<T>[]>([]);
-  const {toast} = useToast();
-
-  const setSkipCustomerIds = new Set(skipCustomerIds);
+  const [customers, setCustomers] = useState<InferCustomerType<T>[]>([]);
+  const { toast } = useToast();
 
   const searchCustomers = async (q: string) => {
-    const params: GetManyParamsCustomer<T> = {
-      sortBy: "fullName_asc",
-      customerType,
-    };
-    if (q.length || q !== "") {
-      params["q"] = q;
-    }
-    if (q.length === 0) {
-      params["limit"] = 20;
-    }
-    const response = await getMany(params);
+    const response = await getMany({ q: q, customerType });
 
     if (response.success) {
-      setCustomer(response.data.filter((c) => !setSkipCustomerIds.has(c.id!)));
+      setCustomers(response.data);
     } else {
       toast({
         title: "Error",
@@ -87,18 +79,18 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           className="justify-between w-full"
         >
           {value ? value.email : "Seleccione un cliente"}
-          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50"/>
+          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent>
         <Command shouldFilter={false}>
           <CommandInput
             value={search}
-            placeholder="Busque su producto"
+            placeholder="Nombre o dni de cliente"
             onValueChange={setSearch}
           />
           <CommandList>
-            <CommandEmpty>No se encontro ningun producto</CommandEmpty>
+            <CommandEmpty>No se encontro ningun cliente</CommandEmpty>
             <CommandGroup>
               {customers.map((customer) => (
                 <CommandItem
@@ -106,7 +98,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
                   value={customer.id}
                   onSelect={onCustomerSelect}
                 >
-                  <span>{customer.email}</span>
+                  <span>{fullName(customer)}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
