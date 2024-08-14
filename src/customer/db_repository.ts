@@ -141,22 +141,29 @@ export const find = async (
 
 export const getMany = async ({
   companyId,
-  limit,
   q,
   customerType,
 }: {
   companyId: string;
-  limit?: number;
   q?: string | null;
   customerType?: TypeNaturalCustomerType | TypeBusinessCustomerType;
 }): Promise<response<Customer[]>> => {
   try {
     const query: Prisma.CustomerFindManyArgs = {
-      where: { companyId },
+      where: {
+        companyId,
+        documentType: customerType === "BusinessCustomer" ? "RUC" : "DNI",
+      },
+      take: 20,
       orderBy: [{ legalName: "asc" }],
     };
 
-    if (limit) query.take = 20;
+    if (customerType) {
+      query.where = {
+        ...query.where,
+      };
+    }
+
     if (q)
       query.where = {
         ...query.where,

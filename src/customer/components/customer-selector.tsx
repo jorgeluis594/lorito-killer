@@ -82,7 +82,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           aria-expanded={open}
           className="justify-between w-full"
         >
-          {value ? value.email : "Seleccione un cliente"}
+          {value ? fullName(value) : "Seleccione un cliente"}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
