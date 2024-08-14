@@ -46,7 +46,8 @@ export default function Cart() {
         </div>
 
         <div className="p-5 border-b flex justify-between items-center space-x-4">
-          <div>
+          <div className="flex items-center justify-end">
+            <h2 className="mr-4">Cliente:</h2>
             <CustomerSelector
               value={currentCustomer}
               onSelect={(customer) => {
