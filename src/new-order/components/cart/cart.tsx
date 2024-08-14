@@ -12,10 +12,15 @@ import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import NewCustomerModal from "@/customer/components/new-customer-modal";
+import {Customer} from "@/customer/types";
+import CustomerSelector from "@/customer/components/customer-selector";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
   const cashShift = useCashShiftStore((state) => state.cashShift);
+  const [currentCustomer, setCurrentCustomer] = useState<
+    Customer | undefined
+  >();
 
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const { increaseQuantity, decreaseQuantity, reset, removeOrderItem } =
@@ -39,7 +44,13 @@ export default function Cart() {
             Vaciar carrito
           </Button>
         </div>
-        <div className="p-5 border-b flex justify-between">
+        <div className="p-5 border-b flex justify-between items-center space-x-4">
+          <CustomerSelector
+            value={currentCustomer}
+            onSelect={(customer) => {
+              setCurrentCustomer(customer);
+            }}
+          />
           <NewCustomerModal />
         </div>
         <ScrollArea className="border-b">
