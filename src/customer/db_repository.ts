@@ -1,18 +1,18 @@
-import { DocumentType, INVOICE, RECEIPT, TICKET } from "@/order/types";
+import {DocumentType, INVOICE, RECEIPT, TICKET} from "@/order/types";
 import {
   BusinessCustomer,
+  CustomerDocumentType, CustomerSortParams,
   type Customer,
-  CustomerDocumentType,
   DNI,
   NaturalCustomer,
-  RUC,
+  RUC, TypeBusinessCustomerType, TypeNaturalCustomerType,
 } from "@/customer/types";
-import { response } from "@/lib/types";
+import {response} from "@/lib/types";
 import prisma from "@/lib/prisma";
-import { $Enums } from "@prisma/client";
+import {$Enums, Customer as PrismaCustomer, Prisma} from "@prisma/client";
 import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
 import PrismaDocumentType = $Enums.DocumentType;
-import { isBusinessCustomer, isNaturalCustomer } from "@/customer/utils";
+import {isBusinessCustomer, isNaturalCustomer} from "@/customer/utils";
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   CustomerDocumentType,
@@ -58,10 +58,10 @@ export const createCustomer = async (
     } else if (isNaturalCustomer(customer)) {
       customerName = customer.fullName;
     } else {
-      return { success: false, message: "Unknown customer type" };
+      return {success: false, message: "Unknown customer type"};
     }
 
-    const { _branch, fullName, legalName, ...customerData } = {
+    const {_branch, fullName, legalName, ...customerData} = {
       fullName: undefined,
       legalName: undefined,
       ...customer,
@@ -71,6 +71,7 @@ export const createCustomer = async (
       data: {
         ...customerData,
         documentType: documentType,
+        companyId: customer.companyId,
         documentNumber: customer.documentNumber,
         legalName: customerName,
         address: customer.address,
@@ -93,7 +94,7 @@ export const createCustomer = async (
         phoneNumber: customerCreatedResponse.phoneNumber!,
       };
 
-      return { success: true, data: businessCustomer };
+      return {success: true, data: businessCustomer};
     } else if (isNaturalCustomer(customer)) {
       const naturalCustomer: NaturalCustomer = {
         _branch: "NaturalCustomer",
@@ -108,11 +109,99 @@ export const createCustomer = async (
         phoneNumber: customerCreatedResponse.phoneNumber!,
       };
 
-      return { success: true, data: naturalCustomer };
+      return {success: true, data: naturalCustomer};
     } else {
-      return { success: false, message: "Unknown customer type" };
+      return {success: false, message: "Unknown customer type"};
     }
   } catch (e: any) {
-    return { success: false, message: e.message };
+    return {success: false, message: e.message};
+  }
+};
+
+export const find = async (
+  id: string,
+  companyId?: string,
+): Promise<response<Customer>> => {
+  try {
+    const customer = await prisma.customer.findUnique({
+      where: {id},
+    });
+
+    if (customer) {
+      return { success: true, data: await prismaToCustomer(customer) };
+    } else {
+      return { success: false, message: "Product not found" };
+    }
+  } catch (error: any) {
+    return {success: false, message: error.message};
+  }
+};
+
+export const getMany = async ({
+  companyId,
+  sortBy,
+  limit,
+  q,
+  customerType,
+  }: {
+  companyId: string;
+  sortBy?: CustomerSortParams;
+  limit?: number;
+  q?: string | null;
+  customerType?: TypeNaturalCustomerType | TypeBusinessCustomerType;
+}): Promise<response<Customer[]>> => {
+  try {
+    const query: Prisma.CustomerFindManyArgs = {
+      where: {companyId},
+      orderBy: sortBy,
+    };
+
+    if (limit) query.take = limit;
+    if (q)
+      query.where = {
+        ...query.where,
+      };
+
+    const result = await prisma.customer.findMany({
+      ...query,
+    });
+    const customer = await Promise.all(result.map(prismaToCustomer));
+
+    return {success: true, data: customer};
+  } catch (error: any) {
+    return {success: false, message: error.message};
+  }
+};
+
+const prismaToCustomer = async (
+  prismaCustomer: PrismaCustomer,
+): Promise<Customer> => {
+
+  if (prismaCustomer.documentType === "RUC") {
+    return {
+      _branch: "BusinessCustomer",
+      id: prismaCustomer.id,
+      companyId: prismaCustomer.companyId,
+      documentType: "ruc",
+      documentNumber: prismaCustomer.documentNumber!,
+      legalName: prismaCustomer.legalName!,
+      address: prismaCustomer.address!,
+      geoCode: "",
+      email: prismaCustomer.email!,
+      phoneNumber: prismaCustomer.phoneNumber!,
+    };
+  } else {
+    return {
+      _branch: "NaturalCustomer",
+      id: prismaCustomer.id,
+      companyId: prismaCustomer.companyId,
+      documentType: "dni",
+      documentNumber: prismaCustomer.documentNumber!,
+      geoCode: "",
+      fullName: prismaCustomer.legalName!,
+      address: prismaCustomer.address!,
+      email: prismaCustomer.email!,
+      phoneNumber: prismaCustomer.phoneNumber!,
+    };
   }
 };
