@@ -11,3 +11,11 @@ export function isNaturalCustomer(
 ): customer is NaturalCustomer {
   return customer._branch === "NaturalCustomer";
 }
+
+export function fullName(customer: Customer): string {
+  if (isBusinessCustomer(customer)) {
+    return customer.legalName;
+  } else {
+    return customer.fullName;
+  }
+}
