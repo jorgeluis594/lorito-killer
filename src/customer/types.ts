@@ -61,10 +61,10 @@ export type CustomerItem = {
   fullName: string;
 };
 
-export type GetManyParamsCustomer<T extends CustomerType | undefined = undefined> = {
+export type GetManyParamsCustomer<
+  T extends CustomerType | undefined = undefined,
+> = {
   q?: string | null;
-  limit?: number;
-  sortBy?: SortKeyCustomer;
   customerType?: T;
 };
 
