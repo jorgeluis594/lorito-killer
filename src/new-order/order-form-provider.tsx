@@ -20,6 +20,7 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
 import { mul, plus } from "@/lib/utils";
+import {Customer} from "@/customer/types";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -204,6 +205,14 @@ export const useOrderFormActions = (): Actions => {
     }
   };
 
+  const setCustomer = (customer: Customer) => {
+    const { order } = orderFormStoreContext.getState();
+
+    orderFormStoreContext.setState(() => {
+      return { order: { ...order, customer: {...customer} } };
+    })
+  }
+
   const removeOrderItem = (orderItemId: string) => {
     const { order } = orderFormStoreContext.getState();
     order.orderItems = order.orderItems.filter(
@@ -278,6 +287,7 @@ export const useOrderFormActions = (): Actions => {
 
   return {
     addProduct,
+    setCustomer,
     removeOrderItem,
     addOrderItem,
     updateOrderItem,

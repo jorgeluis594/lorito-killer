@@ -12,19 +12,15 @@ import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import NewCustomerModal from "@/customer/components/new-customer-modal";
-import {Customer} from "@/customer/types";
 import CustomerSelector from "@/customer/components/customer-selector";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
   const cashShift = useCashShiftStore((state) => state.cashShift);
-  const [currentCustomer, setCurrentCustomer] = useState<
-    Customer | undefined
-  >();
+  const customer = useOrderFormStore((state) => state.order.customer);
 
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
-  const { increaseQuantity, decreaseQuantity, reset, removeOrderItem } =
-    useOrderFormActions();
+  const { increaseQuantity, decreaseQuantity, reset, removeOrderItem, setCustomer } = useOrderFormActions();
 
   useEffect(() => {
     reset();
@@ -49,9 +45,9 @@ export default function Cart() {
           <div className="flex items-center justify-end">
             <h2 className="mr-4">Cliente:</h2>
             <CustomerSelector
-              value={currentCustomer}
+              value={customer}
               onSelect={(customer) => {
-                setCurrentCustomer(customer);
+                setCustomer(customer);
               }}
             />
           </div>
