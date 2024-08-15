@@ -25,7 +25,7 @@ export default function InvoiceView() {
 
   return (
     <>
-      <div className="h-full border-l grid grid-rows-[min-content_min-content_1fr_min-content]">
+      <div className="h-full grid grid-rows-[min-content_min-content_1fr_min-content]">
         <div className="p-5 border-b flex justify-between">
           <h2 className="text-xl font-semibold tracking-tight">Factura</h2>
           <Button
