@@ -213,11 +213,24 @@ export const useOrderFormActions = (): Actions => {
     })
   }
 
-  const setDocumentType = (documentType: DocumentType) => {
+  function needsRemoveCustomer(previousDocumentType: string, newDocumentType: string): boolean {
+    return ((previousDocumentType === "receipt" || previousDocumentType === "ticket") && newDocumentType === "invoice") ||
+    (previousDocumentType === "invoice" && (newDocumentType === "receipt" || newDocumentType === "ticket"))
+  }
+
+  const setDocumentType = (newDocumentType: DocumentType) => {
     const { order } = orderFormStoreContext.getState();
 
+    if(needsRemoveCustomer(order.documentType, newDocumentType)) {
+      orderFormStoreContext.setState(() => {
+        return { order: { ...order, documentType: newDocumentType, customer: undefined } };
+      })
+
+      return
+    }
+
     orderFormStoreContext.setState(() => {
-      return { order: { ...order, documentType: documentType } };
+      return { order: { ...order, documentType: newDocumentType } };
     })
   }
 
