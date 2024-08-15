@@ -15,6 +15,7 @@ export type Actions = {
   addProduct: (product: Product, stock?: number) => void;
   setDocumentType: (documentType: DocumentType) => void;
   setCustomer: (customer: Customer) => void;
+  removeCustomer: () => void;
   getOrderItemByProduct: (productId: string) => OrderItem | undefined;
   removeOrderItem: (orderItemId: string) => void;
   addOrderItem: (orderItem: OrderItem) => void;

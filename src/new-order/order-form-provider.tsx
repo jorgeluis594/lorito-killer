@@ -311,6 +311,13 @@ export const useOrderFormActions = (): Actions => {
         paymentMode: "none",
       });
     },
+    removeCustomer: () => {
+      const { order } = orderFormStoreContext.getState();
+
+      orderFormStoreContext.setState({
+        order: { ...order, customer: undefined},
+      });
+    },
     reset: () => {
       const {
         order: { cashShiftId, companyId },
