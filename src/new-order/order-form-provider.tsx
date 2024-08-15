@@ -15,7 +15,7 @@ import {
   SingleProductType,
   UNIT_UNIT_TYPE,
 } from "@/product/types";
-import { OrderItem, Payment, PaymentMethod } from "@/order/types";
+import { OrderItem, Payment, PaymentMethod, DocumentType } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
@@ -213,6 +213,14 @@ export const useOrderFormActions = (): Actions => {
     })
   }
 
+  const setDocumentType = (documentType: DocumentType) => {
+    const { order } = orderFormStoreContext.getState();
+
+    orderFormStoreContext.setState(() => {
+      return { order: { ...order, documentType: documentType } };
+    })
+  }
+
   const removeOrderItem = (orderItemId: string) => {
     const { order } = orderFormStoreContext.getState();
     order.orderItems = order.orderItems.filter(
@@ -287,6 +295,7 @@ export const useOrderFormActions = (): Actions => {
 
   return {
     addProduct,
+    setDocumentType,
     setCustomer,
     removeOrderItem,
     addOrderItem,
