@@ -220,18 +220,20 @@ export const useOrderFormActions = (): Actions => {
 
   const setDocumentType = (newDocumentType: DocumentType) => {
     const { order } = orderFormStoreContext.getState();
+    console.log('Cambio de tipo de documento:', order.documentType, '->', newDocumentType);
 
     if(needsRemoveCustomer(order.documentType, newDocumentType)) {
       orderFormStoreContext.setState(() => {
         return { order: { ...order, documentType: newDocumentType, customer: undefined } };
       })
-
+      console.log('Cliente eliminado debido al cambio de documento.');
       return
     }
 
     orderFormStoreContext.setState(() => {
       return { order: { ...order, documentType: newDocumentType } };
     })
+    console.log('Tipo de documento actualizado:', newDocumentType);
   }
 
   const removeOrderItem = (orderItemId: string) => {
