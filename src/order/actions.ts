@@ -53,7 +53,6 @@ export const create = async (
     ...order,
     cashShiftId: openCashShift.id,
     companyId: session.user.companyId,
-    documentType: order.documentType,
   });
   if (!createOrderResponse.success) {
     return createOrderResponse;
@@ -82,16 +81,7 @@ export const create = async (
   const documentResponse = await createDocument(
     { createReceipt, createInvoice },
     { createdDocument, createCustomer },
-    {
-      id: crypto.randomUUID(),
-      cashShiftId: openCashShift.id,
-      companyId: companyResponse.data.id,
-      orderItems: order.orderItems,
-      total: order.total,
-      status: order.status,
-      payments: order.payments,
-      documentType: "invoice",
-    },
+    createOrderResponse.data,
     companyResponse.data,
   );
   if (!documentResponse.success) {
@@ -101,7 +91,7 @@ export const create = async (
   return {
     success: true,
     data: {
-      ...order,
+      ...createOrderResponse.data,
       documentType: documentResponse.data.documentType,
       document: documentResponse.data,
     },
