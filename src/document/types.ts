@@ -42,7 +42,6 @@ export type Document = {
   number: string;
   dateOfIssue: string;
   broadcastTime: string;
-  order: Order;
   customer: Customer;
   observations: string;
   createdAt?: Date;

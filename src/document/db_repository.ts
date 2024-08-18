@@ -62,7 +62,6 @@ export const createdDocument = async (
       dateOfIssue: documentResponse.dateOfIssue,
       broadcastTime: documentResponse.broadcastTime,
       observations: documentResponse.observations,
-      order: orderResponse.data,
       customer: { ...document.customer },
     };
 

@@ -18,11 +18,14 @@ import { createDocument } from "@/document/use_cases/create-document";
 import { createInvoice, createReceipt } from "@/document/factpro_gateway";
 import { createdDocument } from "@/document/db_repository";
 import { createCustomer } from "@/customer/db_repository";
+import type { Document, DocumentType } from "@/document/types";
 
 export const create = async (
   userId: string,
-  order: Order,
-): Promise<response<Order>> => {
+  order: Order & { documentType: DocumentType },
+): Promise<
+  response<Order & { documentType: DocumentType; document: Document }>
+> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
@@ -95,7 +98,14 @@ export const create = async (
     return documentResponse;
   }
 
-  return { success: true, data: documentResponse.data.order };
+  return {
+    success: true,
+    data: {
+      ...order,
+      documentType: documentResponse.data.documentType,
+      document: documentResponse.data,
+    },
+  };
 };
 
 export const getCompany = async (): Promise<response<Company>> => {

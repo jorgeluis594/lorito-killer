@@ -1,27 +1,22 @@
-import {Order, OrderItem, OrderWithBusinessCustomer} from "@/order/types";
-import {response} from "@/lib/types";
-import {
-  FormatPdf,
-  IssuerData,
-  PaymentTerm,
-  TotalPay
-} from "@/document/types";
-import {format} from "date-fns";
+import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
+import { response } from "@/lib/types";
+import { FormatPdf, IssuerData, PaymentTerm, TotalPay } from "@/document/types";
+import { format } from "date-fns";
 import axios from "axios";
-import {Company} from "@/company/types";
-import { Document } from "@/document/types"
+import { Company } from "@/company/types";
+import { Document } from "@/document/types";
 
 const url = process.env.FACTPRO_URL;
 const token = process.env.FACTPRO_TOKEN;
-const INVOICE_DOCUMENT_TYPE = "01"
-const RUC_CUSTOMER_DOCUMENT_TYPE = "6"
-const INVOICE_SERIES = "F001"
-const INTERNAL_SALES = "0101"
-const CURRENCY = "PEN"
-const COUNTRY_CODE = "PE"
-const PDF_FORMAT = "a4"
-const PAYMENT_TYPE = "0"
-const UNIT_OF_MEASUREMENT = "NIU"
+const INVOICE_DOCUMENT_TYPE = "01";
+const RUC_CUSTOMER_DOCUMENT_TYPE = "6";
+const INVOICE_SERIES = "F001";
+const INTERNAL_SALES = "0101";
+const CURRENCY = "PEN";
+const COUNTRY_CODE = "PE";
+const PDF_FORMAT = "a4";
+const PAYMENT_TYPE = "0";
+const UNIT_OF_MEASUREMENT = "NIU";
 
 interface DocumentItem {
   unite: string;
@@ -62,7 +57,10 @@ interface BodyDocument {
   observations?: string;
 }
 
-export const createInvoice = async (order: OrderWithBusinessCustomer, company: Company): Promise<response<Document>> => {
+export const createInvoice = async (
+  order: OrderWithBusinessCustomer,
+  company: Company,
+): Promise<response<Document>> => {
   try {
     if (!company.invoiceCode) {
       throw new Error("Invoice Code is required");
@@ -88,24 +86,26 @@ export const createInvoice = async (order: OrderWithBusinessCustomer, company: C
         countryCode: COUNTRY_CODE,
         address: order.customer.address,
         email: order.customer.email,
-        phoneNumber: order.customer.phoneNumber
+        phoneNumber: order.customer.phoneNumber,
       },
       totals: {
-        totalExport: 0.00, // Por el momento no se acepta exportaciones
-        totalTaxes: 0.00, // Por el momento no se acepta impuesto, por desarrollar TODO: https://trello.com/c/avRmC8Yq
-        totallyUnaffected: 0.00,
-        totalExonerated: 0.00,
-        totallyFree: 0.00,
-        totalTax: 0.00,
+        totalExport: 0.0, // Por el momento no se acepta exportaciones
+        totalTaxes: 0.0, // Por el momento no se acepta impuesto, por desarrollar TODO: https://trello.com/c/avRmC8Yq
+        totallyUnaffected: 0.0,
+        totalExonerated: 0.0,
+        totallyFree: 0.0,
+        totalTax: 0.0,
         totalSale: order.total,
       },
-      items: order.orderItems.map(orderItem => orderItemToDocumentItem(orderItem)),
+      items: order.orderItems.map((orderItem) =>
+        orderItemToDocumentItem(orderItem),
+      ),
       actions: {
-        formatPdf: PDF_FORMAT
+        formatPdf: PDF_FORMAT,
       },
       paymentTerm: {
         description: "",
-        type: PAYMENT_TYPE
+        type: PAYMENT_TYPE,
       },
       paymentMethod: "",
       purchaseOrder: order.id,
@@ -121,24 +121,26 @@ export const createInvoice = async (order: OrderWithBusinessCustomer, company: C
         orderId: order.id!,
         customerId: order.customer.id,
         total: order.total,
-        documentType: order.documentType,
+        documentType: order.documentType!,
         series: body.series,
         number: body.number,
         dateOfIssue: body.dateOfIssue,
         broadcastTime: body.broadcastTime,
-        order: order,
         customer: order.customer,
         observations: body.observations!,
-      }
+      },
     };
   } catch (e: any) {
-    return {success: false, message: e.message};
+    return { success: false, message: e.message };
   }
-}
+};
 
-export const createReceipt = async (order: Order, company: Company): Promise<response<Document>> => {
-  return {success: false, message: "createReceipt"};
-}
+export const createReceipt = async (
+  order: Order,
+  company: Company,
+): Promise<response<Document>> => {
+  return { success: false, message: "createReceipt" };
+};
 
 const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
   return {
@@ -147,21 +149,23 @@ const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
     description: "",
     quantity: orderItem.quantity,
     unitValue: orderItem.productPrice,
-    unitPrice: 0.00,
+    unitPrice: 0.0,
     taxType: "10",
-    totalBaseTax: 0.00,
-    taxPercentage: 0.00,
-    totalTax: 0.00,
+    totalBaseTax: 0.0,
+    taxPercentage: 0.0,
+    totalTax: 0.0,
     total: orderItem.total,
-  }
-}
+  };
+};
 
-const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>> => {
+const sendDocument = async (
+  body: BodyDocument,
+): Promise<response<BodyDocument>> => {
   try {
     const res = await axios.post(url!, body, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -172,9 +176,8 @@ const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>>
       };
     }
   } catch (error) {
-    console.error('Error al emitir la factura:', error);
+    console.error("Error al emitir la factura:", error);
   }
 
-  return {success: false, message: "not implemented"};
-}
-
+  return { success: false, message: "not implemented" };
+};

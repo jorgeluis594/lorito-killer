@@ -1,6 +1,6 @@
 import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
 import type { BusinessCustomer, Customer } from "@/customer/types";
-import { DocumentType } from "@/document/types";
+import { DocumentType, InvoiceType, Document } from "@/document/types";
 
 export type OrderItem = {
   id?: string;
@@ -23,13 +23,18 @@ export type Order = {
   status: "pending" | "completed" | "cancelled";
   payments: Payment[];
   documentType: DocumentType;
+  document?: Document;
   customer?: Customer;
   createdAt?: Date;
   updatedAt?: Date;
 };
 
-export type OrderWithBusinessCustomer = Omit<Order, "customer"> & {
+export type OrderWithBusinessCustomer = Omit<
+  Order,
+  "customer" | "documentType"
+> & {
   customer: BusinessCustomer;
+  documentType: InvoiceType;
 };
 
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "wallet";
