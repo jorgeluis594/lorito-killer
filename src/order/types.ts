@@ -1,5 +1,6 @@
 import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
 import type { BusinessCustomer, Customer } from "@/customer/types";
+import { DocumentType } from "@/document/types";
 
 export type OrderItem = {
   id?: string;
@@ -12,17 +13,6 @@ export type OrderItem = {
   createdAt?: Date;
   updatedAt?: Date;
 };
-
-export const INVOICE = "invoice";
-export type InvoiceType = typeof INVOICE;
-
-export const RECEIPT = "receipt";
-export type ReceiptType = typeof RECEIPT;
-
-export const TICKET = "ticket";
-export type TicketType = typeof TICKET;
-
-export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
 export type Order = {
   id?: string;
