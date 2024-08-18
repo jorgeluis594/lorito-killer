@@ -19,8 +19,7 @@ interface DocumentGateway {
 }
 
 interface Repository {
-  createdDocument: (document: Document) => Promise<response<Document>>;
-  createCustomer: (customer: Customer) => Promise<response<Customer>>;
+  createDocument: (document: Document) => Promise<response<Document>>;
 }
 
 export const createDocument = async (
@@ -34,7 +33,6 @@ export const createDocument = async (
   }
 
   let documentResponse: response<Document>;
-  // generar la factura o boleta
   if (order.documentType == "receipt") {
     documentResponse = await documentGateway.createReceipt(order, company);
   } else {
@@ -49,5 +47,5 @@ export const createDocument = async (
     return documentResponse;
   }
 
-  return await repository.createdDocument(documentResponse.data);
+  return await repository.createDocument(documentResponse.data);
 };

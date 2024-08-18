@@ -1,6 +1,6 @@
 "use server";
 
-import { Order, OrderItem } from "./types";
+import { Order } from "./types";
 import { response } from "@/lib/types";
 import { create as createOrder } from "./db_repository";
 import { revalidatePath } from "next/cache";
@@ -16,8 +16,7 @@ import { getSession } from "@/lib/auth";
 import { Company } from "@/company/types";
 import { createDocument } from "@/document/use_cases/create-document";
 import { createInvoice, createReceipt } from "@/document/factpro_gateway";
-import { createdDocument } from "@/document/db_repository";
-import { createCustomer } from "@/customer/db_repository";
+import { createDocument as saveDocument } from "@/document/db_repository";
 import type { Document, DocumentType } from "@/document/types";
 
 export const create = async (
@@ -80,7 +79,7 @@ export const create = async (
 
   const documentResponse = await createDocument(
     { createReceipt, createInvoice },
-    { createdDocument, createCustomer },
+    { createDocument: saveDocument },
     createOrderResponse.data,
     companyResponse.data,
   );

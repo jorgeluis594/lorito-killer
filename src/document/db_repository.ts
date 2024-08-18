@@ -27,7 +27,7 @@ export const PrismaDocumentTypeMapper: Record<
   [PrismaDocumentType.RECEIPT]: RECEIPT,
   [PrismaDocumentType.TICKET]: TICKET,
 };
-export const createdDocument = async (
+export const createDocument = async (
   document: Document,
 ): Promise<response<Document>> => {
   try {
