@@ -5,6 +5,7 @@ import { DocumentType, InvoiceType, Document } from "@/document/types";
 export type OrderItem = {
   id?: string;
   productId: string;
+  productSku?: string; // TODO: add orderCode to db repository
   productName: string;
   productPrice: number;
   quantity: number;
