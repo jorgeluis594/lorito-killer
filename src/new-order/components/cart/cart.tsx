@@ -10,6 +10,7 @@ import TicketView from "@/new-order/components/document-view/ticket-view";
 import InvoiceView from "@/new-order/components/document-view/invoice-view";
 import ReceiptView from "@/new-order/components/document-view/receipt-view";
 import {useOrderFormActions, useOrderFormStore} from "@/new-order/order-form-provider";
+import { DocumentType } from "@/order/types";
 
 export default function Cart() {
 
@@ -19,22 +20,19 @@ export default function Cart() {
   return (
     <>
       <div className="border-l h-full">
-        <Tabs defaultValue={order.documentType} onValueChange={(value) => setDocumentType(value)}>
+        <Tabs value={order.documentType} onValueChange={(value) => setDocumentType(value as DocumentType)}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ticket">Nota de Venta</TabsTrigger>
             <TabsTrigger value="receipt">Boleta</TabsTrigger>
             <TabsTrigger value="invoice">Factura</TabsTrigger>
           </TabsList>
           <TabsContent value="ticket" className="h-[40rem]">
-            <p>{order.documentType}</p>
             <TicketView/>
           </TabsContent>
           <TabsContent value="receipt" className="h-[40rem]">
-            <p>{order.documentType}</p>
             <ReceiptView/>
           </TabsContent>
           <TabsContent value="invoice" className="h-[40rem]">
-            <p>{order.documentType}</p>
             <InvoiceView/>
           </TabsContent>
         </Tabs>
