@@ -1,28 +1,4 @@
-import { Order } from "@/order/types";
 import { Customer } from "@/customer/types";
-
-export type IssuerData = {
-  establishmentCode: string;
-};
-
-export type PaymentTerm = {
-  description?: string;
-  type: string;
-};
-
-export type TotalPay = {
-  totalExport?: number;
-  totalTaxes?: number;
-  totallyUnaffected?: number;
-  totalExonerated?: number;
-  totallyFree?: number;
-  totalTax?: number;
-  totalSale?: number;
-};
-
-export type FormatPdf = {
-  formatPdf: string;
-};
 
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
