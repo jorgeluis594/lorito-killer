@@ -23,54 +23,47 @@ export const createInvoice = async (
     }
 
     const body: FactproDocument = {
-      documentType: INVOICE_DOCUMENT_TYPE,
-      series: "series",
-      number: order.customer.documentNumber,
-      operationType: INTERNAL_SALES,
-      dateOfIssue: format(order.createdAt!, "dd/MM/yyyy"),
-      broadcastTime: format(order.createdAt!, "hh:mm aa"),
-      currency: CURRENCY,
-      dueDate: "",
-      automaticallySendToClient: false,
-      issuerData: {
-        establishmentCode: company.invoiceCode,
+      tipo_documento: "01",
+      serie: "series", // Falta configurar, primero se debe hacer la prueba de concepto
+      numero: "number", // Falta crear algoritmo de asignación de numero
+      tipo_operacion: "0101",
+      fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
+      hora_de_emision: format(order.createdAt!, "hh:mm aa"),
+      moneda: "PEN",
+      enviar_automaticamente_al_cliente: false,
+      datos_del_emisor: {
+        codigo_establecimiento: "165", // Falta configurar el codigo de establecimiento
       },
-      customer: {
-        documentType: RUC_CUSTOMER_DOCUMENT_TYPE,
-        documentNumber: order.customer.documentNumber,
-        legalName: order.customer.legalName,
-        countryCode: COUNTRY_CODE,
-        address: order.customer.address,
-        email: order.customer.email,
-        phoneNumber: order.customer.phoneNumber,
+      cliente: {
+        cliente_tipo_documento: "6", // agregar mapeo segun el tipo de cliente
+        cliente_numero_documento: order.customer.documentNumber,
+        cliente_denominacion: order.customer.legalName,
+        codigo_pais: "PE",
+        cliente_direccion: order.customer.address,
+        cliente_email: order.customer.email,
+        cliente_telefono: order.customer.phoneNumber,
       },
-      totals: {
-        totalExport: 0.0, // Por el momento no se acepta exportaciones
-        totalTaxes: 0.0, // Por el momento no se acepta impuesto, por desarrollar TODO: https://trello.com/c/avRmC8Yq
-        totallyUnaffected: 0.0,
-        totalExonerated: 0.0,
-        totallyFree: 0.0,
-        totalTax: 0.0,
-        totalSale: order.total,
+      totales: {
+        total_exoneradas: order.total,
+        total_tax: 0,
+        total_venta: order.total,
       },
       items: order.orderItems.map((orderItem) =>
         orderItemToDocumentItem(orderItem),
       ),
-      actions: {
-        formatPdf: PDF_FORMAT,
+      acciones: {
+        formato_pdf: "a4",
       },
-      paymentTerm: {
-        description: "",
-        type: PAYMENT_TYPE,
+      termino_de_pago: {
+        descripcion: "Contado",
+        tipo: "0",
       },
-      paymentMethod: "",
-      purchaseOrder: order.id,
-      observations: "",
+      metodo_de_pago: "Efectivo", // agregar metodo de pago
     };
 
     const response = sendDocument(body);
-
-    return {
+    return { success: false, message: "Falta entregar el document" };
+    /*    return {
       success: true,
       data: {
         id: crypto.randomUUID(),
@@ -85,7 +78,7 @@ export const createInvoice = async (
         customer: order.customer,
         observations: body.observations!,
       },
-    };
+    };*/
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -100,16 +93,16 @@ export const createReceipt = async (
 
 const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
   return {
-    unite: UNIT_OF_MEASUREMENT,
-    item_code: orderItem.productId,
-    description: "",
-    quantity: orderItem.quantity,
-    unitValue: orderItem.productPrice,
-    unitPrice: 0.0,
-    taxType: "10",
-    totalBaseTax: 0.0,
-    taxPercentage: 0.0,
-    totalTax: 0.0,
+    unidad: "NIU",
+    codigo: orderItem.productSku,
+    descripcion: orderItem.productName,
+    cantidad: orderItem.quantity,
+    valor_unitario: orderItem.productPrice,
+    precio_unitario: orderItem.productPrice,
+    tipo_tax: "20", // Exonerado - Operación Onerosa
+    total_base_tax: orderItem.total,
+    porcentaje_tax: 0, // All products are exonerated in Pucallpa
+    total_tax: 0,
     total: orderItem.total,
   };
 };
