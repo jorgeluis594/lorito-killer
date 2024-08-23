@@ -38,9 +38,9 @@ export interface FactproDocument {
     // 0 = NO DOMICILIADO, SIN RUC
     cliente_tipo_documento: "6" | "1" | "4" | "7" | "A" | "0";
     cliente_numero_documento: string;
-    cliente_denomiacion: string; // legal name
+    cliente_denominacion: string; // legal name
     codigo_pais: "PE";
-    ubigeo: string;
+    ubigeo?: string;
     cliente_direccion: string;
     cliente_email?: string;
     cliente_telefono?: string;
@@ -56,7 +56,7 @@ export interface FactproDocument {
   };
   termino_de_pago: {
     descripcion: "Contado" | "Crédito";
-    tipo: 0 | 1;
+    tipo: "0" | "1";
   };
   metodo_de_pago?: string;
 }
