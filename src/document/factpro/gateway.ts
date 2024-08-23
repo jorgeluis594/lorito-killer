@@ -1,62 +1,18 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
-import { FormatPdf, IssuerData, PaymentTerm, TotalPay } from "@/document/types";
 import { format } from "date-fns";
 import axios from "axios";
 import { Company } from "@/company/types";
 import { Document } from "@/document/types";
+import type {
+  FactproDocument,
+  FactproDocumentItem,
+} from "@/document/factpro/types";
 
 const url = process.env.FACTPRO_URL;
 const token = process.env.FACTPRO_TOKEN;
-const INVOICE_DOCUMENT_TYPE = "01";
-const RUC_CUSTOMER_DOCUMENT_TYPE = "6";
-const INVOICE_SERIES = "F001";
-const INTERNAL_SALES = "0101";
-const CURRENCY = "PEN";
-const COUNTRY_CODE = "PE";
-const PDF_FORMAT = "a4";
-const PAYMENT_TYPE = "0";
-const UNIT_OF_MEASUREMENT = "NIU";
 
-interface DocumentItem {
-  unite: string;
-  item_code: string;
-  description: string;
-  sunatProductCode?: string;
-  gslProductCode?: string;
-  quantity: number;
-  unitValue: number;
-  unitPrice: number;
-  taxType: string;
-  totalBaseTax: number;
-  taxPercentage: number;
-  totalTax: number;
-  total: number;
-}
-
-interface BodyDocument {
-  documentType: string;
-  series: string;
-  number: string;
-  operationType: string;
-  dateOfIssue: string;
-  broadcastTime: string;
-  currency: string;
-  dueDate?: string;
-  automaticallySendToClient?: boolean;
-  issuerData: IssuerData;
-  customer: {};
-  totals: TotalPay;
-  items: DocumentItem[];
-  actions: FormatPdf;
-  paymentTerm: PaymentTerm;
-  paymentMethod?: string;
-  salesChanel?: string;
-  purchaseOrder?: string;
-  store?: string;
-  observations?: string;
-}
-
+// Api documentation https://docs.factpro.la/
 export const createInvoice = async (
   order: OrderWithBusinessCustomer,
   company: Company,
@@ -66,9 +22,9 @@ export const createInvoice = async (
       throw new Error("Invoice Code is required");
     }
 
-    const body: BodyDocument = {
+    const body: FactproDocument = {
       documentType: INVOICE_DOCUMENT_TYPE,
-      series: INVOICE_SERIES,
+      series: "series",
       number: order.customer.documentNumber,
       operationType: INTERNAL_SALES,
       dateOfIssue: format(order.createdAt!, "dd/MM/yyyy"),
@@ -142,7 +98,7 @@ export const createReceipt = async (
   return { success: false, message: "createReceipt" };
 };
 
-const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
+const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
   return {
     unite: UNIT_OF_MEASUREMENT,
     item_code: orderItem.productId,
@@ -159,8 +115,8 @@ const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
 };
 
 const sendDocument = async (
-  body: BodyDocument,
-): Promise<response<BodyDocument>> => {
+  body: FactproDocument,
+): Promise<response<FactproDocument>> => {
   try {
     const res = await axios.post(url!, body, {
       headers: {
