@@ -19,10 +19,6 @@ export default function ReceiptView() {
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const { increaseQuantity, decreaseQuantity, reset, removeOrderItem, setCustomer } = useOrderFormActions();
 
-  useEffect(() => {
-    reset();
-  }, []);
-
   return (
     <>
       <div className="h-full grid grid-rows-[min-content_min-content_1fr_min-content]">
