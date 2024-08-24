@@ -11,7 +11,7 @@ import CartItem from "@/new-order/components/cart/cart-item";
 import {formatPrice} from "@/lib/utils";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 
-export default function TicketView() {
+export default function Ticket() {
   const order = useOrderFormStore((state) => state.order);
   const cashShift = useCashShiftStore((state) => state.cashShift);
   const customer = useOrderFormStore((state) => state.order.customer);

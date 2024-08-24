@@ -11,7 +11,7 @@ import CartItem from "@/new-order/components/cart/cart-item";
 import {formatPrice} from "@/lib/utils";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 
-export default function InvoiceView() {
+export default function Receipt() {
   const order = useOrderFormStore((state) => state.order);
   const cashShift = useCashShiftStore((state) => state.cashShift);
   const customer = useOrderFormStore((state) => state.order.customer);
@@ -23,7 +23,7 @@ export default function InvoiceView() {
     <>
       <div className="h-full grid grid-rows-[min-content_min-content_1fr_min-content]">
         <div className="p-5 border-b flex justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Factura</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Boleta</h2>
           <Button
             variant="ghost_destructive"
             type="button"

@@ -6,9 +6,9 @@ import {
   TabsList,
   TabsTrigger
 } from "@/shared/components/ui/tabs";
-import TicketView from "@/new-order/components/document-view/ticket-view";
-import InvoiceView from "@/new-order/components/document-view/invoice-view";
-import ReceiptView from "@/new-order/components/document-view/receipt-view";
+import Ticket from "@/new-order/components/document-view/ticket";
+import Invoice from "@/new-order/components/document-view/invoice";
+import Receipt from "@/new-order/components/document-view/receipt";
 import {useOrderFormActions, useOrderFormStore} from "@/new-order/order-form-provider";
 import { DocumentType } from "@/order/types";
 
@@ -27,13 +27,13 @@ export default function Cart() {
             <TabsTrigger value="invoice">Factura</TabsTrigger>
           </TabsList>
           <TabsContent value="ticket" className="h-[40rem]">
-            <TicketView/>
+            <Ticket/>
           </TabsContent>
           <TabsContent value="receipt" className="h-[40rem]">
-            <ReceiptView/>
+            <Receipt/>
           </TabsContent>
           <TabsContent value="invoice" className="h-[40rem]">
-            <InvoiceView/>
+            <Invoice/>
           </TabsContent>
         </Tabs>
       </div>
