@@ -3,7 +3,7 @@ import { response } from "@/lib/types";
 import { format, parse } from "date-fns";
 import axios from "axios";
 import { Company } from "@/company/types";
-import type { Invoice, Receipt } from "@/document/types";
+import type { Invoice, Receipt, Ticket } from "@/document/types";
 import type {
   FactproDocument,
   FactproDocumentItem,
@@ -142,6 +142,27 @@ export const createReceipt = async (
         "yyyy-MM-dd HH:mm",
         new Date(),
       ),
+    },
+  };
+};
+
+export const createTicket = async (
+  order: Order,
+  company: Company,
+): Promise<response<Ticket>> => {
+  return {
+    success: true,
+    data: {
+      id: crypto.randomUUID(),
+      orderId: order.id!,
+      customerId: order.customer?.id!,
+      netTotal: order.total,
+      taxTotal: 0,
+      total: order.total,
+      documentType: "ticket",
+      series: "NV01",
+      number: "1",
+      dateOfIssue: order.createdAt!,
     },
   };
 };
