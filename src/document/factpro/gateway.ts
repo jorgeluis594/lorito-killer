@@ -8,6 +8,7 @@ import type {
   FactproDocument,
   FactproDocumentItem,
 } from "@/document/factpro/types";
+import { log } from "@/lib/log";
 
 const url = process.env.FACTPRO_URL;
 const token = process.env.FACTPRO_TOKEN;
@@ -24,15 +25,15 @@ export const createInvoice = async (
 
     const body: FactproDocument = {
       tipo_documento: "01",
-      serie: "series", // Falta configurar, primero se debe hacer la prueba de concepto
-      numero: "number", // Falta crear algoritmo de asignación de numero
-      tipo_operacion: "0101",
+      serie: "NV01", // Falta configurar, primero se debe hacer la prueba de concepto
+      numero: "1", // Falta crear algoritmo de asignación de numero
+      tipo_operacion: "0101", // By default
       fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
       hora_de_emision: format(order.createdAt!, "hh:mm aa"),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
       datos_del_emisor: {
-        codigo_establecimiento: "165", // Falta configurar el codigo de establecimiento
+        codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
       },
       cliente: {
         cliente_tipo_documento: "6", // agregar mapeo segun el tipo de cliente
@@ -61,7 +62,8 @@ export const createInvoice = async (
       metodo_de_pago: "Efectivo", // agregar metodo de pago
     };
 
-    const response = sendDocument(body);
+    const response = sendDocument(body, order.id!);
+
     return { success: false, message: "Falta entregar el document" };
     /*    return {
       success: true,
@@ -109,24 +111,23 @@ const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
 
 const sendDocument = async (
   body: FactproDocument,
+  orderId: string,
 ): Promise<response<FactproDocument>> => {
-  try {
-    const res = await axios.post(url!, body, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const res = await axios.post(url!, body, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-    if (res.status === 200) {
-      return {
-        success: true,
-        data: res.data,
-      };
-    }
-  } catch (error) {
-    console.error("Error al emitir la factura:", error);
+  if (res.status === 200 && res.data.success) {
+    log.info("factpro_document_sent", { document: body, orderId });
+    return {
+      success: true,
+      data: res.data,
+    };
   }
 
-  return { success: false, message: "not implemented" };
+  log.error("factpro_document_error", { document: body, orderId });
+  return { success: false, message: "Error creating document" };
 };
