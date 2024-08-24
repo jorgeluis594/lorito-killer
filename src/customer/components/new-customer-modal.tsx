@@ -33,9 +33,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { createCustomer } from "@/customer/actions";
+import {BusinessCustomer, NaturalCustomer} from "@/customer/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useUserSession } from "@/lib/use-user-session";
+import {useOrderFormStore} from "@/new-order/order-form-provider";
+import {useEffect, useState} from "react";
+import {createCustomer} from "@/customer/actions";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
@@ -86,17 +89,18 @@ export default function NewCustomerModal() {
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(CustomerSchema),
   });
+  const order = useOrderFormStore((state) => state.order);
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const user = useUserSession();
 
-  const onSubmit = async (data: CustomerFormValues) => {
-    const res = await createCustomer(
-      formValuesToCustomer(data, user!.companyId!),
-    );
+  const resp = (res: any) => {
     if (res.success) {
       toast({
         description: "Cliente creado con éxito",
       });
+      form.reset();
+      setOpen(false)
     } else {
       toast({
         title: "Error",
@@ -104,10 +108,31 @@ export default function NewCustomerModal() {
         description: "Error al crear el cliente " + res.message,
       });
     }
+  }
+
+  const onSubmit = async (data: CustomerFormValues) => {
+
+    if(form.getValues("documentType") === "dni"){
+      const res = await createCustomer(
+        formValuesToCustomer(data, user!.companyId!) as NaturalCustomer,
+      );
+      resp(res)
+    } else {
+      const res = await createCustomer(
+        formValuesToCustomer(data, user!.companyId!) as BusinessCustomer,
+      );
+      resp(res)
+    }
+
   };
 
+  useEffect(() => {
+    const defaultDocumentType = order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC;
+    form.setValue("documentType", defaultDocumentType);
+  }, [order.documentType, form]);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
         <Button variant="outline" size="icon">
           <Plus />
@@ -145,16 +170,19 @@ export default function NewCustomerModal() {
                     <FormLabel>Tipo de Documento</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={ order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC }
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar" />
+                          <SelectValue/>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={DNI}>DNI</SelectItem>
-                        <SelectItem value={RUC}>RUC</SelectItem>
+                        { order.documentType === "receipt" || order.documentType === "ticket" ?
+                          <SelectItem value={DNI}>DNI</SelectItem>
+                          :
+                          <SelectItem value={RUC}>RUC</SelectItem>
+                        }
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -167,7 +195,7 @@ export default function NewCustomerModal() {
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre</FormLabel>
+                  <FormLabel>{order.documentType === "ticket" || order.documentType === "receipt" ? "Nombre" : "Razón Social"}</FormLabel>
                   <FormControl>
                     <Input autoComplete="off" {...field} />
                   </FormControl>
