@@ -126,6 +126,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
+      customer: customer,
     };
 
     createdOrder.orderItems = createdOrderItemsResponses
