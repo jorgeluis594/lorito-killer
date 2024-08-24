@@ -1,5 +1,3 @@
-import { Customer } from "@/customer/types";
-
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
 export const RECEIPT = "receipt";
@@ -12,14 +10,13 @@ export type Document = {
   id: string;
   orderId: string;
   customerId: string;
+  netTotal: number;
+  taxTotal: number;
   total: number;
   documentType: DocumentType;
   series: string;
   number: string;
-  dateOfIssue: string;
-  broadcastTime: string;
-  customer: Customer;
-  observations: string;
+  dateOfIssue: Date;
   createdAt?: Date;
   updatedAt?: Date;
 };
