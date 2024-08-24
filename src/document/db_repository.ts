@@ -5,7 +5,6 @@ import {
   RECEIPT,
   TICKET,
 } from "@/document/types";
-import { find as findOrder } from "@/order/db_repository";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
 import { $Enums } from "@prisma/client";
@@ -45,9 +44,6 @@ export const createDocument = async (
         order: true,
       },
     });
-
-    const orderResponse = await findOrder(document.orderId);
-    if (!orderResponse.success) return orderResponse;
 
     const createdDocument: Document = {
       id: documentResponse.customerId,
