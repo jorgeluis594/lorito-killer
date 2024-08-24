@@ -34,14 +34,12 @@ export const createDocument = async (
     const documentResponse = await prisma.document.create({
       data: {
         orderId: document.orderId,
-        customerId: document.customer.id,
+        customerId: document.customerId,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
         series: document.series,
         number: document.number,
         dateOfIssue: document.dateOfIssue,
-        broadcastTime: document.broadcastTime,
-        observations: document.observations,
       },
       include: {
         order: true,
@@ -60,9 +58,8 @@ export const createDocument = async (
       series: documentResponse.series,
       number: documentResponse.number,
       dateOfIssue: documentResponse.dateOfIssue,
-      broadcastTime: documentResponse.broadcastTime,
-      observations: documentResponse.observations,
-      customer: { ...document.customer },
+      taxTotal: 0,
+      netTotal: +documentResponse.total,
     };
 
     return { success: true, data: createdDocument };
