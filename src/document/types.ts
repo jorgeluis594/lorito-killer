@@ -6,7 +6,7 @@ export const TICKET = "ticket";
 export type TicketType = typeof TICKET;
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
-export type Document = {
+type DocumentBase = {
   id: string;
   orderId: string;
   customerId: string;
@@ -20,3 +20,17 @@ export type Document = {
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+export type Invoice = DocumentBase & {
+  documentType: InvoiceType;
+};
+
+export type Receipt = DocumentBase & {
+  documentType: ReceiptType;
+};
+
+export type Ticket = DocumentBase & {
+  documentType: TicketType;
+};
+
+export type Document = Invoice | Receipt | Ticket;

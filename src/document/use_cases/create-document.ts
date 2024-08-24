@@ -4,18 +4,14 @@ import { response } from "@/lib/types";
 import { Order, OrderWithBusinessCustomer } from "@/order/types";
 import { Company } from "@/company/types";
 import { hasBusinessCustomer } from "@/order/utils";
-import type { Document } from "@/document/types";
-import type { Customer } from "@/customer/types";
+import type { Document, Invoice, Receipt } from "@/document/types";
 
 interface DocumentGateway {
   createInvoice: (
     order: OrderWithBusinessCustomer,
     company: Company,
-  ) => Promise<response<Document>>;
-  createReceipt: (
-    order: Order,
-    company: Company,
-  ) => Promise<response<Document>>;
+  ) => Promise<response<Invoice>>;
+  createReceipt: (order: Order, company: Company) => Promise<response<Receipt>>;
 }
 
 interface Repository {
