@@ -22,6 +22,7 @@ import { getMany } from "@/customer/api_repository";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { fullName } from "@/customer/utils";
+import {useOrderFormStore} from "@/new-order/order-form-provider";
 
 export interface CustomerSelectorProps<T extends CustomerType | undefined> {
   value?: InferCustomerType<T>;
@@ -35,6 +36,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   onSelect,
   customerType,
 }: CustomerSelectorProps<T>) {
+  const order = useOrderFormStore((state) => state.order);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [customers, setCustomers] = useState<InferCustomerType<T>[]>([]);
@@ -78,7 +80,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           aria-expanded={open}
           className="justify-between w-96"
         >
-          {value ? fullName(value) : "Seleccione un cliente"}
+          {value ? fullName(value) : order.documentType === "ticket" || order.documentType === "receipt" ? "Cliente General" : "Seleccione un Cliente "}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
