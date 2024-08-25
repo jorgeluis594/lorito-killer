@@ -178,3 +178,23 @@ const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>>
   return {success: false, message: "not implemented"};
 }
 
+export const fetchCustomerByRuc = async (documentNumber: string) => {
+  try {
+    const response = await fetch(`https://consultas.factpro.la/api/v1/ruc/{${documentNumber}}`);
+
+    return await response.json();
+
+  } catch (error) {
+    return { success: false, message: "customer not found"}
+  }
+};
+
+export const fetchCustomerByDNI = async (documentNumber: string) => {
+  try {
+    const response = await fetch(`https://consultas.factpro.la/api/v1/dni/{${documentNumber}}`);
+
+    return await response.json();
+  } catch (error) {
+    console.error('There has been a problem with your fetch operation:', error);
+  }
+};
