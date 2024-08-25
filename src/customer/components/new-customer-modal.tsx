@@ -140,7 +140,7 @@ export default function NewCustomerModal() {
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogTrigger>
+      <DialogTrigger asChild>
         <Button variant="outline" size="icon">
           <Plus />
         </Button>
