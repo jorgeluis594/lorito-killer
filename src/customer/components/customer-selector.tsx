@@ -17,7 +17,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/shared/components/ui/command";
-import { CustomerType, InferCustomerType } from "@/customer/types";
+import {CustomerType, DNI, InferCustomerType, NaturalCustomer, RUC} from "@/customer/types";
 import { getMany } from "@/customer/api_repository";
 import * as React from "react";
 import { useEffect, useState } from "react";
@@ -41,6 +41,9 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   const [search, setSearch] = useState("");
   const [customers, setCustomers] = useState<InferCustomerType<T>[]>([]);
   const { toast } = useToast();
+
+  const naturalCustomer = customers.filter(customer => customer.documentType === DNI);
+  const businessCustomer = customers.filter(customer => customer.documentType === RUC);
 
   const searchCustomers = async (q: string) => {
     const response = await getMany({ q: q, customerType });
@@ -94,15 +97,26 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           <CommandList>
             <CommandEmpty>No se encontro ningun cliente</CommandEmpty>
             <CommandGroup>
-              {customers.map((customer) => (
+              { order.documentType === "ticket" || order.documentType === "receipt"
+                ?
+                naturalCustomer.map((customer) => (
                 <CommandItem
                   key={customer.id}
                   value={customer.id}
                   onSelect={onCustomerSelect}
                 >
                   <span>{fullName(customer)}</span>
-                </CommandItem>
-              ))}
+                </CommandItem>))
+                :
+                businessCustomer.map((customer) => (
+                  <CommandItem
+                    key={customer.id}
+                    value={customer.id}
+                    onSelect={onCustomerSelect}
+                  >
+                    <span>{fullName(customer)}</span>
+                  </CommandItem>
+                ))}
             </CommandGroup>
           </CommandList>
         </Command>
