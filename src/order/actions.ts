@@ -33,7 +33,6 @@ export const create = async (
   }
 
   const openCashShift = openCashShiftResponse.data;
-
   if (openCashShift.id !== order.cashShiftId) {
     return {
       success: false,
@@ -58,15 +57,11 @@ export const create = async (
   }
 
   revalidatePath("/api/orders");
-  const updateStockResponse = await updateStock(
-    userId,
-    createOrderResponse.data,
-    {
-      findProduct,
-      createStockTransfer,
-      updateStock: UpdateStockFromStockTransfer,
-    },
-  );
+  const updateStockResponse = await updateStock(userId, order, {
+    findProduct,
+    createStockTransfer,
+    updateStock: UpdateStockFromStockTransfer,
+  });
 
   if (!updateStockResponse.success) {
     return updateStockResponse;
