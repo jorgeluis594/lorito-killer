@@ -11,10 +11,13 @@ export const createCustomer = async (
 
 export const searchCustomer = async  (
   documentNumber: string,
+  documentType: string,
 ) => {
-  if(documentNumber.length > 8) {
+  if(documentType === "invoice") {
     fetchCustomerByRuc(documentNumber);
+    console.log("holi ruc")
   }else{
     fetchCustomerByDNI(documentNumber);
+    console.log("holi dni")
   }
 }

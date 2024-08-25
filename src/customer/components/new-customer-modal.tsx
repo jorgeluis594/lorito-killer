@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from "@/shared/components/ui/form";
 
-import { Plus } from "lucide-react";
+import {Plus, Search} from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { useForm } from "react-hook-form";
@@ -38,7 +38,7 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { useUserSession } from "@/lib/use-user-session";
 import {useOrderFormStore} from "@/new-order/order-form-provider";
 import {useEffect, useState} from "react";
-import {createCustomer} from "@/customer/actions";
+import {createCustomer, searchCustomer} from "@/customer/actions";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
@@ -133,6 +133,12 @@ export default function NewCustomerModal() {
     setOpen(isOpen);
   };
 
+  const documentNumberSearch = form.getValues("documentNumber");
+
+  const handleSearch = () => {
+    searchCustomer(String(documentNumberSearch), order.documentType)
+  }
+
   useEffect(() => {
     const defaultDocumentType = order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC;
     form.setValue("documentType", defaultDocumentType);
@@ -156,19 +162,22 @@ export default function NewCustomerModal() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="documentNumber"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormLabel>Numero de documento</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex items-center col-span-1">
+                <FormField
+                  control={form.control}
+                  name="documentNumber"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Numero de documento</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="off" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="button" className="h-10 w-14 flex mt-8 items-center px-4" onClick={handleSearch}><Search/></Button>
+              </div>
               <FormField
                 control={form.control}
                 name="documentType"
