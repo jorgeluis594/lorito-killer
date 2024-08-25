@@ -126,13 +126,20 @@ export default function NewCustomerModal() {
 
   };
 
+  const handleDialogChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      form.reset();
+    }
+    setOpen(isOpen);
+  };
+
   useEffect(() => {
     const defaultDocumentType = order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC;
     form.setValue("documentType", defaultDocumentType);
   }, [order.documentType, form]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogTrigger>
         <Button variant="outline" size="icon">
           <Plus />
@@ -248,7 +255,7 @@ export default function NewCustomerModal() {
         </Form>
         <DialogFooter className="mt-auto">
           <DialogClose asChild>
-            <Button variant="secondary">Cancelar</Button>
+            <Button variant="secondary" >Cancelar</Button>
           </DialogClose>
           <Button type="button" onClick={form.handleSubmit(onSubmit)}>
             Guardar
