@@ -3,8 +3,8 @@
 import { response } from "@/lib/types";
 import { Order, OrderWithBusinessCustomer } from "@/order/types";
 import { Company } from "@/company/types";
-import { hasBusinessCustomer } from "@/order/utils";
 import type { Document, Invoice, Receipt, Ticket } from "@/document/types";
+import { hasBusinessCustomer } from "@/order/utils";
 
 interface DocumentGateway {
   createInvoice: (
@@ -35,7 +35,10 @@ export const createDocument = async (
       documentResponse = await documentGateway.createReceipt(order, company);
       break;
     case "invoice":
-      documentResponse = await documentGateway.createTicket(order, company);
+      documentResponse = await documentGateway.createInvoice(
+        order as OrderWithBusinessCustomer,
+        company,
+      );
       break;
     default:
       throw new Error("Invalid document type");
