@@ -25,19 +25,20 @@ export const createDocument = async (
   order: Order,
   company: Company,
 ): Promise<response<Document>> => {
-  if (order.documentType !== "receipt" || "invoice") {
-    return { success: false, message: "not implemented" };
-  }
-
   let documentResponse: response<Document>;
-  if (order.documentType == "receipt") {
-    documentResponse = await documentGateway.createReceipt(order, company);
-  } else {
-    if (!hasBusinessCustomer(order)) {
-      return { success: false, message: "No customer found" };
-    }
 
-    documentResponse = await documentGateway.createInvoice(order, company);
+  switch (order.documentType) {
+    case "ticket":
+      documentResponse = await documentGateway.createTicket(order, company);
+      break;
+    case "receipt":
+      documentResponse = await documentGateway.createReceipt(order, company);
+      break;
+    case "invoice":
+      documentResponse = await documentGateway.createTicket(order, company);
+      break;
+    default:
+      throw new Error("Invalid document type");
   }
 
   if (!documentResponse.success) {
