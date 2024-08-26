@@ -21,29 +21,25 @@ export const createInvoice = async (
 ): Promise<response<Invoice>> => {
   const body: FactproDocument = {
     tipo_documento: "01",
-    serie: "NV01", // Falta configurar, primero se debe hacer la prueba de concepto
+    serie: "F001", // Falta configurar, primero se debe hacer la prueba de concepto
     numero: "1", // Falta crear algoritmo de asignación de numero
     tipo_operacion: "0101", // By default
-    fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
+    fecha_de_emision: format(order.createdAt!, "yyyy/MM/dd"),
     hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
     moneda: "PEN",
     enviar_automaticamente_al_cliente: false,
     datos_del_emisor: {
       codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
     },
-    cliente: {
-      cliente_tipo_documento: "6", // agregar mapeo segun el tipo de cliente
-      cliente_numero_documento: order.customer.documentNumber,
-      cliente_denominacion: order.customer.legalName,
-      codigo_pais: "PE",
-      cliente_direccion: order.customer.address,
-      cliente_email: order.customer.email,
-      cliente_telefono: order.customer.phoneNumber,
-    },
+    cliente: clientParamsBuilder(order.customer),
     totales: {
       total_exoneradas: order.total,
       total_tax: 0,
       total_venta: order.total,
+      total_gravadas: 0,
+      total_exportacion: 0,
+      total_inafectas: 0,
+      total_gratuitas: 0,
     },
     items: order.orderItems.map((orderItem) =>
       orderItemToDocumentItem(orderItem),
@@ -56,6 +52,11 @@ export const createInvoice = async (
       tipo: "0",
     },
     metodo_de_pago: "Efectivo", // agregar metodo de pago
+    canal_de_venta: "",
+    orden_de_compra: "",
+    almacen: "",
+    observaciones: "",
+    fecha_de_vencimiento: "",
   };
 
   const response = await sendDocument(body, order.id!);
@@ -89,8 +90,8 @@ export const createReceipt = async (
   company: Company,
 ): Promise<response<Receipt>> => {
   const body: FactproDocument = {
-    tipo_documento: "01",
-    serie: "NV01", // Falta configurar, primero se debe hacer la prueba de concepto
+    tipo_documento: "03",
+    serie: "B001", // Falta configurar, primero se debe hacer la prueba de concepto
     numero: "1", // Falta crear algoritmo de asignación de numero
     tipo_operacion: "0101", // By default
     fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
@@ -105,6 +106,10 @@ export const createReceipt = async (
       total_exoneradas: order.total,
       total_tax: 0,
       total_venta: order.total,
+      total_gravadas: 0,
+      total_exportacion: 0,
+      total_inafectas: 0,
+      total_gratuitas: 0,
     },
     items: order.orderItems.map((orderItem) =>
       orderItemToDocumentItem(orderItem),
@@ -117,6 +122,11 @@ export const createReceipt = async (
       tipo: "0",
     },
     metodo_de_pago: "Efectivo", // agregar metodo de pago
+    canal_de_venta: "",
+    orden_de_compra: "",
+    almacen: "",
+    observaciones: "",
+    fecha_de_vencimiento: "",
   };
 
   const response = await sendDocument(body, order.id!);
@@ -175,6 +185,7 @@ function clientParamsBuilder(
       cliente_numero_documento: "00000000",
       cliente_denominacion: "-",
       codigo_pais: "PE",
+      ubigeo: "",
       cliente_direccion: "-",
     };
   }
@@ -185,6 +196,7 @@ function clientParamsBuilder(
       cliente_numero_documento: customer.documentNumber,
       cliente_denominacion: customer.legalName,
       codigo_pais: "PE",
+      ubigeo: "",
       cliente_direccion: customer.address,
       cliente_email: customer.email,
       cliente_telefono: customer.phoneNumber,
@@ -196,6 +208,7 @@ function clientParamsBuilder(
     cliente_numero_documento: customer.documentNumber || "00000000",
     cliente_denominacion: customer.fullName,
     codigo_pais: "PE",
+    ubigeo: "150101",
     cliente_direccion: customer.address || "-",
     cliente_email: customer.email,
     cliente_telefono: customer.phoneNumber,
@@ -205,11 +218,13 @@ function clientParamsBuilder(
 const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
   return {
     unidad: "NIU",
-    codigo: orderItem.productSku,
+    codigo: orderItem.productSku || "",
     descripcion: orderItem.productName,
     cantidad: orderItem.quantity,
     valor_unitario: orderItem.productPrice,
     precio_unitario: orderItem.productPrice,
+    codigo_producto_sunat: "",
+    codigo_producto_gsl: "",
     tipo_tax: "20", // Exonerado - Operación Onerosa
     total_base_tax: orderItem.total,
     porcentaje_tax: 0, // All products are exonerated in Pucallpa
