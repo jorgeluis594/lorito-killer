@@ -15,7 +15,7 @@ import { updateStock } from "@/order/use-cases/update-stock";
 import { getSession } from "@/lib/auth";
 import { Company } from "@/company/types";
 import { createDocument } from "@/document/use_cases/create-document";
-import * as billingDocumentGateway from "@/document/factpro/gateway";
+import billingDocumentGateway from "@/document/factpro/gateway";
 import { createDocument as saveDocument } from "@/document/db_repository";
 import type { Document, DocumentType } from "@/document/types";
 
@@ -73,7 +73,7 @@ export const create = async (
   }
 
   const documentResponse = await createDocument(
-    billingDocumentGateway,
+    billingDocumentGateway("oasd"),
     { createDocument: saveDocument },
     createOrderResponse.data,
     companyResponse.data,

@@ -6,7 +6,7 @@ import { Company } from "@/company/types";
 import type { Document, Invoice, Receipt, Ticket } from "@/document/types";
 import { hasBusinessCustomer } from "@/order/utils";
 
-interface DocumentGateway {
+export interface DocumentGateway {
   createInvoice: (
     order: OrderWithBusinessCustomer,
     company: Company,

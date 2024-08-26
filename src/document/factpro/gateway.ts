@@ -10,171 +10,9 @@ import type {
 import { log } from "@/lib/log";
 import { Customer } from "@/customer/types";
 import { isBusinessCustomer } from "@/customer/utils";
+import { DocumentGateway } from "@/document/use_cases/create-document";
 
 const url = process.env.FACTPRO_URL;
-const token = process.env.FACTPRO_TOKEN;
-
-// Api documentation https://docs.factpro.la/
-export const createInvoice = async (
-  order: OrderWithBusinessCustomer,
-  company: Company,
-): Promise<response<Invoice>> => {
-  const body: FactproDocument = {
-    tipo_documento: "01",
-    serie: "F001", // Falta configurar, primero se debe hacer la prueba de concepto
-    numero: "1", // Falta crear algoritmo de asignación de numero
-    tipo_operacion: "0101", // By default
-    fecha_de_emision: format(order.createdAt!, "yyyy/MM/dd"),
-    hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
-    moneda: "PEN",
-    enviar_automaticamente_al_cliente: false,
-    datos_del_emisor: {
-      codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
-    },
-    cliente: clientParamsBuilder(order.customer),
-    totales: {
-      total_exoneradas: order.total,
-      total_tax: 0,
-      total_venta: order.total,
-      total_gravadas: 0,
-      total_exportacion: 0,
-      total_inafectas: 0,
-      total_gratuitas: 0,
-    },
-    items: order.orderItems.map((orderItem) =>
-      orderItemToDocumentItem(orderItem),
-    ),
-    acciones: {
-      formato_pdf: "a4",
-    },
-    termino_de_pago: {
-      descripcion: "Contado",
-      tipo: "0",
-    },
-    metodo_de_pago: "Efectivo", // agregar metodo de pago
-    canal_de_venta: "",
-    orden_de_compra: "",
-    almacen: "",
-    observaciones: "",
-    fecha_de_vencimiento: "",
-  };
-
-  const response = await sendDocument(body, order.id!);
-  if (!response.success) {
-    return response;
-  }
-
-  return {
-    success: true,
-    data: {
-      id: crypto.randomUUID(),
-      orderId: order.id!,
-      customerId: order.customer.id!,
-      netTotal: body.totales.total_exoneradas,
-      taxTotal: body.totales.total_tax,
-      total: body.totales.total_venta,
-      documentType: "invoice",
-      series: body.serie,
-      number: body.numero,
-      dateOfIssue: parse(
-        `${body.fecha_de_emision} ${body.hora_de_emision}`,
-        "yyyy-MM-dd HH:mm",
-        new Date(),
-      ),
-    },
-  };
-};
-
-export const createReceipt = async (
-  order: Order,
-  company: Company,
-): Promise<response<Receipt>> => {
-  const body: FactproDocument = {
-    tipo_documento: "03",
-    serie: "B001", // Falta configurar, primero se debe hacer la prueba de concepto
-    numero: "1", // Falta crear algoritmo de asignación de numero
-    tipo_operacion: "0101", // By default
-    fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
-    hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
-    moneda: "PEN",
-    enviar_automaticamente_al_cliente: false,
-    datos_del_emisor: {
-      codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
-    },
-    cliente: clientParamsBuilder(order.customer),
-    totales: {
-      total_exoneradas: order.total,
-      total_tax: 0,
-      total_venta: order.total,
-      total_gravadas: 0,
-      total_exportacion: 0,
-      total_inafectas: 0,
-      total_gratuitas: 0,
-    },
-    items: order.orderItems.map((orderItem) =>
-      orderItemToDocumentItem(orderItem),
-    ),
-    acciones: {
-      formato_pdf: "a4",
-    },
-    termino_de_pago: {
-      descripcion: "Contado",
-      tipo: "0",
-    },
-    metodo_de_pago: "Efectivo", // agregar metodo de pago
-    canal_de_venta: "",
-    orden_de_compra: "",
-    almacen: "",
-    observaciones: "",
-    fecha_de_vencimiento: "",
-  };
-
-  const response = await sendDocument(body, order.id!);
-  if (!response.success) {
-    return response;
-  }
-
-  return {
-    success: true,
-    data: {
-      id: crypto.randomUUID(),
-      orderId: order.id!,
-      customerId: order.customer?.id!,
-      netTotal: body.totales.total_exoneradas,
-      taxTotal: body.totales.total_tax,
-      total: body.totales.total_venta,
-      documentType: "receipt",
-      series: body.serie,
-      number: body.numero,
-      dateOfIssue: parse(
-        `${body.fecha_de_emision} ${body.hora_de_emision}`,
-        "yyyy-MM-dd HH:mm",
-        new Date(),
-      ),
-    },
-  };
-};
-
-export const createTicket = async (
-  order: Order,
-  company: Company,
-): Promise<response<Ticket>> => {
-  return {
-    success: true,
-    data: {
-      id: crypto.randomUUID(),
-      orderId: order.id!,
-      customerId: order.customer?.id!,
-      netTotal: order.total,
-      taxTotal: 0,
-      total: order.total,
-      documentType: "ticket",
-      series: "NV01",
-      number: "1",
-      dateOfIssue: order.createdAt!,
-    },
-  };
-};
 
 function clientParamsBuilder(
   customer: Customer | undefined,
@@ -215,27 +53,10 @@ function clientParamsBuilder(
   };
 }
 
-const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
-  return {
-    unidad: "NIU",
-    codigo: orderItem.productSku || "",
-    descripcion: orderItem.productName,
-    cantidad: orderItem.quantity,
-    valor_unitario: orderItem.productPrice,
-    precio_unitario: orderItem.productPrice,
-    codigo_producto_sunat: "",
-    codigo_producto_gsl: "",
-    tipo_tax: "20", // Exonerado - Operación Onerosa
-    total_base_tax: orderItem.total,
-    porcentaje_tax: 0, // All products are exonerated in Pucallpa
-    total_tax: 0,
-    total: orderItem.total,
-  };
-};
-
 const sendDocument = async (
   body: FactproDocument,
   orderId: string,
+  token: string,
 ): Promise<response<FactproDocument>> => {
   const res = await fetch(`${url!}/documentos`, {
     method: "POST",
@@ -263,3 +84,191 @@ const sendDocument = async (
   });
   return { success: false, message: "Error creating document" };
 };
+
+const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
+  return {
+    unidad: "NIU",
+    codigo: orderItem.productSku || "",
+    descripcion: orderItem.productName,
+    cantidad: orderItem.quantity,
+    valor_unitario: orderItem.productPrice,
+    precio_unitario: orderItem.productPrice,
+    codigo_producto_sunat: "",
+    codigo_producto_gsl: "",
+    tipo_tax: "20", // Exonerado - Operación Onerosa
+    total_base_tax: orderItem.total,
+    porcentaje_tax: 0, // All products are exonerated in Pucallpa
+    total_tax: 0,
+    total: orderItem.total,
+  };
+};
+
+// Api documentation https://docs.factpro.la/
+export default function gateway(token: string): DocumentGateway {
+  const createInvoice = async (
+    order: OrderWithBusinessCustomer,
+    company: Company,
+  ): Promise<response<Invoice>> => {
+    const body: FactproDocument = {
+      tipo_documento: "01",
+      serie: "F001", // Falta configurar, primero se debe hacer la prueba de concepto
+      numero: "1", // Falta crear algoritmo de asignación de numero
+      tipo_operacion: "0101", // By default
+      fecha_de_emision: format(order.createdAt!, "yyyy/MM/dd"),
+      hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
+      moneda: "PEN",
+      enviar_automaticamente_al_cliente: false,
+      datos_del_emisor: {
+        codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
+      },
+      cliente: clientParamsBuilder(order.customer),
+      totales: {
+        total_exoneradas: order.total,
+        total_tax: 0,
+        total_venta: order.total,
+        total_gravadas: 0,
+        total_exportacion: 0,
+        total_inafectas: 0,
+        total_gratuitas: 0,
+      },
+      items: order.orderItems.map((orderItem) =>
+        orderItemToDocumentItem(orderItem),
+      ),
+      acciones: {
+        formato_pdf: "a4",
+      },
+      termino_de_pago: {
+        descripcion: "Contado",
+        tipo: "0",
+      },
+      metodo_de_pago: "Efectivo", // agregar metodo de pago
+      canal_de_venta: "",
+      orden_de_compra: "",
+      almacen: "",
+      observaciones: "",
+      fecha_de_vencimiento: "",
+    };
+
+    const response = await sendDocument(body, order.id!, token);
+    if (!response.success) {
+      return response;
+    }
+
+    return {
+      success: true,
+      data: {
+        id: crypto.randomUUID(),
+        orderId: order.id!,
+        customerId: order.customer.id!,
+        netTotal: body.totales.total_exoneradas,
+        taxTotal: body.totales.total_tax,
+        total: body.totales.total_venta,
+        documentType: "invoice",
+        series: body.serie,
+        number: body.numero,
+        dateOfIssue: parse(
+          `${body.fecha_de_emision} ${body.hora_de_emision}`,
+          "yyyy-MM-dd HH:mm",
+          new Date(),
+        ),
+      },
+    };
+  };
+
+  const createReceipt = async (
+    order: Order,
+    company: Company,
+  ): Promise<response<Receipt>> => {
+    const body: FactproDocument = {
+      tipo_documento: "03",
+      serie: "B001", // Falta configurar, primero se debe hacer la prueba de concepto
+      numero: "1", // Falta crear algoritmo de asignación de numero
+      tipo_operacion: "0101", // By default
+      fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
+      hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
+      moneda: "PEN",
+      enviar_automaticamente_al_cliente: false,
+      datos_del_emisor: {
+        codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
+      },
+      cliente: clientParamsBuilder(order.customer),
+      totales: {
+        total_exoneradas: order.total,
+        total_tax: 0,
+        total_venta: order.total,
+        total_gravadas: 0,
+        total_exportacion: 0,
+        total_inafectas: 0,
+        total_gratuitas: 0,
+      },
+      items: order.orderItems.map((orderItem) =>
+        orderItemToDocumentItem(orderItem),
+      ),
+      acciones: {
+        formato_pdf: "a4",
+      },
+      termino_de_pago: {
+        descripcion: "Contado",
+        tipo: "0",
+      },
+      metodo_de_pago: "Efectivo", // agregar metodo de pago
+      canal_de_venta: "",
+      orden_de_compra: "",
+      almacen: "",
+      observaciones: "",
+      fecha_de_vencimiento: "",
+    };
+
+    const response = await sendDocument(body, order.id!, token);
+    if (!response.success) {
+      return response;
+    }
+
+    return {
+      success: true,
+      data: {
+        id: crypto.randomUUID(),
+        orderId: order.id!,
+        customerId: order.customer?.id!,
+        netTotal: body.totales.total_exoneradas,
+        taxTotal: body.totales.total_tax,
+        total: body.totales.total_venta,
+        documentType: "receipt",
+        series: body.serie,
+        number: body.numero,
+        dateOfIssue: parse(
+          `${body.fecha_de_emision} ${body.hora_de_emision}`,
+          "yyyy-MM-dd HH:mm",
+          new Date(),
+        ),
+      },
+    };
+  };
+
+  const createTicket = async (
+    order: Order,
+    company: Company,
+  ): Promise<response<Ticket>> => {
+    return {
+      success: true,
+      data: {
+        id: crypto.randomUUID(),
+        orderId: order.id!,
+        customerId: order.customer?.id!,
+        netTotal: order.total,
+        taxTotal: 0,
+        total: order.total,
+        documentType: "ticket",
+        series: "NV01",
+        number: "1",
+        dateOfIssue: order.createdAt!,
+      },
+    };
+  };
+
+  return {
+    createInvoice,
+    createReceipt,
+    createTicket,
+  };
+}
