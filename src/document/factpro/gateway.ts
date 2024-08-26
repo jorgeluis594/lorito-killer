@@ -1,7 +1,6 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
 import { format, parse } from "date-fns";
-import axios from "axios";
 import { Company } from "@/company/types";
 import type { Invoice, Receipt, Ticket } from "@/document/types";
 import type {
@@ -223,21 +222,29 @@ const sendDocument = async (
   body: FactproDocument,
   orderId: string,
 ): Promise<response<FactproDocument>> => {
-  const res = await axios.post(url!, body, {
+  const res = await fetch(`${url!}/documentos`, {
+    method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify(body),
   });
 
-  if (res.status === 200 && res.data.success) {
+  const resJson = await res.json();
+
+  if (res.status === 200 && resJson.success) {
     log.info("factpro_document_sent", { document: body, orderId });
     return {
       success: true,
-      data: res.data,
+      data: resJson,
     };
   }
 
-  log.error("factpro_document_error", { document: body, orderId });
+  log.error("factpro_document_error", {
+    document: body,
+    orderId,
+    factpro_response: resJson,
+  });
   return { success: false, message: "Error creating document" };
 };
