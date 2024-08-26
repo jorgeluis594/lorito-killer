@@ -1,6 +1,7 @@
 import {Order, OrderItem, OrderWithBusinessCustomer} from "@/order/types";
 import {response} from "@/lib/types";
 import {
+  FetchCustomer,
   FormatPdf,
   IssuerData,
   PaymentTerm,
@@ -178,23 +179,33 @@ const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>>
   return {success: false, message: "not implemented"};
 }
 
-export const fetchCustomerByRuc = async (documentNumber: string) => {
+export const fetchCustomerByRuc = async (documentNumber: string): Promise<response<FetchCustomer>>  => {
   try {
     const response = await fetch(`https://consultas.factpro.la/api/v1/ruc/{${documentNumber}}`);
 
-    return await response.json();
+    const res = await response.json();
+    return {
+      ...res,
+      name: res.name,
+      address: res.address,
+    }
 
   } catch (error) {
     return { success: false, message: "customer not found"}
   }
 };
 
-export const fetchCustomerByDNI = async (documentNumber: string) => {
+export const fetchCustomerByDNI = async (documentNumber: string): Promise<response<FetchCustomer>> => {
   try {
     const response = await fetch(`https://consultas.factpro.la/api/v1/dni/{${documentNumber}}`);
 
-    return await response.json();
+    const res = await response.json();
+    return {
+      ...res,
+      name: res.name,
+      address: res.address,
+    }
   } catch (error) {
-    console.error('There has been a problem with your fetch operation:', error);
+    return { success: false, message: "customer not found"}
   }
 };
