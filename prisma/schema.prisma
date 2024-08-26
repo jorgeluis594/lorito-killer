@@ -204,7 +204,7 @@ model Company {
   categories Category[]
   stockTransfers StockTransfer[]
   subdomain String? @unique
-  invoiceCredentials Json?
+  billingCredentials Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
