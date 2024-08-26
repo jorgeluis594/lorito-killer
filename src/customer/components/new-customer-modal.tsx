@@ -21,11 +21,11 @@ import {
 } from "@/shared/components/ui/form";
 
 import {Plus, Search} from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { type Customer, DNI, RUC } from "@/customer/types";
+import {Button} from "@/shared/components/ui/button";
+import {Input} from "@/shared/components/ui/input";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {type Customer, DNI, RUC} from "@/customer/types";
 import {
   Select,
   SelectContent,
@@ -34,11 +34,12 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import {BusinessCustomer, NaturalCustomer} from "@/customer/types";
-import { useToast } from "@/shared/components/ui/use-toast";
-import { useUserSession } from "@/lib/use-user-session";
+import {useToast} from "@/shared/components/ui/use-toast";
+import {useUserSession} from "@/lib/use-user-session";
 import {useOrderFormStore} from "@/new-order/order-form-provider";
 import {useEffect, useState} from "react";
 import {createCustomer, searchCustomer} from "@/customer/actions";
+import {FetchCustomer} from "@/document/types";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
@@ -91,8 +92,10 @@ export default function NewCustomerModal() {
   });
   const order = useOrderFormStore((state) => state.order);
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
+  const {toast} = useToast();
   const user = useUserSession();
+  const [customerData, setCustomerData] = useState<FetchCustomer | null>(null);
+  const documentNumberSearch = form.getValues("documentNumber");
 
   const resp = (res: any) => {
     if (res.success) {
@@ -112,7 +115,7 @@ export default function NewCustomerModal() {
 
   const onSubmit = async (data: CustomerFormValues) => {
 
-    if(form.getValues("documentType") === "dni"){
+    if (form.getValues("documentType") === "dni") {
       const res = await createCustomer(
         formValuesToCustomer(data, user!.companyId!) as NaturalCustomer,
       );
@@ -133,11 +136,21 @@ export default function NewCustomerModal() {
     setOpen(isOpen);
   };
 
-  const documentNumberSearch = form.getValues("documentNumber");
+  const handleSearch = async () => {
+    const res = await searchCustomer(String(documentNumberSearch), order.documentType);
 
-  const handleSearch = () => {
-    searchCustomer(String(documentNumberSearch), order.documentType)
-  }
+    if (res.success) {
+      setCustomerData(res.data);
+      form.setValue("fullName", customerData?.name!)
+      form.setValue("address", customerData?.address!)
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Error al buscar el cliente",
+      });
+    }
+  };
 
   useEffect(() => {
     const defaultDocumentType = order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC;
@@ -148,7 +161,7 @@ export default function NewCustomerModal() {
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon">
-          <Plus />
+          <Plus/>
         </Button>
       </DialogTrigger>
       <DialogContent variant="right" className="flex flex-col max-w-[35rem]">
@@ -166,13 +179,13 @@ export default function NewCustomerModal() {
                 <FormField
                   control={form.control}
                   name="documentNumber"
-                  render={({ field }) => (
+                  render={({field}) => (
                     <FormItem className="flex-1">
                       <FormLabel>Numero de documento</FormLabel>
                       <FormControl>
                         <Input autoComplete="off" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage/>
                     </FormItem>
                   )}
                 />
@@ -181,12 +194,12 @@ export default function NewCustomerModal() {
               <FormField
                 control={form.control}
                 name="documentType"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem className="col-span-1">
                     <FormLabel>Tipo de Documento</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={ order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC }
+                      defaultValue={order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -194,14 +207,14 @@ export default function NewCustomerModal() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        { order.documentType === "receipt" || order.documentType === "ticket" ?
+                        {order.documentType === "receipt" || order.documentType === "ticket" ?
                           <SelectItem value={DNI}>DNI</SelectItem>
                           :
                           <SelectItem value={RUC}>RUC</SelectItem>
                         }
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
@@ -209,26 +222,26 @@ export default function NewCustomerModal() {
             <FormField
               control={form.control}
               name="fullName"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem>
                   <FormLabel>{order.documentType === "ticket" || order.documentType === "receipt" ? "Nombre" : "Razón Social"}</FormLabel>
                   <FormControl>
                     <Input autoComplete="off" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="address"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem>
                   <FormLabel>Dirección</FormLabel>
                   <FormControl>
                     <Input autoComplete="off" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
@@ -236,26 +249,26 @@ export default function NewCustomerModal() {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem>
                     <FormLabel>Correo</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
                 name="phoneNumber"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem>
                     <FormLabel>Teléfono</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
@@ -264,7 +277,7 @@ export default function NewCustomerModal() {
         </Form>
         <DialogFooter className="mt-auto">
           <DialogClose asChild>
-            <Button variant="secondary" >Cancelar</Button>
+            <Button variant="secondary">Cancelar</Button>
           </DialogClose>
           <Button type="button" onClick={form.handleSubmit(onSubmit)}>
             Guardar
