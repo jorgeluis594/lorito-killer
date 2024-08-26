@@ -1,5 +1,6 @@
 import { DocumentType, Order } from "@/order/types";
 import { Customer } from "@/customer/types";
+import {fetchCustomerByRuc} from "@/document/factpro_gateway";
 
 export type IssuerData = {
   establishmentCode: string;
@@ -40,3 +41,8 @@ export type Document = {
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+export type FetchCustomer = {
+  name: string;
+  address: string;
+}
