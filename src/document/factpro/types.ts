@@ -2,7 +2,7 @@ export interface FactproDocumentItem {
   // NIU = PRODUCTO
   // ZZ = SERVICIO
   unidad: "NIU";
-  codigo?: string;
+  codigo: string;
   descripcion: string; // product name
   cantidad: number;
   valor_unitario: number; // without igv
@@ -11,6 +11,8 @@ export interface FactproDocumentItem {
   // 20= Exonerado - Operación Onerosa
   tipo_tax: "10" | "20";
   total_base_tax: number;
+  codigo_producto_sunat: string;
+  codigo_producto_gsl: string;
   porcentaje_tax: 18 | 0;
   total_tax: number;
   total: number;
@@ -49,6 +51,10 @@ export interface FactproDocument {
     total_venta: number;
     total_tax: number;
     total_exoneradas: number;
+    total_exportacion: number;
+    total_gravadas: number;
+    total_inafectas: number;
+    total_gratuitas: number;
   };
   items: FactproDocumentItem[];
   acciones: {
@@ -59,4 +65,8 @@ export interface FactproDocument {
     tipo: "0" | "1";
   };
   metodo_de_pago?: string;
+  canal_de_venta: "";
+  orden_de_compra: "";
+  observaciones: "";
+  almacen: "";
 }
