@@ -13,8 +13,11 @@ import {Company} from "@/company/types";
 import {Document} from "@/document/types"
 import {BusinessCustomer, NaturalCustomer} from "@/customer/types";
 
-const url = process.env.FACTPRO_URL;
-const token = process.env.FACTPRO_TOKEN;
+const urlDoument = process.env.FACTPRO_URL_DOCUMENT;
+const tokenDocument = process.env.FACTPRO_TOKEN;
+const urlDni = process.env.FACTPRO_URL_SEARCH_DNI;
+const urlRuc = process.env.FACTPRO_URL_SEARCH_RUC;
+const tokenSearh = process.env.FACTPRO_TOKEN_SEARCH;
 const INVOICE_DOCUMENT_TYPE = "01"
 const RUC_CUSTOMER_DOCUMENT_TYPE = "6"
 const INVOICE_SERIES = "F001"
@@ -160,10 +163,11 @@ const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
 
 const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>> => {
   try {
-    const res = await axios.post(url!, body, {
+    const res = await axios.post(urlDoument!, body, {
+      method: "POST",
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${tokenDocument}`
       },
     });
 
@@ -205,7 +209,13 @@ type FactproBusinessCustomer = {
 
 export const fetchCustomerByRuc = async (documentNumber: string): Promise<response<BusinessCustomer>> => {
 
-  const response = await fetch(`https://consultas.factpro.la/api/v1/ruc/${documentNumber}`);
+  const response = await fetch(`${urlDni},${documentNumber}`,{
+    method: "GET  ",
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${tokenSearh}`
+    },
+  });
 
   if(!response.ok) {
     return {success: false, message: "No customers found"};
@@ -232,7 +242,13 @@ export const fetchCustomerByRuc = async (documentNumber: string): Promise<respon
 };
 
 export const fetchCustomerByDNI = async (documentNumber: string): Promise<response<NaturalCustomer>> => {
-  const response = await fetch(`https://consultas.factpro.la/api/v1/dni/${documentNumber}`);
+  const response = await fetch(`${urlRuc},${documentNumber}`,{
+    method: "GET",
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${tokenSearh}`
+    },
+  });
 
   if(!response.ok) {
     return {success: false, message: "No customer found"};
