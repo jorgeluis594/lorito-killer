@@ -94,8 +94,6 @@ export default function NewCustomerModal() {
   const [open, setOpen] = useState(false);
   const {toast} = useToast();
   const user = useUserSession();
-  const [customerData, setCustomerData] = useState<FetchCustomer | null>(null);
-  const documentNumberSearch = form.getValues("documentNumber");
 
   const resp = (res: any) => {
     if (res.success) {
@@ -136,13 +134,19 @@ export default function NewCustomerModal() {
     setOpen(isOpen);
   };
 
+  const documentNumberSearch = form.getValues("documentNumber");
+
   const handleSearch = async () => {
     const res = await searchCustomer(String(documentNumberSearch), order.documentType);
-
     if (res.success) {
-      setCustomerData(res.data);
-      form.setValue("fullName", customerData?.name!)
-      form.setValue("address", customerData?.address!)
+      if (res.data._branch === "BusinessCustomer"){
+        form.setValue("fullName", res.data.legalName)
+        form.setValue("address", res.data.address)
+      }else{
+        form.setValue("fullName", res.data.fullName)
+        form.setValue("address", res.data.address)
+      }
+
     } else {
       toast({
         title: "Error",
@@ -200,6 +204,7 @@ export default function NewCustomerModal() {
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC}
+                      disabled={true}
                     >
                       <FormControl>
                         <SelectTrigger>
