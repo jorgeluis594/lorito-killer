@@ -75,7 +75,6 @@ export const create = async (
   if (!companyResponse.success) {
     return { success: false, message: "no se encontro empresa" };
   }
-
   const documentResponse = await createDocument(
     { createReceipt, createInvoice },
     { createdDocument, createCustomer },
@@ -87,7 +86,8 @@ export const create = async (
       total: order.total,
       status: order.status,
       payments: order.payments,
-      documentType: "invoice",
+      documentType: order.documentType,
+      customer: order.customer,
     },
     companyResponse.data,
   );
