@@ -13,25 +13,8 @@ export const createCustomer = async (
 export const searchCustomer = async (
   documentNumber: string,
   documentType: string,
-): Promise<response<FetchCustomer>> => {
-  try {
-    const fetchFunction = documentType === "invoice" ? fetchCustomerByRuc : fetchCustomerByDNI;
+): Promise<response<Customer>> => {
+  const fetchFunction = documentType === "invoice" ? fetchCustomerByRuc : fetchCustomerByDNI;
 
-    const result = await fetchFunction(documentNumber);
-
-    if (result.success) {
-      return {
-        success: true,
-        data: {
-          ...result.data,
-          name: result.data.name,
-          address: result.data.address,
-        }
-      };
-    } else {
-      return { success: false, message: result.message || "No se encontró el cliente" };
-    }
-  } catch (e) {
-    return {success: false, message: "No se encontro el cliente"};
-  }
+  return fetchFunction(documentNumber);
 }
