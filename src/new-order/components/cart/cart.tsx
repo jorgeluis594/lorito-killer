@@ -17,6 +17,7 @@ import {formatPrice} from "@/lib/utils";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import {useEffect, useState} from "react";
 import {useCashShiftStore} from "@/cash-shift/components/cash-shift-store-provider";
+import {toast} from "@/shared/components/ui/use-toast";
 
 export default function Cart() {
 
@@ -28,6 +29,21 @@ export default function Cart() {
 
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const { increaseQuantity, decreaseQuantity, reset, removeOrderItem, setCustomer } = useOrderFormActions();
+
+  const handleClickSell = () => {
+    if(order.documentType === "invoice" && order.customer !== undefined) {
+      setOpenPaymentModal(true)
+    }else if(order.documentType === "receipt" || order.documentType === "ticket") {
+      setOpenPaymentModal(true)
+    }else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Se necesita elegir un cliente",
+      });
+    }
+
+  }
 
   useEffect(() => {
     reset();
@@ -96,7 +112,7 @@ export default function Cart() {
         <div className="p-5">
           <Button
             className="w-full"
-            onClick={() => setOpenPaymentModal(true)}
+            onClick={handleClickSell}
             disabled={!cashShift || order.orderItems.length === 0}
           >
             <div className="flex justify-between w-full">
