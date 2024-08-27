@@ -13,11 +13,11 @@ import {Company} from "@/company/types";
 import {Document} from "@/document/types"
 import {BusinessCustomer, NaturalCustomer} from "@/customer/types";
 
-const urlDoument = process.env.FACTPRO_URL_DOCUMENT;
-const tokenDocument = process.env.FACTPRO_TOKEN;
-const urlDni = process.env.FACTPRO_URL_SEARCH_DNI;
-const urlRuc = process.env.FACTPRO_URL_SEARCH_RUC;
-const tokenSearh = process.env.FACTPRO_TOKEN_SEARCH;
+//const urlDoument = process.env.FACTPRO_URL_DOCUMENT;
+//const tokenDocument = process.env.FACTPRO_TOKEN;
+//const urlDni = process.env.FACTPRO_URL_SEARCH_DNI;
+//const urlRuc = process.env.FACTPRO_URL_SEARCH_RUC;
+//const tokenSearh = process.env.FACTPRO_TOKEN_SEARCH;
 const INVOICE_DOCUMENT_TYPE = "01"
 const RUC_CUSTOMER_DOCUMENT_TYPE = "6"
 const INVOICE_SERIES = "F001"
@@ -163,11 +163,11 @@ const orderItemToDocumentItem = (orderItem: OrderItem): DocumentItem => {
 
 const sendDocument = async (body: BodyDocument): Promise<response<BodyDocument>> => {
   try {
-    const res = await axios.post(urlDoument!, body, {
+    const res = await axios.post("https://dev.factpro.la/api/v2/", body, {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${tokenDocument}`
+        'Authorization': `Bearer 1i9DoeZ0uF8w0NJOwc9z8PDOMiq8213kug7wPoT2NBjAIGc7MX`
       },
     });
 
