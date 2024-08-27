@@ -69,22 +69,22 @@ interface BodyDocument {
 
 export const createInvoice = async (order: OrderWithBusinessCustomer, company: Company): Promise<response<Document>> => {
   try {
-    if (!company.invoiceCode) {
-      throw new Error("Invoice Code is required");
-    }
+    //if (!company.invoiceCode) {
+    //  throw new Error("Invoice Code is required");
+    //}
 
     const body: BodyDocument = {
       documentType: INVOICE_DOCUMENT_TYPE,
       series: INVOICE_SERIES,
       number: order.customer.documentNumber,
       operationType: INTERNAL_SALES,
-      dateOfIssue: format(order.createdAt!, "dd/MM/yyyy"),
-      broadcastTime: format(order.createdAt!, "hh:mm aa"),
+      dateOfIssue: format(new Date(), "dd/MM/yyyy"),
+      broadcastTime: format(new Date(), "hh:mm aa"),
       currency: CURRENCY,
       dueDate: "",
       automaticallySendToClient: false,
       issuerData: {
-        establishmentCode: company.invoiceCode,
+        establishmentCode: "",
       },
       customer: {
         documentType: RUC_CUSTOMER_DOCUMENT_TYPE,
