@@ -209,11 +209,11 @@ type FactproBusinessCustomer = {
 
 export const fetchCustomerByRuc = async (documentNumber: string): Promise<response<BusinessCustomer>> => {
 
-  const response = await fetch(`${urlDni},${documentNumber}`,{
-    method: "GET  ",
+  const response = await fetch(`https://consultas.factpro.la/api/v1/ruc/${documentNumber}`,{
+    method: "GET",
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${tokenSearh}`
+      'Authorization': `Bearer 0eee2f39adbbe53723ccdd46e982f24a1b3925b9da82039a03`
     },
   });
 
@@ -242,11 +242,11 @@ export const fetchCustomerByRuc = async (documentNumber: string): Promise<respon
 };
 
 export const fetchCustomerByDNI = async (documentNumber: string): Promise<response<NaturalCustomer>> => {
-  const response = await fetch(`${urlRuc},${documentNumber}`,{
+  const response = await fetch(`https://consultas.factpro.la/api/v1/dni/${documentNumber}`,{
     method: "GET",
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${tokenSearh}`
+      'Authorization': `Bearer 0eee2f39adbbe53723ccdd46e982f24a1b3925b9da82039a03`
     },
   });
 
