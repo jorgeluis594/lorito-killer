@@ -39,13 +39,14 @@ import {useUserSession} from "@/lib/use-user-session";
 import {useOrderFormStore} from "@/new-order/order-form-provider";
 import {useEffect, useState} from "react";
 import {createCustomer, searchCustomer} from "@/customer/actions";
-import {FetchCustomer} from "@/document/types";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
-  documentNumber: z.coerce.number(),
+  documentNumber: z.coerce.number().max(99999999999, {message: "El número máximo de dígitos es 11."}),
   geoCode: z.string().optional(),
-  fullName: z.string(),
+  fullName: z.string().min(3, {
+    message: "El nombre del cliente debe tener al menos 3 caracteres",
+  }),
   address: z.string().optional(),
   email: z.string().optional(),
   phoneNumber: z.string().optional(),
