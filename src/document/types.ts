@@ -34,3 +34,10 @@ export type Ticket = DocumentBase & {
 };
 
 export type Document = Invoice | Receipt | Ticket;
+
+export type BillingCredentials = {
+  token: string;
+  invoiceSeries: string;
+  receiptSeries: string;
+  ticketSeries: string;
+};
