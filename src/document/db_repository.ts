@@ -1,4 +1,5 @@
 import {
+  BillingCredentials,
   Document,
   DocumentType,
   INVOICE,
@@ -9,6 +10,7 @@ import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
 import { $Enums } from "@prisma/client";
 import PrismaDocumentType = $Enums.DocumentType;
+import { isEmpty } from "@/lib/utils";
 
 export const DocumentTypeToPrismaMapper: Record<
   DocumentType,
@@ -63,3 +65,24 @@ export const createDocument = async (
     return { success: false, message: e.message };
   }
 };
+
+async function getBillingCredentialsFor(
+  companyId: string,
+): Promise<response<BillingCredentials>> {
+  const companyData = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { billingCredentials: true },
+  });
+
+  if (!companyData || isEmpty(companyData.billingCredentials)) {
+    return { success: false, message: "Credentials not found" };
+  }
+
+  const credentials =
+    companyData.billingCredentials as unknown as BillingCredentials;
+
+  return {
+    success: true,
+    data: credentials,
+  };
+}
