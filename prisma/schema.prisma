@@ -242,3 +242,25 @@ model Payment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum LocalityLevel {
+  DEPARTMENT
+  PROVINCE
+  DISTRICT
+}
+
+model Locality {
+  id          String   @id @default(uuid())
+  idUbigeo    String   @unique
+  name        String
+  code        String
+  tag         String
+  searchValue String
+  level       LocalityLevel
+  parentId    String?
+  children    Locality[] @relation("LocalityParent")
+  parent      Locality? @relation("LocalityParent", fields: [parentId], references: [id])
+
+
+  @@index([name, code, tag, parentId])
+}
