@@ -29,7 +29,7 @@ export const createDocument = async (
   order: Order,
   company: Company,
 ): Promise<response<Document>> => {
-  if (order.documentType !== "receipt" || "invoice") {
+  if (order.documentType !== "receipt" && order.documentType !== "invoice") {
     return { success: false, message: "not implemented" };
   }
 
