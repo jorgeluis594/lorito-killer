@@ -26,7 +26,6 @@ export const createDocument = async (
   company: Company,
 ): Promise<response<Document>> => {
   let documentResponse: response<Document>;
-
   switch (order.documentType) {
     case "ticket":
       documentResponse = await documentGateway.createTicket(order, company);
@@ -35,10 +34,13 @@ export const createDocument = async (
       documentResponse = await documentGateway.createReceipt(order, company);
       break;
     case "invoice":
-      documentResponse = await documentGateway.createInvoice(
-        order as OrderWithBusinessCustomer,
-        company,
-      );
+      if (!hasBusinessCustomer(order)) {
+        return {
+          success: false,
+          message: "Customer must be a BusinessCustomer",
+        };
+      }
+      documentResponse = await documentGateway.createInvoice(order, company);
       break;
     default:
       throw new Error("Invalid document type");
