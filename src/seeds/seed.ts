@@ -4,12 +4,13 @@ import fs from 'fs';
 import csv from 'csv-parser';
 import {$Enums} from "@prisma/client";
 import PrismaLocalityType = $Enums.LocalityLevel;
-import {DEPARTMENT, DISTRICT, Local, LocalityLevelType, PROVINCE} from "./type";
+import {COUNTRY, DEPARTMENT, DISTRICT, Local, LocalityLevelType, PROVINCE} from "./type";
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   LocalityLevelType,
   PrismaLocalityType
 > = {
+  [COUNTRY]: PrismaLocalityType.COUNTRY,
   [DEPARTMENT]: PrismaLocalityType.DEPARTMENT,
   [PROVINCE]: PrismaLocalityType.PROVINCE,
   [DISTRICT]: PrismaLocalityType.DISTRICT,
@@ -24,6 +25,17 @@ const locality = async () => {
       console.log('CSV file successfully processed');
 
       for (const result of results) {
+        console.log('Inserting locality:', {
+          id: result.id,
+          idUbigeo: result.idUbigeo,
+          name: result.name,
+          code: result.code,
+          tag: result.tag,
+          searchValue: result.searchValue,
+          level: CustomerDocumentTypeToPrismaMapper[result.level],
+          parentId: result.parentId,
+        });
+
         await prisma.locality.create({
           data: {
             id: result.id,
