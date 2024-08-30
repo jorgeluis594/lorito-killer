@@ -18,41 +18,37 @@ const CustomerDocumentTypeToPrismaMapper: Record<
 
 const locality = async () => {
   const results: Array<Local> = [];
+
   fs.createReadStream('localities.csv')
     .pipe(csv())
     .on('data', (data: Local) => results.push(data))
     .on('end', async () => {
       console.log('CSV file successfully processed');
 
-      for (const result of results) {
-        console.log('Inserting locality:', {
-          id: result.id,
-          idUbigeo: result.idUbigeo,
-          name: result.name,
-          code: result.code,
-          tag: result.tag,
-          searchValue: result.searchValue,
-          level: CustomerDocumentTypeToPrismaMapper[result.level],
-          parentId: result.parentId,
-        });
+      try {
+        for (const result of results) {
+          await prisma.locality.create({
+            data: {
+              id: result.id,
+              idUbigeo: result.idUbigeo,
+              name: result.name,
+              code: result.code,
+              tag: result.tag,
+              searchValue: result.searchValue,
+              level: CustomerDocumentTypeToPrismaMapper[result.level],
+              parentId: result.parentId || null,
+            },
+          });
+        }
 
-        await prisma.locality.create({
-          data: {
-            id: result.id,
-            idUbigeo: result.idUbigeo,
-            name: result.name,
-            code: result.code,
-            tag: result.tag,
-            searchValue: result.searchValue,
-            level: CustomerDocumentTypeToPrismaMapper[result.level],
-            parentId: result.parentId,
-          },
-        });
+        console.log('Data successfully inserted');
+      } catch (error) {
+        console.error('Error inserting data:', error);
+      } finally {
+        await prisma.$disconnect();
       }
-
-      console.log('Data successfully inserted');
     });
-}
+};
 
 const execute = async () => {
   const company = await prisma.company.create({
@@ -76,6 +72,19 @@ const execute = async () => {
       name: "Jorge Gonzalez",
     },
   });
+
+  /*const local = await prisma.locality.create({
+    data: {
+      id: "b3738fed-8cd0-433d-a370-359566996f46",
+      idUbigeo: "2533",
+      name: "Perú",
+      code: "",
+      tag: "Perú",
+      searchValue: "perú",
+      level: CustomerDocumentTypeToPrismaMapper[COUNTRY],
+      parentId: null,
+    },
+  });*/
 
   await locality();
 
