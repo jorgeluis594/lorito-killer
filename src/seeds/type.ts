@@ -1,3 +1,7 @@
+export const COUNTRY = "0";
+
+export type CountryType = typeof COUNTRY;
+
 export const DEPARTMENT = "1";
 
 export type DepartmentType = typeof DEPARTMENT;
@@ -10,7 +14,7 @@ export const DISTRICT = "3";
 
 export type DistrictType = typeof DISTRICT;
 
-export type LocalityLevelType = DepartmentType | ProvinceType | DistrictType;
+export type LocalityLevelType = CountryType | DepartmentType | ProvinceType | DistrictType;
 
 export type Local = {
   id: string,
