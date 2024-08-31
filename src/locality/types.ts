@@ -16,7 +16,7 @@ export type DistrictType = typeof DISTRICT;
 
 export type LocalityLevelType = CountryType | DepartmentType | ProvinceType | DistrictType;
 
-export type Local = {
+export type Locality = {
   id: string,
   idUbigeo: string,
   name: string,
@@ -24,5 +24,5 @@ export type Local = {
   tag: string,
   searchValue: string,
   level: LocalityLevelType,
-  parentId: string,
+  parentId: string | null,
 }
