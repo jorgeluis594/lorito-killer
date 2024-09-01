@@ -1,133 +1,51 @@
 import {
-  Customer,
+  BillingCredentials,
   Document,
-  CustomerDocumentType,
-  DNI,
-  RUC
-} from "@/document/types"
-import {
   DocumentType,
   INVOICE,
   RECEIPT,
-  TICKET
-}from "@/order/types"
-import {find as findOrder} from "@/order/db_repository"
-import {response} from "@/lib/types";
+  TICKET,
+} from "@/document/types";
+import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import {$Enums} from "@prisma/client";
-import PrismaCustomerDocumentType = $Enums.CustomerDocumentType
-import PrismaDocumentType = $Enums.DocumentType
+import { $Enums } from "@prisma/client";
+import PrismaDocumentType = $Enums.DocumentType;
+import { isEmpty } from "@/lib/utils";
 
-const CustomerDocumentTypeToPrismaMapper: Record<CustomerDocumentType, PrismaCustomerDocumentType> = {
-  [DNI]: PrismaCustomerDocumentType.DNI,
-  [RUC]: PrismaCustomerDocumentType.RUC
-}
-
-const PrismaCustomerDocumentTypeMapper: Record<PrismaCustomerDocumentType, CustomerDocumentType> = {
-  [PrismaCustomerDocumentType.DNI]: DNI,
-  [PrismaCustomerDocumentType.RUC]: RUC,
-}
-
-const DocumentTypeToPrismaMapper: Record<DocumentType, PrismaDocumentType> = {
+export const DocumentTypeToPrismaMapper: Record<
+  DocumentType,
+  PrismaDocumentType
+> = {
   [INVOICE]: PrismaDocumentType.INVOICE,
   [RECEIPT]: PrismaDocumentType.RECEIPT,
   [TICKET]: PrismaDocumentType.TICKET,
-}
-
-const PrismaDocumentTypeMapper: Record<PrismaDocumentType, DocumentType> = {
+};
+export const PrismaDocumentTypeMapper: Record<
+  PrismaDocumentType,
+  DocumentType
+> = {
   [PrismaDocumentType.INVOICE]: INVOICE,
   [PrismaDocumentType.RECEIPT]: RECEIPT,
   [PrismaDocumentType.TICKET]: TICKET,
-}
-
-export const createCustomer = async (
-  customer: Customer
-): Promise<response<Customer>> => {
-  try {
-    const customerResponse = await prisma.customer.create({data: {
-      ...customer,
-        documentType: CustomerDocumentTypeToPrismaMapper[customer.documentType],
-        documentNumber: customer.documentNumber,
-        legalName: customer.legalName,
-        address: customer.address,
-        email: customer.email,
-        phoneNumber: customer.phoneNumber,
-    }})
-
-    /*let createdCustomer: Customer;
-
-    if (createdResponse.documentType === PrismaCustomerDocumentType.DNI) {
-      createdCustomer = {
-        id: createdResponse.id,
-        orderId: customer.orderId,
-        documentType: PrismaCustomerDocumentTypeMapper.DNI,
-        documentNumber: createdResponse.documentNumber!,
-        legalName: createdResponse.legalName,
-        address: createdResponse.address!,
-        email: createdResponse.email!,
-        phoneNumber: createdResponse.phoneNumber!
-      }
-    } else if (createdResponse.documentType === PrismaCustomerDocumentType.RUC) {
-      createdCustomer = {
-        id: createdResponse.id,
-        orderId: customer.orderId,
-        documentType: PrismaCustomerDocumentTypeMapper.RUC,
-        documentNumber: createdResponse.documentNumber!,
-        legalName: createdResponse.legalName,
-        address: createdResponse.address!,
-        email: createdResponse.email!,
-        phoneNumber: createdResponse.phoneNumber!
-      }
-    } else {
-      throw new Error('Unknown document type');
-    }*/
-
-    const createdCustomer: Customer = {
-      id: customerResponse.id,
-      orderId: customer.orderId,
-      documentType: PrismaCustomerDocumentTypeMapper[customerResponse.documentType],
-      documentNumber: customerResponse.documentNumber!,
-      legalName: customerResponse.legalName,
-      address: customerResponse.address!,
-      email: customerResponse.email!,
-      phoneNumber: customerResponse.phoneNumber!
-    }
-
-    if(!createdCustomer) {
-      throw new Error('Unknown document type');
-    }
-
-    return {success: true, data: createdCustomer};
-
-  } catch (e: any) {
-    return {success: false, message: e.message};
-  }
 };
-
-export const createdDocument = async (
-  document: Document
+export const createDocument = async (
+  document: Document,
 ): Promise<response<Document>> => {
   try {
     const documentResponse = await prisma.document.create({
       data: {
         orderId: document.orderId,
-        customerId: document.customer.id,
+        customerId: document.customerId,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
         series: document.series,
         number: document.number,
         dateOfIssue: document.dateOfIssue,
-        broadcastTime: document.broadcastTime,
-        observations: document.observations
       },
       include: {
         order: true,
-        customer: true,
-      }
+      },
     });
-
-    const orderResponse = await findOrder(document.orderId);
-    if (!orderResponse.success) return orderResponse
 
     const createdDocument: Document = {
       id: documentResponse.customerId,
@@ -138,15 +56,52 @@ export const createdDocument = async (
       series: documentResponse.series,
       number: documentResponse.number,
       dateOfIssue: documentResponse.dateOfIssue,
-      broadcastTime: documentResponse.broadcastTime,
-      observations: documentResponse.observations,
-      order: orderResponse.data,
-      customer: {...document.customer},
+      taxTotal: 0,
+      netTotal: +documentResponse.total,
+    };
+
+    return { success: true, data: createdDocument };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
+export const getLatestDocumentNumber = async (
+  serialNumber: string,
+): Promise<response<number>> => {
+  try {
+    const document = await prisma.document.findFirst({
+      where: { series: serialNumber },
+      orderBy: { number: "desc" },
+    });
+
+    if (!document) {
+      return { success: true, data: 1 };
     }
 
-    return {success: true, data: createdDocument };
-
+    return { success: true, data: +document.number + 1 };
   } catch (e: any) {
-    return {success: false, message: e.message};
+    return { success: false, message: e.message };
   }
+};
+
+export const getBillingCredentialsFor = async (
+  companyId: string,
+): Promise<response<BillingCredentials>> => {
+  const companyData = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { billingCredentials: true },
+  });
+
+  if (!companyData || isEmpty(companyData.billingCredentials)) {
+    return { success: false, message: "Credentials not found" };
+  }
+
+  const credentials =
+    companyData.billingCredentials as unknown as BillingCredentials;
+
+  return {
+    success: true,
+    data: credentials,
+  };
 };

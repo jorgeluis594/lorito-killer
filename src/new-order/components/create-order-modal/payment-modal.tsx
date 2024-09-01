@@ -58,6 +58,14 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const user = useUserSession();
 
   const handleOrderCreation = async () => {
+    if (!order.documentType) {
+      toast({
+        variant: "destructive",
+        description: "Seleccione un tipo de documento",
+      });
+      return;
+    }
+
     setCreatingOrder(true);
     const response = await create(user!.id, { ...order, status: "completed" });
     if (response.success) {

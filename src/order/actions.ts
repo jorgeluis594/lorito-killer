@@ -1,36 +1,52 @@
 "use server";
 
-import {Order, OrderItem} from "./types";
-import {response} from "@/lib/types";
-import {create as createOrder} from "./db_repository";
-import {revalidatePath} from "next/cache";
-import {getLastOpenCashShift} from "@/cash-shift/db_repository";
-import {getCompany as findCompany} from "@/company/db_repository";
-import {find as findProduct} from "@/product/db_repository";
+import { Order } from "./types";
+import { response } from "@/lib/types";
+import { create as createOrder } from "./db_repository";
+import { revalidatePath } from "next/cache";
+import { getLastOpenCashShift } from "@/cash-shift/db_repository";
+import { getCompany as findCompany } from "@/company/db_repository";
+import { find as findProduct } from "@/product/db_repository";
 import {
   updateStock as UpdateStockFromStockTransfer,
   create as createStockTransfer,
 } from "@/stock-transfer/db_repository";
-import {updateStock} from "@/order/use-cases/update-stock";
-import {getSession} from "@/lib/auth";
-import {Company} from "@/company/types";
-import {createDocument} from "@/document/use_cases/create-document";
-import {createInvoice, createReceipt} from "@/document/factpro_gateway";
-import {createdDocument, createCustomer} from "@/document/db_repository";
+import { updateStock } from "@/order/use-cases/update-stock";
+import { getSession } from "@/lib/auth";
+import { Company } from "@/company/types";
+import { createDocument } from "@/document/use_cases/create-document";
+import billingDocumentGateway from "@/document/factpro/gateway";
+import {
+  createDocument as saveDocument,
+  getLatestDocumentNumber,
+  getBillingCredentialsFor,
+} from "@/document/db_repository";
+import type { Document, DocumentType } from "@/document/types";
 
 export const create = async (
   userId: string,
-  order: Order,
-): Promise<response<Order>> => {
+  order: Order & { documentType: DocumentType },
+): Promise<
+  response<Order & { documentType: DocumentType; document: Document }>
+> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
+  const billingCredentialsResponse = await getBillingCredentialsFor(
+    session.user.companyId,
+  );
+  if (!billingCredentialsResponse.success) {
+    return {
+      success: false,
+      message: "No se encontraron credenciales de facturación",
+    };
+  }
+
   if (!openCashShiftResponse.success) {
-    return {success: false, message: "No tienes una caja abierta"};
+    return { success: false, message: "No tienes una caja abierta" };
   }
 
   const openCashShift = openCashShiftResponse.data;
-
   if (openCashShift.id !== order.cashShiftId) {
     return {
       success: false,
@@ -49,22 +65,17 @@ export const create = async (
     ...order,
     cashShiftId: openCashShift.id,
     companyId: session.user.companyId,
-    documentType: order.documentType,
   });
   if (!createOrderResponse.success) {
     return createOrderResponse;
   }
 
   revalidatePath("/api/orders");
-  const updateStockResponse = await updateStock(
-    userId,
-    createOrderResponse.data,
-    {
-      findProduct,
-      createStockTransfer,
-      updateStock: UpdateStockFromStockTransfer,
-    },
-  );
+  const updateStockResponse = await updateStock(userId, order, {
+    findProduct,
+    createStockTransfer,
+    updateStock: UpdateStockFromStockTransfer,
+  });
 
   if (!updateStockResponse.success) {
     return updateStockResponse;
@@ -72,39 +83,31 @@ export const create = async (
 
   const companyResponse = await findCompany(session.user.companyId);
   if (!companyResponse.success) {
-    return {success: false, message: 'no se encontro empresa'}
+    return { success: false, message: "no se encontro empresa" };
   }
 
+  const { token, ...billingSettings } = billingCredentialsResponse.data;
   const documentResponse = await createDocument(
-    {createReceipt, createInvoice},
-    {createdDocument, createCustomer},
+    billingDocumentGateway(token),
     {
-      id: crypto.randomUUID(),
-      cashShiftId: openCashShift.id,
-      companyId: companyResponse.data.id,
-      orderItems: order.orderItems,
-      total: order.total,
-      status: order.status,
-      payments: order.payments,
-      documentType: "invoice",
-      customer: {
-        id: crypto.randomUUID(),
-        orderId: order.id!,
-        documentType: "ruc",
-        documentNumber: "1234567890",
-        legalName: "Business COP",
-        address: "mi casa",
-        email: "email@gmail.com",
-        phoneNumber: "123456789",
-      },
+      createDocument: saveDocument,
+      getLastDocumentNumber: getLatestDocumentNumber,
     },
-    companyResponse.data,
+    createOrderResponse.data,
+    billingSettings,
   );
   if (!documentResponse.success) {
     return documentResponse;
   }
 
-  return {success: true, data: documentResponse.data.order};
+  return {
+    success: true,
+    data: {
+      ...createOrderResponse.data,
+      documentType: documentResponse.data.documentType,
+      document: documentResponse.data,
+    },
+  };
 };
 
 export const getCompany = async (): Promise<response<Company>> => {

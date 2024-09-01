@@ -1,9 +1,11 @@
 import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
-import {Customer, BusinessCustomer, DniType, RucType} from "@/document/types";
+import type { BusinessCustomer, Customer } from "@/customer/types";
+import { DocumentType, InvoiceType, Document } from "@/document/types";
 
 export type OrderItem = {
   id?: string;
   productId: string;
+  productSku?: string; // TODO: add orderCode to db repository
   productName: string;
   productPrice: number;
   quantity: number;
@@ -12,17 +14,6 @@ export type OrderItem = {
   createdAt?: Date;
   updatedAt?: Date;
 };
-
-export const INVOICE = "invoice";
-export type InvoiceType = typeof INVOICE;
-
-export const RECEIPT = "receipt"
-export type ReceiptType = typeof RECEIPT
-
-export const TICKET = "ticket"
-export type TicketType = typeof TICKET
-
-export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
 export type Order = {
   id?: string;
@@ -33,12 +24,19 @@ export type Order = {
   status: "pending" | "completed" | "cancelled";
   payments: Payment[];
   documentType: DocumentType;
+  document?: Document;
   customer?: Customer;
   createdAt?: Date;
   updatedAt?: Date;
 };
 
-export type OrderWithBusinessCustomer = Omit<Order, 'customer'> & { customer: BusinessCustomer }
+export type OrderWithBusinessCustomer = Omit<
+  Order,
+  "customer" | "documentType"
+> & {
+  customer: BusinessCustomer;
+  documentType: InvoiceType;
+};
 
 export type PaymentMethod = "cash" | "credit_card" | "debit_card" | "wallet";
 
