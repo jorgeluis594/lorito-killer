@@ -1,7 +1,6 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
 import { format, parse } from "date-fns";
-import { Company } from "@/company/types";
 import type { Invoice, Receipt, Ticket } from "@/document/types";
 import type {
   FactproDocument,
@@ -117,7 +116,7 @@ export default function gateway(token: string): DocumentGateway {
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
-      fecha_de_emision: format(order.createdAt!, "yyyy/MM/dd"),
+      fecha_de_emision: format(order.createdAt!, "yyyy-MM-dd"),
       hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
@@ -187,7 +186,7 @@ export default function gateway(token: string): DocumentGateway {
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
-      fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
+      fecha_de_emision: format(order.createdAt!, "yyyy-MM-dd"),
       hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
