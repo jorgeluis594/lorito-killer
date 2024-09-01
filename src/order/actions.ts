@@ -16,7 +16,11 @@ import { getSession } from "@/lib/auth";
 import { Company } from "@/company/types";
 import { createDocument } from "@/document/use_cases/create-document";
 import billingDocumentGateway from "@/document/factpro/gateway";
-import { createDocument as saveDocument } from "@/document/db_repository";
+import {
+  createDocument as saveDocument,
+  getLatestDocumentNumber,
+  getBillingCredentialsFor,
+} from "@/document/db_repository";
 import type { Document, DocumentType } from "@/document/types";
 
 export const create = async (
@@ -28,6 +32,16 @@ export const create = async (
   // TODO: Implement order creator use case to manage the creation of an order logic
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
+  const billingCredentialsResponse = await getBillingCredentialsFor(
+    session.user.companyId,
+  );
+  if (!billingCredentialsResponse.success) {
+    return {
+      success: false,
+      message: "No se encontraron credenciales de facturación",
+    };
+  }
+
   if (!openCashShiftResponse.success) {
     return { success: false, message: "No tienes una caja abierta" };
   }
@@ -72,11 +86,15 @@ export const create = async (
     return { success: false, message: "no se encontro empresa" };
   }
 
+  const { token, ...billingSettings } = billingCredentialsResponse.data;
   const documentResponse = await createDocument(
-    billingDocumentGateway("oasd"),
-    { createDocument: saveDocument },
+    billingDocumentGateway(token),
+    {
+      createDocument: saveDocument,
+      getLastDocumentNumber: getLatestDocumentNumber,
+    },
     createOrderResponse.data,
-    companyResponse.data,
+    billingSettings,
   );
   if (!documentResponse.success) {
     return documentResponse;
