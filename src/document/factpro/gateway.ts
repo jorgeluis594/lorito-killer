@@ -10,7 +10,10 @@ import type {
 import { log } from "@/lib/log";
 import { Customer } from "@/customer/types";
 import { isBusinessCustomer } from "@/customer/utils";
-import { DocumentGateway } from "@/document/use_cases/create-document";
+import {
+  DocumentGateway,
+  DocumentMetadata,
+} from "@/document/use_cases/create-document";
 
 const url = process.env.FACTPRO_URL;
 
@@ -107,19 +110,19 @@ const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
 export default function gateway(token: string): DocumentGateway {
   const createInvoice = async (
     order: OrderWithBusinessCustomer,
-    company: Company,
+    documentMetadata: DocumentMetadata,
   ): Promise<response<Invoice>> => {
     const body: FactproDocument = {
       tipo_documento: "01",
-      serie: "F001", // Falta configurar, primero se debe hacer la prueba de concepto
-      numero: "1", // Falta crear algoritmo de asignación de numero
+      serie: documentMetadata.serialNumber,
+      numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
       fecha_de_emision: format(order.createdAt!, "yyyy/MM/dd"),
       hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
       datos_del_emisor: {
-        codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
+        codigo_establecimiento: documentMetadata.establishmentCode,
       },
       cliente: clientParamsBuilder(order.customer),
       totales: {
@@ -177,19 +180,19 @@ export default function gateway(token: string): DocumentGateway {
 
   const createReceipt = async (
     order: Order,
-    company: Company,
+    documentMetadata: DocumentMetadata,
   ): Promise<response<Receipt>> => {
     const body: FactproDocument = {
       tipo_documento: "03",
-      serie: "B001", // Falta configurar, primero se debe hacer la prueba de concepto
-      numero: "1", // Falta crear algoritmo de asignación de numero
+      serie: documentMetadata.serialNumber,
+      numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
       fecha_de_emision: format(order.createdAt!, "dd/MM/yyyy"),
       hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
       datos_del_emisor: {
-        codigo_establecimiento: "0000", // Falta configurar el codigo de establecimiento
+        codigo_establecimiento: documentMetadata.establishmentCode,
       },
       cliente: clientParamsBuilder(order.customer),
       totales: {
@@ -247,7 +250,7 @@ export default function gateway(token: string): DocumentGateway {
 
   const createTicket = async (
     order: Order,
-    company: Company,
+    documentMetadata: DocumentMetadata,
   ): Promise<response<Ticket>> => {
     return {
       success: true,
