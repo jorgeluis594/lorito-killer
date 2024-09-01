@@ -128,7 +128,6 @@ export const getMany = async ({
     const query: Prisma.CustomerFindManyArgs = {
       where: {
         companyId,
-        documentType: customerType === "BusinessCustomer" ? "RUC" : "DNI",
       },
       take: 20,
       orderBy: [{ legalName: "asc" }],

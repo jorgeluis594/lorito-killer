@@ -42,3 +42,8 @@ export type BillingCredentials = {
   ticketSerialNumber: string;
   establishmentCode: string;
 };
+
+export type FetchCustomer = {
+  name: string;
+  address: string;
+}

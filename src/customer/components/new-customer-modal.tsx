@@ -20,12 +20,12 @@ import {
   FormMessage,
 } from "@/shared/components/ui/form";
 
-import { Plus } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { type Customer, DNI, RUC } from "@/customer/types";
+import {Plus, Search} from "lucide-react";
+import {Button} from "@/shared/components/ui/button";
+import {Input} from "@/shared/components/ui/input";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {type Customer, DNI, RUC} from "@/customer/types";
 import {
   Select,
   SelectContent,
@@ -33,15 +33,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { createCustomer } from "@/customer/actions";
-import { useToast } from "@/shared/components/ui/use-toast";
-import { useUserSession } from "@/lib/use-user-session";
+import {BusinessCustomer, NaturalCustomer} from "@/customer/types";
+import {useToast} from "@/shared/components/ui/use-toast";
+import {useUserSession} from "@/lib/use-user-session";
+import {useOrderFormStore} from "@/new-order/order-form-provider";
+import {useEffect, useState} from "react";
+import {createCustomer, searchCustomer} from "@/customer/actions";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
-  documentNumber: z.coerce.number(),
+  documentNumber: z.coerce.number().max(99999999999, {message: "El número máximo de dígitos es 11."}),
   geoCode: z.string().optional(),
-  fullName: z.string(),
+  fullName: z.string().min(3, {
+    message: "El nombre del cliente debe tener al menos 3 caracteres",
+  }),
   address: z.string().optional(),
   email: z.string().optional(),
   phoneNumber: z.string().optional(),
@@ -86,17 +91,18 @@ export default function NewCustomerModal() {
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(CustomerSchema),
   });
-  const { toast } = useToast();
+  const order = useOrderFormStore((state) => state.order);
+  const [open, setOpen] = useState(false);
+  const {toast} = useToast();
   const user = useUserSession();
 
-  const onSubmit = async (data: CustomerFormValues) => {
-    const res = await createCustomer(
-      formValuesToCustomer(data, user!.companyId!),
-    );
+  const resp = (res: any) => {
     if (res.success) {
       toast({
         description: "Cliente creado con éxito",
       });
+      form.reset();
+      setOpen(false)
     } else {
       toast({
         title: "Error",
@@ -104,13 +110,63 @@ export default function NewCustomerModal() {
         description: "Error al crear el cliente " + res.message,
       });
     }
+  }
+
+  const onSubmit = async (data: CustomerFormValues) => {
+
+    if (form.getValues("documentType") === "dni") {
+      const res = await createCustomer(
+        formValuesToCustomer(data, user!.companyId!) as NaturalCustomer,
+      );
+      resp(res)
+    } else {
+      const res = await createCustomer(
+        formValuesToCustomer(data, user!.companyId!) as BusinessCustomer,
+      );
+      resp(res)
+    }
+
   };
 
+  const handleDialogChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      form.reset();
+    }
+    setOpen(isOpen);
+  };
+
+  const documentNumberSearch = form.getValues("documentNumber");
+
+  const handleSearch = async () => {
+    const res = await searchCustomer(String(documentNumberSearch), order.documentType);
+    if (res.success) {
+      if (res.data._branch === "BusinessCustomer"){
+        form.setValue("fullName", res.data.legalName)
+        form.setValue("address", res.data.address)
+      }else{
+        form.setValue("fullName", res.data.fullName)
+        form.setValue("address", res.data.address)
+      }
+
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Error al buscar el cliente",
+      });
+    }
+  };
+
+  useEffect(() => {
+    const defaultDocumentType = order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC;
+    form.setValue("documentType", defaultDocumentType);
+  }, [order.documentType, form]);
+
   return (
-    <Dialog>
-      <DialogTrigger>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
+      <DialogTrigger asChild>
         <Button variant="outline" size="icon">
-          <Plus />
+          <Plus/>
         </Button>
       </DialogTrigger>
       <DialogContent variant="right" className="flex flex-col max-w-[35rem]">
@@ -124,40 +180,47 @@ export default function NewCustomerModal() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="documentNumber"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormLabel>Numero de documento</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex items-center col-span-1">
+                <FormField
+                  control={form.control}
+                  name="documentNumber"
+                  render={({field}) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Numero de documento</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="off" {...field} />
+                      </FormControl>
+                      <FormMessage/>
+                    </FormItem>
+                  )}
+                />
+                <Button type="button" className="h-10 w-14 flex mt-8 items-center px-4" onClick={handleSearch}><Search/></Button>
+              </div>
               <FormField
                 control={form.control}
                 name="documentType"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem className="col-span-1">
                     <FormLabel>Tipo de Documento</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={order.documentType === "receipt" || order.documentType === "ticket" ? DNI : RUC}
+                      disabled={true}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar" />
+                          <SelectValue/>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={DNI}>DNI</SelectItem>
-                        <SelectItem value={RUC}>RUC</SelectItem>
+                        {order.documentType === "receipt" || order.documentType === "ticket" ?
+                          <SelectItem value={DNI}>DNI</SelectItem>
+                          :
+                          <SelectItem value={RUC}>RUC</SelectItem>
+                        }
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
@@ -165,26 +228,26 @@ export default function NewCustomerModal() {
             <FormField
               control={form.control}
               name="fullName"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem>
-                  <FormLabel>Nombre</FormLabel>
+                  <FormLabel>{order.documentType === "ticket" || order.documentType === "receipt" ? "Nombre" : "Razón Social"}</FormLabel>
                   <FormControl>
                     <Input autoComplete="off" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="address"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem>
                   <FormLabel>Dirección</FormLabel>
                   <FormControl>
                     <Input autoComplete="off" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
@@ -192,26 +255,26 @@ export default function NewCustomerModal() {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem>
                     <FormLabel>Correo</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
                 name="phoneNumber"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem>
                     <FormLabel>Teléfono</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
