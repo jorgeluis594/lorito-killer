@@ -8,12 +8,14 @@ import {
   Locality,
   LocalityLevelType,
   PROVINCE,
-  TypecountryType,
+  TypeCountryType,
   TypeDepartmentType,
   TypeDistrictType,
-  TypeProvinceType
+  TypeProvinceType,
+  LocalityLevelMap,
 } from "@/locality/types";
 import PrismaLocalityType = $Enums.LocalityLevel;
+import {async} from "effect/Micro";
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   PrismaLocalityType,
@@ -25,67 +27,75 @@ const CustomerDocumentTypeToPrismaMapper: Record<
   [PrismaLocalityType.DISTRICT]: DISTRICT,
 };
 
+export const PRISMA_LOCALITY_LEVEL_TYPE_MAPPER: Record<
+  LocalityLevelType,
+  $Enums.LocalityLevel
+> = {
+  Country: "COUNTRY",
+  Department: "DEPARTMENT",
+  Province: "PROVINCE",
+  District: "DISTRICT",
+} as const;
+
 const prismaToLocality = async (
   prismaLocality: PrismaLocality,
 ): Promise<Locality> => {
   if (prismaLocality.level === "COUNTRY") {
     return {
-      _branch: "COUNTRY",
+      _brand: "Country",
       id: prismaLocality.id,
-      idUbigeo: prismaLocality.idUbigeo,
+      geoCode: prismaLocality.idUbigeo,
       name: prismaLocality.name,
-      code: prismaLocality.code,
-      tag: prismaLocality.tag,
-      searchValue: prismaLocality.searchValue,
       level: COUNTRY,
       parentId: prismaLocality.parentId,
     };
   } else if (prismaLocality.level === "DEPARTMENT"){
     return {
-      _branch: "DEPARTMENT",
+      _brand: "Department",
       id: prismaLocality.id,
-      idUbigeo: prismaLocality.idUbigeo,
+      geoCode: prismaLocality.idUbigeo,
       name: prismaLocality.name,
-      code: prismaLocality.code,
-      tag: prismaLocality.tag,
-      searchValue: prismaLocality.searchValue,
       level: DEPARTMENT,
-      parentId: prismaLocality.parentId,
+      parentId: prismaLocality.parentId!,
     };
   } else if (prismaLocality.level === "PROVINCE"){
     return {
-      _branch: "PROVINCE",
+      _brand: "Province",
       id: prismaLocality.id,
-      idUbigeo: prismaLocality.idUbigeo,
+      geoCode: prismaLocality.idUbigeo,
       name: prismaLocality.name,
-      code: prismaLocality.code,
-      tag: prismaLocality.tag,
-      searchValue: prismaLocality.searchValue,
       level: PROVINCE,
-      parentId: prismaLocality.parentId,
+      parentId: prismaLocality.parentId!,
     };
   } else{
+
+    const findprovince = await prisma.locality.findUnique({
+      where: {idUbigeo: prismaLocality.parentId!},
+    })
+
+    const findDepartment = await prisma.locality.findUnique({
+      where: {idUbigeo: findprovince!.parentId!},
+    })
+
     return {
-      _branch: "DISTRICT",
+      _brand: "District",
       id: prismaLocality.id,
-      idUbigeo: prismaLocality.idUbigeo,
+      geoCode: prismaLocality.idUbigeo,
       name: prismaLocality.name,
-      code: prismaLocality.code,
-      tag: prismaLocality.tag,
-      searchValue: prismaLocality.searchValue,
+      provinceName: findprovince!.name,
+      departmentName: findDepartment!.name,
       level: DISTRICT,
-      parentId: prismaLocality.parentId,
+      parentId: prismaLocality.parentId!,
     };
   }
 };
-
 
 export const getMany = async ({
   q,
   localityLevel,
 }: {
   q?: string | null;
-  localityLevel?: TypecountryType | TypeDepartmentType | TypeProvinceType | TypeDistrictType;
+  localityLevel?: TypeCountryType | TypeDepartmentType | TypeProvinceType | TypeDistrictType;
 }): Promise<response<Locality[]>> => {
   try {
     const query: Prisma.LocalityFindManyArgs = {
@@ -96,6 +106,7 @@ export const getMany = async ({
     if (localityLevel) {
       query.where = {
         ...query.where,
+        level: PRISMA_LOCALITY_LEVEL_TYPE_MAPPER[localityLevel],
       };
     }
 
