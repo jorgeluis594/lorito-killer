@@ -85,9 +85,9 @@ export const getLatestDocumentNumber = async (
   }
 };
 
-async function getBillingCredentialsFor(
+export const getBillingCredentialsFor = async (
   companyId: string,
-): Promise<response<BillingCredentials>> {
+): Promise<response<BillingCredentials>> => {
   const companyData = await prisma.company.findUnique({
     where: { id: companyId },
     select: { billingCredentials: true },
@@ -104,4 +104,4 @@ async function getBillingCredentialsFor(
     success: true,
     data: credentials,
   };
-}
+};
