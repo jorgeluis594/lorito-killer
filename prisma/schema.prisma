@@ -18,7 +18,6 @@ enum UnitType {
   KG
 }
 
-// Categoria <-> Product
 model Product {
   id                         String          @id @default(uuid())
   companyId                  String?
