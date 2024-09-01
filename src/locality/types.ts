@@ -1,88 +1,78 @@
-export const COUNTRY = "0";
+export const COUNTRY = "Country";
 
-export type CountryType = typeof COUNTRY;
+export type CountryLevelType = typeof COUNTRY;
 
-export const DEPARTMENT = "1";
+export const DEPARTMENT = "Department";
 
-export type DepartmentType = typeof DEPARTMENT;
+export type DepartmentLevelType = typeof DEPARTMENT;
 
-export const PROVINCE = "2";
+export const PROVINCE = "Province";
 
-export type ProvinceType = typeof PROVINCE;
+export type ProvinceLevelType = typeof PROVINCE;
 
-export const DISTRICT = "3";
+export const DISTRICT = "District";
 
-export type DistrictType = typeof DISTRICT;
+export type DistrictLevelType = typeof DISTRICT;
 
-export type LocalityLevelType = CountryType | DepartmentType | ProvinceType | DistrictType;
+export type LocalityLevelType = CountryLevelType | DepartmentLevelType | ProvinceLevelType | DistrictLevelType;
 
-export type CountryLocal = {
-  _branch: "COUNTRY"
+export type Country = {
+  _brand: "Country"
   id: string,
-  idUbigeo: string,
+  geoCode: string,
   name: string,
-  code: string,
-  tag: string,
-  searchValue: string,
-  level: LocalityLevelType,
+  level: CountryLevelType,
   parentId: string | null,
 }
 
-export type DepartmentLocal = {
-  _branch: "DEPARTMENT"
+export type Department = {
+  _brand: "Department"
   id: string,
-  idUbigeo: string,
+  geoCode: string,
   name: string,
-  code: string,
-  tag: string,
-  searchValue: string,
-  level: LocalityLevelType,
-  parentId: string | null,
+  level: DepartmentLevelType,
+  parentId: string,
 }
 
-export type ProvinceLocal = {
-  _branch: "PROVINCE"
+export type Province = {
+  _brand: "Province"
   id: string,
-  idUbigeo: string,
+  geoCode: string,
   name: string,
-  code: string,
-  tag: string,
-  searchValue: string,
-  level: LocalityLevelType,
-  parentId: string | null,
+  level: ProvinceLevelType,
+  parentId: string,
 }
 
-export type DisctrictLocal = {
-  _branch: "DISTRICT"
+export type District = {
+  _brand: "District"
   id: string,
-  idUbigeo: string,
+  geoCode: string,
+  provinceName: string,
+  departmentName: string,
   name: string,
-  code: string,
-  tag: string,
-  searchValue: string,
-  level: LocalityLevelType,
-  parentId: string | null,
+  level: DistrictLevelType,
+  parentId: string,
 }
 
-export type Locality = CountryLocal | DepartmentLocal | ProvinceLocal | DisctrictLocal
+export type Locality = Country | Department | Province | District
 
-export const CountryType = "COUNTRY";
-export type TypecountryType = typeof CountryType;
+export const CountryType = "Country";
+export type TypeCountryType = typeof CountryType;
 
-export const DepartmentType = "DEPARTMENT";
+export const DepartmentType = "Department";
 export type TypeDepartmentType = typeof DepartmentType;
 
-export const ProvinceType = "PROVINCE";
+export const ProvinceType = "Province";
 export type TypeProvinceType = typeof ProvinceType;
 
-export const DistrictType = "DISTRICT";
+export const DistrictType = "District";
 export type TypeDistrictType = typeof DistrictType;
 
-type LocalityLevelMap = {
-  [CountryType]: CountryLocal;
-  [DepartmentType]: DepartmentLocal;
-  [ProvinceType]: ProvinceLocal;
-  [DistrictType]: DisctrictLocal;
+export type LocalityLevelMap = {
+  [CountryType]: Country;
+  [DepartmentType]: Department;
+  [ProvinceType]: Province;
+  [DistrictType]: District;
 }
 
 export type LocalityType = keyof LocalityLevelMap;
@@ -94,5 +84,5 @@ export type GetManyParamsLocality<
   T extends LocalityType | undefined = undefined,
 > = {
   q?: string | null;
-  localityLevel: T;
+  localityLevel?: T;
 };
