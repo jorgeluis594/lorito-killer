@@ -1,26 +1,24 @@
 "use client";
 
+import type { DocumentType } from "@/document/types";
+
+import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from "@/shared/components/ui/tabs";
-import {useOrderFormActions, useOrderFormStore} from "@/new-order/order-form-provider";
-import { DocumentType } from "@/order/types";
-import {Button} from "@/shared/components/ui/button";
+  useOrderFormActions,
+  useOrderFormStore,
+} from "@/new-order/order-form-provider";
+import { Button } from "@/shared/components/ui/button";
 import CustomerSelector from "@/customer/components/customer-selector";
 import NewCustomerModal from "@/customer/components/new-customer-modal";
-import {ScrollArea} from "@/shared/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import CartItem from "@/new-order/components/cart/cart-item";
-import {formatPrice} from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
-import {useEffect, useState} from "react";
-import {useCashShiftStore} from "@/cash-shift/components/cash-shift-store-provider";
-import {toast} from "@/shared/components/ui/use-toast";
+import { useEffect, useState } from "react";
+import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import { toast } from "@/shared/components/ui/use-toast";
 
 export default function Cart() {
-
   const order = useOrderFormStore((state) => state.order);
   const { setDocumentType } = useOrderFormActions();
 
@@ -28,22 +26,30 @@ export default function Cart() {
   const customer = useOrderFormStore((state) => state.order.customer);
 
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
-  const { increaseQuantity, decreaseQuantity, reset, removeOrderItem, setCustomer } = useOrderFormActions();
+  const {
+    increaseQuantity,
+    decreaseQuantity,
+    reset,
+    removeOrderItem,
+    setCustomer,
+  } = useOrderFormActions();
 
   const handleClickSell = () => {
-    if(order.documentType === "invoice" && order.customer !== undefined) {
-      setOpenPaymentModal(true)
-    }else if(order.documentType === "receipt" || order.documentType === "ticket") {
-      setOpenPaymentModal(true)
-    }else {
+    if (order.documentType === "invoice" && order.customer !== undefined) {
+      setOpenPaymentModal(true);
+    } else if (
+      order.documentType === "receipt" ||
+      order.documentType === "ticket"
+    ) {
+      setOpenPaymentModal(true);
+    } else {
       toast({
         title: "Error",
         variant: "destructive",
         description: "Se necesita elegir un cliente",
       });
     }
-
-  }
+  };
 
   useEffect(() => {
     reset();
@@ -52,7 +58,10 @@ export default function Cart() {
   return (
     <>
       <div className="h-full border-l grid grid-rows-[min-content_min-content_min-content_1fr_min-content]">
-        <Tabs value={order.documentType} onValueChange={(value) => setDocumentType(value as DocumentType)}>
+        <Tabs
+          value={order.documentType}
+          onValueChange={(value) => setDocumentType(value as DocumentType)}
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ticket">Nota de Venta</TabsTrigger>
             <TabsTrigger value="receipt">Boleta</TabsTrigger>
@@ -60,15 +69,13 @@ export default function Cart() {
           </TabsList>
         </Tabs>
         <div className="p-5 border-b flex justify-between">
-          {order.documentType === "ticket" ?
+          {order.documentType === "ticket" ? (
             <h2 className="text-xl font-semibold tracking-tight">Pedido</h2>
-
-            :
-            order.documentType === "receipt" ?
-              <h2 className="text-xl font-semibold tracking-tight">Boleta</h2>
-              :
-              <h2 className="text-xl font-semibold tracking-tight">Factura</h2>
-          }
+          ) : order.documentType === "receipt" ? (
+            <h2 className="text-xl font-semibold tracking-tight">Boleta</h2>
+          ) : (
+            <h2 className="text-xl font-semibold tracking-tight">Factura</h2>
+          )}
 
           <Button
             variant="ghost_destructive"
@@ -91,7 +98,7 @@ export default function Cart() {
             />
           </div>
           <div>
-            <NewCustomerModal/>
+            <NewCustomerModal />
           </div>
         </div>
         <ScrollArea className="border-b">
