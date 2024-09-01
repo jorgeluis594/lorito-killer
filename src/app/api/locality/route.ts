@@ -1,10 +1,9 @@
-import { getSession } from "@/lib/auth";
-import { NextResponse } from "next/server";
-import { getMany } from "@/locality/db_repository";
+import {NextResponse} from "next/server";
+import {getMany} from "@/locality/db_repository";
 import {
   CountryType,
-  DepartmentType, DistrictType, ProvinceType,
-  TypecountryType,
+  DistrictType,
+  TypeCountryType,
   TypeDepartmentType,
   TypeDistrictType,
   TypeProvinceType
@@ -17,16 +16,16 @@ export async function GET(req: Request) {
 
   const response = await getMany({
     q: param,
-    localityLevel: ensureLocalityLevel(localityLevel),
+    localityLevel: DistrictType,
   });
 
   return NextResponse.json(response, { status: response.success ? 200 : 404 });
 }
 
-const ensureLocalityLevel = (
+/*const ensureLocalityLevel = (
   level?: string,
-): TypecountryType | TypeDepartmentType | TypeProvinceType | TypeDistrictType | undefined => {
+): TypeCountryType | TypeDepartmentType | TypeProvinceType | TypeDistrictType | undefined => {
   return level === CountryType || level === DepartmentType || level === ProvinceType || level === DistrictType
     ? level
     : undefined;
-};
+};*/
