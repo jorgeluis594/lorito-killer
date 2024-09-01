@@ -4,8 +4,7 @@ import fs from 'fs';
 import csv from 'csv-parser';
 import {$Enums} from "@prisma/client";
 import PrismaLocalityType = $Enums.LocalityLevel;
-import {COUNTRY, DEPARTMENT, DISTRICT, Local, LocalityLevelType, PROVINCE} from "./type";
-
+import {COUNTRY, DEPARTMENT, DISTRICT, Locality, LocalityLevelType, PROVINCE} from "../locality/types";
 const CustomerDocumentTypeToPrismaMapper: Record<
   LocalityLevelType,
   PrismaLocalityType
@@ -17,11 +16,11 @@ const CustomerDocumentTypeToPrismaMapper: Record<
 };
 
 const locality = async () => {
-  const results: Array<Local> = [];
+  const results: Array<Locality> = [];
 
   fs.createReadStream('localities.csv')
     .pipe(csv())
-    .on('data', (data: Local) => results.push(data))
+    .on('data', (data: Locality) => results.push(data))
     .on('end', async () => {
       console.log('CSV file successfully processed');
 
@@ -72,19 +71,6 @@ const execute = async () => {
       name: "Jorge Gonzalez",
     },
   });
-
-  /*const local = await prisma.locality.create({
-    data: {
-      id: "b3738fed-8cd0-433d-a370-359566996f46",
-      idUbigeo: "2533",
-      name: "Perú",
-      code: "",
-      tag: "Perú",
-      searchValue: "perú",
-      level: CustomerDocumentTypeToPrismaMapper[COUNTRY],
-      parentId: null,
-    },
-  });*/
 
   await locality();
 
