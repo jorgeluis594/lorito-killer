@@ -37,7 +37,8 @@ export type Document = Invoice | Receipt | Ticket;
 
 export type BillingCredentials = {
   token: string;
-  invoiceSeries: string;
-  receiptSeries: string;
-  ticketSeries: string;
+  invoiceSerialNumber: string;
+  receiptSerialNumber: string;
+  ticketSerialNumber: string;
+  establishmentCode: string;
 };
