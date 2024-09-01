@@ -36,9 +36,11 @@ import {
 import {BusinessCustomer, NaturalCustomer} from "@/customer/types";
 import {useToast} from "@/shared/components/ui/use-toast";
 import {useUserSession} from "@/lib/use-user-session";
-import {useOrderFormStore} from "@/new-order/order-form-provider";
+import {useOrderFormActions, useOrderFormStore} from "@/new-order/order-form-provider";
 import {useEffect, useState} from "react";
 import {createCustomer, searchCustomer} from "@/customer/actions";
+import DepartmentSelector from "@/locality/components/department_selector";
+import DistrictSelector from "@/locality/components/district_selector";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
@@ -95,6 +97,7 @@ export default function NewCustomerModal() {
   const [open, setOpen] = useState(false);
   const {toast} = useToast();
   const user = useUserSession();
+  const { setCustomer } = useOrderFormActions();
 
   const resp = (res: any) => {
     if (res.success) {
@@ -251,6 +254,15 @@ export default function NewCustomerModal() {
                 </FormItem>
               )}
             />
+            <div>
+              <div><DistrictSelector
+                onSelect={(locality)=>{
+                  return locality
+                }}
+              }/></div>
+              <div></div>
+              <div></div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
