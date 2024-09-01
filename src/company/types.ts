@@ -5,5 +5,4 @@ export type Company = {
   email: string;
   address: string;
   subdomain: string;
-  invoiceCode?: string;
 };
