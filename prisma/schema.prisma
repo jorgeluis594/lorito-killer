@@ -164,11 +164,9 @@ model Document {
   documentType  DocumentType
   series        String
   number        String
-  dateOfIssue   String
-  broadcastTime String
+  dateOfIssue   DateTime
   order         Order        @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   customer      Customer     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  observations  String
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -207,6 +205,7 @@ model Company {
   categories     Category[]
   stockTransfers StockTransfer[]
   subdomain      String?         @unique
+  billingCredentials Json?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }

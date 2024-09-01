@@ -1,35 +1,51 @@
-import { Document } from "@/document/types";
-import { find as findOrder } from "@/order/db_repository";
+import {
+  BillingCredentials,
+  Document,
+  DocumentType,
+  INVOICE,
+  RECEIPT,
+  TICKET,
+} from "@/document/types";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import {
-  DocumentTypeToPrismaMapper,
-  PrismaDocumentTypeMapper,
-} from "@/customer/db_repository";
+import { $Enums } from "@prisma/client";
+import PrismaDocumentType = $Enums.DocumentType;
+import { isEmpty } from "@/lib/utils";
 
-export const createdDocument = async (
+export const DocumentTypeToPrismaMapper: Record<
+  DocumentType,
+  PrismaDocumentType
+> = {
+  [INVOICE]: PrismaDocumentType.INVOICE,
+  [RECEIPT]: PrismaDocumentType.RECEIPT,
+  [TICKET]: PrismaDocumentType.TICKET,
+};
+export const PrismaDocumentTypeMapper: Record<
+  PrismaDocumentType,
+  DocumentType
+> = {
+  [PrismaDocumentType.INVOICE]: INVOICE,
+  [PrismaDocumentType.RECEIPT]: RECEIPT,
+  [PrismaDocumentType.TICKET]: TICKET,
+};
+export const createDocument = async (
   document: Document,
 ): Promise<response<Document>> => {
   try {
     const documentResponse = await prisma.document.create({
       data: {
         orderId: document.orderId,
-        customerId: document.customer.id,
+        customerId: document.customerId,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
         series: document.series,
         number: document.number,
         dateOfIssue: document.dateOfIssue,
-        broadcastTime: document.broadcastTime,
-        observations: document.observations,
       },
       include: {
         order: true,
       },
     });
-
-    const orderResponse = await findOrder(document.orderId);
-    if (!orderResponse.success) return orderResponse;
 
     const createdDocument: Document = {
       id: documentResponse.customerId,
@@ -40,14 +56,52 @@ export const createdDocument = async (
       series: documentResponse.series,
       number: documentResponse.number,
       dateOfIssue: documentResponse.dateOfIssue,
-      broadcastTime: documentResponse.broadcastTime,
-      observations: documentResponse.observations,
-      order: orderResponse.data,
-      customer: { ...document.customer },
+      taxTotal: 0,
+      netTotal: +documentResponse.total,
     };
 
     return { success: true, data: createdDocument };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
+};
+
+export const getLatestDocumentNumber = async (
+  serialNumber: string,
+): Promise<response<number>> => {
+  try {
+    const document = await prisma.document.findFirst({
+      where: { series: serialNumber },
+      orderBy: { number: "desc" },
+    });
+
+    if (!document) {
+      return { success: true, data: 1 };
+    }
+
+    return { success: true, data: +document.number + 1 };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
+export const getBillingCredentialsFor = async (
+  companyId: string,
+): Promise<response<BillingCredentials>> => {
+  const companyData = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { billingCredentials: true },
+  });
+
+  if (!companyData || isEmpty(companyData.billingCredentials)) {
+    return { success: false, message: "Credentials not found" };
+  }
+
+  const credentials =
+    companyData.billingCredentials as unknown as BillingCredentials;
+
+  return {
+    success: true,
+    data: credentials,
+  };
 };

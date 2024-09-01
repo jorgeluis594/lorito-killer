@@ -92,3 +92,17 @@ export const sub = (a: number) => (b: number) =>
 
 export const div = (a: number) => (b: number) =>
   new Decimal(a).div(b).toNumber();
+
+export const isEmpty = (obj: unknown): boolean => {
+  if (obj == null) return true;
+
+  if (typeof obj === "string" || Array.isArray(obj)) {
+    return obj.length === 0;
+  }
+
+  if (typeof obj === "object") {
+    return Object.keys(obj as object).length === 0;
+  }
+
+  return false;
+};

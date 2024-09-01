@@ -1,45 +1,46 @@
-import { DocumentType, Order } from "@/order/types";
-import { Customer } from "@/customer/types";
-import {fetchCustomerByRuc} from "@/document/factpro_gateway";
+export const INVOICE = "invoice";
+export type InvoiceType = typeof INVOICE;
+export const RECEIPT = "receipt";
+export type ReceiptType = typeof RECEIPT;
+export const TICKET = "ticket";
+export type TicketType = typeof TICKET;
+export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
-export type IssuerData = {
-  establishmentCode: string;
-};
-
-export type PaymentTerm = {
-  description?: string;
-  type: string;
-};
-
-export type TotalPay = {
-  totalExport?: number;
-  totalTaxes?: number;
-  totallyUnaffected?: number;
-  totalExonerated?: number;
-  totallyFree?: number;
-  totalTax?: number;
-  totalSale?: number;
-};
-
-export type FormatPdf = {
-  formatPdf: string;
-};
-
-export type Document = {
+type DocumentBase = {
   id: string;
   orderId: string;
   customerId: string;
+  netTotal: number;
+  taxTotal: number;
   total: number;
   documentType: DocumentType;
   series: string;
   number: string;
-  dateOfIssue: string;
-  broadcastTime: string;
-  order: Order;
-  customer: Customer;
-  observations: string;
+  dateOfIssue: Date;
   createdAt?: Date;
   updatedAt?: Date;
+};
+
+export type Invoice = DocumentBase & {
+  documentType: InvoiceType;
+};
+
+export type Receipt = DocumentBase & {
+  documentType: ReceiptType;
+};
+
+export type Ticket = DocumentBase & {
+  documentType: TicketType;
+};
+
+export type Document = Invoice | Receipt | Ticket;
+
+export type BillingCredentials = {
+  token: string;
+  invoiceSerialNumber: string;
+  receiptSerialNumber: string;
+  ticketSerialNumber: string;
+  establishmentCode: string;
 };
 
 export type FetchCustomer = {

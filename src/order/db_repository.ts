@@ -20,7 +20,7 @@ async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { productName, unitType, ...orderItemData } = orderItem;
+  const { productName, productSku, unitType, ...orderItemData } = orderItem;
 
   try {
     const persistedOrderItem = await prisma.orderItem.create({
@@ -126,6 +126,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
+      customer: customer,
     };
 
     createdOrder.orderItems = createdOrderItemsResponses
@@ -246,6 +247,7 @@ export async function transformOrdersData(
             ],
           quantity: oi.quantity.toNumber(),
           productName: prismaProductsMap[oi.productId].name,
+          productSku: prismaProductsMap[oi.productId].sku || undefined,
           productPrice: prismaProductsMap[oi.productId].price.toNumber(),
           total: oi.total.toNumber(),
         };

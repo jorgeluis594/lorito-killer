@@ -15,12 +15,13 @@ import {
   SingleProductType,
   UNIT_UNIT_TYPE,
 } from "@/product/types";
-import { OrderItem, Payment, PaymentMethod, DocumentType } from "@/order/types";
+import { OrderItem, Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
 import { mul, plus } from "@/lib/utils";
-import {Customer} from "@/customer/types";
+import { Customer } from "@/customer/types";
+import { DocumentType } from "@/document/types";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -209,32 +210,51 @@ export const useOrderFormActions = (): Actions => {
     const { order } = orderFormStoreContext.getState();
 
     orderFormStoreContext.setState(() => {
-      return { order: { ...order, customer: {...customer} } };
-    })
-  }
+      return { order: { ...order, customer: { ...customer } } };
+    });
+  };
 
-  function needsRemoveCustomer(previousDocumentType: string, newDocumentType: string): boolean {
-    return ((previousDocumentType === "receipt" || previousDocumentType === "ticket") && newDocumentType === "invoice") ||
-    (previousDocumentType === "invoice" && (newDocumentType === "receipt" || newDocumentType === "ticket"))
+  function needsRemoveCustomer(
+    previousDocumentType: string,
+    newDocumentType: string,
+  ): boolean {
+    return (
+      ((previousDocumentType === "receipt" ||
+        previousDocumentType === "ticket") &&
+        newDocumentType === "invoice") ||
+      (previousDocumentType === "invoice" &&
+        (newDocumentType === "receipt" || newDocumentType === "ticket"))
+    );
   }
 
   const setDocumentType = (newDocumentType: DocumentType) => {
     const { order } = orderFormStoreContext.getState();
-    console.log('Cambio de tipo de documento:', order.documentType, '->', newDocumentType);
+    console.log(
+      "Cambio de tipo de documento:",
+      order.documentType,
+      "->",
+      newDocumentType,
+    );
 
-    if(needsRemoveCustomer(order.documentType, newDocumentType)) {
+    if (needsRemoveCustomer(order.documentType, newDocumentType)) {
       orderFormStoreContext.setState(() => {
-        return { order: { ...order, documentType: newDocumentType, customer: undefined } };
-      })
-      console.log('Cliente eliminado debido al cambio de documento.');
-      return
+        return {
+          order: {
+            ...order,
+            documentType: newDocumentType,
+            customer: undefined,
+          },
+        };
+      });
+      console.log("Cliente eliminado debido al cambio de documento.");
+      return;
     }
 
     orderFormStoreContext.setState(() => {
       return { order: { ...order, documentType: newDocumentType } };
-    })
-    console.log('Tipo de documento actualizado:', newDocumentType);
-  }
+    });
+    console.log("Tipo de documento actualizado:", newDocumentType);
+  };
 
   const removeOrderItem = (orderItemId: string) => {
     const { order } = orderFormStoreContext.getState();
@@ -330,7 +350,7 @@ export const useOrderFormActions = (): Actions => {
       const { order } = orderFormStoreContext.getState();
 
       orderFormStoreContext.setState({
-        order: { ...order, customer: undefined},
+        order: { ...order, customer: undefined },
       });
     },
     reset: () => {

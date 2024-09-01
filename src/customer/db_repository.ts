@@ -1,8 +1,7 @@
-import { DocumentType, INVOICE, RECEIPT, TICKET } from "@/order/types";
 import {
   BusinessCustomer,
-  CustomerDocumentType,
   type Customer,
+  CustomerDocumentType,
   DNI,
   NaturalCustomer,
   RUC,
@@ -12,9 +11,8 @@ import {
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
 import { $Enums, Customer as PrismaCustomer, Prisma } from "@prisma/client";
-import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
-import PrismaDocumentType = $Enums.DocumentType;
 import { isBusinessCustomer, isNaturalCustomer } from "@/customer/utils";
+import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   CustomerDocumentType,
@@ -23,29 +21,7 @@ const CustomerDocumentTypeToPrismaMapper: Record<
   [DNI]: PrismaCustomerDocumentType.DNI,
   [RUC]: PrismaCustomerDocumentType.RUC,
 };
-const PrismaCustomerDocumentTypeMapper: Record<
-  PrismaCustomerDocumentType,
-  CustomerDocumentType
-> = {
-  [PrismaCustomerDocumentType.DNI]: DNI,
-  [PrismaCustomerDocumentType.RUC]: RUC,
-};
-export const DocumentTypeToPrismaMapper: Record<
-  DocumentType,
-  PrismaDocumentType
-> = {
-  [INVOICE]: PrismaDocumentType.INVOICE,
-  [RECEIPT]: PrismaDocumentType.RECEIPT,
-  [TICKET]: PrismaDocumentType.TICKET,
-};
-export const PrismaDocumentTypeMapper: Record<
-  PrismaDocumentType,
-  DocumentType
-> = {
-  [PrismaDocumentType.INVOICE]: INVOICE,
-  [PrismaDocumentType.RECEIPT]: RECEIPT,
-  [PrismaDocumentType.TICKET]: TICKET,
-};
+
 export const createCustomer = async (
   customer: Customer,
 ): Promise<response<Customer>> => {
