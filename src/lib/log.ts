@@ -1,4 +1,4 @@
-import pino, { BaseLogger, Logger } from "pino";
+import pino, { Logger } from "pino";
 
 export const pinoLogger: Logger =
   process.env["NODE_ENV"] === "production"
