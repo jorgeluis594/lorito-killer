@@ -66,6 +66,25 @@ export const createDocument = async (
   }
 };
 
+export const getLatestDocumentNumber = async (
+  serialNumber: string,
+): Promise<response<number>> => {
+  try {
+    const document = await prisma.document.findFirst({
+      where: { series: serialNumber },
+      orderBy: { number: "desc" },
+    });
+
+    if (!document) {
+      return { success: true, data: 1 };
+    }
+
+    return { success: true, data: +document.number + 1 };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
 async function getBillingCredentialsFor(
   companyId: string,
 ): Promise<response<BillingCredentials>> {
