@@ -42,10 +42,10 @@ export interface FactproDocument {
     cliente_numero_documento: string;
     cliente_denominacion: string; // legal name
     codigo_pais: "PE";
-    ubigeo?: string;
+    ubigeo: string;
     cliente_direccion: string;
     cliente_email?: string;
-    cliente_telefono?: string;
+    cliente_telefono: string;
   };
   totales: {
     total_venta: number;

@@ -27,6 +27,8 @@ function clientParamsBuilder(
       codigo_pais: "PE",
       ubigeo: "",
       cliente_direccion: "-",
+      cliente_telefono: "",
+      cliente_email: "",
     };
   }
 
@@ -36,7 +38,7 @@ function clientParamsBuilder(
       cliente_numero_documento: customer.documentNumber,
       cliente_denominacion: customer.legalName,
       codigo_pais: "PE",
-      ubigeo: "",
+      ubigeo: customer.geoCode,
       cliente_direccion: customer.address,
       cliente_email: customer.email,
       cliente_telefono: customer.phoneNumber,
@@ -48,10 +50,10 @@ function clientParamsBuilder(
     cliente_numero_documento: customer.documentNumber || "00000000",
     cliente_denominacion: customer.fullName,
     codigo_pais: "PE",
-    ubigeo: "150101",
+    ubigeo: customer.geoCode || "",
     cliente_direccion: customer.address || "-",
-    cliente_email: customer.email,
-    cliente_telefono: customer.phoneNumber,
+    cliente_email: customer.email || "",
+    cliente_telefono: customer.phoneNumber || "",
   };
 }
 
@@ -201,7 +203,7 @@ export default function gateway({
     if (!billingToken) {
       return { success: false, message: "Billing token not found" };
     }
-
+    debugger;
     const body: FactproDocument = {
       tipo_documento: "03",
       serie: documentMetadata.serialNumber,

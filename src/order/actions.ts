@@ -81,11 +81,6 @@ export const create = async (
     return updateStockResponse;
   }
 
-  const companyResponse = await findCompany(session.user.companyId);
-  if (!companyResponse.success) {
-    return { success: false, message: "no se encontro empresa" };
-  }
-
   const { billingToken, ...billingSettings } = billingCredentialsResponse.data;
   const documentResponse = await createDocument(
     billingDocumentGateway({ billingToken }),
