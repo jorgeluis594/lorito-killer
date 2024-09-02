@@ -1,6 +1,6 @@
-import {response} from "@/lib/types";
+import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import {$Enums, Locality as PrismaLocality, Prisma} from "@prisma/client";
+import { $Enums, Locality as PrismaLocality, Prisma } from "@prisma/client";
 import {
   COUNTRY,
   DEPARTMENT,
@@ -15,7 +15,6 @@ import {
   LocalityLevelMap,
 } from "@/locality/types";
 import PrismaLocalityType = $Enums.LocalityLevel;
-import {async} from "effect/Micro";
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   PrismaLocalityType,
@@ -49,7 +48,7 @@ const prismaToLocality = async (
       level: COUNTRY,
       parentId: prismaLocality.parentId,
     };
-  } else if (prismaLocality.level === "DEPARTMENT"){
+  } else if (prismaLocality.level === "DEPARTMENT") {
     return {
       _brand: "Department",
       id: prismaLocality.id,
@@ -58,7 +57,7 @@ const prismaToLocality = async (
       level: DEPARTMENT,
       parentId: prismaLocality.parentId!,
     };
-  } else if (prismaLocality.level === "PROVINCE"){
+  } else if (prismaLocality.level === "PROVINCE") {
     return {
       _brand: "Province",
       id: prismaLocality.id,
@@ -67,15 +66,14 @@ const prismaToLocality = async (
       level: PROVINCE,
       parentId: prismaLocality.parentId!,
     };
-  } else{
-
+  } else {
     const findprovince = await prisma.locality.findUnique({
-      where: {idUbigeo: prismaLocality.parentId!},
-    })
+      where: { idUbigeo: prismaLocality.parentId! },
+    });
 
     const findDepartment = await prisma.locality.findUnique({
-      where: {idUbigeo: findprovince!.parentId!},
-    })
+      where: { idUbigeo: findprovince!.parentId! },
+    });
 
     return {
       _brand: "District",
@@ -95,7 +93,11 @@ export const getMany = async ({
   localityLevel,
 }: {
   q?: string | null;
-  localityLevel?: TypeCountryType | TypeDepartmentType | TypeProvinceType | TypeDistrictType;
+  localityLevel?:
+    | TypeCountryType
+    | TypeDepartmentType
+    | TypeProvinceType
+    | TypeDistrictType;
 }): Promise<response<Locality[]>> => {
   try {
     const query: Prisma.LocalityFindManyArgs = {
