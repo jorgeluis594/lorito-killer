@@ -1,10 +1,17 @@
 import prisma from "../lib/prisma";
 import bcrypt from "bcrypt";
-import fs from 'fs';
-import csv from 'csv-parser';
-import {$Enums} from "@prisma/client";
+import fs from "fs";
+import csv from "csv-parser";
+import { $Enums } from "@prisma/client";
 import PrismaLocalityType = $Enums.LocalityLevel;
-import {COUNTRY, DEPARTMENT, DISTRICT, Locality, LocalityLevelType, PROVINCE} from "../locality/types";
+import {
+  COUNTRY,
+  DEPARTMENT,
+  DISTRICT,
+  Locality,
+  LocalityLevelType,
+  PROVINCE,
+} from "../locality/types";
 const CustomerDocumentTypeToPrismaMapper: Record<
   LocalityLevelType,
   PrismaLocalityType
@@ -16,13 +23,13 @@ const CustomerDocumentTypeToPrismaMapper: Record<
 };
 
 const locality = async () => {
-  const results: Array<Locality> = [];
+  const results: any = [];
 
-  fs.createReadStream('localities.csv')
+  fs.createReadStream("localities.csv")
     .pipe(csv())
-    .on('data', (data: Locality) => results.push(data))
-    .on('end', async () => {
-      console.log('CSV file successfully processed');
+    .on("data", (data: Locality) => results.push(data))
+    .on("end", async () => {
+      console.log("CSV file successfully processed");
 
       try {
         for (const result of results) {
@@ -34,15 +41,18 @@ const locality = async () => {
               code: result.code,
               tag: result.tag,
               searchValue: result.searchValue,
-              level: CustomerDocumentTypeToPrismaMapper[result.level],
+              level:
+                CustomerDocumentTypeToPrismaMapper[
+                  result.level as LocalityLevelType
+                ],
               parentId: result.parentId || null,
             },
           });
         }
 
-        console.log('Data successfully inserted');
+        console.log("Data successfully inserted");
       } catch (error) {
-        console.error('Error inserting data:', error);
+        console.error("Error inserting data:", error);
       } finally {
         await prisma.$disconnect();
       }
