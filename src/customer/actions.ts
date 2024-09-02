@@ -23,9 +23,9 @@ export const searchCustomer = async (
     return billingCredentialsResponse;
   }
 
-  const { fetchCustomerByRuc, fetchCustomerByDNI } = gatewayCreator(
-    billingCredentialsResponse.data.token,
-  );
+  const { fetchCustomerByRuc, fetchCustomerByDNI } = gatewayCreator({
+    customerSearchToken: billingCredentialsResponse.data.customerSearchToken,
+  });
   const fetchFunction =
     documentType === "invoice" ? fetchCustomerByRuc : fetchCustomerByDNI;
 

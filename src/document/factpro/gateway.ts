@@ -106,7 +106,13 @@ const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
 };
 
 // Api documentation https://docs.factpro.la/
-export default function gateway(token: string): DocumentGateway & {
+export default function gateway({
+  billingToken,
+  customerSearchToken,
+}: {
+  billingToken?: string;
+  customerSearchToken?: string;
+}): DocumentGateway & {
   fetchCustomerByRuc: (
     documentNumber: string,
   ) => Promise<response<BusinessCustomer>>;
@@ -118,6 +124,10 @@ export default function gateway(token: string): DocumentGateway & {
     order: OrderWithBusinessCustomer,
     documentMetadata: DocumentMetadata,
   ): Promise<response<Invoice>> => {
+    if (!billingToken) {
+      return { success: false, message: "Billing token not found" };
+    }
+
     const body: FactproDocument = {
       tipo_documento: "01",
       serie: documentMetadata.serialNumber,
@@ -158,7 +168,7 @@ export default function gateway(token: string): DocumentGateway & {
       fecha_de_vencimiento: "",
     };
 
-    const response = await sendDocument(body, order.id!, token);
+    const response = await sendDocument(body, order.id!, billingToken);
     if (!response.success) {
       return response;
     }
@@ -188,6 +198,10 @@ export default function gateway(token: string): DocumentGateway & {
     order: Order,
     documentMetadata: DocumentMetadata,
   ): Promise<response<Receipt>> => {
+    if (!billingToken) {
+      return { success: false, message: "Billing token not found" };
+    }
+
     const body: FactproDocument = {
       tipo_documento: "03",
       serie: documentMetadata.serialNumber,
@@ -228,7 +242,7 @@ export default function gateway(token: string): DocumentGateway & {
       fecha_de_vencimiento: "",
     };
 
-    const response = await sendDocument(body, order.id!, token);
+    const response = await sendDocument(body, order.id!, billingToken);
     if (!response.success) {
       return response;
     }
@@ -307,7 +321,7 @@ export default function gateway(token: string): DocumentGateway & {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${customerSearchToken}`,
         },
       },
     );
@@ -344,7 +358,7 @@ export default function gateway(token: string): DocumentGateway & {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${customerSearchToken}`,
         },
       },
     );

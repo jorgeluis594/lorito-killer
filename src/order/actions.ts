@@ -86,9 +86,9 @@ export const create = async (
     return { success: false, message: "no se encontro empresa" };
   }
 
-  const { token, ...billingSettings } = billingCredentialsResponse.data;
+  const { billingToken, ...billingSettings } = billingCredentialsResponse.data;
   const documentResponse = await createDocument(
-    billingDocumentGateway(token),
+    billingDocumentGateway({ billingToken }),
     {
       createDocument: saveDocument,
       getLastDocumentNumber: getLatestDocumentNumber,

@@ -36,7 +36,8 @@ export type Ticket = DocumentBase & {
 export type Document = Invoice | Receipt | Ticket;
 
 export type BillingCredentials = {
-  token: string;
+  billingToken: string;
+  customerSearchToken: string;
   invoiceSerialNumber: string;
   receiptSerialNumber: string;
   ticketSerialNumber: string;
@@ -46,4 +47,4 @@ export type BillingCredentials = {
 export type FetchCustomer = {
   name: string;
   address: string;
-}
+};
