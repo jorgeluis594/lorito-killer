@@ -4,28 +4,21 @@ import fs from "fs";
 import csv from "csv-parser";
 import { $Enums } from "@prisma/client";
 import PrismaLocalityType = $Enums.LocalityLevel;
-import {
-  COUNTRY,
-  DEPARTMENT,
-  DISTRICT,
-  Locality,
-  LocalityLevelType,
-  PROVINCE,
-} from "../locality/types";
+import { Locality, LocalityLevelType } from "../locality/types";
 const CustomerDocumentTypeToPrismaMapper: Record<
-  LocalityLevelType,
+  "0" | "1" | "2" | "3",
   PrismaLocalityType
 > = {
-  [COUNTRY]: PrismaLocalityType.COUNTRY,
-  [DEPARTMENT]: PrismaLocalityType.DEPARTMENT,
-  [PROVINCE]: PrismaLocalityType.PROVINCE,
-  [DISTRICT]: PrismaLocalityType.DISTRICT,
+  "0": PrismaLocalityType.COUNTRY,
+  "1": PrismaLocalityType.DEPARTMENT,
+  "2": PrismaLocalityType.PROVINCE,
+  "3": PrismaLocalityType.DISTRICT,
 };
 
 const locality = async () => {
   const results: any = [];
 
-  fs.createReadStream("localities.csv")
+  fs.createReadStream("src/seeds/localities.csv")
     .pipe(csv())
     .on("data", (data: Locality) => results.push(data))
     .on("end", async () => {
@@ -43,7 +36,7 @@ const locality = async () => {
               searchValue: result.searchValue,
               level:
                 CustomerDocumentTypeToPrismaMapper[
-                  result.level as LocalityLevelType
+                  result.level as "0" | "1" | "2" | "3"
                 ],
               parentId: result.parentId || null,
             },
@@ -68,6 +61,7 @@ const execute = async () => {
       phone: "1234567890",
       email: "test@test.com",
       subdomain: "fantastidog",
+      billingCredentials: {},
       createdAt: new Date(),
     },
   });
