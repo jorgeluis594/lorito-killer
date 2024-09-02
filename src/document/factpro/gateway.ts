@@ -7,7 +7,7 @@ import type {
   FactproDocumentItem,
 } from "@/document/factpro/types";
 import { log } from "@/lib/log";
-import { Customer } from "@/customer/types";
+import { BusinessCustomer, Customer, NaturalCustomer } from "@/customer/types";
 import { isBusinessCustomer } from "@/customer/utils";
 import {
   DocumentGateway,
@@ -106,7 +106,14 @@ const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
 };
 
 // Api documentation https://docs.factpro.la/
-export default function gateway(token: string): DocumentGateway {
+export default function gateway(token: string): DocumentGateway & {
+  fetchCustomerByRuc: (
+    documentNumber: string,
+  ) => Promise<response<BusinessCustomer>>;
+  fetchCustomerByDNI: (
+    documentNumber: string,
+  ) => Promise<response<NaturalCustomer>>;
+} {
   const createInvoice = async (
     order: OrderWithBusinessCustomer,
     documentMetadata: DocumentMetadata,
@@ -268,9 +275,102 @@ export default function gateway(token: string): DocumentGateway {
     };
   };
 
+  type FactproBusinessCustomer = {
+    ruc: string; // "20337564373",
+    nombre: string; // "TIENDAS POR DEPARTAMENTO RIPLEY S.A.C.",
+    estado: string; // "ACTIVO",
+    condicion: string; // "HABIDO",
+    direccion: string; // "AV. LAS BEGONIAS NRO. 545 URB. JARDIN",
+    direccion_completa: string; // "AV. LAS BEGONIAS NRO. 545 URB. JARDIN LIMA LIMA SAN ISIDRO",
+    ubigeo: string; // "150131",
+    departamento: string; // "LIMA",
+    provincia: string; // "LIMA",
+    distrito: string; // "SAN ISIDRO",
+    tipo_via: string; // "AV.",
+    nombre_via: string; // "LAS BEGONIAS",
+    codigo_zona: string; // "URB.",
+    tipo_zona: string; // "JARDIN",
+    numero: string; // "545",
+    interior: string; // "",
+    lote: string; // "",
+    dpto: string; // "",
+    manzana: string; // "",
+    kilometro: string; // ""
+  };
+
+  const fetchCustomerByRuc = async (
+    documentNumber: string,
+  ): Promise<response<BusinessCustomer>> => {
+    const response = await fetch(
+      `https://consultas.factpro.la/api/v1/ruc/${documentNumber}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      return { success: false, message: "No customers found" };
+    }
+
+    const data: FactproBusinessCustomer = await response.json();
+
+    return {
+      success: true,
+      data: {
+        _branch: "BusinessCustomer",
+        id: "",
+        companyId: "",
+        legalName: data.nombre,
+        address: data.direccion_completa || "",
+        email: "",
+        documentNumber: data.ruc,
+        documentType: "ruc",
+        phoneNumber: "",
+        geoCode: data.ubigeo || "",
+      },
+    };
+  };
+
+  const fetchCustomerByDNI = async (
+    documentNumber: string,
+  ): Promise<response<NaturalCustomer>> => {
+    const response = await fetch(
+      `https://consultas.factpro.la/api/v1/dni/${documentNumber}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      return { success: false, message: "No customer found" };
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      data: {
+        _branch: "NaturalCustomer",
+        id: "",
+        companyId: "",
+        fullName: data.nombres,
+      },
+    };
+  };
+
   return {
     createInvoice,
     createReceipt,
     createTicket,
+    fetchCustomerByRuc,
+    fetchCustomerByDNI,
   };
 }
