@@ -9,7 +9,11 @@ import { getBillingCredentialsFor } from "@/document/db_repository";
 
 export const createCustomer = async (
   customer: Customer,
-): Promise<response<Customer>> => persistCustomer(customer);
+): Promise<response<Customer>> => {
+  const session = await getSession();
+
+  return persistCustomer({ ...customer, companyId: session.user.companyId });
+};
 
 export const searchCustomer = async (
   documentNumber: string,
