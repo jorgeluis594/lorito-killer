@@ -67,12 +67,12 @@ const prismaToLocality = async (
       parentId: prismaLocality.parentId!,
     };
   } else {
-    const findprovince = await prisma.locality.findUnique({
+    const foundProvince = await prisma.locality.findUnique({
       where: { idUbigeo: prismaLocality.parentId! },
     });
 
-    const findDepartment = await prisma.locality.findUnique({
-      where: { idUbigeo: findprovince!.parentId! },
+    const foundDepartment = await prisma.locality.findUnique({
+      where: { idUbigeo: foundProvince!.parentId! },
     });
 
     return {
@@ -80,8 +80,8 @@ const prismaToLocality = async (
       id: prismaLocality.id,
       geoCode: prismaLocality.idUbigeo,
       name: prismaLocality.name,
-      provinceName: findprovince!.name,
-      departmentName: findDepartment!.name,
+      provinceName: foundProvince!.name,
+      departmentName: foundDepartment!.name,
       level: DISTRICT,
       parentId: prismaLocality.parentId!,
     };
