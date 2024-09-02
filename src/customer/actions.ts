@@ -1,10 +1,11 @@
 "use server";
 
-import {type Customer} from "@/customer/types";
-import {response} from "@/lib/types";
-import {createCustomer as persistCustomer} from "@/customer/db_repository";
-import {fetchCustomerByDNI, fetchCustomerByRuc} from "@/document/factpro_gateway";
-import {FetchCustomer} from "@/document/types";
+import { type Customer } from "@/customer/types";
+import { response } from "@/lib/types";
+import { createCustomer as persistCustomer } from "@/customer/db_repository";
+import gatewayCreator from "@/document/factpro/gateway";
+import { getSession } from "@/lib/auth";
+import { getBillingCredentialsFor } from "@/document/db_repository";
 
 export const createCustomer = async (
   customer: Customer,
@@ -14,7 +15,19 @@ export const searchCustomer = async (
   documentNumber: string,
   documentType: string,
 ): Promise<response<Customer>> => {
-  const fetchFunction = documentType === "invoice" ? fetchCustomerByRuc : fetchCustomerByDNI;
+  const session = await getSession();
+  const billingCredentialsResponse = await getBillingCredentialsFor(
+    session.user.companyId,
+  );
+  if (!billingCredentialsResponse.success) {
+    return billingCredentialsResponse;
+  }
+
+  const { fetchCustomerByRuc, fetchCustomerByDNI } = gatewayCreator(
+    billingCredentialsResponse.data.token,
+  );
+  const fetchFunction =
+    documentType === "invoice" ? fetchCustomerByRuc : fetchCustomerByDNI;
 
   return fetchFunction(documentNumber);
-}
+};
