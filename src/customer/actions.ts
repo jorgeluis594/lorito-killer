@@ -9,7 +9,7 @@ import { getBillingCredentialsFor } from "@/document/db_repository";
 
 export const createCustomer = async (
   customer: Customer,
-): Promise<response<Customer>> => {
+): Promise<response<Customer>> => { //Hay que validar los datos del customer que estamos entregando.
   const session = await getSession();
 
   return persistCustomer({ ...customer, companyId: session.user.companyId });
