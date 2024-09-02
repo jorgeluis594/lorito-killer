@@ -49,7 +49,9 @@ const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
   documentNumber: z.coerce
     .number()
-    .max(99999999999, { message: "El número máximo de dígitos es 11." }),
+    .refine((value) => Number.isInteger(value) && value >= 0 && value.toString().length <= 11, {
+      message: "El número debe tener un máximo de 11 dígitos.",
+    }),
   geoCode: z.string().optional(),
   fullName: z.string().min(3, {
     message: "El nombre del cliente debe tener al menos 3 caracteres",
