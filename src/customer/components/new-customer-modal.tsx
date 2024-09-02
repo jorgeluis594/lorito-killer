@@ -44,6 +44,7 @@ import { useEffect, useState } from "react";
 import { createCustomer, searchCustomer } from "@/customer/actions";
 import DepartmentSelector from "@/locality/components/department_selector";
 import DistrictSelector from "@/locality/components/district_selector";
+import { District } from "@/locality/types";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
@@ -86,6 +87,9 @@ const formValuesToCustomer = (
       documentType: RUC,
       documentNumber: values.documentNumber.toString(),
       legalName: values.fullName,
+      districtName: "", // Improve this, find a better way to handle localities
+      provinceName: "", // Improve this, find a better way to handle localities
+      departmentName: "", // Improve this, find a better way to handle localities
       address: values.address || "",
       geoCode: values.geoCode || "",
       email: values.email || "",
@@ -102,6 +106,7 @@ export default function NewCustomerModal() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const user = useUserSession();
+  const [locality, setLocality] = useState<District | undefined>();
   const { setCustomer } = useOrderFormActions();
 
   const resp = (res: any) => {
@@ -110,6 +115,7 @@ export default function NewCustomerModal() {
         description: "Cliente creado con éxito",
       });
       form.reset();
+      setLocality(undefined);
       setOpen(false);
     } else {
       toast({
@@ -152,6 +158,17 @@ export default function NewCustomerModal() {
       if (res.data._branch === "BusinessCustomer") {
         form.setValue("fullName", res.data.legalName);
         form.setValue("address", res.data.address);
+        form.setValue("geoCode", res.data.geoCode);
+        setLocality({
+          _brand: "District",
+          id: "",
+          level: "District",
+          geoCode: res.data.geoCode,
+          provinceName: res.data.provinceName,
+          departmentName: res.data.departmentName,
+          name: res.data.districtName,
+          parentId: "",
+        });
       } else {
         form.setValue("fullName", res.data.fullName);
         form.setValue("address", res.data.address);
@@ -160,7 +177,7 @@ export default function NewCustomerModal() {
       toast({
         title: "Error",
         variant: "destructive",
-        description: "Error al buscar el cliente",
+        description: res.message,
       });
     }
   };
@@ -227,7 +244,7 @@ export default function NewCustomerModal() {
                           ? DNI
                           : RUC
                       }
-                      disabled={true}
+                      disabled
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -266,25 +283,45 @@ export default function NewCustomerModal() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dirección</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="off" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div>
-              <DistrictSelector
-                onSelect={(locality) => {
-                  return locality;
-                }}
-              />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-1">
+                <FormField
+                  control={form.control}
+                  name="geoCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Distrito</FormLabel>
+                      <FormControl>
+                        <DistrictSelector
+                          value={locality}
+                          onSelect={(locality) => {
+                            setLocality(locality);
+                            field.onChange({
+                              target: { value: locality.geoCode },
+                            });
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="col-span-2">
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dirección</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="off" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField

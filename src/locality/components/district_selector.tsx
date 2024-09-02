@@ -1,10 +1,14 @@
 "use client";
 
-import {useToast} from "@/shared/components/ui/use-toast";
-import {debounce} from "@/lib/utils";
-import {Popover, PopoverContent, PopoverTrigger,} from "@/shared/components/ui/popover";
-import {Button} from "@/shared/components/ui/button";
-import {CaretSortIcon} from "@radix-ui/react-icons";
+import { useToast } from "@/shared/components/ui/use-toast";
+import { debounce } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/components/ui/popover";
+import { Button } from "@/shared/components/ui/button";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
   Command,
   CommandEmpty,
@@ -13,9 +17,9 @@ import {
   CommandItem,
   CommandList,
 } from "@/shared/components/ui/command";
-import {getMany} from "@/locality/api_repository";
+import { getMany } from "@/locality/api_repository";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import {
   DISTRICT,
   District,
@@ -23,10 +27,10 @@ import {
   InferLocalityType,
   LocalityLevelType,
   LocalityType,
-  PROVINCE
+  PROVINCE,
 } from "@/locality/types";
 
-export interface DistrictSelectorProps{
+export interface DistrictSelectorProps {
   value?: District;
   onSelect?: (locality: District) => void;
 }
@@ -38,10 +42,10 @@ export default function DistrictSelector({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [localities, setLocalities] = useState<District[]>([]);
-  const {toast} = useToast();
+  const { toast } = useToast();
 
   const searchLocalities = async (q: string) => {
-    const response = await getMany({q: q, localityLevel: "District"});
+    const response = await getMany({ q: q, localityLevel: "District" });
 
     if (response.success) {
       setLocalities(response.data);
@@ -70,16 +74,16 @@ export default function DistrictSelector({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild className="w-full">
         <Button
           variant="outline"
           role="combobox"
           type="button"
           aria-expanded={open}
-          className="justify-between w-96"
+          className="justify-between"
         >
-          {value ? value.name : "Seleccione Departamento"}
-          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50"/>
+          {value ? value.name : "Buscar distrito"}
+          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96">
@@ -97,12 +101,15 @@ export default function DistrictSelector({
                   key={locality.id}
                   value={locality.id}
                   onSelect={onLocalitySelect}
+                  className="block"
                 >
-                  <span>{locality.name}</span>/
-                  <span>{locality.provinceName}</span>/
-                  <span>{locality.departmentName}</span>
-                </CommandItem>)
-              )}
+                  {locality.name}
+                  <span className="block text-xs text-muted-foreground">
+                    Departamento: {locality.departmentName} | Provincia:{" "}
+                    {locality.provinceName}
+                  </span>
+                </CommandItem>
+              ))}
             </CommandGroup>
           </CommandList>
         </Command>

@@ -67,7 +67,10 @@ export const createCustomer = async (
         documentNumber: customerCreatedResponse.documentNumber!,
         legalName: customerCreatedResponse.legalName!,
         address: customerCreatedResponse.address!,
-        geoCode: "",
+        provinceName: "", // Improve this, find a better way to handle localities and address
+        departmentName: "", // Improve this, find a better way to handle localities and address
+        districtName: "", // Improve this, find a better way to handle localities and address
+        geoCode: customerCreatedResponse.geoCode!,
         email: customerCreatedResponse.email!,
         phoneNumber: customerCreatedResponse.phoneNumber!,
       };
@@ -80,7 +83,7 @@ export const createCustomer = async (
         companyId: customerCreatedResponse.companyId,
         documentType: "dni",
         documentNumber: customerCreatedResponse.documentNumber!,
-        geoCode: "",
+        geoCode: customerCreatedResponse.geoCode || undefined,
         fullName: customerCreatedResponse.legalName!,
         address: customerCreatedResponse.address!,
         email: customerCreatedResponse.email!,
@@ -175,8 +178,11 @@ const prismaToCustomer = async (
       documentNumber: prismaCustomer.documentNumber!,
       legalName: prismaCustomer.legalName!,
       address: prismaCustomer.address!,
-      geoCode: "",
+      geoCode: prismaCustomer.geoCode!,
       email: prismaCustomer.email!,
+      provinceName: "", // TODO: Improve this, find a better way to handle localities
+      districtName: "", // TODO: Improve this, find a better way to handle localities
+      departmentName: "", // TODO: Improve this, find a better way to handle localities
       phoneNumber: prismaCustomer.phoneNumber!,
     };
   } else {
@@ -186,9 +192,9 @@ const prismaToCustomer = async (
       companyId: prismaCustomer.companyId,
       documentType: "dni",
       documentNumber: prismaCustomer.documentNumber!,
-      geoCode: "",
       fullName: prismaCustomer.legalName!,
       address: prismaCustomer.address!,
+      geoCode: prismaCustomer.geoCode || undefined,
       email: prismaCustomer.email!,
       phoneNumber: prismaCustomer.phoneNumber!,
     };

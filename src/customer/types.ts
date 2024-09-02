@@ -32,6 +32,9 @@ export type BusinessCustomer = {
   legalName: string;
   address: string;
   geoCode: string;
+  districtName: string;
+  provinceName: string;
+  departmentName: string;
   email: string;
   phoneNumber: string;
   updatedAt?: Date;
