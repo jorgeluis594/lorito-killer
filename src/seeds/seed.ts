@@ -61,7 +61,14 @@ const execute = async () => {
       phone: "1234567890",
       email: "test@test.com",
       subdomain: "fantastidog",
-      billingCredentials: {},
+      billingCredentials: {
+        billingToken: process.env.BILLING_TOKEN,
+        customerSearchToken: process.env.CUSTOMER_SEARCH_TOKEN,
+        invoiceSerialNumber: process.env.INVOICE_SERIAL_NUMBER,
+        receiptSerialNumber: process.env.RECEIPT_SERIAL_NUMBER,
+        ticketSerialNumber: process.env.TICKET_SERIAL_NUMBER,
+        establishmentCode: process.env.ESTABLISHMENT_CODE,
+      },
       createdAt: new Date(),
     },
   });
