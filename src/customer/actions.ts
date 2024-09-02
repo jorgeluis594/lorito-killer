@@ -30,8 +30,15 @@ export const searchCustomer = async (
   const { fetchCustomerByRuc, fetchCustomerByDNI } = gatewayCreator({
     customerSearchToken: billingCredentialsResponse.data.customerSearchToken,
   });
+
   const fetchFunction =
     documentType === "invoice" ? fetchCustomerByRuc : fetchCustomerByDNI;
 
-  return fetchFunction(documentNumber);
+  const response = await fetchFunction(documentNumber);
+
+  if (!response.success) {
+    return { success: false, message: "No se encontro al cliente" };
+  }
+
+  return response;
 };
