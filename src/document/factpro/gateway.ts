@@ -339,7 +339,7 @@ export default function gateway({
         id: "",
         companyId: "",
         legalName: data.nombre,
-        address: data.direccion_completa || "",
+        address: data.direccion || "",
         email: "",
         documentNumber: data.ruc,
         districtName: data.distrito,
