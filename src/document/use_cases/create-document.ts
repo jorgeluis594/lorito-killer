@@ -98,7 +98,7 @@ export const createDocument = async (
     return documentResponse;
   }
 
-  return await repository.createDocument(documentResponse.data);
+  return repository.createDocument(documentResponse.data);
 };
 
 const getDocumentNumberAndSerial = async (

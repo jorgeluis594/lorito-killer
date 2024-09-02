@@ -203,7 +203,7 @@ export default function gateway({
     if (!billingToken) {
       return { success: false, message: "Billing token not found" };
     }
-    debugger;
+
     const body: FactproDocument = {
       tipo_documento: "03",
       serie: documentMetadata.serialNumber,

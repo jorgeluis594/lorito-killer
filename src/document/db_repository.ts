@@ -42,9 +42,6 @@ export const createDocument = async (
         number: document.number,
         dateOfIssue: document.dateOfIssue,
       },
-      include: {
-        order: true,
-      },
     });
 
     const createdDocument: Document = {
