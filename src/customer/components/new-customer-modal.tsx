@@ -42,7 +42,6 @@ import {
 } from "@/new-order/order-form-provider";
 import { useEffect, useState } from "react";
 import { createCustomer, searchCustomer } from "@/customer/actions";
-import DepartmentSelector from "@/locality/components/department_selector";
 import DistrictSelector from "@/locality/components/district_selector";
 import { District } from "@/locality/types";
 
@@ -109,7 +108,10 @@ export default function NewCustomerModal() {
   const [locality, setLocality] = useState<District | undefined>();
   const { setCustomer } = useOrderFormActions();
 
-  const resp = (res: any) => {
+  const onSubmit = async (data: CustomerFormValues) => {
+    const res = await createCustomer(
+      formValuesToCustomer(data, user!.companyId!),
+    );
     if (res.success) {
       toast({
         description: "Cliente creado con éxito",
@@ -117,26 +119,13 @@ export default function NewCustomerModal() {
       form.reset();
       setLocality(undefined);
       setOpen(false);
+      setCustomer(res.data);
     } else {
       toast({
         title: "Error",
         variant: "destructive",
         description: "Error al crear el cliente " + res.message,
       });
-    }
-  };
-
-  const onSubmit = async (data: CustomerFormValues) => {
-    if (form.getValues("documentType") === "dni") {
-      const res = await createCustomer(
-        formValuesToCustomer(data, user!.companyId!) as NaturalCustomer,
-      );
-      resp(res);
-    } else {
-      const res = await createCustomer(
-        formValuesToCustomer(data, user!.companyId!) as BusinessCustomer,
-      );
-      resp(res);
     }
   };
 
