@@ -23,10 +23,14 @@ type DocumentBase = {
 
 export type Invoice = DocumentBase & {
   documentType: InvoiceType;
+  qr: string;
+  hash: string;
 };
 
 export type Receipt = DocumentBase & {
   documentType: ReceiptType;
+  qr: string;
+  hash: string;
 };
 
 export type Ticket = DocumentBase & {

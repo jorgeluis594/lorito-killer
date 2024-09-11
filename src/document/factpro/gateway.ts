@@ -2,9 +2,10 @@ import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
 import { format, parse } from "date-fns";
 import type { Invoice, Receipt, Ticket } from "@/document/types";
-import type {
+import {
   FactproDocument,
   FactproDocumentItem,
+  FactproResponse,
 } from "@/document/factpro/types";
 import { log } from "@/lib/log";
 import { BusinessCustomer, Customer, NaturalCustomer } from "@/customer/types";
@@ -61,7 +62,7 @@ const sendDocument = async (
   body: FactproDocument,
   orderId: string,
   token: string,
-): Promise<response<FactproDocument>> => {
+): Promise<response<FactproResponse>> => {
   const res = await fetch(`${url!}/documentos`, {
     method: "POST",
     headers: {
@@ -171,9 +172,9 @@ export default function gateway({
     };
 
     const response = await sendDocument(body, order.id!, billingToken);
-    if (!response.success) {
-      return response;
-    }
+    if (!response.success) return response;
+    if (!response.data.success)
+      return { success: false, message: "Error creating document" };
 
     return {
       success: true,
@@ -187,6 +188,8 @@ export default function gateway({
         documentType: "invoice",
         series: body.serie,
         number: body.numero,
+        qr: response.data.data.qr,
+        hash: response.data.data.hash,
         dateOfIssue: parse(
           `${body.fecha_de_emision} ${body.hora_de_emision}`,
           "yyyy-MM-dd HH:mm",
@@ -245,9 +248,9 @@ export default function gateway({
     };
 
     const response = await sendDocument(body, order.id!, billingToken);
-    if (!response.success) {
-      return response;
-    }
+    if (!response.success) return response;
+    if (!response.data.success)
+      return { success: false, message: "Error creating document" };
 
     return {
       success: true,
@@ -261,6 +264,8 @@ export default function gateway({
         documentType: "receipt",
         series: body.serie,
         number: body.numero,
+        qr: response.data.data.qr,
+        hash: response.data.data.hash,
         dateOfIssue: parse(
           `${body.fecha_de_emision} ${body.hora_de_emision}`,
           "yyyy-MM-dd HH:mm",

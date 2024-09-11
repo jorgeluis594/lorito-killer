@@ -70,3 +70,31 @@ export interface FactproDocument {
   observaciones: "";
   almacen: "";
 }
+
+export interface FactproSuccessResponse {
+  success: true;
+  data: {
+    number: string;
+    filename: string;
+    external_id: string;
+    number_to_letter: string;
+    hash: string;
+    qr: string;
+  };
+  links: {
+    xml: string;
+    pdf: string;
+    cdr: string;
+  };
+  response: {
+    code: string;
+    description: string;
+    notes: string[];
+  };
+}
+
+export interface FactproErrorResponse {
+  success: false;
+}
+
+export type FactproResponse = FactproErrorResponse | FactproSuccessResponse;
