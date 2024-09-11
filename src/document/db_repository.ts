@@ -41,21 +41,41 @@ export const createDocument = async (
         series: document.series,
         number: document.number,
         dateOfIssue: document.dateOfIssue,
+        qr: document.documentType == "ticket" ? undefined : document.qr,
+        hash: document.documentType == "ticket" ? undefined : document.hash,
       },
     });
 
-    const createdDocument: Document = {
-      id: documentResponse.customerId,
-      orderId: documentResponse.orderId,
-      customerId: documentResponse.customerId,
-      total: +documentResponse.total,
-      documentType: PrismaDocumentTypeMapper[documentResponse.documentType],
-      series: documentResponse.series,
-      number: documentResponse.number,
-      dateOfIssue: documentResponse.dateOfIssue,
-      taxTotal: 0,
-      netTotal: +documentResponse.total,
-    };
+    let createdDocument: Document;
+    if (document.documentType == "ticket") {
+      createdDocument = {
+        id: documentResponse.customerId,
+        orderId: documentResponse.orderId,
+        customerId: documentResponse.customerId,
+        total: +documentResponse.total,
+        documentType: "ticket",
+        series: documentResponse.series,
+        number: documentResponse.number,
+        dateOfIssue: documentResponse.dateOfIssue,
+        taxTotal: 0,
+        netTotal: +documentResponse.total,
+      };
+    } else {
+      createdDocument = {
+        id: documentResponse.customerId,
+        orderId: documentResponse.orderId,
+        customerId: documentResponse.customerId,
+        total: +documentResponse.total,
+        documentType: document.documentType,
+        series: documentResponse.series,
+        number: documentResponse.number,
+        dateOfIssue: documentResponse.dateOfIssue,
+        taxTotal: 0,
+        netTotal: +documentResponse.total,
+        qr: documentResponse.qr!,
+        hash: documentResponse.hash!,
+      };
+    }
 
     return { success: true, data: createdDocument };
   } catch (e: any) {
