@@ -28,6 +28,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import PdfVoucherRedirection from "@/order/components/pdf-voucher-redirection";
 import { Order } from "@/order/types";
 import { Company } from "@/company/types";
+import type { Document } from "@/document/types";
 import { useUserSession } from "@/lib/use-user-session";
 
 const PaymentViews = {
@@ -55,6 +56,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const { toast } = useToast();
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderCreated, setOrderCreated] = useState<Order | null>(null);
+  const [createdDocument, setCreatedDocument] = useState<Document | null>(null);
   const user = useUserSession();
 
   const handleOrderCreation = async () => {
@@ -73,8 +75,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         title: "En hora buena!",
         description: "Venta realizada con éxito, generando comprobante",
       });
-      addOrder(response.data);
-      setOrderCreated(response.data);
+      addOrder(response.data.order);
+      setOrderCreated(response.data.order);
+      setCreatedDocument(response.data.document);
     } else {
       toast({
         variant: "destructive",
@@ -151,9 +154,10 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               CAMBIAR MÉTODO
             </Button>
           )}
-          {orderCreated ? (
+          {orderCreated && createdDocument ? (
             <PdfVoucherRedirection
               order={orderCreated}
+              document={createdDocument}
               company={company!}
               onPdfCreated={() => {
                 onOpenChange(false);

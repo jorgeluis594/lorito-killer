@@ -25,10 +25,8 @@ import type { Document, DocumentType } from "@/document/types";
 
 export const create = async (
   userId: string,
-  order: Order & { documentType: DocumentType },
-): Promise<
-  response<Order & { documentType: DocumentType; document: Document }>
-> => {
+  order: Order,
+): Promise<response<{ order: Order; document: Document }>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
   const session = await getSession();
   const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
@@ -98,9 +96,8 @@ export const create = async (
   return {
     success: true,
     data: {
-      ...createOrderResponse.data,
-      documentType: documentResponse.data.documentType,
-      document: documentResponse.data,
+      order: { ...createOrderResponse.data },
+      document: { ...documentResponse.data },
     },
   };
 };
