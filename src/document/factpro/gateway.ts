@@ -192,7 +192,7 @@ export default function gateway({
         hash: response.data.data.hash,
         dateOfIssue: parse(
           `${body.fecha_de_emision} ${body.hora_de_emision}`,
-          "yyyy-MM-dd HH:mm",
+          "yyyy-MM-dd hh:mm:ss",
           new Date(),
         ),
       },
@@ -268,7 +268,7 @@ export default function gateway({
         hash: response.data.data.hash,
         dateOfIssue: parse(
           `${body.fecha_de_emision} ${body.hora_de_emision}`,
-          "yyyy-MM-dd HH:mm",
+          "yyyy-MM-dd hh:mm:ss",
           new Date(),
         ),
       },
