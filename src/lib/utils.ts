@@ -106,3 +106,5 @@ export const isEmpty = (obj: unknown): boolean => {
 
   return false;
 };
+
+export const max = (a: number) => (b: number) => Decimal.max(a, b).toNumber();
