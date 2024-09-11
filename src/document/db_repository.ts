@@ -11,6 +11,7 @@ import prisma from "@/lib/prisma";
 import { $Enums } from "@prisma/client";
 import PrismaDocumentType = $Enums.DocumentType;
 import { isEmpty } from "@/lib/utils";
+import { log } from "@/lib/log";
 
 export const DocumentTypeToPrismaMapper: Record<
   DocumentType,
@@ -79,6 +80,11 @@ export const createDocument = async (
 
     return { success: true, data: createdDocument };
   } catch (e: any) {
+    log.error("persist_document_failed", {
+      document: document,
+      orderId: document.orderId,
+      error_message: e.message,
+    });
     return { success: false, message: e.message };
   }
 };
