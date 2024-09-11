@@ -1,5 +1,6 @@
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { Order } from "@/order/types";
+import type { Document as BillingDocument } from "@/document/types";
 import {
   formatPrice,
   paymentMethodToText,
@@ -44,11 +45,12 @@ const styles = StyleSheet.create({
 
 interface voucherProps {
   order: Order;
+  document: BillingDocument;
   company: Company;
 }
 
 // Create Document Component
-const Voucher = ({ order, company }: voucherProps) => (
+const Voucher = ({ order, company, document }: voucherProps) => (
   <Document>
     <Page
       size={{ width: 215, height: 595 }}

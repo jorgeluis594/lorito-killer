@@ -4,15 +4,18 @@ import Voucher from "@/order/components/voucher";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { BlobProvider } from "@react-pdf/renderer";
 import { Company } from "@/company/types";
+import type { Document } from "@/document/types";
 
 interface PdfVoucherRedirectionProps {
   order: Order;
+  document: Document;
   company: Company;
   onPdfCreated: () => void;
 }
 
 const PdfVoucherRedirection: React.FC<PdfVoucherRedirectionProps> = ({
   order,
+  document,
   company,
   onPdfCreated,
 }) => {
@@ -26,7 +29,9 @@ const PdfVoucherRedirection: React.FC<PdfVoucherRedirectionProps> = ({
   }, [pdfUrl]);
 
   return (
-    <BlobProvider document={<Voucher order={order} company={company} />}>
+    <BlobProvider
+      document={<Voucher document={document} order={order} company={company} />}
+    >
       {({ url, loading }) => {
         if (loading) {
           return (
