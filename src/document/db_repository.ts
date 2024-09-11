@@ -65,7 +65,7 @@ export const createDocument = async (
 
 export const getLatestDocumentNumber = async (
   serialNumber: string,
-): Promise<response<number>> => {
+): Promise<response<number | undefined>> => {
   try {
     const document = await prisma.document.findFirst({
       where: { series: serialNumber },
@@ -73,10 +73,10 @@ export const getLatestDocumentNumber = async (
     });
 
     if (!document) {
-      return { success: true, data: 1 };
+      return { success: true, data: undefined };
     }
 
-    return { success: true, data: +document.number + 1 };
+    return { success: true, data: +document.number };
   } catch (e: any) {
     return { success: false, message: e.message };
   }

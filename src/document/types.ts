@@ -39,7 +39,9 @@ export type BillingCredentials = {
   billingToken: string;
   customerSearchToken: string;
   invoiceSerialNumber: string;
+  invoiceStartsOnNumber?: number;
   receiptSerialNumber: string;
+  receiptStartsOnNumber?: number;
   ticketSerialNumber: string;
   establishmentCode: string;
 };
