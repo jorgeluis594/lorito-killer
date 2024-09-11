@@ -10,6 +10,7 @@ import type {
   DocumentType,
 } from "@/document/types";
 import { hasBusinessCustomer } from "@/order/utils";
+import { max } from "@/lib/utils";
 
 export interface DocumentMetadata {
   serialNumber: string;
@@ -34,12 +35,16 @@ export interface DocumentGateway {
 
 interface Repository {
   createDocument: (document: Document) => Promise<response<Document>>;
-  getLastDocumentNumber: (serialNumber: string) => Promise<response<number>>;
+  getLastDocumentNumber: (
+    serialNumber: string,
+  ) => Promise<response<number | undefined>>;
 }
 
 interface BillingSettings {
   invoiceSerialNumber: string;
+  invoiceStarsOnNumber?: number;
   receiptSerialNumber: string;
+  receiptStarsOnNumber?: number;
   ticketSerialNumber: string;
   establishmentCode: string;
 }
@@ -51,11 +56,12 @@ export const createDocument = async (
   billingConfig: BillingSettings,
 ): Promise<response<Document>> => {
   let documentResponse: response<Document>;
-  const documentNumberAndSerialResponse = await getDocumentNumberAndSerial(
-    billingConfig,
-    repository.getLastDocumentNumber,
-    order.documentType,
-  );
+  const documentNumberAndSerialResponse =
+    await getAvailableDocumentNumberAndSerial(
+      billingConfig,
+      repository.getLastDocumentNumber,
+      order.documentType,
+    );
   if (!documentNumberAndSerialResponse.success) {
     return documentNumberAndSerialResponse;
   }
@@ -101,37 +107,72 @@ export const createDocument = async (
   return repository.createDocument(documentResponse.data);
 };
 
-const getDocumentNumberAndSerial = async (
+const getAvailableDocumentNumberAndSerial = async (
   billingSettings: BillingSettings,
-  obtainLastNumber: Repository["getLastDocumentNumber"],
+  getLastDocumentNumber: Repository["getLastDocumentNumber"],
   documentType: DocumentType,
 ): Promise<response<{ documentNumber: number; serialNumber: string }>> => {
-  let response: response<number>;
-  let serialNumber: string;
+  let documentDetailsResponse: response<{
+    number: number;
+    serialNumber: string;
+  }>;
 
   switch (documentType) {
     case "invoice":
-      response = await obtainLastNumber(billingSettings.invoiceSerialNumber);
-      serialNumber = billingSettings.invoiceSerialNumber;
+      documentDetailsResponse = await getDocumentDetails(
+        billingSettings.invoiceSerialNumber,
+        billingSettings.invoiceStarsOnNumber,
+        getLastDocumentNumber,
+      );
       break;
     case "receipt":
-      response = await obtainLastNumber(billingSettings.receiptSerialNumber);
-      serialNumber = billingSettings.receiptSerialNumber;
+      documentDetailsResponse = await getDocumentDetails(
+        billingSettings.receiptSerialNumber,
+        billingSettings.receiptStarsOnNumber,
+        getLastDocumentNumber,
+      );
       break;
     case "ticket":
-      response = await obtainLastNumber(billingSettings.ticketSerialNumber);
-      serialNumber = billingSettings.ticketSerialNumber;
+      documentDetailsResponse = await getDocumentDetails(
+        billingSettings.ticketSerialNumber,
+        undefined,
+        getLastDocumentNumber,
+      );
       break;
     default:
       throw new Error("Invalid document type");
   }
 
-  if (!response.success) {
-    return response;
-  }
+  if (!documentDetailsResponse.success) return documentDetailsResponse;
 
   return {
     success: true,
-    data: { documentNumber: response.data + 1, serialNumber: serialNumber },
+    data: {
+      documentNumber: documentDetailsResponse.data.number + 1,
+      serialNumber: documentDetailsResponse.data.serialNumber,
+    },
+  };
+};
+
+const DEFAULT_DOCUMENT_NUMBER = 0;
+
+const getDocumentDetails = async (
+  serialNumber: string,
+  starsOnNumber: number | undefined,
+  getLastDocumentNumber: Repository["getLastDocumentNumber"],
+): Promise<response<{ number: number; serialNumber: string }>> => {
+  const response = await getLastDocumentNumber(serialNumber);
+  if (!response.success) return response;
+
+  const num = starsOnNumber
+    ? max(starsOnNumber)(response.data || DEFAULT_DOCUMENT_NUMBER)
+    : response.data || DEFAULT_DOCUMENT_NUMBER;
+
+  return {
+    success: true,
+    data: {
+      number: num,
+      serialNumber,
+    },
   };
 };
