@@ -164,6 +164,8 @@ model Document {
   series        String
   number        String
   dateOfIssue   DateTime
+  qr            String?
+  hash          String?
   order         Order        @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   customer      Customer     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   createdAt     DateTime     @default(now())
