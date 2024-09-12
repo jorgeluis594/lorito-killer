@@ -361,6 +361,21 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="mx-auto space-y-8"
             >
+              <FormField
+                control={form.control}
+                name="photos"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <FileUpload
+                        onChange={handlePhotosUpdated}
+                        value={field.value || []}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="space-y-4 p-2">
                 <FormField
                   control={form.control}
@@ -555,21 +570,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="photos"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <FileUpload
-                          onChange={handlePhotosUpdated}
-                          value={field.value || []}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </form>
           </Form>
