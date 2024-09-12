@@ -1,4 +1,11 @@
-import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  Image,
+} from "@react-pdf/renderer";
 import { Order } from "@/order/types";
 import type { Document as BillingDocument } from "@/document/types";
 import {
@@ -46,11 +53,12 @@ const styles = StyleSheet.create({
 interface voucherProps {
   order: Order;
   document: BillingDocument;
+  qrBase64: string;
   company: Company;
 }
 
 // Create Document Component
-const Voucher = ({ order, company, document }: voucherProps) => (
+const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
   <Document>
     <Page
       size={{ width: 215, height: 595 }}
@@ -69,6 +77,7 @@ const Voucher = ({ order, company, document }: voucherProps) => (
       >
         <Text style={styles.header}>{company.name}</Text>
         <Text style={styles.description}>{company.address}</Text>
+        <Image style={{ width: 120 }} src={qrBase64} />
       </View>
       <View style={styles.section}>
         <Text style={styles.textCenter}>
