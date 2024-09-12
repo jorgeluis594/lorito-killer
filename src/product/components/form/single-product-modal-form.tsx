@@ -58,6 +58,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import ProductSelector from "@/product/components/form/product-selector";
+import CategoriesModal from "@/category/components/category-list-model/category-modal";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
@@ -361,22 +362,22 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="mx-auto space-y-8"
             >
-              <FormField
-                control={form.control}
-                name="photos"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <FileUpload
-                        onChange={handlePhotosUpdated}
-                        value={field.value || []}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <div className="space-y-4 p-2">
+                <FormField
+                  control={form.control}
+                  name="photos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <FileUpload
+                          onChange={handlePhotosUpdated}
+                          value={field.value || []}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="name"
@@ -501,7 +502,8 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                           value={field.value || []}
                           onChange={handleCategoriesUpdated}
                         />
-                        <NewCategoryDialog addCategory={addCategoryToProduct} />
+                        <CategoriesModal addCategory={addCategoryToProduct}/>
+                        {/*<NewCategoryDialog addCategory={addCategoryToProduct} />*/}
                       </div>
                       <FormMessage />
                     </FormItem>

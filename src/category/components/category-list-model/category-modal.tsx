@@ -8,8 +8,16 @@ import { MenuSquare, Plus } from "lucide-react";
 import DeleteCategoryModal from "./delete-category-modal";
 import CategoryContent from "./category-content";
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import NewCategoryDialog from "@/product/components/category/new-category-dialog";
+import {Category} from "@/category/types";
 
-export default function CategoriesModal() {
+interface NewSectionDialogProps {
+  addCategory: (category: Category) => void;
+}
+
+export default function CategoriesModal({
+  addCategory,
+}: NewSectionDialogProps) {
   const { categories, updateCategory } = useCategoryStore(store => ({
     categories: store.categories,
     updateCategory: store.updateCategory,
@@ -18,31 +26,39 @@ export default function CategoriesModal() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="text-xs md:text-sm"><MenuSquare className="mr-2 h-4 w-4" />Mostrar Categorías</Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="mr-5 rounded-full w-6 h-6 flex items-center justify-center text-lg border-2 border-slate-400"
+        >
+          ＋
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-96 sm:h-[429.5] w-full flex flex-col items-center p-0">
-          <table className="min-w-96 shadow-md rounded-2xl">
-            <thead>
-              <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-                <th className="py-3 px-6 text-left">Categoria</th>
+        <table className="min-w-96 rounded-2xl">
+          <thead>
+          <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+            <th className="py-3 px-6 text-left">Categoria</th>
+          </tr>
+          </thead>
+          <tbody className="text-sm">
+          <ScrollArea className="h-96">
+            {categories.length ? (
+              categories.map(category => (
+                <CategoryContent key={category.id} category={category}
+                                 onCategoryUpdated={(category) => updateCategory(category)}/>
+              ))
+            ) : (
+              <tr className=" text-black">
+                <td className="h-96">
+                  <div className="flex items-center justify-center h-full">No hay categorias</div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="text-sm">
-              <ScrollArea className="h-96">
-                {categories.length ? (
-                  categories.map(category => (
-                    <CategoryContent key={category.id} category={category} onCategoryUpdated={(category) => updateCategory(category)} />
-                  ))
-                ) : (
-                  <tr className=" text-black">
-                    <td className="h-96">
-                      <div className="flex items-center justify-center h-full">No hay categorias</div>
-                    </td>
-                  </tr>
-                )}
-              </ScrollArea>
-            </tbody>
-          </table>
+            )}
+          </ScrollArea>
+          </tbody>
+        </table>
+        <NewCategoryDialog addCategory={addCategory}/>
       </DialogContent>
     </Dialog>
   )

@@ -87,7 +87,6 @@ export default function ProductsClient({
               </>
             )}
           </Button>
-          <CategoriesModal/>
         </div>
       </div>
       <Separator />
