@@ -63,7 +63,7 @@ const sendDocument = async (
   orderId: string,
   token: string,
 ): Promise<response<FactproResponse>> => {
-  return {
+  /*  return {
     success: true,
     data: {
       success: true,
@@ -86,7 +86,7 @@ const sendDocument = async (
         notes: [],
       },
     },
-  };
+  };*/
 
   const res = await fetch(`${url!}/documentos`, {
     method: "POST",
