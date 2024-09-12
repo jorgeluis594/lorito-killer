@@ -354,7 +354,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
-            <Heading title={title} description={description} />
+            <Heading title={title} />
           </div>
           <Form {...form}>
             <form
