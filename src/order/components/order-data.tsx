@@ -25,7 +25,7 @@ export default function OrderData({
       <Card className={"w-11/12"}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mb-4">
           <CardTitle>Pedido {order.id!.substring(0, 8)}</CardTitle>
-          <BlobProvider document={<Voucher order={order} company={company} />}>
+          {/*<BlobProvider document={<Voucher order={order} company={company} />}>
             {({ url, loading }) =>
               loading ? (
                 <p>Cargando...</p>
@@ -40,7 +40,7 @@ export default function OrderData({
                 </a>
               )
             }
-          </BlobProvider>
+          </BlobProvider>*/}
         </CardHeader>
         <CardContent>
           <table className="table-auto border w-full">
