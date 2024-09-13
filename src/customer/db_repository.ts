@@ -47,7 +47,8 @@ export const createCustomer = async (
 
     const customerCreatedResponse = await prisma.customer.create({
       data: {
-        ...customerData,
+        id: customerData.id,
+        geoCode: customerData.geoCode,
         documentType: documentType,
         companyId: customer.companyId,
         documentNumber: customer.documentNumber,
