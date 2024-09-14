@@ -149,7 +149,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
 
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({ ...EMPTY_SINGLE_PRODUCT });
       getCompany().then((response) => {
         if (response.success) {
           form.setValue("companyId", response.data.id);
