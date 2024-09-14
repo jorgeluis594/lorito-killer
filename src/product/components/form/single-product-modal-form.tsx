@@ -502,7 +502,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                           onChange={handleCategoriesUpdated}
                         />
                         <CategoriesModal addCategory={addCategoryToProduct}/>
-                        {/*<NewCategoryDialog addCategory={addCategoryToProduct} />*/}
                       </div>
                       <FormMessage />
                     </FormItem>
