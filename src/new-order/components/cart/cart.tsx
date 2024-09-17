@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import {useProductFormActions} from "@/new-order/components/products-view/product-searcher-form-provider";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
@@ -19,6 +20,8 @@ export default function Cart() {
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const { increaseQuantity, decreaseQuantity, reset, removeOrderItem } =
     useOrderFormActions();
+
+  const { increaseQuantityProduct, decreaseQuantityProduct} = useProductFormActions();
 
   useEffect(() => {
     reset();
@@ -47,6 +50,8 @@ export default function Cart() {
                   item={item}
                   increaseQuantity={increaseQuantity}
                   decreaseQuantity={decreaseQuantity}
+                  increaseQuantityProduct={increaseQuantityProduct}
+                  decreaseQuantityProduct={decreaseQuantityProduct}
                   removeOrderItem={removeOrderItem}
                 />
               ))}
