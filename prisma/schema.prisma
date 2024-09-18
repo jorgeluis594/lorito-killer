@@ -158,7 +158,7 @@ enum DocumentType {
 model Document {
   id            String       @id @default(uuid())
   orderId       String
-  customerId    String
+  customerId    String?
   total         Decimal
   documentType  DocumentType
   series        String
@@ -167,7 +167,7 @@ model Document {
   qr            String?
   hash          String?
   order         Order        @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  customer      Customer     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
