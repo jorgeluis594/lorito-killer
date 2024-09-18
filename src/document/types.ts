@@ -9,7 +9,6 @@ export type DocumentType = InvoiceType | ReceiptType | TicketType;
 type DocumentBase = {
   id: string;
   orderId: string;
-  customerId: string;
   netTotal: number;
   taxTotal: number;
   total: number;
@@ -22,6 +21,7 @@ type DocumentBase = {
 };
 
 export type Invoice = DocumentBase & {
+  customerId: string;
   documentType: InvoiceType;
   qr: string;
   hash: string;
@@ -29,11 +29,13 @@ export type Invoice = DocumentBase & {
 
 export type Receipt = DocumentBase & {
   documentType: ReceiptType;
+  customerId?: string;
   qr: string;
   hash: string;
 };
 
 export type Ticket = DocumentBase & {
+  customerId?: string;
   documentType: TicketType;
 };
 

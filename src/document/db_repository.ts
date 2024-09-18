@@ -35,7 +35,7 @@ export const createDocument = async (
   try {
     const documentResponse = await prisma.document.create({
       data: {
-        orderId: document.orderId,
+        orderId: document.orderId!,
         customerId: document.customerId,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
@@ -50,9 +50,9 @@ export const createDocument = async (
     let createdDocument: Document;
     if (document.documentType == "ticket") {
       createdDocument = {
-        id: documentResponse.customerId,
+        id: documentResponse.id,
         orderId: documentResponse.orderId,
-        customerId: documentResponse.customerId,
+        customerId: documentResponse.customerId || undefined,
         total: +documentResponse.total,
         documentType: "ticket",
         series: documentResponse.series,
@@ -61,11 +61,27 @@ export const createDocument = async (
         taxTotal: 0,
         netTotal: +documentResponse.total,
       };
-    } else {
+    } else if (document.documentType == "receipt") {
       createdDocument = {
-        id: documentResponse.customerId,
+        id: documentResponse.id,
         orderId: documentResponse.orderId,
-        customerId: documentResponse.customerId,
+        customerId: documentResponse.customerId || undefined,
+        total: +documentResponse.total,
+        documentType: document.documentType,
+        series: documentResponse.series,
+        number: documentResponse.number,
+        dateOfIssue: documentResponse.dateOfIssue,
+        taxTotal: 0,
+        netTotal: +documentResponse.total,
+        qr: documentResponse.qr!,
+        hash: documentResponse.hash!,
+      };
+    } else {
+      // invoice case
+      createdDocument = {
+        id: documentResponse.id,
+        orderId: documentResponse.orderId,
+        customerId: documentResponse.customerId!,
         total: +documentResponse.total,
         documentType: document.documentType,
         series: documentResponse.series,
