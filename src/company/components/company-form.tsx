@@ -19,6 +19,7 @@ import { Company, Logo } from "@/company/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import LogoUpload from "@/company/components/file-upload/file-upload-logo";
 import {useLogoStore} from "@/company/logo-store-provider";
+import {getMany as getManyProducts} from "@/product/api_repository";
 
 const IMG_MAX_LIMIT = 1;
 
@@ -55,6 +56,14 @@ export default function CompanyForm({ company }: { company: Company }) {
   const { toast } = useToast();
   const {setLogos} = useLogoStore((store) => store);
   const logos = useLogoStore((store) => store.logos)
+
+  const fetchLogos = async () => {
+    const response = await getLogo(company.id);
+
+    if (response.success) {
+      setLogos(response.data);
+    }
+  };
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(CompanyFormSchema),
@@ -136,6 +145,7 @@ export default function CompanyForm({ company }: { company: Company }) {
   };
 
   useEffect(() => {
+    fetchLogos()
     form.setValue('logos', logos);
   }, [logos, form]);
 
