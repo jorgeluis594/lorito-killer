@@ -5,7 +5,8 @@ import { Company, Logo } from "@/company/types";
 import { 
   updateCompany as updateCompanyRepository,
   removeLogo as removeLogoRepository,
-  storeLogos as storeLogosRepository
+  storeLogos as storeLogosRepository,
+  getLogos as getLogoRepository,
 } from "@/company/db_repository";
 
 export const updateCompany = async (
@@ -38,6 +39,17 @@ export const storeLogos = async (
   const response = await storeLogosRepository(companyId, logos)
   if(!response.success) {
     return {success: false, message: "No se pudo subir el logo"};
+  }
+
+  return response;
+}
+
+export const getLogo = async (
+  companyId: string,
+): Promise<response<Logo[]>> => {
+  const response = await getLogoRepository(companyId)
+  if(!response.success) {
+    return {success: false, message: "No se pudo encontrar el logo"};
   }
 
   return response;
