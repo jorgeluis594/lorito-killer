@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 
 import { Company } from "@/company/types";
 import { response } from "@/lib/types";
+import { log } from "@/lib/log";
 
 export const createCompany = async (
   company: Company,
@@ -15,6 +16,7 @@ export const createCompany = async (
       success: true,
       data: {
         ...storedCompany,
+        ruc: storedCompany.ruc || undefined,
         subdomain: storedCompany.subdomain || "some_subdomain",
       },
     };
@@ -36,10 +38,15 @@ export const updateCompany = async (
       success: true,
       data: {
         ...updatedCompany,
+        ruc: updatedCompany.ruc || undefined,
         subdomain: company.subdomain || "some_subdomain",
       },
     };
   } catch (e: any) {
+    log.error("update_company_failed", {
+      company: company,
+      error_message: e.message,
+    });
     return { success: false, message: e.message };
   }
 };
@@ -56,7 +63,11 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
 
     return {
       success: true,
-      data: { ...company, subdomain: company.subdomain || "some_subdomain" },
+      data: {
+        ...company,
+        ruc: company.ruc || undefined,
+        subdomain: company.subdomain || "some_subdomain",
+      },
     };
   } catch (e: any) {
     return { success: false, message: e.message };

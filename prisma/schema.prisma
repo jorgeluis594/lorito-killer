@@ -198,6 +198,7 @@ model Company {
   email          String
   phone          String
   address        String
+  ruc            String?
   customers      Customer[]
   users          User[]
   products       Product[]
