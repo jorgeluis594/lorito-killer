@@ -56,3 +56,12 @@ export type FetchCustomer = {
   name: string;
   address: string;
 };
+
+type DocumentMapper = {
+  [INVOICE]: Invoice;
+  [RECEIPT]: Receipt;
+  [TICKET]: Ticket;
+};
+
+export type InferDocumentType<T extends keyof DocumentMapper> =
+  DocumentMapper[T];

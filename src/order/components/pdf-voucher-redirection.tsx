@@ -21,7 +21,8 @@ const PdfVoucherRedirection: React.FC<PdfVoucherRedirectionProps> = ({
   onPdfCreated,
 }) => {
   const [pdfUrl, setPdfUrl] = React.useState<string | null>(null);
-  const [QRBase64, setQRBase64] = React.useState<string | null>(null);
+  const [QRBase64, setQRBase64] = React.useState<string | undefined>(undefined);
+  const [QRProcessed, setQRProcessed] = React.useState<boolean>(false);
 
   useEffect(() => {
     if (pdfUrl) {
@@ -43,14 +44,16 @@ const PdfVoucherRedirection: React.FC<PdfVoucherRedirectionProps> = ({
 
   const setQR = async (qrBase64: string): Promise<undefined> => {
     setQRBase64(await generateQRBase64(qrBase64));
+    setQRProcessed(true);
   };
 
   useEffect(() => {
-    document.documentType != "ticket" && setQR(document.qr);
+    if (document.documentType != "ticket") setQR(document.qr);
+    else setQRProcessed(true);
   }, []);
 
   return (
-    QRBase64 && (
+    QRProcessed && (
       <BlobProvider
         document={
           <Voucher
@@ -61,7 +64,8 @@ const PdfVoucherRedirection: React.FC<PdfVoucherRedirectionProps> = ({
           />
         }
       >
-        {({ url, loading }) => {
+        {({ url, loading, error }) => {
+          console.log({ url, loading, error });
           if (loading) {
             return (
               <>
