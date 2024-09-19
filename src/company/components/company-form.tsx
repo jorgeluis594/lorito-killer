@@ -13,11 +13,12 @@ import {
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import React from "react";
-import { updateCompany, removeLogo, storeLogos } from "@/company/components/actions";
+import React, {useEffect, useState} from "react";
+import {updateCompany, removeLogo, storeLogos, getLogo} from "@/company/components/actions";
 import { Company, Logo } from "@/company/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import LogoUpload from "@/company/components/file-upload/file-upload-logo";
+import {useLogoStore} from "@/company/logo-store-provider";
 
 const IMG_MAX_LIMIT = 1;
 
@@ -52,6 +53,8 @@ type CompanyFormValues = zod.infer<typeof CompanyFormSchema>;
 
 export default function CompanyForm({ company }: { company: Company }) {
   const { toast } = useToast();
+  const {setLogos} = useLogoStore((store) => store);
+  const logos = useLogoStore((store) => store.logos)
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(CompanyFormSchema),
@@ -59,8 +62,8 @@ export default function CompanyForm({ company }: { company: Company }) {
   });
 
   const handleSubmit = async (data: CompanyFormValues) => {
-    
-    const response = await updateCompany({ ...company, ...data, logo: data.logos ? data.logos![0] : undefined });
+    const { logos, ...dataStore} = data
+    const response = await updateCompany({ ...company, ...dataStore }); //, logo: data.logos ? data.logos![0] : undefined
 
     if (!response.success) {
       toast({
@@ -80,7 +83,6 @@ export default function CompanyForm({ company }: { company: Company }) {
 
   const handleLogosUpdated = async (newLogos: Logo[]) => {
     const currentLogos = form.getValues("logos") || [];
-
     const logosToRemove = currentLogos.filter(
       (logo: Logo) =>
         !newLogos.find((newLogo: Logo) => newLogo.key === logo.key),
@@ -132,6 +134,10 @@ export default function CompanyForm({ company }: { company: Company }) {
       }
     }
   };
+
+  useEffect(() => {
+    form.setValue('logos', logos);
+  }, [logos, form]);
 
   return (
     <Form {...form}>
@@ -202,7 +208,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 <FormItem>
                   <FormControl>
                     <LogoUpload
-                      onChange={ field.onChange }
+                      onChange={ handleLogosUpdated }
                       value={field.value || []}
                     />
                   </FormControl>
