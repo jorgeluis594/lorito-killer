@@ -24,6 +24,7 @@ export const updateCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
+    //debugger
     const { logo, ...companyData } = company
     
     const updatedCompany = await prisma.company.update({
@@ -31,25 +32,27 @@ export const updateCompany = async (
       data: companyData,
     });
 
-    const [foundLogo] = await prisma.logo.findMany({
-      where: { companyId: updatedCompany.id },
-      orderBy: { createdAt: "asc" },
-      take: 1
-    })
+    // const [foundLogo] = await prisma.logo.findMany({
+    //   where: { companyId: updatedCompany.id },
+    //   orderBy: { createdAt: "asc" },
+    //   take: 1
+    // })
 
-    if (foundLogo?.id === logo?.id) {
-      return { success: true, data: updatedCompany };
-    } else {
-      await prisma.logo.deleteMany({
-        where: { companyId: updatedCompany.id },
-      })
+    // if (foundLogo?.id === logo?.id) {
+    //   return { success: true, data: updatedCompany };
+    // } else {
+    //   await prisma.logo.deleteMany({
+    //     where: { companyId: updatedCompany.id },
+    //   })
+    //
+    //   await prisma.logo.create({
+    //     data: { ...logo!, companyId: company.id },
+    //   })
+    //
+    //   return { success: true, data: company };
+    // }
 
-      await prisma.logo.create({
-        data: { ...logo!, companyId: company.id },
-      })
-
-      return { success: true, data: company };
-    }
+    return { success: true, data: updatedCompany };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
