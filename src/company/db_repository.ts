@@ -134,6 +134,19 @@ export const storeLogo = async (
 ): Promise<response<Logo>> => {
   debugger
   try {
+    const logoResponse = await getStoreLogo(companyId);
+    if (logoResponse.success) {
+      return {
+      success: true,
+      data: {
+        id: logoResponse.data.id,
+        name: logoResponse.data.name,
+        size: logoResponse.data.size,
+        type: logoResponse.data.type,
+        url: logoResponse.data.url,
+        key: logoResponse.data.key,
+      },};
+    }else {
     const createdLogo = await prisma.logo.create({
           data: {
             name: logo.name,
@@ -144,7 +157,7 @@ export const storeLogo = async (
             companyId,
           },
         })
-    return { success: true, data: createdLogo };
+    return { success: true, data: createdLogo };}
   } catch (error: any) {
     return { success: false, message: error.message };
   }
