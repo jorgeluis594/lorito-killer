@@ -104,11 +104,23 @@ export const find = async (
 };
 
 export const getLogo = async (
-  companyId: string,
-  logoKey: string,
+  compnayId: string,
+  logoId: string,
 ): Promise<response<Logo>> => {
   try {
-    const logo = await prisma.logo.findFirst({ where: { companyId: companyId} });
+    const logo = await prisma.logo.findUnique({ where: { id: logoId } });
+    if (!logo) return { success: false, message: "Logo not found" };
+    return { success: true, data: logo };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
+export const getStoreLogo = async (
+  companyId: string,
+): Promise<response<Logo>> => {
+  try {
+    const logo = await prisma.logo.findFirst({ where: { companyId } });
     if (!logo) return { success: false, message: "Logo not found" };
     return { success: true, data: logo };
   } catch (error: any) {
@@ -121,14 +133,14 @@ export const storeLogo = async (
   logo: Logo,
 ): Promise<response<Logo>> => {
   debugger
-  const companyLogosResponse = await getLogo(companyId, logo.key);
-
-  if (!companyLogosResponse.success)
-    return { success: false, message: companyLogosResponse.message };
   try {
     const createdLogo = await prisma.logo.create({
           data: {
-            ...companyLogosResponse.data,
+            name: logo.name,
+            size: logo.size,
+            type: logo.type,
+            url: logo.url,
+            key: logo.key,
             companyId,
           },
         })
