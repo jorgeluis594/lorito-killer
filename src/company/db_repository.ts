@@ -26,7 +26,7 @@ export const updateCompany = async (
   try {
     //debugger
     const { logo, ...companyData } = company
-    
+
     const updatedCompany = await prisma.company.update({
       where: { id: company.id },
       data: companyData,
@@ -62,13 +62,23 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
   try {
     const company = await prisma.company.findUnique({
       where: { id },
+      include: { logos: true},
     });
 
     if (!company) {
       return { success: false, message: "Company not found" };
     }
 
-    return { success: true, data: company };
+    const companyResponse: Company = {
+      id: company.id,
+      address: company.address,
+      name: company.name,
+      email: company.email,
+      phone: company.phone,
+      logo: company.logos[0],
+    }
+
+    return { success: true, data: companyResponse };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -93,23 +103,13 @@ export const find = async (
   }
 };
 
-export const getLogos = async (
-  companyId: string,
-): Promise<response<Logo[]>> => {
-  try {
-    const logos = await prisma.logo.findMany({ where: { companyId } });
-    return { success: true, data: logos };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
-};
-
 export const getLogo = async (
   compnayId: string,
-  logoId: string,
+  logoKey: string,
 ): Promise<response<Logo>> => {
   try {
-    const logo = await prisma.logo.findUnique({ where: { id: logoId } });
+    debugger
+    const logo = await prisma.logo.findFirst({ where: { key: logoKey} });
     if (!logo) return { success: false, message: "Logo not found" };
     return { success: true, data: logo };
   } catch (error: any) {
@@ -117,31 +117,26 @@ export const getLogo = async (
   }
 };
 
-export const storeLogos = async (
+export const storeLogo = async (
   companyId: string,
-  logos: Logo[],
-): Promise<response<Logo[]>> => {
-  const companyLogosResponse = await getLogos(companyId);
-
-  if (!companyLogosResponse.success)
-    return { success: false, message: companyLogosResponse.message };
-
-  const logosToStore = logos.filter(
-    (logo) =>
-      !(companyLogosResponse.data || []).find((p) => p.key === logo.key),
-  );
+  logo: Logo,
+): Promise<response<Logo>> => {
+  debugger
   try {
-    const createdLogos = await Promise.all(
-      logosToStore.map((logo) =>
-        prisma.logo.create({
-          data: {
-            ...logo,
-            companyId,
-          },
-        }),
-      ),
-    );
-    return { success: true, data: createdLogos };
+    const companyLogosResponse = await getLogo(companyId, logo.key);
+
+    if (!companyLogosResponse.success) {
+      const createdLogo = await prisma.logo.create({
+        data: {
+          ...logo,
+          companyId,
+        },
+      });
+
+      return { success: true, data: createdLogo };
+    }else {
+      return companyLogosResponse;
+    }
   } catch (error: any) {
     return { success: false, message: error.message };
   }
