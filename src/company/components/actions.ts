@@ -5,8 +5,8 @@ import { Company, Logo } from "@/company/types";
 import { 
   updateCompany as updateCompanyRepository,
   removeLogo as removeLogoRepository,
-  storeLogos as storeLogosRepository,
-  getLogos as getLogoRepository,
+  storeLogo as storeLogoRepository,
+  getLogo as getLogoRepository,
 } from "@/company/db_repository";
 
 export const updateCompany = async (
@@ -32,11 +32,12 @@ export const removeLogo = async (
   return response;
 }
 
-export const storeLogos = async (
+export const storeLogo = async (
   companyId: string,
-  logos: Logo[]
-): Promise<response<Logo[]>> => {
-  const response = await storeLogosRepository(companyId, logos)
+  logo: Logo
+): Promise<response<Logo>> => {
+  debugger
+  const response = await storeLogoRepository(companyId, logo)
   if(!response.success) {
     return {success: false, message: "No se pudo subir el logo"};
   }
@@ -46,8 +47,9 @@ export const storeLogos = async (
 
 export const getLogo = async (
   companyId: string,
-): Promise<response<Logo[]>> => {
-  const response = await getLogoRepository(companyId)
+  logoId: string,
+): Promise<response<Logo>> => {
+  const response = await getLogoRepository(companyId, logoId)
   if(!response.success) {
     return {success: false, message: "No se pudo encontrar el logo"};
   }
