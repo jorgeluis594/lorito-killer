@@ -21,7 +21,8 @@ import {
   getLatestDocumentNumber,
   getBillingCredentialsFor,
 } from "@/document/db_repository";
-import type { Document, DocumentType } from "@/document/types";
+import type { Document } from "@/document/types";
+import prisma, { setPrismaClient } from "@/lib/prisma";
 
 export const create = async (
   userId: string,
@@ -59,50 +60,79 @@ export const create = async (
     };
   }
 
-  const createOrderResponse = await createOrder({
-    ...order,
-    cashShiftId: openCashShift.id,
-    companyId: session.user.companyId,
-  });
-  if (!createOrderResponse.success) {
-    return createOrderResponse;
-  }
+  return withinTransaction<{ order: Order; document: Document }>(
+    async function () {
+      const createOrderResponse = await createOrder({
+        ...order,
+        cashShiftId: openCashShift.id,
+        companyId: session.user.companyId,
+      });
+      if (!createOrderResponse.success) {
+        return createOrderResponse;
+      }
 
-  revalidatePath("/api/orders");
-  const updateStockResponse = await updateStock(userId, order, {
-    findProduct,
-    createStockTransfer,
-    updateStock: UpdateStockFromStockTransfer,
-  });
+      revalidatePath("/api/orders");
+      const updateStockResponse = await updateStock(userId, order, {
+        findProduct,
+        createStockTransfer,
+        updateStock: UpdateStockFromStockTransfer,
+      });
 
-  if (!updateStockResponse.success) {
-    return updateStockResponse;
-  }
+      if (!updateStockResponse.success) {
+        return updateStockResponse;
+      }
 
-  const { billingToken, ...billingSettings } = billingCredentialsResponse.data;
-  const documentResponse = await createDocument(
-    billingDocumentGateway({ billingToken }),
-    {
-      createDocument: saveDocument,
-      getLastDocumentNumber: getLatestDocumentNumber,
+      const { billingToken, ...billingSettings } =
+        billingCredentialsResponse.data;
+      const documentResponse = await createDocument(
+        billingDocumentGateway({ billingToken }),
+        {
+          createDocument: saveDocument,
+          getLastDocumentNumber: getLatestDocumentNumber,
+        },
+        createOrderResponse.data,
+        billingSettings,
+      );
+      if (!documentResponse.success) {
+        return documentResponse;
+      }
+
+      return {
+        success: true,
+        data: {
+          order: { ...createOrderResponse.data },
+          document: { ...documentResponse.data },
+        },
+      };
     },
-    createOrderResponse.data,
-    billingSettings,
   );
-  if (!documentResponse.success) {
-    return documentResponse;
-  }
-
-  return {
-    success: true,
-    data: {
-      order: { ...createOrderResponse.data },
-      document: { ...documentResponse.data },
-    },
-  };
 };
 
 export const getCompany = async (): Promise<response<Company>> => {
   const session = await getSession();
   return await findCompany(session.user.companyId);
 };
+
+async function withinTransaction<T>(
+  cb: () => Promise<response<T>>,
+): Promise<response<T>> {
+  const previousPrismaClient = prisma();
+  let value: response;
+
+  try {
+    await previousPrismaClient.$transaction(async (tx) => {
+      setPrismaClient(tx as any);
+      value = await cb();
+      if (!value.success) {
+        throw new Error("rollback transaction");
+      }
+    });
+  } catch (e) {
+    console.error("transaction rollback");
+  } finally {
+    setPrismaClient(previousPrismaClient); // Reset to the previous client
+  }
+
+  // @ts-ignore
+  return value;
+}
