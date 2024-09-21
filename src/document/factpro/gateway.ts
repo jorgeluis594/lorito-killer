@@ -277,7 +277,7 @@ export default function gateway({
 
   const createTicket = async (
     order: Order,
-    documentMetadata: DocumentMetadata,
+    documentMetadata: Omit<DocumentMetadata, "establishmentCode">,
   ): Promise<response<Ticket>> => {
     return {
       success: true,

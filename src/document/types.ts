@@ -42,14 +42,14 @@ export type Ticket = DocumentBase & {
 export type Document = Invoice | Receipt | Ticket;
 
 export type BillingCredentials = {
-  billingToken: string;
+  billingToken?: string;
   customerSearchToken: string;
-  invoiceSerialNumber: string;
+  invoiceSerialNumber?: string;
   invoiceStartsOnNumber?: number;
-  receiptSerialNumber: string;
+  receiptSerialNumber?: string;
   receiptStartsOnNumber?: number;
   ticketSerialNumber: string;
-  establishmentCode: string;
+  establishmentCode?: string;
 };
 
 type DocumentMapper = {

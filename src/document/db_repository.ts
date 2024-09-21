@@ -124,6 +124,11 @@ export const getLatestDocumentNumber = async (
   }
 };
 
+const defaultCredentials: BillingCredentials = {
+  customerSearchToken: process.env.CUSTOMER_SEARCH_TOKEN!,
+  ticketSerialNumber: "NV01",
+};
+
 export const getBillingCredentialsFor = async (
   companyId: string,
 ): Promise<response<BillingCredentials>> => {
@@ -133,7 +138,7 @@ export const getBillingCredentialsFor = async (
   });
 
   if (!companyData || isEmpty(companyData.billingCredentials)) {
-    return { success: false, message: "Credentials not found" };
+    return { success: true, data: { ...defaultCredentials } };
   }
 
   const credentials =
@@ -141,6 +146,6 @@ export const getBillingCredentialsFor = async (
 
   return {
     success: true,
-    data: credentials,
+    data: { ...defaultCredentials, ...credentials },
   };
 };
