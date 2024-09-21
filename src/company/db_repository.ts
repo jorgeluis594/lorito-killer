@@ -15,6 +15,7 @@ export const createCompany = async (
     return {
       success: true,
       data: {
+        ...company,
         ...storedCompany,
         ruc: storedCompany.ruc || undefined,
         subdomain: storedCompany.subdomain || "some_subdomain",
@@ -37,6 +38,7 @@ export const updateCompany = async (
     return {
       success: true,
       data: {
+        ...company,
         ...updatedCompany,
         ruc: updatedCompany.ruc || undefined,
         subdomain: company.subdomain || "some_subdomain",
@@ -61,12 +63,16 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
       return { success: false, message: "Company not found" };
     }
 
+    const { billingCredentials, ...companyData } = company;
+
     return {
       success: true,
       data: {
-        ...company,
+        ...companyData,
         ruc: company.ruc || undefined,
         subdomain: company.subdomain || "some_subdomain",
+        isBillingActivated:
+          !!billingCredentials && Object.keys(billingCredentials).length > 0,
       },
     };
   } catch (e: any) {
