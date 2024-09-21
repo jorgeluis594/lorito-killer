@@ -36,7 +36,6 @@ export const storeLogo = async (
   companyId: string,
   logo: Logo
 ): Promise<response<Logo>> => {
-  debugger
   const response = await storeLogoRepository(companyId, logo)
   if(!response.success) {
     return {success: false, message: "No se pudo subir el logo"};

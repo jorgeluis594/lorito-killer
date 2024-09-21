@@ -19,7 +19,7 @@ export default function LogoUpload({
   const { toast } = useToast();
 
   const onDeleteFile = () => {
-    onChange(undefined);
+    onChange(undefined!);
   };
 
   const onUpdateFile = (newFile: Logo) => {

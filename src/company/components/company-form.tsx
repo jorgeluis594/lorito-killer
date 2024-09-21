@@ -97,7 +97,6 @@ export default function CompanyForm({company}: { company: Company }) {
     }
 
     if (newLogo) {
-      debugger
       const storeLogoResponse = await storeLogo(
         company.id!,
         newLogo,

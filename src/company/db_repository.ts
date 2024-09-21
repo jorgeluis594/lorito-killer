@@ -24,7 +24,6 @@ export const updateCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
-    //debugger
     const {logo, ...companyData} = company
 
     const updatedCompany = await prisma.company.update({
@@ -167,7 +166,6 @@ export const removeLogo = async (
   companyId: string,
   logoId: string,
 ): Promise<response<Logo>> => {
-  debugger
   const logoResponse = await getLogo(companyId, logoId);
   if (!logoResponse.success) return logoResponse;
 
