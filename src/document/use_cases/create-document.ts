@@ -8,6 +8,7 @@ import type {
   Receipt,
   Ticket,
   DocumentType,
+  BillingCredentials,
 } from "@/document/types";
 import { hasBusinessCustomer } from "@/order/utils";
 import { errorResponse, max } from "@/lib/utils";
@@ -30,7 +31,7 @@ export interface DocumentGateway {
   ) => Promise<response<Receipt>>;
   createTicket: (
     order: Order,
-    documentMetadata: DocumentMetadata,
+    documentMetadata: Omit<DocumentMetadata, "establishmentCode">,
   ) => Promise<response<Ticket>>;
 }
 
@@ -41,14 +42,10 @@ interface Repository {
   ) => Promise<response<number | undefined>>;
 }
 
-interface BillingSettings {
-  invoiceSerialNumber: string;
-  invoiceStarsOnNumber?: number;
-  receiptSerialNumber: string;
-  receiptStarsOnNumber?: number;
-  ticketSerialNumber: string;
-  establishmentCode: string;
-}
+type BillingSettings = Omit<
+  BillingCredentials,
+  "billingToken" | "customerSearchToken"
+>;
 
 const serverError = errorResponse(
   "Error al realizar la venta, comuniquese con nostros para solucionar el problema",
@@ -80,6 +77,8 @@ export const createDocument = async (
     establishmentCode: billingConfig.establishmentCode,
   };
 
+  const { establishmentCode, ...restMetadata } = documentMetadata;
+
   switch (order.documentType) {
     case "ticket":
       documentResponse = await documentGateway.createTicket(
@@ -88,10 +87,14 @@ export const createDocument = async (
       );
       break;
     case "receipt":
-      documentResponse = await documentGateway.createReceipt(
-        order,
-        documentMetadata,
-      );
+      if (!establishmentCode) {
+        return serverError;
+      }
+
+      documentResponse = await documentGateway.createReceipt(order, {
+        ...restMetadata,
+        establishmentCode,
+      });
       break;
     case "invoice":
       if (!hasBusinessCustomer(order)) {
@@ -100,10 +103,15 @@ export const createDocument = async (
           message: "El cliente debe ser empresa",
         };
       }
-      documentResponse = await documentGateway.createInvoice(
-        order,
-        documentMetadata,
-      );
+
+      if (!establishmentCode) {
+        return serverError;
+      }
+
+      documentResponse = await documentGateway.createInvoice(order, {
+        ...restMetadata,
+        establishmentCode,
+      });
       break;
     default:
       throw new Error("Invalid document type");
@@ -133,18 +141,32 @@ const getAvailableDocumentNumberAndSerial = async (
     serialNumber: string;
   }>;
 
+  const {
+    invoiceSerialNumber,
+    invoiceStartsOnNumber,
+    receiptSerialNumber,
+    receiptStartsOnNumber,
+  } = billingSettings;
+
   switch (documentType) {
     case "invoice":
+      if (!invoiceSerialNumber || !invoiceStartsOnNumber) {
+        return serverError;
+      }
       documentDetailsResponse = await getDocumentDetails(
-        billingSettings.invoiceSerialNumber,
-        billingSettings.invoiceStarsOnNumber,
+        invoiceSerialNumber,
+        invoiceStartsOnNumber,
         getLastDocumentNumber,
       );
       break;
     case "receipt":
+      if (!receiptSerialNumber || !receiptStartsOnNumber) {
+        return serverError;
+      }
+
       documentDetailsResponse = await getDocumentDetails(
-        billingSettings.receiptSerialNumber,
-        billingSettings.receiptStarsOnNumber,
+        receiptSerialNumber,
+        receiptStartsOnNumber,
         getLastDocumentNumber,
       );
       break;
@@ -174,14 +196,14 @@ const DEFAULT_DOCUMENT_NUMBER = 0;
 
 const getDocumentDetails = async (
   serialNumber: string,
-  starsOnNumber: number | undefined,
+  startsOnNumber: number | undefined,
   getLastDocumentNumber: Repository["getLastDocumentNumber"],
 ): Promise<response<{ number: number; serialNumber: string }>> => {
   const response = await getLastDocumentNumber(serialNumber);
   if (!response.success) return response;
 
-  const num = starsOnNumber
-    ? max(starsOnNumber)(response.data || DEFAULT_DOCUMENT_NUMBER)
+  const num = startsOnNumber
+    ? max(startsOnNumber)(response.data || DEFAULT_DOCUMENT_NUMBER)
     : response.data || DEFAULT_DOCUMENT_NUMBER;
 
   return {
