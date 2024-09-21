@@ -113,6 +113,14 @@ export const getCompany = async (): Promise<response<Company>> => {
   return await findCompany(session.user.companyId);
 };
 
+/**
+ * Executes a given callback function within a database transaction context.
+ * If the callback function resolves with a success response,
+ * the transaction is committed; otherwise, it is rolled back.
+ *
+ * @param {Function} cb - A callback function that returns a promise of a response object.
+ * @return {Promise<response<T>>} A promise that resolves with the response object returned by the callback function.
+ */
 async function withinTransaction<T>(
   cb: () => Promise<response<T>>,
 ): Promise<response<T>> {
@@ -128,7 +136,7 @@ async function withinTransaction<T>(
       }
     });
   } catch (e) {
-    console.error("transaction rollback");
+    console.error("transaction rolled back");
   } finally {
     setPrismaClient(previousPrismaClient); // Reset to the previous client
   }

@@ -101,7 +101,18 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     });
   }, []);
 
-  const CreateOrderButton = ({ amountIsValid }: { amountIsValid: boolean }) => {
+  const CreateOrderButton = ({
+    amountIsInvalid,
+    paidAmount,
+    total,
+  }: {
+    amountIsInvalid: boolean;
+    paidAmount: number;
+    total: number;
+  }) => {
+    useEffect(() => {
+      console.log({ amountIsInvalid, paidAmount, total });
+    }, []);
     if (creatingOrder) {
       return (
         <Button className="btn-success" type="button" disabled={true}>
@@ -112,7 +123,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
       return (
         <Button
           type="button"
-          disabled={amountIsValid}
+          disabled={amountIsInvalid}
           onClick={handleOrderCreation}
         >
           Realiza pago
@@ -169,7 +180,11 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           )}
         </div>
         <DialogFooter>
-          <CreateOrderButton amountIsValid={getPaidAmount() !== order.total} />
+          <CreateOrderButton
+            amountIsInvalid={getPaidAmount() !== order.total}
+            paidAmount={getPaidAmount()}
+            total={order.total}
+          />
         </DialogFooter>
       </DialogContent>
     </Dialog>
