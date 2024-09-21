@@ -17,10 +17,12 @@ import PaymentModal from "@/new-order/components/create-order-modal/payment-moda
 import { useEffect, useState } from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import { toast } from "@/shared/components/ui/use-toast";
+import { useCompany } from "@/lib/use-company";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
   const { setDocumentType } = useOrderFormActions();
+  const company = useCompany();
 
   const cashShift = useCashShiftStore((state) => state.cashShift);
   const customer = useOrderFormStore((state) => state.order.customer);
@@ -64,8 +66,12 @@ export default function Cart() {
         >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ticket">Nota de Venta</TabsTrigger>
-            <TabsTrigger value="receipt">Boleta</TabsTrigger>
-            <TabsTrigger value="invoice">Factura</TabsTrigger>
+            <TabsTrigger value="receipt" disabled={!company.isBillingActivated}>
+              Boleta
+            </TabsTrigger>
+            <TabsTrigger value="invoice" disabled={!company.isBillingActivated}>
+              Factura
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="p-5 border-b flex justify-between">
