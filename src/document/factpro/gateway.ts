@@ -24,7 +24,7 @@ function clientParamsBuilder(
     return {
       cliente_tipo_documento: "0",
       cliente_numero_documento: "00000000",
-      cliente_denominacion: "-",
+      cliente_denominacion: "aaa",
       codigo_pais: "PE",
       ubigeo: "",
       cliente_direccion: "-",
@@ -63,31 +63,6 @@ const sendDocument = async (
   orderId: string,
   token: string,
 ): Promise<response<FactproResponse>> => {
-  /*  return {
-    success: true,
-    data: {
-      success: true,
-      data: {
-        number: "F001-5",
-        filename: "20415963255-01-F001-5",
-        external_id: "103c8710-6c6e-4b7b-8d7b-c59f642c7a71",
-        number_to_letter: "Ciento dieciocho  con 00/100 ",
-        hash: "gLOlpznxBvvhT/BUUugMYDhQo84=",
-        qr: "iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAIAAACzY+a1AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEgklEQVR4nO2d3XYbMQgG4568/yund45bqwQBWneOZy7t1U/yHZAWIXz7+vr6EDK/Xj0B6aKEeJQQjxLiUUI8SohHCfEoIR4lxKOEeJQQjxLi+Uw+d7vd+oM9htTvHd4/fBzi+=",
-      },
-      links: {
-        xml: "https://factpro.pe/downloads/document/xml/103c8710-6c6e-4b7b-8d7b-c59f642c7a71",
-        pdf: "https://factpro.pe/downloads/document/pdf/103c8710-6c6e-4b7b-8d7b-c59f642c7a71",
-        cdr: "https://factpro.pe/downloads/document/cdr/103c8710-6c6e-4b7b-8d7b-c59f642c7a71",
-      },
-      response: {
-        code: "0",
-        description: "La Factura numero F001-5, ha sido aceptada",
-        notes: [],
-      },
-    },
-  };*/
-
   const res = await fetch(`${url!}/documentos`, {
     method: "POST",
     headers: {
@@ -309,13 +284,13 @@ export default function gateway({
       data: {
         id: crypto.randomUUID(),
         orderId: order.id!,
-        customerId: order.customer?.id!,
+        customerId: order.customer?.id,
         netTotal: order.total,
         taxTotal: 0,
         total: order.total,
         documentType: "ticket",
-        series: "NV01",
-        number: "1",
+        series: documentMetadata.serialNumber,
+        number: documentMetadata.documentNumber.toString(),
         dateOfIssue: order.createdAt!,
       },
     };
