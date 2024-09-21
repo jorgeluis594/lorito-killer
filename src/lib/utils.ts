@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { PaymentMethod } from "@/order/types";
 import { format } from "date-fns";
 import Decimal from "decimal.js";
+import { ErrorResponse } from "@/lib/types";
 
 const formater = new Intl.NumberFormat("es-PE", {
   style: "currency",
@@ -303,3 +304,8 @@ export const billableNumberToWords = (() => {
     return `${capitalize(Millones(data.enteros))} con ${data.centavos.toString().padStart(2, "0")}/100 ${data.letrasMonedaPlural}`;
   };
 })();
+
+export const errorResponse = (message: string): ErrorResponse => ({
+  success: false,
+  message: message,
+});

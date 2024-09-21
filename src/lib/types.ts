@@ -5,7 +5,7 @@ export type successResponse<DataType = any> = {
   data: DataType; //Product
 };
 
-export type errorResponse = {
+export type ErrorResponse = {
   success: false;
   message: string;
   type?: "AuthError";
@@ -13,4 +13,4 @@ export type errorResponse = {
 
 export type response<DataType = any> =
   | successResponse<DataType>
-  | errorResponse;
+  | ErrorResponse;
