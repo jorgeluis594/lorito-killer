@@ -33,7 +33,7 @@ export const createDocument = async (
   document: Document,
 ): Promise<response<Document>> => {
   try {
-    const documentResponse = await prisma.document.create({
+    const documentResponse = await prisma().document.create({
       data: {
         orderId: document.orderId!,
         customerId: document.customerId,
@@ -109,7 +109,7 @@ export const getLatestDocumentNumber = async (
   serialNumber: string,
 ): Promise<response<number | undefined>> => {
   try {
-    const document = await prisma.document.findFirst({
+    const document = await prisma().document.findFirst({
       where: { series: serialNumber },
       orderBy: { number: "desc" },
     });
@@ -127,7 +127,7 @@ export const getLatestDocumentNumber = async (
 export const getBillingCredentialsFor = async (
   companyId: string,
 ): Promise<response<BillingCredentials>> => {
-  const companyData = await prisma.company.findUnique({
+  const companyData = await prisma().company.findUnique({
     where: { id: companyId },
     select: { billingCredentials: true },
   });

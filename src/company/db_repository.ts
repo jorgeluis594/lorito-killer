@@ -8,7 +8,7 @@ export const createCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
-    const storedCompany = await prisma.company.create({
+    const storedCompany = await prisma().company.create({
       data: company,
     });
 
@@ -29,7 +29,7 @@ export const updateCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
-    const updatedCompany = await prisma.company.update({
+    const updatedCompany = await prisma().company.update({
       where: { id: company.id },
       data: company,
     });
@@ -53,7 +53,7 @@ export const updateCompany = async (
 
 export const getCompany = async (id: string): Promise<response<Company>> => {
   try {
-    const company = await prisma.company.findUnique({
+    const company = await prisma().company.findUnique({
       where: { id },
     });
 

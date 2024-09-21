@@ -67,11 +67,11 @@ const prismaToLocality = async (
       parentId: prismaLocality.parentId!,
     };
   } else {
-    const findprovince = await prisma.locality.findUnique({
+    const findprovince = await prisma().locality.findUnique({
       where: { idUbigeo: prismaLocality.parentId! },
     });
 
-    const findDepartment = await prisma.locality.findUnique({
+    const findDepartment = await prisma().locality.findUnique({
       where: { idUbigeo: findprovince!.parentId! },
     });
 
@@ -118,7 +118,7 @@ export const getMany = async ({
         name: { contains: q, mode: "insensitive" },
       };
 
-    const result = await prisma.locality.findMany({
+    const result = await prisma().locality.findMany({
       ...query,
     });
     const locality = await Promise.all(result.map(prismaToLocality));
@@ -131,7 +131,7 @@ export const getMany = async ({
 
 /*export const find = async (id: string): Promise<response<Locality>> => {
   try {
-    const findLocality = await prisma.locality.findUnique({ where: { id: id } });
+    const findLocality = await prisma().locality.findUnique({ where: { id: id } });
     if (!findLocality) {
       return { success: false, message: "Order not found" };
     }

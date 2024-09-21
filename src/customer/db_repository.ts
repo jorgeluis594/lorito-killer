@@ -45,7 +45,7 @@ export const createCustomer = async (
       ...customer,
     };
 
-    const customerCreatedResponse = await prisma.customer.create({
+    const customerCreatedResponse = await prisma().customer.create({
       data: {
         id: customerData.id,
         geoCode: customerData.geoCode,
@@ -105,7 +105,7 @@ export const find = async (
   companyId?: string,
 ): Promise<response<Customer>> => {
   try {
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma().customer.findUnique({
       where: { id },
     });
 
@@ -156,7 +156,7 @@ export const getMany = async ({
         ],
       };
 
-    const result = await prisma.customer.findMany({
+    const result = await prisma().customer.findMany({
       ...query,
     });
     const customer = await Promise.all(result.map(prismaToCustomer));

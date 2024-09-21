@@ -2,10 +2,7 @@ import prisma from "@/lib/prisma";
 import { Category } from "./types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
-import {
-  Category as PrismaCategory,
-  Prisma,
-} from "@prisma/client";
+import { Category as PrismaCategory, Prisma } from "@prisma/client";
 
 export const create = async (
   category: Category,
@@ -16,7 +13,7 @@ export const create = async (
       return foundResponse;
     }
 
-    const createdCategory = await prisma.category.create({ data: category });
+    const createdCategory = await prisma().category.create({ data: category });
     return {
       success: true,
       data: {
@@ -32,10 +29,10 @@ export const create = async (
 export const update = async (
   category: Category,
 ): Promise<response<Category>> => {
-  const {  companyId, ...categoryData } = category;
+  const { companyId, ...categoryData } = category;
 
   try {
-    await prisma.category.update({
+    await prisma().category.update({
       where: { id: category.id },
       data: category,
     });
@@ -45,12 +42,11 @@ export const update = async (
   }
 };
 
-
 export const deleteCategory = async (
   category: Category,
 ): Promise<response<Category>> => {
   try {
-    const deleteCategory = await prisma.category.delete({
+    const deleteCategory = await prisma().category.delete({
       where: { id: category.id },
     });
     return { success: true, data: category };
@@ -64,7 +60,7 @@ export const getMany = async (
 ): Promise<response<Category[]>> => {
   try {
     const categories = (
-      await prisma.category.findMany({ where: { companyId } })
+      await prisma().category.findMany({ where: { companyId } })
     ).map((c) => ({
       ...c,
       companyId: c.companyId || "some_company_id",
@@ -78,7 +74,7 @@ export const getMany = async (
 
 export const find = async (id: string): Promise<response<Category>> => {
   try {
-    const category = await prisma.category.findUnique({ where: { id } });
+    const category = await prisma().category.findUnique({ where: { id } });
 
     if (category) {
       return {
@@ -101,7 +97,7 @@ export const addCategoryToProduct = async (
   category: Category,
 ): Promise<response<Category>> => {
   try {
-    await prisma.category.update({
+    await prisma().category.update({
       where: { id: category.id },
       data: {
         products: {
@@ -121,7 +117,7 @@ export const removeCategoryFromProduct = async (
   category: Category,
 ): Promise<response<Category>> => {
   try {
-    await prisma.category.update({
+    await prisma().category.update({
       where: { id: category.id },
       data: {
         products: {
@@ -140,7 +136,7 @@ const findByName = async (
   name: string,
 ): Promise<response<Category>> => {
   try {
-    const categories = await prisma.category.findMany({
+    const categories = await prisma().category.findMany({
       where: {
         companyId,
         name: {

@@ -26,7 +26,7 @@ const locality = async () => {
 
       try {
         for (const result of results) {
-          await prisma.locality.create({
+          await prisma().locality.create({
             data: {
               id: result.id,
               idUbigeo: result.idUbigeo,
@@ -47,13 +47,13 @@ const locality = async () => {
       } catch (error) {
         console.error("Error inserting data:", error);
       } finally {
-        await prisma.$disconnect();
+        await prisma().$disconnect();
       }
     });
 };
 
 const execute = async () => {
-  const company = await prisma.company.create({
+  const company = await prisma().company.create({
     data: {
       id: crypto.randomUUID(),
       name: "Company 1",
@@ -73,7 +73,7 @@ const execute = async () => {
     },
   });
 
-  const user = await prisma.user.create({
+  const user = await prisma().user.create({
     data: {
       id: crypto.randomUUID(),
       email: "jorg3.594@gmail.com",
