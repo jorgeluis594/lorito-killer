@@ -22,9 +22,9 @@ function clientParamsBuilder(
 ): FactproDocument["cliente"] {
   if (!customer) {
     return {
-      cliente_tipo_documento: "0",
+      cliente_tipo_documento: "1",
       cliente_numero_documento: "00000000",
-      cliente_denominacion: "aaa",
+      cliente_denominacion: "aaaa",
       codigo_pais: "PE",
       ubigeo: "",
       cliente_direccion: "-",
