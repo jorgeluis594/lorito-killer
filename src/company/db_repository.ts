@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { Company } from "@/company/types";
 import { response } from "@/lib/types";
 import { log } from "@/lib/log";
+import { BillingCredentials } from "@/document/types";
 
 export const createCompany = async (
   company: Company,
@@ -72,7 +73,10 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
         ruc: company.ruc || undefined,
         subdomain: company.subdomain || "some_subdomain",
         isBillingActivated:
-          !!billingCredentials && Object.keys(billingCredentials).length > 0,
+          !!billingCredentials &&
+          !!(billingCredentials as unknown as BillingCredentials)[
+            "billingToken"
+          ],
       },
     };
   } catch (e: any) {
