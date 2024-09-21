@@ -81,8 +81,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     } else {
       toast({
         variant: "destructive",
-        description:
-          "Error al realizar la venta, comuniquese con nostros para solucionar el problema",
+        description: response.message,
       });
     }
     setCreatingOrder(false);

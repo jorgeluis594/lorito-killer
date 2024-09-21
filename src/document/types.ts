@@ -52,11 +52,6 @@ export type BillingCredentials = {
   establishmentCode: string;
 };
 
-export type FetchCustomer = {
-  name: string;
-  address: string;
-};
-
 type DocumentMapper = {
   [INVOICE]: Invoice;
   [RECEIPT]: Receipt;

@@ -1,6 +1,6 @@
 "use server";
 
-import { response } from "@/lib/types";
+import { ErrorResponse, response } from "@/lib/types";
 import { Order, OrderWithBusinessCustomer } from "@/order/types";
 import type {
   Document,
@@ -10,7 +10,8 @@ import type {
   DocumentType,
 } from "@/document/types";
 import { hasBusinessCustomer } from "@/order/utils";
-import { max } from "@/lib/utils";
+import { errorResponse, max } from "@/lib/utils";
+import { log } from "@/lib/log";
 
 export interface DocumentMetadata {
   serialNumber: string;
@@ -49,6 +50,10 @@ interface BillingSettings {
   establishmentCode: string;
 }
 
+const serverError = errorResponse(
+  "Error al realizar la venta, comuniquese con nostros para solucionar el problema",
+);
+
 export const createDocument = async (
   documentGateway: DocumentGateway,
   repository: Repository,
@@ -63,7 +68,11 @@ export const createDocument = async (
       order.documentType,
     );
   if (!documentNumberAndSerialResponse.success) {
-    return documentNumberAndSerialResponse;
+    log.error("get_serial_number_failed", {
+      order,
+      documentNumberAndSerialResponse,
+    });
+    return serverError;
   }
 
   const documentMetadata = {
@@ -88,7 +97,7 @@ export const createDocument = async (
       if (!hasBusinessCustomer(order)) {
         return {
           success: false,
-          message: "Customer must be a BusinessCustomer",
+          message: "El cliente debe ser empresa",
         };
       }
       documentResponse = await documentGateway.createInvoice(
@@ -101,10 +110,17 @@ export const createDocument = async (
   }
 
   if (!documentResponse.success) {
-    return documentResponse;
+    return serverError;
   }
 
-  return repository.createDocument(documentResponse.data);
+  const persistedDocumentResponse = await repository.createDocument(
+    documentResponse.data,
+  );
+  if (!persistedDocumentResponse.success) {
+    return serverError;
+  }
+
+  return persistedDocumentResponse;
 };
 
 const getAvailableDocumentNumberAndSerial = async (
