@@ -1,16 +1,23 @@
-"use client";
-import {useEffect, useState} from "react";
-import {Company} from "@/company/types";
-import {getCompany} from "@/order/actions";
 import Image from "next/image";
-import {useLogoStore} from "@/company/logo-store-provider";
-import {getLogo} from "@/company/components/actions";
+import {getCompany} from "@/order/actions";
+import {getSession} from "@/lib/auth";
+import {getCompany as findCompany} from "@/company/db_repository";
+import {notFound} from "next/navigation";
 
-export function LogoImage() {
+export async function LogoImage() {
+  const session = await getSession();
+  const companyResponse = await findCompany(session.user.companyId);
+
+  if (!companyResponse.success) {
+    notFound();
+    return;
+  }
+
+  const logoUrl = companyResponse.data.logo?.url || "";
 
   return (
     <>
-      <Image fill className="object-cover" alt="Image" src=""/>
+      <Image fill className="object-cover" alt="Image" src={logoUrl}/>
     </>
   );
 }
