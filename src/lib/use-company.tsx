@@ -26,10 +26,14 @@ export const CompanyProvider = ({
   );
 };
 
-export const useCompany = () => {
+export const useCompany = (): Company => {
   const company = useContext(CompanyContext);
-  if (company == null) {
+  if (company === null) {
     throw new Error("useCompany mut be used withing CompanyProvider");
+  }
+
+  if (company === undefined) {
+    throw new Error("Company is not logged");
   }
 
   return company;
