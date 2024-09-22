@@ -9,6 +9,7 @@ export type Company = {
 
 export type Logo = {
   id: string;
+  companyId: string;
   name: string;
   size: number;
   type: string;

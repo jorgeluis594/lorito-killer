@@ -128,34 +128,14 @@ export const getStoreLogo = async (
 };
 
 export const storeLogo = async (
-  companyId: string,
-  logo: Logo,
+  newLogo: Logo,
 ): Promise<response<Logo>> => {
   try {
-    const logoUpsert = await getStoreLogo(companyId);
-    if (logoUpsert.success) {
-      return {
-        success: true,
-        data: {
-          id: logo.id,
-          name: logo.name,
-          size: logo.size,
-          type: logo.type,
-          url: logo.url,
-          key: logo.key,
-        },
-      };
+    const logo = await prisma.logo.findFirst({where: {companyId: newLogo.companyId}});
+    if (logo) {
+      await prisma.logo.delete({where: { id: logo.id}});
     }
-    const createdLogo = await prisma.logo.create({
-      data: {
-        name: logo.name,
-        size: logo.size,
-        type: logo.type,
-        url: logo.url,
-        key: logo.key,
-        companyId,
-      },
-    })
+    const createdLogo = await prisma.logo.create({data: newLogo})
     return {success: true, data: createdLogo};
   } catch (error: any) {
     return {success: false, message: error.message};
