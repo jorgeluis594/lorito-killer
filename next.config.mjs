@@ -13,7 +13,11 @@ const nextConfig = {
     return config;
   },
   experimental: {
-    serverComponentsExternalPackages: ["pino", "pino-pretty"],
+    serverComponentsExternalPackages: [
+      "pino",
+      "pino-pretty",
+      "@react-pdf/renderer",
+    ],
   },
 };
 

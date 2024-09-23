@@ -152,10 +152,13 @@ export const getOrders = async (): Promise<response<Order[]>> => {
   }
 };
 
-export const find = async (id: string): Promise<response<Order>> => {
+export const find = async (
+  id: string,
+  companyId: string,
+): Promise<response<Order>> => {
   try {
     const prismaOrder = await prisma().order.findUnique({ where: { id: id } });
-    if (!prismaOrder) {
+    if (!prismaOrder || prismaOrder.companyId !== companyId) {
       return { success: false, message: "Order not found" };
     }
 
