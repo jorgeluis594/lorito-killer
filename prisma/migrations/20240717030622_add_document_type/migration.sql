@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE "Order" ADD COLUMN     "documentType" TEXT NOT NULL;
+ALTER TABLE "Order" ADD COLUMN     "documentType" TEXT;
