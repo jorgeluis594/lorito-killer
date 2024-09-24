@@ -4,6 +4,7 @@ import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "@/shared/components/ui/toaster";
 import { getServerSession } from "next-auth";
 import Providers from "@/shared/components/layout/providers";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { cn } from "@/lib/utils";
 import { authConfig } from "@/lib/auth-config";
@@ -54,6 +55,7 @@ export default async function RootLayout({
           {children}
         </Providers>
         <Toaster />
+        <SpeedInsights />
       </body>
     </html>
   );
