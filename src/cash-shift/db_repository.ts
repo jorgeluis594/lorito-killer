@@ -23,12 +23,12 @@ import { User } from "@/user/types";
 
 // improve this
 export const userExists = async (userId: string) => {
-  return !!(await prisma.user.findUnique({ where: { id: userId } }));
+  return !!(await prisma().user.findUnique({ where: { id: userId } }));
 };
 
 export const userByEmail = async (email: string): Promise<response<User>> => {
   try {
-    const persistedUser = await prisma.user.findUnique({
+    const persistedUser = await prisma().user.findUnique({
       where: { email },
     });
 
@@ -49,7 +49,7 @@ export const createCashShift = async <T extends CashShift>(
   cashShift: T,
 ): Promise<response<T>> => {
   try {
-    const persistedCashShift = await prisma.cashShift.create({
+    const persistedCashShift = await prisma().cashShift.create({
       data: cashShiftToPrisma(cashShift),
       include: { orders: true, payments: true },
     });
@@ -67,7 +67,7 @@ export const saveCashShift = async <T extends CashShift>(
   cashShift: T,
 ): Promise<response<T>> => {
   try {
-    const persistedCashShift = await prisma.cashShift.update({
+    const persistedCashShift = await prisma().cashShift.update({
       where: { id: cashShift.id },
       data: cashShiftToPrisma(cashShift),
       include: { orders: true, payments: true },
@@ -85,12 +85,12 @@ export const saveCashShift = async <T extends CashShift>(
 export const getManyCashShifts = async (
   companyId: string,
 ): Promise<response<CashShiftWithOutOrders[]>> => {
-  const cashShifts = await prisma.cashShift.findMany({
+  const cashShifts = await prisma().cashShift.findMany({
     where: { companyId },
     orderBy: { openedAt: "desc" },
   });
 
-  const users = await prisma.user.findMany({ where: { companyId } });
+  const users = await prisma().user.findMany({ where: { companyId } });
   const mappedUsers = users.reduce((acc: Record<string, typeof user>, user) => {
     acc[user.id] = user;
     return acc;
@@ -114,7 +114,7 @@ export const getManyCashShifts = async (
 export const getLastOpenCashShift = async (
   userId: string,
 ): Promise<response<OpenCashShift>> => {
-  const cashShift = await prisma.cashShift.findFirst({
+  const cashShift = await prisma().cashShift.findFirst({
     where: {
       userId,
       status: "OPEN",
@@ -136,7 +136,7 @@ export const getLastOpenCashShift = async (
 export const findCashShift = async <T extends CashShift>(
   id: string,
 ): Promise<response<T>> => {
-  const cashShift = await prisma.cashShift.findUnique({
+  const cashShift = await prisma().cashShift.findUnique({
     where: { id },
     include: { orders: true, payments: true },
   });
@@ -154,7 +154,7 @@ export const findCashShift = async <T extends CashShift>(
 export const prismaCashShiftToCashShift = async <T extends CashShift>(
   prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
 ): Promise<T> => {
-  const user = await prisma.user.findUnique({
+  const user = await prisma().user.findUnique({
     where: { id: prismaCashShift.userId },
   });
 

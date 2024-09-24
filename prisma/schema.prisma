@@ -19,38 +19,38 @@ enum UnitType {
 }
 
 model Product {
-  id        String   @id @default(uuid())
-  companyId String?
-  company  Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  name      String
-  price     Decimal
-  sku       String?
-  stock     Decimal?
-  unitType  UnitType?
-  purchasePrice Decimal?
-  targetMovementProductId String?
+  id                         String          @id @default(uuid())
+  companyId                  String?
+  company                    Company?        @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  name                       String
+  price                      Decimal
+  sku                        String?
+  stock                      Decimal?
+  unitType                   UnitType?
+  purchasePrice              Decimal?
+  targetMovementProductId    String?
   targetMovementProductStock Decimal?
-  description String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isPackage Boolean @default(false)
-  photos    Photo[]
-  childPackageItems PackageItem[] @relation("ChildProducts")
-  parentPackageItems PackageItem[] @relation("ParentProducts")
-  stockTransfers StockTransfer[]
-  categories Category[]
-  orderItems OrderItem[]
+  description                String
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+  isPackage                  Boolean         @default(false)
+  photos                     Photo[]
+  childPackageItems          PackageItem[]   @relation("ChildProducts")
+  parentPackageItems         PackageItem[]   @relation("ParentProducts")
+  stockTransfers             StockTransfer[]
+  categories                 Category[]
+  orderItems                 OrderItem[]
 }
 
 model PackageItem {
-  id        String   @id @default(uuid())
-  quantity  Int
-  childProductId String
+  id              String   @id @default(uuid())
+  quantity        Int
+  childProductId  String
   parentProductId String
-  childProduct   Product @relation("ChildProducts", fields: [childProductId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  parentProduct   Product @relation("ParentProducts", fields: [parentProductId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  childProduct    Product  @relation("ChildProducts", fields: [childProductId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  parentProduct   Product  @relation("ParentProducts", fields: [parentProductId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Photo {
@@ -66,13 +66,13 @@ model Photo {
 }
 
 model Category {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   companyId String?
-  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   name      String
   products  Product[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 enum StockTransferType {
@@ -82,18 +82,18 @@ enum StockTransferType {
 }
 
 model StockTransfer {
-  id        String   @id @default(uuid())
+  id        String            @id @default(uuid())
   userId    String
-  user      User @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   type      StockTransferType
   data      Json
   value     Decimal
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 }
 
 enum ShiftStatus {
@@ -102,11 +102,11 @@ enum ShiftStatus {
 }
 
 model CashShift {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   companyId     String?
-  company       Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  company       Company?    @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   initialAmount Decimal
   finalAmount   Decimal?
   orders        Order[]
@@ -114,8 +114,8 @@ model CashShift {
   status        ShiftStatus
   openedAt      DateTime
   closedAt      DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model OrderItem {
@@ -125,55 +125,104 @@ model OrderItem {
   productId    String
   orderId      String
   productPrice Decimal
-  product      Product @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
 
 model Order {
-  id        String    @id @default(uuid())
-  cashShiftId String
-  companyId  String?
-  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  total     Decimal
-  status    String
-  cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  payments  Payment[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  orderItems     OrderItem[]
+  id           String      @id @default(uuid())
+  cashShiftId  String
+  companyId    String?
+  customerId   String?
+  customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  company      Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  total        Decimal
+  status       String
+  cashShift    CashShift   @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  payments     Payment[]
+  documents    Document[]
+  documentType String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orderItems   OrderItem[]
+}
+
+enum DocumentType {
+  INVOICE
+  RECEIPT
+  TICKET
+}
+
+model Document {
+  id            String       @id @default(uuid())
+  orderId       String
+  customerId    String?
+  total         Decimal
+  documentType  DocumentType
+  series        String
+  number        String
+  dateOfIssue   DateTime
+  qr            String?
+  hash          String?
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  customer      Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum CustomerDocumentType {
+  RUC
+  DNI
+}
+
+model Customer {
+  id             String                @id @default(uuid())
+  companyId      String
+  company        Company               @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  documentType   CustomerDocumentType?
+  documentNumber String?
+  legalName      String?
+  address        String?
+  email          String?
+  phoneNumber    String?
+  geoCode        String?
+  documents      Document[]
+  orders         Order[]
 }
 
 model Company {
-  id        String   @id @default(uuid())
-  name      String
-  email     String
-  phone     String
-  address   String
-  users     User[]
-  products Product[]
-  cashShifts CashShift[]
-  orders Order[]
-  categories Category[]
+  id             String          @id @default(uuid())
+  name           String
+  email          String
+  phone          String
+  address        String
+  ruc            String?
+  customers      Customer[]
+  users          User[]
+  products       Product[]
+  cashShifts     CashShift[]
+  orders         Order[]
+  categories     Category[]
   stockTransfers StockTransfer[]
-
-  subdomain String? @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  subdomain      String?         @unique
+  billingCredentials Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model User {
-  id        String   @id @default(uuid())
-  companyId String?
-  company  Company?  @relation(fields: [companyId], references: [id])
-  email     String   @unique
-  password  String
-  name      String?
-  cashShifts CashShift[]
+  id             String          @id @default(uuid())
+  companyId      String?
+  company        Company?        @relation(fields: [companyId], references: [id])
+  email          String          @unique
+  password       String
+  name           String?
+  cashShifts     CashShift[]
   stockTransfers StockTransfer[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 enum PaymentMethod {
@@ -184,14 +233,36 @@ enum PaymentMethod {
 }
 
 model Payment {
-  id        String   @id @default(uuid())
+  id          String        @id @default(uuid())
   cashShiftId String
-  amount    Decimal
-  orderId   String
-  data      Json?
-  method    PaymentMethod
-  cashShift CashShift @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  amount      Decimal
+  orderId     String
+  data        Json?
+  method      PaymentMethod
+  cashShift   CashShift     @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum LocalityLevel {
+  COUNTRY
+  DEPARTMENT
+  PROVINCE
+  DISTRICT
+}
+
+model Locality {
+  id          String        @id @default(uuid())
+  idUbigeo    String        @unique
+  name        String
+  code        String
+  tag         String
+  searchValue String
+  level       LocalityLevel
+  parentId    String?
+  children    Locality[]    @relation("LocalityParent")
+  parent      Locality?     @relation("LocalityParent", fields: [parentId], references: [idUbigeo])
+
+  @@index([name, code, tag, parentId])
 }

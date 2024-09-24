@@ -1,7 +1,7 @@
 import prisma from "../lib/prisma";
 
 const execute = async () => {
-  const company = await prisma.company.create({
+  const company = await prisma().company.create({
     data: {
       id: crypto.randomUUID(),
       name: "Market Chavez",
@@ -12,39 +12,39 @@ const execute = async () => {
     },
   });
 
-  const users = await prisma.user.findMany();
-  const response = await prisma.user.updateMany({
+  const users = await prisma().user.findMany();
+  const response = await prisma().user.updateMany({
     where: { id: { in: users.map((u) => u.id) } },
     data: { companyId: company.id },
   });
   console.log(response);
 
-  const products = await prisma.product.findMany();
-  const productsResponse = await prisma.product.updateMany({
+  const products = await prisma().product.findMany();
+  const productsResponse = await prisma().product.updateMany({
     where: { id: { in: products.map((p) => p.id) } },
     data: { companyId: company.id },
   });
 
   console.log(productsResponse);
 
-  const cashShifts = await prisma.cashShift.findMany();
-  const cashShiftsResponse = await prisma.cashShift.updateMany({
+  const cashShifts = await prisma().cashShift.findMany();
+  const cashShiftsResponse = await prisma().cashShift.updateMany({
     where: { id: { in: cashShifts.map((cs) => cs.id) } },
     data: { companyId: company.id },
   });
 
   console.log(cashShiftsResponse);
 
-  const orders = await prisma.order.findMany();
-  const ordersResponse = await prisma.order.updateMany({
+  const orders = await prisma().order.findMany();
+  const ordersResponse = await prisma().order.updateMany({
     where: { id: { in: orders.map((o) => o.id) } },
     data: { companyId: company.id },
   });
 
   console.log(ordersResponse);
 
-  const categories = await prisma.category.findMany();
-  const categoriesResponse = await prisma.category.updateMany({
+  const categories = await prisma().category.findMany();
+  const categoriesResponse = await prisma().category.updateMany({
     where: { id: { in: categories.map((c) => c.id) } },
     data: { companyId: company.id },
   });

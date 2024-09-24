@@ -2,14 +2,14 @@ import prisma from "../lib/prisma";
 import { Category } from "@prisma/client";
 
 const execute = async () => {
-  const company = (await prisma.company.findMany({}))[1];
-  const products = await prisma.product.findMany({
+  const company = (await prisma().company.findMany({}))[1];
+  const products = await prisma().product.findMany({
     where: { companyId: company.id },
     include: { categories: true },
   });
 
   const companyCategories: Record<string, Category | undefined> = (
-    await prisma.category.findMany({ where: { companyId: company.id } })
+    await prisma().category.findMany({ where: { companyId: company.id } })
   ).reduce((acc: Record<string, Category>, c) => {
     if (!acc[c.id]) {
       acc[c.id] = c;
@@ -24,7 +24,7 @@ const execute = async () => {
         continue;
       }
 
-      const response = await prisma.product.update({
+      const response = await prisma().product.update({
         where: { id: p.id },
         data: {
           categories: {

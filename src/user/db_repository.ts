@@ -6,7 +6,7 @@ export const getUserByEmail = async (
   email: string,
 ): Promise<response<CreateUserParams>> => {
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma().user.findUnique({ where: { email } });
     if (!user) return { success: false, message: "User not found" };
 
     return {
@@ -22,7 +22,7 @@ export const createUser = async (
   user: CreateUserParams,
 ): Promise<response<User>> => {
   try {
-    const { password, ...persistedUser } = await prisma.user.create({
+    const { password, ...persistedUser } = await prisma().user.create({
       data: { ...user, password: user.password },
     });
 
@@ -37,7 +37,7 @@ export const createUser = async (
 
 export const updateUser = async (user: User): Promise<response<User>> => {
   try {
-    const { password, ...persistedUser } = await prisma.user.update({
+    const { password, ...persistedUser } = await prisma().user.update({
       where: { id: user.id },
       data: user,
     });
@@ -59,7 +59,7 @@ export const updatePassword = async (
   newPassword: string,
 ): Promise<response<User>> => {
   try {
-    const { password, ...persistedUser } = await prisma.user.update({
+    const { password, ...persistedUser } = await prisma().user.update({
       where: { id: userId },
       data: { password: newPassword },
     });
