@@ -282,6 +282,8 @@ function isOrderStatus(
 function isOrderDocumentType(
   documentType: any,
 ): documentType is "invoice" | "receipt" | "ticket" {
+  if (documentType === null) return true;
+
   return (
     documentType === "invoice" ||
     documentType === "receipt" ||
