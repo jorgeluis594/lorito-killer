@@ -1,5 +1,4 @@
 import Image from "next/image";
-import {getCompany} from "@/order/actions";
 import {getSession} from "@/lib/auth";
 import {getCompany as findCompany} from "@/company/db_repository";
 import {notFound} from "next/navigation";
@@ -14,6 +13,10 @@ export async function LogoImage() {
   }
 
   const logoUrl = companyResponse.data.logo?.url || "";
+
+  if (!logoUrl) {
+    return null;
+  }
 
   return (
     <>
