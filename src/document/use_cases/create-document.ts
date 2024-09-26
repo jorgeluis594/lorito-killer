@@ -150,7 +150,7 @@ const getAvailableDocumentNumberAndSerial = async (
 
   switch (documentType) {
     case "invoice":
-      if (!invoiceSerialNumber || !invoiceStartsOnNumber) {
+      if (!invoiceSerialNumber) {
         return serverError;
       }
       documentDetailsResponse = await getDocumentDetails(
@@ -160,7 +160,7 @@ const getAvailableDocumentNumberAndSerial = async (
       );
       break;
     case "receipt":
-      if (!receiptSerialNumber || !receiptStartsOnNumber) {
+      if (!receiptSerialNumber) {
         return serverError;
       }
 
