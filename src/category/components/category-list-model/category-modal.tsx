@@ -10,6 +10,9 @@ import CategoryContent from "./category-content";
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import NewCategoryDialog from "@/product/components/category/new-category-dialog";
 import {Category} from "@/category/types";
+import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
+import React from "react";
+import { AlignJustify } from 'lucide-react';
 
 interface NewSectionDialogProps {
   addCategory: (category: Category) => void;
@@ -29,9 +32,8 @@ export default function CategoriesModal({
         <Button
           variant="outline"
           size="icon"
-          className="mr-5 rounded-full w-6 h-6 flex items-center justify-center text-lg border-2 border-slate-400"
         >
-          ＋
+          <AlignJustify />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-96 sm:h-[429.5] w-full flex flex-col items-center p-0">

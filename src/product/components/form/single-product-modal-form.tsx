@@ -60,7 +60,7 @@ import {
 import ProductSelector from "@/product/components/form/product-selector";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
 import { Switch } from "@/components/ui/switch";
-import {Label} from "@/shared/components/ui/label";
+import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
@@ -356,6 +356,9 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         formStore.resetProduct(SingleProductType);
         form.reset({ ...EMPTY_SINGLE_PRODUCT });
         formStore.setOpen(val);
+        if (!val) {
+          setShowTransferProduct(false);
+        }
       }}
     >
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
@@ -363,8 +366,9 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           <div className="flex items-center justify-between">
             <Heading title={title} />
             <div className="flex items-center space-x-1 mr-8">
-              <label className="text-sm">Conversión de Unidad</label>
+              <label className="text-sm">Transformar producto</label>
               <Switch onCheckedChange={handleSwitchChange}/>
+              <HelpTooltip text="Activa para poder traspasar stock" />
             </div>
           </div>
           <Form {...form}>
@@ -513,9 +517,12 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                           value={field.value || []}
                           onChange={handleCategoriesUpdated}
                         />
-                        <CategoriesModal addCategory={addCategoryToProduct}/>
+                        <div className="flex items-center gap-2">
+                          <CategoriesModal addCategory={addCategoryToProduct}/>
+                          <HelpTooltip text="Categorias del Producto"/>
+                        </div>
                       </div>
-                      <FormMessage />
+                      <FormMessage/>
                     </FormItem>
                   )}
                 />
@@ -543,7 +550,10 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Producto de traspaso de stock</FormLabel>
+                        <div className="flex items-center">
+                          <FormLabel>Producto de traspaso de stock</FormLabel>
+                          <HelpTooltip text="Elige un producto para transformarlo en un paquete"/>
+                        </div>
                         <FormControl>
                           <ProductSelector
                             value={targetMovementProduct}
