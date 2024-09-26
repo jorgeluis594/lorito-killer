@@ -42,7 +42,6 @@ export default function LogoUpload({
             },
           }}
           onClientUploadComplete={(res: any | undefined) => {
-            console.log(res);
             if (res) {
               onUpdateFile(res[0]);
             }

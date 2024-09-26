@@ -21,6 +21,7 @@ import LogoUpload from "@/company/components/file-upload/file-upload-logo";
 
 const LogoSchema = zod.object({
   id: zod.string(),
+  companyId: zod.string(),
   name: zod.string(),
   size: zod.number(),
   key: zod.string(),
