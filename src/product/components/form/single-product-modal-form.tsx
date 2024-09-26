@@ -59,6 +59,8 @@ import {
 } from "@/shared/components/ui/select";
 import ProductSelector from "@/product/components/form/product-selector";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
+import { Switch } from "@/components/ui/switch";
+import {Label} from "@/shared/components/ui/label";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
@@ -95,6 +97,7 @@ interface ProductFormProps {
 const SingleProductModalForm: React.FC<ProductFormProps> = ({
   onActionPerformed,
 }) => {
+  const [showTransferProduct, setShowTransferProduct] = useState(false);
   const formStore = useProductFormStore((store) => store);
   const user = useUserSession();
   const title = formStore.isNew ? "Agregar producto" : "Editar producto";
@@ -342,6 +345,10 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  const handleSwitchChange = () => {
+    setShowTransferProduct((prev) => !prev);
+  };
+
   return (
     <Dialog
       open={formStore.open}
@@ -355,9 +362,13 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
             <Heading title={title} />
+            <div className="flex items-center space-x-1 mr-8">
+              <label className="text-sm">Conversión de Unidad</label>
+              <Switch onCheckedChange={handleSwitchChange}/>
+            </div>
           </div>
           <Form {...form}>
-            <form
+          <form
               onSubmit={form.handleSubmit(onSubmit)}
               className="mx-auto space-y-8"
             >
@@ -436,6 +447,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          disabled={!showTransferProduct}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -524,6 +536,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     </FormItem>
                   )}
                 />
+                {showTransferProduct && (
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     name="targetMovementProductId"
@@ -570,6 +583,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     )}
                   />
                 </div>
+                )}
               </div>
             </form>
           </Form>
