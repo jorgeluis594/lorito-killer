@@ -10,7 +10,7 @@ export default async function Header() {
         <div className={cn("block lg:!hidden")}>
           <MobileSidebar/>
         </div>
-        <div className="flex items-center justify-center relative w-[56px] h-[56px] rounded-md overflow-hidden">
+        <div className="flex items-center justify-center relative w-[56px] h-[56px] rounded-md overflow-hidden ml-20">
           <LogoImage/>
         </div>
         <div className="flex items-center justify-end w-full">
