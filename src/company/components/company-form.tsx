@@ -86,7 +86,7 @@ export default function CompanyForm({company}: { company: Company }) {
       );
       if (removeLogoResponse.success) {
         toast({
-          description: "Logo eliminada con exito",
+          description: "Logo eliminada con éxito",
         });
       } else {
         toast({
@@ -105,7 +105,7 @@ export default function CompanyForm({company}: { company: Company }) {
       if (storeLogoResponse.success) {
         form.setValue("logo", storeLogoResponse.data);
         toast({
-          description: "Logos subidas con exito",
+          description: "Logo subido con éxito",
         });
       } else {
         toast({
