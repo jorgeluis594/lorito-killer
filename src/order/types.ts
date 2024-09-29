@@ -20,6 +20,7 @@ export type Order = {
   cashShiftId: string;
   companyId: string;
   orderItems: OrderItem[];
+  discount?: number;
   total: number;
   status: "pending" | "completed" | "cancelled";
   payments: Payment[];
