@@ -54,6 +54,7 @@ const defaultInitState: OrderFormStore = {
     payments: [],
     status: "pending",
     documentType: "ticket",
+    discount: 0,
     total: 0,
     customer: undefined,
   },
