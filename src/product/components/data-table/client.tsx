@@ -86,7 +86,7 @@ export default function ProductsClient({
               <>
                 <Boxes className="mr-2 h-5 w-5" />
                 <span>Agregar Pack</span>
-                <HelpTooltip text="Agrega un nuevo paquete de Producto." />
+                <HelpTooltip text="Agrega un nuevo paquete de tus Producto." />
               </>
             )}
           </Button>
