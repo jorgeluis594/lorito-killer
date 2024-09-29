@@ -583,18 +583,20 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                         control={form.control}
                         render={({field}) => (
                           <FormItem>
-                            <FormLabel>Cantidad a traspasar</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="Ingrese cantidad"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage/>
+                            <div className="flex items-center mt-0.5">
+                              <FormLabel>Cantidad a traspasar</FormLabel>
+                            </div>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Ingrese cantidad"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage/>
                           </FormItem>
-                        )}
-                      />
+                          )}
+                        />
                     </div>
                   )
                 )}
