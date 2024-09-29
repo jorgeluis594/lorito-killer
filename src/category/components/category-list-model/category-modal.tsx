@@ -1,18 +1,14 @@
 "use client"
 
 import { Dialog, DialogContent, DialogTrigger } from "@/shared/components/ui/dialog";
-import EditCategoryModal from "./edit-category-modal";
 import { Button } from "@/shared/components/ui/button";
 import { useCategoryStore } from "@/category/components/category-store-provider";
-import { MenuSquare, Plus } from "lucide-react";
-import DeleteCategoryModal from "./delete-category-modal";
 import CategoryContent from "./category-content";
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import NewCategoryDialog from "@/product/components/category/new-category-dialog";
 import {Category} from "@/category/types";
-import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
 import React from "react";
-import { AlignJustify } from 'lucide-react';
+import { List } from 'lucide-react';
 
 interface NewSectionDialogProps {
   addCategory: (category: Category) => void;
@@ -32,8 +28,9 @@ export default function CategoriesModal({
         <Button
           variant="outline"
           size="icon"
+          className="mb-2"
         >
-          <AlignJustify />
+          <List />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-96 sm:h-[429.5] w-full flex flex-col items-center p-0">
