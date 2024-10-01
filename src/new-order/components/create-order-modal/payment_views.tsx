@@ -21,6 +21,8 @@ import {
 } from "@/shared/components/ui/toggle-group";
 import * as React from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import {Checkbox} from "@/shared/components/ui/checkbox";
+import {Button} from "@/shared/components/ui/button";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -68,9 +70,11 @@ type CashPaymentMethodState = Omit<CashPaymentMethod, "received_amount"> & {
 };
 
 export const CashPayment: React.FC = () => {
+  const [isChecked, setIsChecked] = useState(false);
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { cashShift } = useCashShiftStore((store) => store);
-  const { addPayment, removePayment } = useOrderFormActions();
+  const { addDiscount, addPayment, removePayment } = useOrderFormActions();
+  const [discount, setDiscountLocal] = useState(0)
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
@@ -85,6 +89,12 @@ export const CashPayment: React.FC = () => {
       cashShiftId: cashShift!.id,
       received_amount: value,
     });
+  }
+
+  const handleClickDiscount = () => {
+    debugger
+    addDiscount(+discount)
+    setDiscountLocal(0)
   }
 
   useEffect(() => {
@@ -134,6 +144,33 @@ export const CashPayment: React.FC = () => {
             ? "El monto recibido es menor al total"
             : ""}
         </p>
+      </div>
+      <div>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="terms"
+            checked={isChecked}
+            onCheckedChange={() => setIsChecked(!isChecked)}
+          />
+          <label
+            htmlFor="terms"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Aplicar descuento
+          </label>
+        </div>
+        {isChecked && (
+        <div className="flex items-center">
+          <MoneyInput
+            placeholder="Ingrese descuento"
+            type="number"
+            className="mr-2"
+            value={discount}
+            onChange={(e) =>setDiscountLocal(+e.target.value)}
+          />
+          <Button onClick={handleClickDiscount} type="button">Aplicar descuento</Button>
+        </div>
+        )}
       </div>
       {payment.change !== 0 && (
         <div className="mt-5">

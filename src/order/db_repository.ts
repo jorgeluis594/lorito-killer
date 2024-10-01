@@ -106,11 +106,9 @@ function mapPaymentsToPrisma(payments: Payment[]): PaymentPrismaMatch[] {
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
     const { orderItems, payments, customer, ...orderData } = order;
-    const finalTotal = orderData.total - (orderData.discount || 0);
     const createdOrderResponse = await prisma().order.create({
       data: {
         ...orderData,
-        total: finalTotal,
         customerId: customer?.id,
         payments: { create: mapPaymentsToPrisma(payments) as any },
       },
