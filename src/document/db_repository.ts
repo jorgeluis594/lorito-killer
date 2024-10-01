@@ -35,6 +35,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
   if (prismaDocument.documentType == "TICKET") {
     document = {
       id: prismaDocument.id,
+      companyId: prismaDocument.companyId!,
       orderId: prismaDocument.orderId,
       customerId: prismaDocument.customerId || undefined,
       total: +prismaDocument.total,
@@ -49,6 +50,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
     document = {
       id: prismaDocument.id,
       orderId: prismaDocument.orderId,
+      companyId: prismaDocument.companyId!,
       customerId: prismaDocument.customerId || undefined,
       total: +prismaDocument.total,
       documentType: "receipt",
@@ -65,6 +67,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
     document = {
       id: prismaDocument.id,
       orderId: prismaDocument.orderId,
+      companyId: prismaDocument.companyId!,
       customerId: prismaDocument.customerId!,
       total: +prismaDocument.total,
       documentType: "invoice",
@@ -133,11 +136,12 @@ export const findBillingDocumentFor = async (
 };
 
 export const getLatestDocumentNumber = async (
+  companyId: string,
   serialNumber: string,
 ): Promise<response<number | undefined>> => {
   try {
     const document = await prisma().document.findFirst({
-      where: { series: serialNumber },
+      where: { series: serialNumber, companyId: companyId },
       orderBy: { number: "desc" },
     });
 

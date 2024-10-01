@@ -38,6 +38,7 @@ export interface DocumentGateway {
 interface Repository {
   createDocument: (document: Document) => Promise<response<Document>>;
   getLastDocumentNumber: (
+    companyId: string,
     serialNumber: string,
   ) => Promise<response<number | undefined>>;
 }
@@ -60,6 +61,7 @@ export const createDocument = async (
   let documentResponse: response<Document>;
   const documentNumberAndSerialResponse =
     await getAvailableDocumentNumberAndSerial(
+      order.companyId,
       billingConfig,
       repository.getLastDocumentNumber,
       order.documentType,
@@ -132,6 +134,7 @@ export const createDocument = async (
 };
 
 const getAvailableDocumentNumberAndSerial = async (
+  companyId: string,
   billingSettings: BillingSettings,
   getLastDocumentNumber: Repository["getLastDocumentNumber"],
   documentType: DocumentType,
@@ -154,6 +157,7 @@ const getAvailableDocumentNumberAndSerial = async (
         return serverError;
       }
       documentDetailsResponse = await getDocumentDetails(
+        companyId,
         invoiceSerialNumber,
         invoiceStartsOnNumber,
         getLastDocumentNumber,
@@ -165,6 +169,7 @@ const getAvailableDocumentNumberAndSerial = async (
       }
 
       documentDetailsResponse = await getDocumentDetails(
+        companyId,
         receiptSerialNumber,
         receiptStartsOnNumber,
         getLastDocumentNumber,
@@ -172,6 +177,7 @@ const getAvailableDocumentNumberAndSerial = async (
       break;
     case "ticket":
       documentDetailsResponse = await getDocumentDetails(
+        companyId,
         billingSettings.ticketSerialNumber,
         undefined,
         getLastDocumentNumber,
@@ -195,11 +201,12 @@ const getAvailableDocumentNumberAndSerial = async (
 const DEFAULT_DOCUMENT_NUMBER = 0;
 
 const getDocumentDetails = async (
+  companyId: string,
   serialNumber: string,
   startsOnNumber: number | undefined,
   getLastDocumentNumber: Repository["getLastDocumentNumber"],
 ): Promise<response<{ number: number; serialNumber: string }>> => {
-  const response = await getLastDocumentNumber(serialNumber);
+  const response = await getLastDocumentNumber(companyId, serialNumber);
   if (!response.success) return response;
 
   const num = startsOnNumber
