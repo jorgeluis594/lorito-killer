@@ -11,11 +11,6 @@ type Session = {
   jti: string;
 };
 
-let session: Session | null;
-
 export const getSession = async (): Promise<Session> => {
-  if (!session) {
-    session = (await getServerSession(authConfig)) as Session
-  }
-  return session;
+  return (await getServerSession(authConfig)) as Session;
 };

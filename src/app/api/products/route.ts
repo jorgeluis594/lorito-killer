@@ -14,6 +14,8 @@ import { revalidatePath } from "next/cache";
 import { sortOptions } from "@/product/constants";
 import { getSession } from "@/lib/auth";
 
+export const revalidate = 0;
+
 export async function POST(req: Request) {
   const data: Product = await req.json();
 
