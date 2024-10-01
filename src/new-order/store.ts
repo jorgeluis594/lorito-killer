@@ -15,6 +15,7 @@ export type OrderFormStore = {
 export type Actions = {
   addProduct: (product: Product, stock?: number) => void;
   setDocumentType: (documentType: DocumentType) => void;
+  addDiscount: (discount: number) => void;
   setCustomer: (customer: Customer) => void;
   removeCustomer: () => void;
   getOrderItemByProduct: (productId: string) => OrderItem | undefined;

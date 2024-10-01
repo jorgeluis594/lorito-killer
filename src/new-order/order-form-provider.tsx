@@ -328,10 +328,23 @@ export const useOrderFormActions = (): Actions => {
     );
   };
 
+  const addDiscount = (discount: number) => {
+    const {order} = orderFormStoreContext.getState();
+    const newTotal = order.total - discount;
+    orderFormStoreContext.setState({
+      order: {
+        ...order,
+        discount: discount,
+        total: newTotal,
+      },
+    });
+  }
+
   return {
     addProduct,
     setDocumentType,
     setCustomer,
+    addDiscount,
     removeOrderItem,
     addOrderItem,
     updateOrderItem,
