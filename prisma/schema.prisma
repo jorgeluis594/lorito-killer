@@ -162,7 +162,7 @@ model Document {
   total        Decimal
   documentType DocumentType
   series       String
-  number       String
+  number       Int
   dateOfIssue  DateTime
   qr           String?
   hash         String?
