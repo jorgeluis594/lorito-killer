@@ -91,6 +91,7 @@ export const createDocument = async (
     const createdDocument = await prisma().document.create({
       data: {
         orderId: document.orderId!,
+        companyId: document.companyId,
         customerId: document.customerId,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
