@@ -5,7 +5,9 @@ import {useEffect} from "react";
 export default function SignOutRedirection() {
   const signOut = useSignOut()
   useEffect(() => {
-    signOut()
+    signOut().then(() => {
+      window.location.href = window.location.origin
+    })
   })
 
   return <p>Cerrando sesión</p>
