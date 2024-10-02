@@ -40,13 +40,13 @@ export default async function Page({ searchParams }: paramsProps) {
           title="Movimientos de Stock"
           description="Agrega o regulariza el stock de tus productos"
         />
+        <div className="flex">
+          <AddStockAdjustmentModal />
+        </div>
       </div>
       <Separator />
       <div className="flex flex-row space-x-12 space-y-0 mt-8">
-        <aside className="w-1/5">
-          <AddStockAdjustmentModal />
-        </aside>
-        <div className="flex-1 lg:max-w-5xl mt-6">
+        <div className="flex-1 mt-6">
           <DataTable
             data={resultStockTransfers.data}
             columns={columns}

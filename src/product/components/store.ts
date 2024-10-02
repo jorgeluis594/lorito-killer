@@ -11,6 +11,7 @@ export type ProductsActions = {
   setIsLoading: (isLoading: boolean) => void;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
+  deleteProduct: (productId: string) => void;
 };
 
 export type ProductsStore = ProductsState & ProductsActions;
@@ -39,6 +40,9 @@ export const createProductsStore = (
     return {
       ...initState,
       setProducts,
+      deleteProduct: (productId: string) => {
+        setProducts(getState().products.filter(p => p.id !== productId));
+      },
       setIsLoading: (loading) => set((state) => ({ isLoading: loading })),
       addProduct: (product) => setProducts([...getState().products, product]),
       updateProduct: (product) =>
