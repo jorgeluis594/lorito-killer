@@ -1,11 +1,11 @@
 import Image from "next/image";
 import {getSession} from "@/lib/auth";
-import {getCompany as findCompany} from "@/company/db_repository";
+import {getCompany } from "@/company/db_repository";
 import {notFound} from "next/navigation";
 
 export async function LogoImage() {
   const session = await getSession();
-  const companyResponse = await findCompany(session.user.companyId);
+  const companyResponse = await getCompany(session.user.companyId);
 
   if (!companyResponse.success) {
     notFound();
