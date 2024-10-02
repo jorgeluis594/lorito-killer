@@ -22,7 +22,15 @@ import {
 import * as React from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import {Checkbox} from "@/shared/components/ui/checkbox";
-import {Button} from "@/shared/components/ui/button";
+import {useDebounce} from "@/shared/components/ui/multiple-selector";
+import {
+  Select,
+  SelectContent,
+  SelectGroup, SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue
+} from "@/shared/components/ui/select";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -74,7 +82,8 @@ export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { cashShift } = useCashShiftStore((store) => store);
   const { addDiscount, addPayment, removePayment } = useOrderFormActions();
-  const [discount, setDiscountLocal] = useState(0)
+  const [discount, setDiscount] = useState('');
+  const debouncedDiscount = useDebounce(discount, 2000);
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
@@ -89,12 +98,6 @@ export const CashPayment: React.FC = () => {
       cashShiftId: cashShift!.id,
       received_amount: value,
     });
-  }
-
-  const handleClickDiscount = () => {
-    debugger
-    addDiscount(+discount)
-    setDiscountLocal(0)
   }
 
   useEffect(() => {
@@ -126,6 +129,12 @@ export const CashPayment: React.FC = () => {
   useEffect(() => {
     removePayment("cash");
   }, []);
+
+  useEffect(() => {
+    if (debouncedDiscount) {
+      addDiscount(+debouncedDiscount);
+    }
+  }, [debouncedDiscount]);
 
   return (
     <div className="mt-4">
@@ -161,14 +170,24 @@ export const CashPayment: React.FC = () => {
         </div>
         {isChecked && (
         <div className="flex items-center">
+          <Select>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Descuento en" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="soles">S/. Soles</SelectItem>
+                <SelectItem value="porcent">% Porcentaje</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <MoneyInput
             placeholder="Ingrese descuento"
             type="number"
             className="mr-2"
             value={discount}
-            onChange={(e) =>setDiscountLocal(+e.target.value)}
+            onChange={(e) => setDiscount(e.target.value)}
           />
-          <Button onClick={handleClickDiscount} type="button">Aplicar descuento</Button>
         </div>
         )}
       </div>
