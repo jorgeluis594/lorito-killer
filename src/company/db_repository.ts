@@ -34,16 +34,23 @@ export const updateCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
-    const {logo, ...companyData} = company
     const updatedCompany = await prisma().company.update({
       where: { id: company.id },
-      data: companyData,
+      data: {
+        id: company.id,
+        name: company.name,
+        phone: company.phone,
+        email: company.email,
+        ruc: company.ruc || undefined,
+        address: company.address,
+        subdomain: company.subdomain || "some_subdomain",
+      },
     });
 
     return {
       success: true,
       data: {
-        ...companyData,
+        ...company,
         ...updatedCompany,
         ruc: updatedCompany.ruc || undefined,
         subdomain: company.subdomain || "some_subdomain",
@@ -75,6 +82,7 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
       success: true,
       data: {
         ...companyData,
+        logo: company.logos[0],
         ruc: company.ruc || undefined,
         subdomain: company.subdomain || "some_subdomain",
         isBillingActivated:
@@ -94,7 +102,7 @@ export const getLogo = async (
   logoId: string,
 ): Promise<response<Logo>> => {
   try {
-    const logo = await prisma.logo.findUnique({where: {id: logoId}});
+    const logo = await prisma().logo.findUnique({where: {id: logoId}});
     if (!logo) return {success: false, message: "Logo not found"};
     return {success: true, data: logo};
   } catch (error: any) {
@@ -107,11 +115,11 @@ export const storeLogo = async (
   newLogo: Logo,
 ): Promise<response<Logo>> => {
   try {
-    const logo = await prisma.logo.findFirst({where: {companyId: newLogo.companyId}});
+    const logo = await prisma().logo.findFirst({where: {companyId: newLogo.companyId}});
     if (logo) {
-      await prisma.logo.delete({where: { id: logo.id}});
+      await prisma().logo.delete({where: { id: logo.id}});
     }
-    const createdLogo = await prisma.logo.create({
+    const createdLogo = await prisma().logo.create({
       data: {
         id: newLogo.id,
         key: newLogo.key,
@@ -135,7 +143,7 @@ export const removeLogo = async (
   if (!logoResponse.success) return logoResponse;
 
   try {
-    await prisma.logo.delete({
+    await prisma().logo.delete({
       where: {id: logoId, companyId: companyId},
     });
     return {success: true, data: logoResponse.data};
