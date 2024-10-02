@@ -11,8 +11,10 @@ export const authConfig: NextAuthOptions = {
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user?.id) token.userId = user.id;
-
-      return token;
+      return {
+        ...token,
+        user: user,
+      };
     },
     session: async ({ session, token, user }) => {
       if (!session.user) return session;
@@ -59,7 +61,6 @@ export const authConfig: NextAuthOptions = {
         if (!isValidPassword) return null;
 
         const { password: _, ...user } = userResponse.data;
-        console.log({ user });
         return { ...user, id: user.id! };
       },
     }),

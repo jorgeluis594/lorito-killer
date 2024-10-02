@@ -1,19 +1,13 @@
 "use client";
 
-import { useSingleProducts } from "@/product/components/products-store-provider";
-import { ProductItem } from "@/product/types";
+import { ProductItem, SingleProduct } from "@/product/types";
 import { Label } from "@/shared/components/ui/label";
 import { Button } from "@/shared/components/ui/button";
 import { Plus, Trash } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
 import { useToast } from "@/shared/components/ui/use-toast";
+import ProductSelector from "@/product/components/form/product-selector";
+import { useState } from "react";
 
 interface ProductItemsSelectorProps {
   value: ProductItem[];
@@ -24,7 +18,6 @@ export default function ProductItemsSelector({
   value,
   onChange,
 }: ProductItemsSelectorProps) {
-  const singleProducts = useSingleProducts();
   const { toast } = useToast();
 
   const addProduct = () => {
@@ -34,24 +27,11 @@ export default function ProductItemsSelector({
     ]);
   };
 
-  const onProductChange = (productItemId: string, productId: string) => {
+  const onProductChange = (newProductItem: ProductItem) => {
     const updatedValue = value.map((productItem) => {
-      if (productItem.id !== productItemId) return productItem;
+      if (productItem.id !== productItem.id) return productItem;
 
-      const product = singleProducts.find(
-        (product) => product.id === productId,
-      );
-
-      if (!product) {
-        toast({
-          title: "Error",
-          variant: "destructive",
-          description: "No se encontró el producto",
-        });
-        return productItem;
-      }
-
-      return { ...productItem, productId, productName: product.name };
+      return newProductItem;
     });
 
     onChange(updatedValue);
@@ -82,23 +62,10 @@ export default function ProductItemsSelector({
         {value.map((productItem) => (
           <div key={productItem.id} className="grid grid-cols-12 gap-4 mb-2">
             <div className="col-span-8">
-              <Select
-                onValueChange={(productId) =>
-                  onProductChange(productItem.id, productId)
-                }
-                value={productItem.productId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Escoja un producto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {singleProducts.map((product) => (
-                    <SelectItem key={product.id} value={product.id!}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ProductItemSelectorField
+                productItem={productItem}
+                onChange={onProductChange}
+              />
             </div>
             <div className="col-span-3">
               <Input
@@ -124,5 +91,32 @@ export default function ProductItemsSelector({
         ))}
       </div>
     </>
+  );
+}
+
+function ProductItemSelectorField({
+  productItem,
+  onChange,
+}: {
+  productItem: ProductItem;
+  onChange: (value: ProductItem) => void;
+}) {
+  const [currentProduct, setCurrentProduct] = useState<
+    SingleProduct | undefined
+  >();
+
+  return (
+    <ProductSelector
+      productType="SingleProduct"
+      value={currentProduct}
+      onSelect={(product) => {
+        setCurrentProduct(product);
+        onChange({
+          ...productItem,
+          productId: product.id!,
+          productName: product.name,
+        });
+      }}
+    />
   );
 }

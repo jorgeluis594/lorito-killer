@@ -1,10 +1,20 @@
 import { create, findBy, getMany } from "@/product/db_repository";
 import productCreator from "@/product/use-cases/product-creator";
-import { Product, ProductSortParams, SortKey } from "@/product/types";
+import {
+  PackageProductType,
+  Product,
+  ProductSortParams,
+  SingleProductType,
+  SortKey,
+  TypePackageProductType,
+  TypeSingleProductType,
+} from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { sortOptions } from "@/product/constants";
 import { getSession } from "@/lib/auth";
+
+export const revalidate = 0;
 
 export async function POST(req: Request) {
   const data: Product = await req.json();
@@ -24,6 +34,7 @@ export async function GET(req: Request) {
   const categoryId = searchParams.get("categoryId");
   const sortKey = searchParams.get("sortBy") as SortKey | null;
   const limit = searchParams.get("limit");
+  const productType = searchParams.get("productType") || undefined;
 
   let sortBy: ProductSortParams =
     sortKey && sortOptions[sortKey]
@@ -36,7 +47,16 @@ export async function GET(req: Request) {
     sortBy: sortBy,
     limit: limit ? parseInt(limit) : undefined,
     categoryId,
+    productType: ensureProductType(productType),
   });
 
   return NextResponse.json(response, { status: response.success ? 200 : 404 });
 }
+
+const ensureProductType = (
+  type?: string,
+): TypePackageProductType | TypeSingleProductType | undefined => {
+  return type === SingleProductType || type === PackageProductType
+    ? type
+    : undefined;
+};

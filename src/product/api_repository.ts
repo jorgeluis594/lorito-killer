@@ -1,4 +1,10 @@
-import type { Photo, Product, SortKey } from "./types";
+import type {
+  InferProductType,
+  Photo,
+  Product,
+  ProductType,
+  SortKey,
+} from "./types";
 import { response } from "@/lib/types";
 
 export const create = async (product: Product): Promise<response<Product>> => {
@@ -77,21 +83,23 @@ export const removePhoto = async (
   return await res.json();
 };
 
-export type GetManyParams = {
+export type GetManyParams<T extends ProductType | undefined = undefined> = {
   q?: string | null;
   categoryId?: string | null;
   limit?: number;
   sortBy?: SortKey;
+  productType?: T;
 };
 
-export const getMany = async (
-  params: GetManyParams = {},
-): Promise<response<Product[]>> => {
+export const getMany = async <T extends ProductType | undefined>(
+  params: GetManyParams<T> = {},
+): Promise<response<InferProductType<T>[]>> => {
   const searchParams: any = {};
   if (params.q) searchParams["param"] = params.q;
   if (params.categoryId) searchParams["categoryId"] = params.categoryId;
   if (params.sortBy) searchParams["sortBy"] = params.sortBy;
   if (params.limit) searchParams["limit"] = params.limit;
+  if (params.productType) searchParams["productType"] = params.productType;
   const queryString = new URLSearchParams(searchParams).toString();
 
   const res = await fetch(`/api/products?${queryString}`, {
@@ -108,15 +116,18 @@ export const getMany = async (
 
   return {
     ...data,
-    data: data.data.map((product) => ({
-      ...product,
-      createdAt: new Date(product.createdAt!),
-      updatedAt: new Date(product.updatedAt!),
-      photos: (product.photos || []).map((photo) => ({
-        ...photo,
-        createdAt: new Date(photo.createdAt!),
-      })),
-    })),
+    data: data.data.map(
+      (product): InferProductType<T> =>
+        ({
+          ...product,
+          createdAt: new Date(product.createdAt!),
+          updatedAt: new Date(product.updatedAt!),
+          photos: (product.photos || []).map((photo) => ({
+            ...photo,
+            createdAt: new Date(photo.createdAt!),
+          })),
+        }) as InferProductType<T>,
+    ),
   };
 };
 

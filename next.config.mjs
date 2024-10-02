@@ -9,9 +9,16 @@ const nextConfig = {
     ],
   },
   webpack: (config) => {
-    config.externals = [...config.externals, 'bcrypt'];
-    return config
-  }
+    config.externals = [...config.externals, "bcrypt"];
+    return config;
+  },
+  experimental: {
+    serverComponentsExternalPackages: [
+      "pino",
+      "pino-pretty",
+      "@react-pdf/renderer",
+    ],
+  },
 };
 
 export default nextConfig;

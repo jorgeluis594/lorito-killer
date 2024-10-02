@@ -4,8 +4,10 @@ import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "@/shared/components/ui/toaster";
 import { getServerSession } from "next-auth";
 import Providers from "@/shared/components/layout/providers";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { cn } from "@/lib/utils";
+import { authConfig } from "@/lib/auth-config";
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -21,7 +23,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession();
+  const session = await getServerSession(authConfig)
 
   return (
     <html lang="en">
@@ -31,8 +33,11 @@ export default async function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers session={session}>{children}</Providers>
+        <Providers session={session}>
+          {children}
+        </Providers>
         <Toaster />
+        <SpeedInsights />
       </body>
     </html>
   );

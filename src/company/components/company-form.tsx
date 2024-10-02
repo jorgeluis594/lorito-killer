@@ -37,7 +37,8 @@ const CompanyFormSchema = zod.object({
   email: zod.string().email({message: "El email no es válido"}),
   phone: zod
     .string()
-    .min(6, {message: "El teléfono debe tener al menos 6 caracteres"}),
+    .min(6, { message: "El teléfono debe tener al menos 6 caracteres" }),
+  ruc: zod.string().length(11, "El ruc debe tener 11 digitos").optional(),
   address: zod
     .string()
     .min(6, {message: "La dirección debe tener al menos 6 caracteres"}),
@@ -47,17 +48,21 @@ const CompanyFormSchema = zod.object({
 
 type CompanyFormValues = zod.infer<typeof CompanyFormSchema>;
 
-export default function CompanyForm({company}: { company: Company }) {
-  const {toast} = useToast();
+export default function CompanyForm({ company }: { company: Company }) {
+  const { toast } = useToast();
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(CompanyFormSchema),
-    defaultValues: {...company},
+    defaultValues: { ...company },
   });
 
   const handleSubmit = async (data: CompanyFormValues) => {
     const {logo, ...dataStore} = data
-    const response = await updateCompany({...company, ...dataStore}); //, logo: data.logos ? data.logos![0] : undefined
+    const response = await updateCompany({
+      ...company,
+      ...dataStore,
+      ruc: data["ruc"],
+    });
 
     if (!response.success) {
       toast({
@@ -86,7 +91,7 @@ export default function CompanyForm({company}: { company: Company }) {
       );
       if (removeLogoResponse.success) {
         toast({
-          description: "Logo eliminada con éxito",
+          description: "Logo eliminado con éxito",
         });
       } else {
         toast({
@@ -105,7 +110,7 @@ export default function CompanyForm({company}: { company: Company }) {
       if (storeLogoResponse.success) {
         form.setValue("logo", storeLogoResponse.data);
         toast({
-          description: "Logo subido con éxito",
+          description: "Logo actualizado con éxito",
         });
       } else {
         toast({
@@ -125,33 +130,46 @@ export default function CompanyForm({company}: { company: Company }) {
             <FormField
               control={form.control}
               name="name"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Razón Social</FormLabel>
                   <FormControl>
                     <Input placeholder="Razón social" {...field} />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ruc"
+              render={({ field }) => (
+                <FormItem className="my-2 max-w-sm">
+                  <FormLabel>Ruc</FormLabel>
+                  <FormControl>
+                    <Input placeholder="10712432876" {...field} />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="address"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Dirección</FormLabel>
                   <FormControl>
                     <Input placeholder="Dirección" {...field} />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="phone"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Teléfono</FormLabel>
                   <FormControl>
@@ -162,14 +180,14 @@ export default function CompanyForm({company}: { company: Company }) {
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="email"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
@@ -190,7 +208,7 @@ export default function CompanyForm({company}: { company: Company }) {
                       value={field.value}
                     />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />

@@ -1,22 +1,32 @@
 import prisma from "@/lib/prisma";
 
-import {Company, Logo} from "@/company/types";
-import {response} from "@/lib/types";
+import { Company, Logo } from "@/company/types";
+import { response } from "@/lib/types";
+import { log } from "@/lib/log";
+import { BillingCredentials } from "@/document/types";
 
 export const createCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
     const {logo, ...companyData} = company
-    const storedCompany = await prisma.company.create({
+    const storedCompany = await prisma().company.create({
       data: {...companyData},
     });
 
-    if (logo) await prisma.logo.create({data: {...logo, companyId: storedCompany.id}})
+    if (logo) await prisma().logo.create({data: {...logo, companyId: storedCompany.id}})
 
-    return {success: true, data: storedCompany};
+    return {
+      success: true,
+      data: {
+        ...company,
+        ...storedCompany,
+        ruc: storedCompany.ruc || undefined,
+        subdomain: storedCompany.subdomain || "some_subdomain",
+      },
+    };
   } catch (e: any) {
-    return {success: false, message: e.message};
+    return { success: false, message: e.message };
   }
 };
 
@@ -25,80 +35,57 @@ export const updateCompany = async (
 ): Promise<response<Company>> => {
   try {
     const {logo, ...companyData} = company
-
-    const updatedCompany = await prisma.company.update({
-      where: {id: company.id},
+    const updatedCompany = await prisma().company.update({
+      where: { id: company.id },
       data: companyData,
     });
 
-    // const [foundLogo] = await prisma.logo.findMany({
-    //   where: { companyId: updatedCompany.id },
-    //   orderBy: { createdAt: "asc" },
-    //   take: 1
-    // })
-
-    // if (foundLogo?.id === logo?.id) {
-    //   return { success: true, data: updatedCompany };
-    // } else {
-    //   await prisma.logo.deleteMany({
-    //     where: { companyId: updatedCompany.id },
-    //   })
-    //
-    //   await prisma.logo.create({
-    //     data: { ...logo!, companyId: company.id },
-    //   })
-    //
-    //   return { success: true, data: company };
-    // }
-
-    return {success: true, data: updatedCompany};
+    return {
+      success: true,
+      data: {
+        ...companyData,
+        ...updatedCompany,
+        ruc: updatedCompany.ruc || undefined,
+        subdomain: company.subdomain || "some_subdomain",
+      },
+    };
   } catch (e: any) {
-    return {success: false, message: e.message};
+    log.error("update_company_failed", {
+      company: company,
+      error_message: e.message,
+    });
+    return { success: false, message: e.message };
   }
 };
 
 export const getCompany = async (id: string): Promise<response<Company>> => {
   try {
-    const company = await prisma.company.findUnique({
-      where: {id},
+    const company = await prisma().company.findUnique({
+      where: { id },
       include: {logos: true},
     });
 
     if (!company) {
-      return {success: false, message: "Company not found"};
+      return { success: false, message: "Company not found" };
     }
 
-    const companyResponse: Company = {
-      id: company.id,
-      address: company.address,
-      name: company.name,
-      email: company.email,
-      phone: company.phone,
-      logo: company.logos[0],
-    }
+    const { billingCredentials, ...companyData } = company;
 
-    return {success: true, data: companyResponse};
+    return {
+      success: true,
+      data: {
+        ...companyData,
+        ruc: company.ruc || undefined,
+        subdomain: company.subdomain || "some_subdomain",
+        isBillingActivated:
+          !!billingCredentials &&
+          !!(billingCredentials as unknown as BillingCredentials)[
+            "billingToken"
+          ],
+      },
+    };
   } catch (e: any) {
-    return {success: false, message: e.message};
-  }
-};
-
-export const find = async (
-  id: string,
-): Promise<response<Company>> => {
-  try {
-    const company = await prisma.company.findUnique({
-      where: {id},
-      include: {logos: true},
-    });
-
-    if (company) {
-      return {success: true, data: {...company, logo: company.logos[0]}};
-    } else {
-      return {success: false, message: "Company not found"};
-    }
-  } catch (error: any) {
-    return {success: false, message: error.message};
+    return { success: false, message: e.message };
   }
 };
 
@@ -108,18 +95,6 @@ export const getLogo = async (
 ): Promise<response<Logo>> => {
   try {
     const logo = await prisma.logo.findUnique({where: {id: logoId}});
-    if (!logo) return {success: false, message: "Logo not found"};
-    return {success: true, data: logo};
-  } catch (error: any) {
-    return {success: false, message: error.message};
-  }
-};
-
-export const getStoreLogo = async (
-  companyId: string,
-): Promise<response<Logo>> => {
-  try {
-    const logo = await prisma.logo.findFirst({where: {companyId}});
     if (!logo) return {success: false, message: "Logo not found"};
     return {success: true, data: logo};
   } catch (error: any) {

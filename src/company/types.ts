@@ -3,7 +3,10 @@ export type Company = {
   name: string;
   phone: string;
   email: string;
+  ruc?: string;
   address: string;
+  subdomain: string;
+  isBillingActivated: boolean;
   logo?: Logo;
 };
 
