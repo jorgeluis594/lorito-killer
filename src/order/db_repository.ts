@@ -20,10 +20,10 @@ async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { productName, unitType, ...orderItemData } = orderItem;
+  const { productName, productSku, unitType, ...orderItemData } = orderItem;
 
   try {
-    const persistedOrderItem = await prisma.orderItem.create({
+    const persistedOrderItem = await prisma().orderItem.create({
       data: {
         ...orderItemData,
         orderId,
@@ -105,10 +105,11 @@ function mapPaymentsToPrisma(payments: Payment[]): PaymentPrismaMatch[] {
 
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
-    const { orderItems, payments, ...orderData } = order;
-    const createdOrderResponse = await prisma.order.create({
+    const { orderItems, payments, customer, ...orderData } = order;
+    const createdOrderResponse = await prisma().order.create({
       data: {
         ...orderData,
+        customerId: customer?.id,
         payments: { create: mapPaymentsToPrisma(payments) as any },
       },
       include: { payments: true },
@@ -122,8 +123,10 @@ export const create = async (order: Order): Promise<response<Order>> => {
       companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
+      documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
+      customer: customer,
     };
 
     createdOrder.orderItems = createdOrderItemsResponses
@@ -138,12 +141,31 @@ export const create = async (order: Order): Promise<response<Order>> => {
 
 export const getOrders = async (): Promise<response<Order[]>> => {
   try {
-    const orders = await prisma.order.findMany({});
+    const orders = await prisma().order.findMany({});
 
     return {
       success: true,
       data: await transformOrdersData(orders),
     };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
+export const find = async (
+  id: string,
+  companyId: string,
+): Promise<response<Order>> => {
+  try {
+    const prismaOrder = await prisma().order.findUnique({ where: { id: id } });
+    if (!prismaOrder || prismaOrder.companyId !== companyId) {
+      return { success: false, message: "Order not found" };
+    }
+
+    const [order] = await transformOrdersData([prismaOrder]);
+    if (!order) return { success: false, message: "Order not found" };
+
+    return { success: true, data: order };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -160,14 +182,14 @@ export const getOrders = async (): Promise<response<Order[]>> => {
  *
  * @example
  *
- * const prismaOrders = await prisma.order.findMany({});
+ * const prismaOrders = await prisma().order.findMany({});
  * const orders = await transformOrdersData(prismaOrders);
  *
  */
 export async function transformOrdersData(
   prismaOrders: PrismaOrder[],
 ): Promise<Order[]> {
-  const prismaOrderItems = await prisma.orderItem.findMany({
+  const prismaOrderItems = await prisma().orderItem.findMany({
     where: { orderId: { in: prismaOrders.map((order) => order.id) } },
   });
 
@@ -183,7 +205,7 @@ export async function transformOrdersData(
     {},
   );
 
-  const payments = await prisma.payment.findMany({
+  const payments = await prisma().payment.findMany({
     where: { orderId: { in: prismaOrders.map((order) => order.id) } },
   });
   const orderPayments = payments.reduce(
@@ -194,7 +216,7 @@ export async function transformOrdersData(
     {},
   );
 
-  const prismaProducts = await prisma.product.findMany({
+  const prismaProducts = await prisma().product.findMany({
     where: { id: { in: prismaOrderItems.map((oi) => oi.productId) } },
   });
 
@@ -211,6 +233,12 @@ export async function transformOrdersData(
       throw new Error(`Invalid order status: ${prismaOrder.status}`);
     }
 
+    if (!isOrderDocumentType(prismaOrder.documentType)) {
+      throw new Error(
+        `Invalid order documentType: ${prismaOrder.documentType}`,
+      );
+    }
+
     const parsedOrderItems = (prismaOrderItemsMap[prismaOrder.id] || []).map(
       (oi: PrismaOrderItem) => {
         const { orderId, ...orderItemData } = oi;
@@ -222,6 +250,7 @@ export async function transformOrdersData(
             ],
           quantity: oi.quantity.toNumber(),
           productName: prismaProductsMap[oi.productId].name,
+          productSku: prismaProductsMap[oi.productId].sku || undefined,
           productPrice: prismaProductsMap[oi.productId].price.toNumber(),
           total: oi.total.toNumber(),
         };
@@ -237,6 +266,7 @@ export async function transformOrdersData(
       ),
       total: prismaOrder.total.toNumber(),
       status: prismaOrder.status,
+      documentType: prismaOrder.documentType,
     };
   });
 }
@@ -246,5 +276,17 @@ function isOrderStatus(
 ): status is "pending" | "completed" | "cancelled" {
   return (
     status === "pending" || status === "completed" || status === "cancelled"
+  );
+}
+
+function isOrderDocumentType(
+  documentType: any,
+): documentType is "invoice" | "receipt" | "ticket" {
+  if (documentType === null) return true;
+
+  return (
+    documentType === "invoice" ||
+    documentType === "receipt" ||
+    documentType === "ticket"
   );
 }

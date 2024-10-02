@@ -86,7 +86,7 @@ export const create = async (
   stockTransfer: StockTransfer,
 ): Promise<response<StockTransfer>> => {
   try {
-    const storedStockTransfer = await prisma.stockTransfer.create(
+    const storedStockTransfer = await prisma().stockTransfer.create(
       buildStockTransferData(stockTransfer),
     );
     let persistedStockTransfer: StockTransfer;
@@ -159,7 +159,7 @@ export const updateStock = async (
   stockTransfer: StockTransfer,
 ): Promise<response<undefined>> => {
   try {
-    await prisma.product.update({
+    await prisma().product.update({
       where: { id: stockTransfer.productId },
       data: {
         stock: {
@@ -180,7 +180,7 @@ export const getMany = async (
   pageLimit: number,
 ): Promise<response<StockTransfer[]>> => {
   try {
-    const result = await prisma.stockTransfer.findMany({
+    const result = await prisma().stockTransfer.findMany({
       where: { companyId },
       skip: (page - 1) * pageLimit,
       orderBy: { createdAt: "desc" },
@@ -247,5 +247,5 @@ export const getMany = async (
 };
 
 export const total = async (companyId: string): Promise<number> => {
-  return prisma.stockTransfer.count({ where: { companyId } });
+  return prisma().stockTransfer.count({ where: { companyId } });
 };
