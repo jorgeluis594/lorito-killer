@@ -4,7 +4,6 @@ import {CashShiftStoreProvider} from "@/cash-shift/components/cash-shift-store-p
 import CategoriesLoader from "@/category/components/categories-loader";
 import {ProductsStoreProvider} from "@/product/components/products-store-provider";
 import {AdvertenceModal} from "@/shared/components/modal/advertence-modal";
-import {LogoStoreProvider} from "@/company/logo-store-provider";
 
 export default function DashboardLayout({
   children,
@@ -13,7 +12,6 @@ export default function DashboardLayout({
 }) {
   return (
     <OrderFormProvider>
-      <LogoStoreProvider>
         <CategoryStoreProvider>
           <ProductsStoreProvider>
             <CashShiftStoreProvider>
@@ -21,7 +19,6 @@ export default function DashboardLayout({
             </CashShiftStoreProvider>
           </ProductsStoreProvider>
         </CategoryStoreProvider>
-      </LogoStoreProvider>
     </OrderFormProvider>
   );
 }
