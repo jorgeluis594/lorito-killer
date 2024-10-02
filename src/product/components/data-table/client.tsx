@@ -92,7 +92,7 @@ export default function ProductsClient({
       </div>
       <Separator />
       <DataTable
-        searchKey="name"
+        searchKey={["name","sku"]}
         columns={columns}
         data={data ?? []}
         isLoading={isLoading}
