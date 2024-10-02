@@ -57,10 +57,9 @@ export default function CompanyForm({ company }: { company: Company }) {
   });
 
   const handleSubmit = async (data: CompanyFormValues) => {
-    const {logo, ...dataStore} = data
     const response = await updateCompany({
       ...company,
-      ...dataStore,
+      ...data,
       ruc: data["ruc"],
     });
 
@@ -147,7 +146,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Ruc</FormLabel>
                   <FormControl>
-                    <Input placeholder="10712432876" {...field} />
+                    <Input placeholder="Ingrese RUC" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
