@@ -82,8 +82,9 @@ export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { cashShift } = useCashShiftStore((store) => store);
   const { addDiscount, addPayment, removePayment } = useOrderFormActions();
-  const [discount, setDiscount] = useState('');
+  const [discount, setDiscount] = useState(0);
   const debouncedDiscount = useDebounce(discount, 2000);
+  const [discountType, setDiscountType] = useState<'soles' | 'porcent'>('soles');
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
@@ -99,6 +100,11 @@ export const CashPayment: React.FC = () => {
       received_amount: value,
     });
   }
+
+  const handleDiscountChange = (value: string) => {
+    setDiscountType(value as 'soles' | 'porcent');
+    setDiscount(0);
+  };
 
   useEffect(() => {
     if (payment.received_amount === null) return;
@@ -132,7 +138,7 @@ export const CashPayment: React.FC = () => {
 
   useEffect(() => {
     if (debouncedDiscount) {
-      addDiscount(+debouncedDiscount);
+      addDiscount(debouncedDiscount);
     }
   }, [debouncedDiscount]);
 
@@ -170,7 +176,7 @@ export const CashPayment: React.FC = () => {
         </div>
         {isChecked && (
         <div className="flex items-center my-3 gap-3">
-          <Select>
+          <Select onValueChange={handleDiscountChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Descuento en" />
             </SelectTrigger>
@@ -181,13 +187,29 @@ export const CashPayment: React.FC = () => {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <MoneyInput
-            placeholder="Ingrese descuento"
-            type="number"
-            className="mr-2"
-            value={discount}
-            onChange={(e) => setDiscount(e.target.value)}
-          />
+          {discountType === 'soles' ? (
+            <MoneyInput
+              placeholder="Ingrese descuento en soles"
+              type="number"
+              className="mr-2"
+              value={discount}
+              onChange={(e) => setDiscount(+e.target.value)}
+            />
+          ) : (
+            <Input
+              placeholder="Ingrese descuento en porcentaje"
+              type="number"
+              className="mr-2"
+              onChange={(e) => {
+                if(discountType === "porcent") {
+                  const discountPorcent = orderTotal - (orderTotal * ( +e.target.value / 100 ))
+                  setDiscount(discountPorcent)
+                }
+              }}
+            />
+          )
+          }
+
         </div>
         )}
       </div>
