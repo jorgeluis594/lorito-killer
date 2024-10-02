@@ -169,7 +169,7 @@ export const CashPayment: React.FC = () => {
           </label>
         </div>
         {isChecked && (
-        <div className="flex items-center">
+        <div className="flex items-center my-3 gap-3">
           <Select>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Descuento en" />
