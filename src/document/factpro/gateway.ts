@@ -181,6 +181,7 @@ export default function gateway({
       data: {
         id: crypto.randomUUID(),
         orderId: order.id!,
+        companyId: order.companyId,
         customerId: order.customer.id!,
         netTotal: body.totales.total_exoneradas,
         taxTotal: body.totales.total_tax,
@@ -257,6 +258,7 @@ export default function gateway({
       data: {
         id: crypto.randomUUID(),
         orderId: order.id!,
+        companyId: order.companyId,
         customerId: order.customer?.id!,
         netTotal: body.totales.total_exoneradas,
         taxTotal: body.totales.total_tax,
@@ -283,6 +285,7 @@ export default function gateway({
       success: true,
       data: {
         id: crypto.randomUUID(),
+        companyId: order.companyId,
         orderId: order.id!,
         customerId: order.customer?.id,
         netTotal: order.total,

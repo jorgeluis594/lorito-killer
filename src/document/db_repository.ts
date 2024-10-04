@@ -35,12 +35,13 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
   if (prismaDocument.documentType == "TICKET") {
     document = {
       id: prismaDocument.id,
+      companyId: prismaDocument.companyId!,
       orderId: prismaDocument.orderId,
       customerId: prismaDocument.customerId || undefined,
       total: +prismaDocument.total,
       documentType: "ticket",
       series: prismaDocument.series,
-      number: prismaDocument.number,
+      number: prismaDocument.number.toString(),
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -49,11 +50,12 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
     document = {
       id: prismaDocument.id,
       orderId: prismaDocument.orderId,
+      companyId: prismaDocument.companyId!,
       customerId: prismaDocument.customerId || undefined,
       total: +prismaDocument.total,
       documentType: "receipt",
       series: prismaDocument.series,
-      number: prismaDocument.number,
+      number: prismaDocument.number.toString(),
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -65,11 +67,12 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
     document = {
       id: prismaDocument.id,
       orderId: prismaDocument.orderId,
+      companyId: prismaDocument.companyId!,
       customerId: prismaDocument.customerId!,
       total: +prismaDocument.total,
       documentType: "invoice",
       series: prismaDocument.series,
-      number: prismaDocument.number,
+      number: prismaDocument.number.toString(),
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -88,11 +91,12 @@ export const createDocument = async (
     const createdDocument = await prisma().document.create({
       data: {
         orderId: document.orderId!,
+        companyId: document.companyId,
         customerId: document.customerId,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
         series: document.series,
-        number: document.number,
+        number: parseInt(document.number),
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
@@ -133,11 +137,12 @@ export const findBillingDocumentFor = async (
 };
 
 export const getLatestDocumentNumber = async (
+  companyId: string,
   serialNumber: string,
 ): Promise<response<number | undefined>> => {
   try {
     const document = await prisma().document.findFirst({
-      where: { series: serialNumber },
+      where: { series: serialNumber, companyId: companyId },
       orderBy: { number: "desc" },
     });
 

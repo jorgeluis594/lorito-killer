@@ -8,6 +8,7 @@ export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
 type DocumentBase = {
   id: string;
+  companyId: string;
   orderId: string;
   netTotal: number;
   taxTotal: number;
