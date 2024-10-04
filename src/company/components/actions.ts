@@ -8,6 +8,7 @@ import {
   storeLogo as storeLogoRepository,
   getLogo as getLogoRepository,
 } from "@/company/db_repository";
+import {log} from "@/lib/log";
 
 export const updateCompany = async (
   company: Company,
@@ -26,6 +27,10 @@ export const removeLogo = async (
 ): Promise<response<Logo>> => {
   const response = await removeLogoRepository(companyId, logoId)
   if (!response.success) {
+    log.error("remove_logo", {
+      logoId,
+      response
+    });
     return {success: false, message: "No se pudo eliminar el logo"};
   }
 
@@ -38,6 +43,10 @@ export const storeLogo = async (
 ): Promise<response<Logo>> => {
   const response = await storeLogoRepository(companyId, logo)
   if(!response.success) {
+    log.error("add_logo", {
+      logo,
+      response
+    })
     return {success: false, message: "No se pudo subir el logo"};
   }
 
