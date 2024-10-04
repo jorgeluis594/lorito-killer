@@ -146,7 +146,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Ruc</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ingrese RUC" {...field} />
+                    <Input placeholder="ej: 10326545678" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
