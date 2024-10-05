@@ -9,9 +9,10 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useCallback, useEffect, useState } from "react";
-import type {
+import {
+  AMOUNT, AmountDiscount,
   CashPayment as CashPaymentMethod,
-  PaymentMethod,
+  PaymentMethod, PERCENT, PercentDiscount,
   WalletPayment as WalletPaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
@@ -31,6 +32,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/shared/components/ui/select";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/shared/components/ui/form";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import * as z from "zod";
+import * as zod from "zod";
+import {Button} from "@/shared/components/ui/button";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -77,17 +84,26 @@ type CashPaymentMethodState = Omit<CashPaymentMethod, "received_amount"> & {
   received_amount: number | null;
 };
 
+const DiscountFormSchema = zod.object({
+  discountType: zod.enum([AMOUNT, PERCENT]),
+  value: zod.coerce.number(),
+});
+
+type DiscountFormValues = z.infer<typeof DiscountFormSchema>;
+
 export const CashPayment: React.FC = () => {
   const [isChecked, setIsChecked] = useState(false);
-  const orderTotal = useOrderFormStore((state) => state.order.total);
-  const { cashShift } = useCashShiftStore((store) => store);
-  const { addDiscount, addPayment, removePayment } = useOrderFormActions();
-  const [discount, setDiscount] = useState(0);
-  const debouncedDiscount = useDebounce(discount, 2000);
-  const [discountType, setDiscountType] = useState<'soles' | 'porcent'>('soles');
+  const orderNetTotal = useOrderFormStore((state) => state.order.netTotal);
+  const {cashShift} = useCashShiftStore((store) => store);
+  const {setDiscount, addPayment, removePayment} = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
+  });
+
+  const form = useForm<DiscountFormValues>({
+    resolver: zodResolver(DiscountFormSchema),
+    defaultValues: { discountType: AMOUNT}
   });
 
   function handleChangeReceivedAmount(
@@ -101,19 +117,14 @@ export const CashPayment: React.FC = () => {
     });
   }
 
-  const handleDiscountChange = (value: string) => {
-    setDiscountType(value as 'soles' | 'porcent');
-    setDiscount(0);
-  };
-
   useEffect(() => {
     if (payment.received_amount === null) return;
 
-    if (payment.received_amount >= orderTotal) {
+    if (payment.received_amount >= orderNetTotal) {
       setPayment({
         ...payment,
-        amount: orderTotal,
-        change: payment.received_amount - orderTotal,
+        amount: orderNetTotal,
+        change: payment.received_amount - orderNetTotal,
       });
     } else {
       setPayment({
@@ -122,25 +133,37 @@ export const CashPayment: React.FC = () => {
         change: 0,
       });
     }
-  }, [payment.received_amount, orderTotal]);
+  }, [payment.received_amount, orderNetTotal]);
 
   useEffect(() => {
-    const { received_amount, ...rest } = payment;
+    const {received_amount, ...rest} = payment;
     if (received_amount === null) return;
 
     removePayment("cash");
-    addPayment({ ...rest, received_amount });
+    addPayment({...rest, received_amount});
   }, [payment]);
 
   useEffect(() => {
     removePayment("cash");
   }, []);
 
-  useEffect(() => {
-    if (debouncedDiscount) {
-      addDiscount(debouncedDiscount);
+  const handleDiscountSubmit = (data: DiscountFormValues) => {
+    const {discountType, value} = data;
+
+    if (discountType === AMOUNT) {
+      const discount: AmountDiscount = {
+        value: value,
+        type: AMOUNT,
+      };
+      setDiscount(discount);
+    } else {
+      const discount: PercentDiscount = {
+        value: value,
+        type: PERCENT,
+      };
+      setDiscount(discount);
     }
-  }, [debouncedDiscount]);
+  };
 
   return (
     <div className="mt-4">
@@ -155,7 +178,7 @@ export const CashPayment: React.FC = () => {
         <p className="text-sm font-medium text-destructive">
           {payment.received_amount !== 0 &&
           payment.received_amount !== null &&
-          payment.received_amount! < orderTotal
+          payment.received_amount! < orderNetTotal
             ? "El monto recibido es menor al total"
             : ""}
         </p>
@@ -175,42 +198,70 @@ export const CashPayment: React.FC = () => {
           </label>
         </div>
         {isChecked && (
-        <div className="flex items-center my-3 gap-3">
-          <Select onValueChange={handleDiscountChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Descuento en" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="soles">S/. Soles</SelectItem>
-                <SelectItem value="porcent">% Porcentaje</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          {discountType === 'soles' ? (
-            <MoneyInput
-              placeholder="Ingrese descuento en soles"
-              type="number"
-              className="mr-2"
-              value={discount}
-              onChange={(e) => setDiscount(+e.target.value)}
-            />
-          ) : (
-            <Input
-              placeholder="Ingrese descuento en porcentaje"
-              type="number"
-              className="mr-2"
-              onChange={(e) => {
-                if(discountType === "porcent") {
-                  const discountPorcent = orderTotal - (orderTotal * ( +e.target.value / 100 ))
-                  setDiscount(discountPorcent)
+          <Form {...form}>
+            <form>
+              <div className="flex items-center my-3 gap-3">
+                <FormField
+                  control={form.control}
+                  name="discountType"
+                  render={({field}) => (
+                    <FormItem className="col-span-1">
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Descuento en"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={AMOUNT}>S/. Soles</SelectItem>
+                          <SelectItem value={PERCENT}>% Porcentaje</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage/>
+                    </FormItem>
+                  )}
+                />
+                {form.watch('discountType') === "amount" ? (
+                  <FormField
+                    control={form.control}
+                    name="value"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormControl>
+                          <MoneyInput
+                            placeholder="Ingrese descuento en soles"
+                            type="number"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage/>
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="value"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            autoComplete="off"
+                            type="number"
+                            placeholder="Ingrese descuento en porcentaje"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage/>
+                      </FormItem>
+                    )}
+                  />
+                )
                 }
-              }}
-            />
-          )
-          }
-
-        </div>
+              </div>
+              <Button type="submit" size="sm" onSubmit={form.handleSubmit(handleDiscountSubmit)}>
+                Aplicar Descuento
+              </Button>
+            </form>
+          </Form>
         )}
       </div>
       {payment.change !== 0 && (
