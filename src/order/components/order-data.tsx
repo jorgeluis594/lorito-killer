@@ -24,7 +24,11 @@ export default function OrderData({
     <div className="h-full mt-8 flex justify-center">
       <Card className={"w-11/12"}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mb-4">
-          <CardTitle>Pedido {order.id}</CardTitle>
+          <CardTitle>
+            {order.documentType === "receipt" ? "Boleta Electrónica" :
+              order.documentType === "invoice" ? "Factura Electrónica" :
+                "Nota de venta"} ({order.id!.substring(0, 8)})
+          </CardTitle>
           <a
             className={buttonVariants({ variant: "ghost" })}
             href={`/api/orders/${order.id}/documents`}
@@ -41,19 +45,26 @@ export default function OrderData({
               <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
                 Cliente
               </td>
-              <td className="pl-2 border py-1">Cliente 1</td>
+              <td className="pl-2 border py-1">
+                {order.customer ?
+                  order.customer._branch === "NaturalCustomer" ?
+                    order.customer.fullName: order.customer.legalName
+                  :
+                  'Cliente General'
+                }
+              </td>
             </tr>
             <tr>
               <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
                 Email
               </td>
-              <td className="pl-2 border py-1">Cliente email</td>
+              <td className="pl-2 border py-1">{order.customer?.email || "No disponible"}</td>
             </tr>
             <tr>
               <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
                 Teléfono
               </td>
-              <td className="pl-2 border py-1">+51 997997854</td>
+              <td className="pl-2 border py-1">{order.customer?.phoneNumber || 'No disponible'}</td>
             </tr>
             <tr>
               <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">

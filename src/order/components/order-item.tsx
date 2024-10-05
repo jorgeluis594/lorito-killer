@@ -20,7 +20,9 @@ export default function OrderItem({
       onClick={() => onSelect(order)}
     >
       <div>
-        <div className="text-sm font-medium">{order.id!.substring(0, 8)}</div>
+        <div className="text-sm font-medium">{order.documentType === "receipt" ? "Boleta Electrónica" :
+          order.documentType === "invoice" ? "Factura Electrónica" :
+            "Nota de venta"} ({order.id!.substring(0, 8)})</div>
         <div className="text-xs text-gray-500">
           {localizeDate(order.createdAt!)}
         </div>
