@@ -7,11 +7,13 @@ import {
 } from "@/shared/components/ui/card";
 import { formatPrice, localizeDate, paymentMethodToText } from "@/lib/utils";
 import { Printer } from "lucide-react";
-import { BlobProvider } from "@react-pdf/renderer";
-import Voucher from "@/order/components/voucher";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { Company } from "@/company/types";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
+import {findCustomerById} from "@/customer/actions";
+import {useEffect, useState} from "react";
+import {Customer} from "@/customer/types";
+import {fullName} from "@/customer/utils";
 
 export default function OrderData({
                                     order,
@@ -20,6 +22,28 @@ export default function OrderData({
   order: Order;
   company: Company;
 }) {
+  const [customerResponse, setCustomerResponse] = useState<Customer>();
+  const [customerFullName, setCustomerFullName] = useState<string>("");
+  console.log(order)
+  console.log(customerResponse)
+
+  useEffect(() => {
+    const fetchCustomerData = async () => {
+      const response = await findCustomerById(order.customerId);
+      if(!response.success) { return response}
+      setCustomerResponse(response.data);
+    };
+
+    fetchCustomerData();
+  }, [order.customerId]);
+
+  useEffect(() => {
+    if (customerResponse) {
+      const nameCustomer = fullName(customerResponse);
+      setCustomerFullName(nameCustomer);
+    }
+  }, [customerResponse]);
+
   return (
     <div className="h-full mt-8 flex justify-center">
       <Card className={"w-11/12"}>
@@ -46,11 +70,7 @@ export default function OrderData({
                 Cliente
               </td>
               <td className="pl-2 border py-1">
-                {order.customer ?
-                  order.customer._branch === "NaturalCustomer" ?
-                    order.customer.fullName: order.customer.legalName
-                  :
-                  'Cliente General'
+                { customerResponse ? customerFullName : 'Cliente General'
                 }
               </td>
             </tr>
@@ -58,13 +78,13 @@ export default function OrderData({
               <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
                 Email
               </td>
-              <td className="pl-2 border py-1">{order.customer?.email || "No disponible"}</td>
+              <td className="pl-2 border py-1">{customerResponse?.email || "No disponible"}</td>
             </tr>
             <tr>
               <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
                 Teléfono
               </td>
-              <td className="pl-2 border py-1">{order.customer?.phoneNumber || 'No disponible'}</td>
+              <td className="pl-2 border py-1">{customerResponse?.phoneNumber || 'No disponible'}</td>
             </tr>
             <tr>
               <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
