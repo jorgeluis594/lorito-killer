@@ -120,6 +120,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
 
     const createdOrder: Order = {
       ...createdOrderResponse,
+      customerId: createdOrderResponse.customerId!,
       companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
@@ -259,6 +260,7 @@ export async function transformOrdersData(
 
     return {
       ...prismaOrder,
+      customerId: prismaOrder.customerId!,
       companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(
