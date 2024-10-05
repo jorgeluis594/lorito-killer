@@ -138,6 +138,7 @@ model Order {
   customerId   String?
   customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   company      Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  discount     Decimal?
   total        Decimal
   status       String
   cashShift    CashShift   @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
