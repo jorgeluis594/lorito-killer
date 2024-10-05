@@ -15,15 +15,37 @@ export type OrderItem = {
   updatedAt?: Date;
 };
 
+export const AMOUNT = "amount";
+
+export type AmountType = typeof AMOUNT;
+
+export const PERCENT = "percent";
+
+export type PercentType = typeof PERCENT;
+
+export type AmountDiscount = {
+  value: number,
+  type: AmountType
+}
+
+export type PercentDiscount = {
+  value: number,
+  type: PercentType
+}
+
+export type Discount = AmountDiscount | PercentDiscount
+
 export type Order = {
   id?: string;
   cashShiftId: string;
   companyId: string;
   orderItems: OrderItem[];
-  discount?: number;
+  netTotal: number;
+  discountAmount: number;
   total: number;
   status: "pending" | "completed" | "cancelled";
   payments: Payment[];
+  discount?: Discount;
   documentType: DocumentType;
   document?: Document;
   customer?: Customer;
