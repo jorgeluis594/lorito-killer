@@ -7,6 +7,7 @@ import { findBillingDocumentFor } from "@/document/db_repository";
 import QRCode from "qrcode";
 import { isBillableDocument } from "@/document/utils";
 import generateInvoicePdfStream from "@/document/generate-invoice-pdf-stream";
+import {findCustomerById} from "@/customer/actions";
 
 const generateQRBase64 = (qrValue: string): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -45,6 +46,17 @@ export async function GET(
     );
   }
 
+  const customerResponse = await findCustomerById(orderResponse.data.customerId)
+
+  if (!customerResponse.success) {
+    return NextResponse.json(
+      errorResponse("No se encontro el cliente"),
+      {
+        status: 404,
+      },
+    );
+  }
+
   const document = documentResponse.data;
   const qr = isBillableDocument(document)
     ? await generateQRBase64(document.qr)
@@ -54,6 +66,7 @@ export async function GET(
     orderResponse.data,
     companyResponse.data,
     document,
+    customerResponse.data,
     qr,
   );
 
