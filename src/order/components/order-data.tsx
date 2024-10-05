@@ -24,8 +24,6 @@ export default function OrderData({
 }) {
   const [customerResponse, setCustomerResponse] = useState<Customer>();
   const [customerFullName, setCustomerFullName] = useState<string>("");
-  console.log(order)
-  console.log(customerResponse)
 
   useEffect(() => {
     const fetchCustomerData = async () => {
