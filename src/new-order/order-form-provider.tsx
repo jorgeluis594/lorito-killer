@@ -15,13 +15,15 @@ import {
   SingleProductType,
   UNIT_UNIT_TYPE,
 } from "@/product/types";
-import { OrderItem, Payment, PaymentMethod } from "@/order/types";
+import {Discount, OrderItem, Payment, PaymentMethod} from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
 import { mul, plus } from "@/lib/utils";
 import { Customer } from "@/customer/types";
 import { DocumentType } from "@/document/types";
+import calculateDiscount from "@/order/use-cases/calculate_discount";
+import {log} from "@/lib/log";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -114,13 +116,21 @@ export const useOrderFormActions = (): Actions => {
   };
 
   const updateTotal = () => {
-    const { order } = orderFormStoreContext.getState();
-    order.total = order.orderItems.reduce(
+    const {order} = orderFormStoreContext.getState();
+    order.netTotal = order.orderItems.reduce(
       (acc, item) => plus(acc)(item.total),
       0,
     );
+
+    const discountResponse = calculateDiscount(order)
+    if (!discountResponse.success) {
+      log.error("calculate_discount", {
+        discountResponse
+      })
+      return
+    }
     orderFormStoreContext.setState(() => {
-      return { order: { ...order, total: order.total } };
+      return {order: discountResponse.data};
     });
   };
 
@@ -328,15 +338,19 @@ export const useOrderFormActions = (): Actions => {
     );
   };
 
-  const addDiscount = (discount: number) => {
+  const setDiscount = (discount: Discount) => {
     const {order} = orderFormStoreContext.getState();
-    const newTotal = order.total - discount;
+    const discountResponse = calculateDiscount({ ...order, discount: discount })
+    if (!discountResponse.success) {
+      log.error("discount_store", {
+        discount,
+        discountResponse
+      })
+      return
+    }
+
     orderFormStoreContext.setState({
-      order: {
-        ...order,
-        discount: discount,
-        total: newTotal,
-      },
+      order: discountResponse.data,
     });
   }
 
@@ -344,7 +358,7 @@ export const useOrderFormActions = (): Actions => {
     addProduct,
     setDocumentType,
     setCustomer,
-    addDiscount,
+    setDiscount,
     removeOrderItem,
     addOrderItem,
     updateOrderItem,
@@ -391,7 +405,7 @@ export const useOrderFormActions = (): Actions => {
         );
       }
 
-      if (payment.amount > order.total - getPaidAmount()) {
+      if (payment.amount > order.netTotal - getPaidAmount()) {
         return {
           success: false,
           message: "El monto pagado es mayor que el a pagar",
