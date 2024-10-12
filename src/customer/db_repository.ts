@@ -101,12 +101,11 @@ export const createCustomer = async (
 };
 
 export const find = async (
-  id: string,
-  companyId?: string,
+  documentNumber: string,
 ): Promise<response<Customer>> => {
   try {
     const customer = await prisma().customer.findUnique({
-      where: { id },
+      where: { documentNumber: documentNumber },
     });
 
     if (customer) {
