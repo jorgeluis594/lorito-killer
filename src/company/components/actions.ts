@@ -27,7 +27,7 @@ export const removeLogo = async (
 ): Promise<response<Logo>> => {
   const response = await removeLogoRepository(companyId, logoId)
   if (!response.success) {
-    log.error("remove_logo", {
+    log.error("logo_removed", {
       logoId,
       response
     });
@@ -43,7 +43,7 @@ export const storeLogo = async (
 ): Promise<response<Logo>> => {
   const response = await storeLogoRepository(companyId, logo)
   if(!response.success) {
-    log.error("add_logo", {
+    log.error("logo_added", {
       logo,
       response
     })
