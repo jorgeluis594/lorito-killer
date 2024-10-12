@@ -153,6 +153,8 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           <p className="text-2xl font-medium leading-none text-center">
             <span className="text-xl font-light mr-2">Total</span>
             {formatPrice(order.netTotal)}
+            {formatPrice(order.discountAmount)}
+            {formatPrice(order.total)}
           </p>
           {paymentMode !== "none" && (
             <Button

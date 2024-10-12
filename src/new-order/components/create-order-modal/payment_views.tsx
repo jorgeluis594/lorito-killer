@@ -93,7 +93,7 @@ type DiscountFormValues = z.infer<typeof DiscountFormSchema>;
 
 export const CashPayment: React.FC = () => {
   const [isChecked, setIsChecked] = useState(false);
-  const orderNetTotal = useOrderFormStore((state) => state.order.netTotal);
+  const orderTotal = useOrderFormStore((state) => state.order.total);
   const {cashShift} = useCashShiftStore((store) => store);
   const {setDiscount, addPayment, removePayment} = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethodState>({
@@ -120,11 +120,11 @@ export const CashPayment: React.FC = () => {
   useEffect(() => {
     if (payment.received_amount === null) return;
 
-    if (payment.received_amount >= orderNetTotal) {
+    if (payment.received_amount >= orderTotal) {
       setPayment({
         ...payment,
-        amount: orderNetTotal,
-        change: payment.received_amount - orderNetTotal,
+        amount: orderTotal,
+        change: payment.received_amount - orderTotal,
       });
     } else {
       setPayment({
@@ -133,7 +133,7 @@ export const CashPayment: React.FC = () => {
         change: 0,
       });
     }
-  }, [payment.received_amount, orderNetTotal]);
+  }, [payment.received_amount, orderTotal]);
 
   useEffect(() => {
     const {received_amount, ...rest} = payment;
@@ -178,7 +178,7 @@ export const CashPayment: React.FC = () => {
         <p className="text-sm font-medium text-destructive">
           {payment.received_amount !== 0 &&
           payment.received_amount !== null &&
-          payment.received_amount! < orderNetTotal
+          payment.received_amount! < orderTotal
             ? "El monto recibido es menor al total"
             : ""}
         </p>
@@ -257,7 +257,7 @@ export const CashPayment: React.FC = () => {
                 )
                 }
               </div>
-              <Button type="submit" size="sm" onSubmit={form.handleSubmit(handleDiscountSubmit)}>
+              <Button type="button" size="sm" onClick={form.handleSubmit(handleDiscountSubmit)}>
                 Aplicar Descuento
               </Button>
             </form>
