@@ -52,15 +52,3 @@ export const storeLogo = async (
 
   return response;
 }
-
-export const getLogo = async (
-  companyId: string,
-  logoId: string,
-): Promise<response<Logo>> => {
-  const response = await getLogoRepository(companyId, logoId)
-  if(!response.success) {
-    return {success: false, message: "No se pudo encontrar el logo"};
-  }
-
-  return response;
-}
