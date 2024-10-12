@@ -184,7 +184,7 @@ model Customer {
   companyId      String
   company        Company               @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   documentType   CustomerDocumentType?
-  documentNumber String?
+  documentNumber String?               @unique
   legalName      String?
   address        String?
   email          String?
