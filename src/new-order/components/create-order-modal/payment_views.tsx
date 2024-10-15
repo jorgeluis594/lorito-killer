@@ -92,18 +92,12 @@ const DiscountFormSchema = zod.object({
 type DiscountFormValues = z.infer<typeof DiscountFormSchema>;
 
 export const CashPayment: React.FC = () => {
-  const [isChecked, setIsChecked] = useState(false);
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const {cashShift} = useCashShiftStore((store) => store);
   const {setDiscount, addPayment, removePayment} = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
-  });
-
-  const form = useForm<DiscountFormValues>({
-    resolver: zodResolver(DiscountFormSchema),
-    defaultValues: { discountType: AMOUNT}
   });
 
   function handleChangeReceivedAmount(
@@ -147,24 +141,6 @@ export const CashPayment: React.FC = () => {
     removePayment("cash");
   }, []);
 
-  const handleDiscountSubmit = (data: DiscountFormValues) => {
-    const {discountType, value} = data;
-
-    if (discountType === AMOUNT) {
-      const discount: AmountDiscount = {
-        value: value,
-        type: AMOUNT,
-      };
-      setDiscount(discount);
-    } else {
-      const discount: PercentDiscount = {
-        value: value,
-        type: PERCENT,
-      };
-      setDiscount(discount);
-    }
-  };
-
   return (
     <div className="mt-4">
       <div className="my-3">
@@ -182,87 +158,6 @@ export const CashPayment: React.FC = () => {
             ? "El monto recibido es menor al total"
             : ""}
         </p>
-      </div>
-      <div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="terms"
-            checked={isChecked}
-            onCheckedChange={() => setIsChecked(!isChecked)}
-          />
-          <label
-            htmlFor="terms"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Aplicar descuento
-          </label>
-        </div>
-        {isChecked && (
-          <Form {...form}>
-            <form>
-              <div className="flex items-center my-3 gap-3">
-                <FormField
-                  control={form.control}
-                  name="discountType"
-                  render={({field}) => (
-                    <FormItem className="col-span-1">
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Descuento en"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={AMOUNT}>S/. Soles</SelectItem>
-                          <SelectItem value={PERCENT}>% Porcentaje</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage/>
-                    </FormItem>
-                  )}
-                />
-                {form.watch('discountType') === "amount" ? (
-                  <FormField
-                    control={form.control}
-                    name="value"
-                    render={({field}) => (
-                      <FormItem>
-                        <FormControl>
-                          <MoneyInput
-                            placeholder="Ingrese descuento en soles"
-                            type="number"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage/>
-                      </FormItem>
-                    )}
-                  />
-                ) : (
-                  <FormField
-                    control={form.control}
-                    name="value"
-                    render={({field}) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            autoComplete="off"
-                            type="number"
-                            placeholder="Ingrese descuento en porcentaje"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage/>
-                      </FormItem>
-                    )}
-                  />
-                )
-                }
-              </div>
-              <Button type="button" size="sm" onClick={form.handleSubmit(handleDiscountSubmit)}>
-                Aplicar Descuento
-              </Button>
-            </form>
-          </Form>
-        )}
       </div>
       {payment.change !== 0 && (
         <div className="mt-5">

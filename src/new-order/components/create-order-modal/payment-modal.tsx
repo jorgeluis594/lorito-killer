@@ -30,6 +30,7 @@ import { Order } from "@/order/types";
 import { Company } from "@/company/types";
 import type { Document } from "@/document/types";
 import { useUserSession } from "@/lib/use-user-session";
+import DiscountFields from "@/new-order/components/create-order-modal/discount-fields";
 
 const PaymentViews = {
   none: NonePayment,
@@ -110,9 +111,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     paidAmount: number;
     total: number;
   }) => {
-    useEffect(() => {
-      console.log({ amountIsInvalid, paidAmount, total });
-    }, []);
     if (creatingOrder) {
       return (
         <Button className="btn-success" type="button" disabled={true}>
@@ -180,6 +178,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           ) : (
             <PaymentView />
           )}
+          { paymentMode !== 'none' && <DiscountFields/> }
         </div>
         <DialogFooter>
           <CreateOrderButton
