@@ -338,11 +338,12 @@ export const useOrderFormActions = (): Actions => {
     );
   };
 
-  const setDiscount = (discount: Discount) => {
+  const setDiscount = (discount?: Discount) => {
     const {order} = orderFormStoreContext.getState();
+
     const discountResponse = calculateDiscount({ ...order, discount: discount })
     if (!discountResponse.success) {
-      log.error("discount_store", {
+      log.error("calculate_discount_failed", {
         discount,
         discountResponse
       })

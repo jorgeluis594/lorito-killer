@@ -3,7 +3,7 @@ import {response} from "@/lib/types";
 import {div, mul, sub} from "@/lib/utils";
 
 export default function calculateDiscount(order: Order): response<Order> {
-  if (!order.discount) return {success: true, data: order};
+  if (!order.discount) return {success: true, data: {...order, total: order.netTotal, discountAmount: 0}};
 
   if (order.discount.type == 'amount') {
     const discountAmount = order.discount.value
