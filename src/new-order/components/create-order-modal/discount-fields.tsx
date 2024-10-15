@@ -18,7 +18,7 @@ export default function DiscountFields() {
     }
   }
 
-  const setDiscountDebouncing = debounce(setDiscount, 500);
+  const setDiscountDebouncing = debounce(setDiscount, 200);
   useEffect(() => {
     if (discountValue) {
       setDiscountDebouncing({ type: discountType, value: discountValue });
@@ -27,11 +27,19 @@ export default function DiscountFields() {
     }
   }, [discountValue, discountType]);
 
+  const toggleIsDiscountAvailable = () => {
+    const value = !isDiscountAvailable;
+    setIsDiscountAvailable(value);
+    if (!value) {
+      setDiscount(undefined);
+    }
+  }
+
   return (
     <>
       <div className="flex items-center space-x-2 mt-5">
-        {!isDiscountAvailable && <Button type="button" onClick={() => setIsDiscountAvailable(true)} size="sm" ><TicketPercent className="w-4 h-4 mr-2"/> Agregar descuento</Button> }
-        {isDiscountAvailable && <Button type="button" variant="destructive" onClick={() => setIsDiscountAvailable(false)} size="sm" ><TicketPercent className="w-4 h-4 mr-2"/> Eliminar descuento</Button> }
+        {!isDiscountAvailable && <Button type="button" onClick={toggleIsDiscountAvailable} size="sm" ><TicketPercent className="w-4 h-4 mr-2"/> Agregar descuento</Button> }
+        {isDiscountAvailable && <Button type="button" variant="destructive" onClick={toggleIsDiscountAvailable} size="sm" ><TicketPercent className="w-4 h-4 mr-2"/> Eliminar descuento</Button> }
       </div>
       {isDiscountAvailable && (
         <div className="flex items-center space-x-2 mt-2 transition animate-move-from-up-to-down">
