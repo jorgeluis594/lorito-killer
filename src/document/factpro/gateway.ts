@@ -82,7 +82,7 @@ const sendDocument = async (
     };
   }
 
-  log.error("factpro_document_sent", {
+  log.error("send_factpro_document_failed", {
     document: body,
     orderId,
     factpro_response: resJson,
