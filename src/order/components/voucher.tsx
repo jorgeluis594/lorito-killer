@@ -84,7 +84,6 @@ interface voucherProps {
   document: BillingDocument;
   qrBase64?: string;
   company: Company;
-  customer: Customer;
 }
 
 const documentTypeToEs: Record<DocumentType, string> = {
@@ -164,7 +163,7 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
 );
 
 // Create Document Component
-const Voucher = ({ order, company, document,customer, qrBase64 }: voucherProps) => (
+const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
   <Document>
     <Page
       size={{ width: 215, height: 595 }}
@@ -223,12 +222,12 @@ const Voucher = ({ order, company, document,customer, qrBase64 }: voucherProps) 
         </Text>
 
         <Text style={styles.text}>
-          Cliente: {fullName(customer)}
+          Cliente: {order.customer && fullName(order.customer)}
         </Text>
 
         <Text style={styles.text}>
           {documentTypeToCustomerDocumentTypeES[document.documentType]}:{" "}
-          {customer.documentNumber}
+          {order.customer?.documentNumber}
         </Text>
       </View>
 
