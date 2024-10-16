@@ -49,6 +49,7 @@ export type Actions = {
 const defaultInitState: OrderFormStore = {
   order: {
     cashShiftId: "",
+    customerId: undefined,
     companyId: "",
     orderItems: [],
     payments: [],

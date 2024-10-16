@@ -19,6 +19,7 @@ export type Order = {
   id?: string;
   cashShiftId: string;
   companyId: string;
+  customerId?: string;
   orderItems: OrderItem[];
   total: number;
   status: "pending" | "completed" | "cancelled";
