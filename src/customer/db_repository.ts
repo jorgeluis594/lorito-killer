@@ -100,9 +100,7 @@ export const createCustomer = async (
   }
 };
 
-export const findCustomer = async (
-  id: string,
-): Promise<response<Customer>> => {
+export const findCustomer = async (id: string): Promise<response<Customer>> => {
   try {
     const customer = await prisma().customer.findUnique({
       where: { id },
@@ -166,7 +164,7 @@ export const getMany = async ({
   }
 };
 
-const prismaToCustomer = async (
+export const prismaToCustomer = async (
   prismaCustomer: PrismaCustomer,
 ): Promise<Customer> => {
   if (prismaCustomer.documentType === "RUC") {
