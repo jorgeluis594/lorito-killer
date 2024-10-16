@@ -178,12 +178,15 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
             marginTop: "18px",
             paddingBottom: "12px",
             borderBottom: "1px solid black",
+            alignItems: 'center',
           },
         ]}
       >
+        {company.logo && (<Image src={company.logo.url} style={{ width: '40px'}}/>)}
         <Text style={styles.header}>{company.name}</Text>
         {company.ruc && <Text style={styles.description}>{company.ruc}</Text>}
         <Text style={styles.description}>{company.address}</Text>
+
       </View>
 
       {/*Document series and number*/}
