@@ -1,12 +1,14 @@
 import {useEffect, useState} from "react";
 import {Button} from "@/shared/components/ui/button";
 import {TicketPercent} from "lucide-react"
-import {useOrderFormActions} from "@/new-order/order-form-provider";
-import {Input} from "@/shared/components/ui/input";
-import {Tabs, TabsList, TabsTrigger} from "@/shared/components/ui/tabs";
+import {useOrderFormActions, useOrderFormStore} from "@/new-order/order-form-provider";
+import {Input, MoneyInput} from "@/shared/components/ui/input";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/shared/components/ui/tabs";
 import {debounce} from "@/lib/utils";
+import {toast} from "@/shared/components/ui/use-toast";
 
 export default function DiscountFields() {
+  const { order } = useOrderFormStore((state) => state);
   const [isDiscountAvailable, setIsDiscountAvailable] = useState<boolean>(false);
   const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
   const [discountValue, setDiscountValue] = useState<number>(0);
@@ -21,7 +23,32 @@ export default function DiscountFields() {
   const setDiscountDebouncing = debounce(setDiscount, 200);
   useEffect(() => {
     if (discountValue) {
-      setDiscountDebouncing({ type: discountType, value: discountValue });
+      let validDiscount = true;
+
+      if (discountType === 'amount' && discountValue > order.netTotal) {
+        validDiscount = false;
+      } else if (discountType === 'percent' && (discountValue > 100 || discountValue < 0)) {
+        validDiscount = false;
+      }
+
+      if (validDiscount) {
+        setDiscountDebouncing({ type: discountType, value: discountValue });
+      } else {
+        if(discountType === 'amount'){
+          toast({
+            title: "Descuento no válido",
+            description: `El descuento no puede ser mayor que el total de la orden.`,
+            variant: "destructive",
+          });
+        }else{
+          toast({
+            title: "Descuento no válido",
+            description: `El descuento en porcentaje debe tener un numero válido.`,
+            variant: "destructive",
+          });
+        }
+        setDiscount(undefined);
+      }
     } else {
       setDiscount(undefined);
     }
@@ -49,12 +76,23 @@ export default function DiscountFields() {
               <TabsTrigger value="percent">%</TabsTrigger>
             </TabsList>
           </Tabs>
-          <Input
+          {discountType === "amount" ? (
+            <MoneyInput
+              type="number"
+              className="w-40"
+              placeholder="S/."
+              value={discountValue}
+              onChange={(e) => setDiscountValue(Number(e.target.value))}
+            />
+          ): (
+            <Input
             type="number"
             className="w-40"
+            placeholder="%"
             value={discountValue}
             onChange={(e) => setDiscountValue(Number(e.target.value))}
-          />
+            />
+          )}
         </div>
       )}
     </>
