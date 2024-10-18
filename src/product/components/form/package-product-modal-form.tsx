@@ -46,6 +46,7 @@ import { useUserSession } from "@/lib/use-user-session";
 import ProductItemsSelector from "@/product/components/form/product-items-selector";
 import { useProductsStore } from "@/product/components/products-store-provider";
 import { getCompany } from "@/order/actions";
+import CategoriesModal from "@/category/components/category-list-model/category-modal";
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
 
@@ -98,7 +99,6 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
   // Setting the companyId to the product
   useEffect(() => {
     if (formStore.isNew) {
-      form.reset({ ...EMPTY_SINGLE_PRODUCT });
       getCompany().then((response) => {
         if (response.success) {
           form.setValue("companyId", response.data.id);
@@ -268,7 +268,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
       <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
-            <Heading title={title} description={description} />
+            <Heading title={title} />
           </div>
           <Form {...form}>
             <form
@@ -276,6 +276,21 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
               className="mx-auto space-y-8"
             >
               <div className="space-y-4 p-2">
+                <FormField
+                  control={form.control}
+                  name="photos"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <FileUpload
+                          onChange={handlePhotosUpdated}
+                          value={field.value || []}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="name"
@@ -338,7 +353,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
                           onCategoryAdded={onCategoryAdded}
                           onCategoryRemoved={onCategoryRemoved}
                         />
-                        <NewCategoryDialog addCategory={addCategoryToProduct} />
+                        <CategoriesModal addCategory={addCategoryToProduct}/>
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -370,21 +385,6 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
                         <ProductItemsSelector
                           value={field.value || []}
                           onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="photos"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <FileUpload
-                          onChange={handlePhotosUpdated}
-                          value={field.value || []}
                         />
                       </FormControl>
                       <FormMessage />

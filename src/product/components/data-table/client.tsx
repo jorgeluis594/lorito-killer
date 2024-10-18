@@ -10,11 +10,12 @@ import {
   SingleProductType,
 } from "@/product/types";
 import { Button } from "@/shared/components/ui/button";
-import { SyntheticEvent } from "react";
+import React, { SyntheticEvent } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
+import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
 
 interface ProductsClientProps {
   data: Product[] | null;
@@ -53,20 +54,21 @@ export default function ProductsClient({
           title={data ? `Productos (${data.length})` : ""}
           description="Gestiona tus productos!"
         />
-        <div className="flex">
-          <Button
-            type="button"
-            variant="outline"
-            className="text-xs md:text-sm mr-2 justify-start"
-            disabled={performingAction}
-            onClick={onNewProductClick}
-          >
-            {performingAction ? (
-              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+          <div className="flex">
+            <Button
+              type="button"
+              variant="outline"
+              className="text-xs md:text-sm mr-2 justify-start"
+              disabled={performingAction}
+              onClick={onNewProductClick}
+            >
+              {performingAction ? (
+                <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <>
                 <Plus className="mr-2 h-4 w-4" />
                 <span>Agregar producto</span>
+                <HelpTooltip text="Agrega un nuevo Producto" />
               </>
             )}
           </Button>
@@ -84,10 +86,10 @@ export default function ProductsClient({
               <>
                 <Boxes className="mr-2 h-5 w-5" />
                 <span>Agregar Pack</span>
+                <HelpTooltip text="Agrega un nuevo paquete de tus Producto." />
               </>
             )}
           </Button>
-          <CategoriesModal/>
         </div>
       </div>
       <Separator />

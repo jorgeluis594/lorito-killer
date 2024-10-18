@@ -102,7 +102,7 @@ export function DataTable<TData, TValue>({
       <div className="flex justify-between">
         {searchKey && (
           <Input
-            placeholder={`Buscar por ${searchKey}...`}
+            placeholder={`Buscar por nombre...`}
             value={
               (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
             }

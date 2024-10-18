@@ -8,12 +8,15 @@ import Image from "next/image";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
 import { useState } from "react";
 import KgCalculatorForm from "@/new-order/components/cart/kg-calculator-form";
+import {useProductFormActions} from "@/new-order/components/products-view/product-searcher-form-provider";
 
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
   const [openKgCalculator, setOpenKgCalculator] = useState(false);
   const { addProduct, updateOrderItem, getOrderItemByProduct } =
     useOrderFormActions();
+
+  const { decreaseQuantityProduct } = useProductFormActions()
 
   const onAddProductToCart = () => {
     if (
@@ -25,6 +28,7 @@ export default function ProductItem({ product }: { product: Product }) {
     }
 
     addProduct(product);
+    decreaseQuantityProduct(product.id!)
   };
 
   const onKgCalculatorSubmit = (kg: number) => {

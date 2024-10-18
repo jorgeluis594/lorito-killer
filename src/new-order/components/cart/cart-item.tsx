@@ -9,6 +9,8 @@ interface CartItemProps {
   item: OrderItem;
   increaseQuantity: (orderItemId: string) => void;
   decreaseQuantity: (orderItemId: string) => void;
+  increaseQuantityProduct: (orderItemId: string) => void;
+  decreaseQuantityProduct: (orderItemId: string) => void;
   removeOrderItem: (orderItemId: string) => void;
 }
 
@@ -16,10 +18,18 @@ export default function CartItem({
   item,
   increaseQuantity,
   decreaseQuantity,
+  increaseQuantityProduct,
+  decreaseQuantityProduct,
   removeOrderItem,
 }: CartItemProps) {
-  const onIncreaseIncreaseQuantity = () => increaseQuantity(item.id!);
-  const onDecreaseIncreaseQuantity = () => decreaseQuantity(item.id!);
+  const onIncreaseIncreaseQuantity = () => {
+    increaseQuantity(item.id!)
+    decreaseQuantityProduct(item.productId)
+  };
+  const onDecreaseIncreaseQuantity = () => {
+    decreaseQuantity(item.id!)
+    increaseQuantityProduct(item.productId)
+  };
 
   const UnitQuantityComponent = () => (
     <div className="flex justify-around items-center">

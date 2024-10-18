@@ -17,10 +17,6 @@ export const columns: ColumnDef<Product>[] = [
       row.original.categories.map((category) => category.name).join(", "),
   },
   {
-    accessorKey: "sku",
-    header: "CÓDIGO",
-  },
-  {
     accessorKey: "stock",
     header: "CANTIDAD",
     cell: ({ row }) =>
@@ -38,6 +34,10 @@ export const columns: ColumnDef<Product>[] = [
     cell: ({ row }) =>
       row.original.type === SingleProductType &&
       formatPrice(row.original.purchasePrice),
+  },
+  {
+    accessorKey: "sku",
+    header: "CÓDIGO",
   },
   {
     id: "actions",
