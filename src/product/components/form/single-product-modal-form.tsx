@@ -59,7 +59,7 @@ import {
 } from "@/shared/components/ui/select";
 import ProductSelector from "@/product/components/form/product-selector";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
-import {Switch} from "@/components/ui/switch";
+import {Switch} from "@/shared/components/ui/switch";
 import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
