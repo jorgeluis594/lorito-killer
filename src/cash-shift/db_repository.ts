@@ -182,7 +182,9 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
       prismaCashShift.payments || [],
       "WALLET",
     ),
-    orders: await transformOrdersData(prismaCashShift.orders || []),
+    orders: (await transformOrdersData(prismaCashShift.orders || [])).sort(
+      (a, b) => b.createdAt!.getTime() - a.createdAt!.getTime(),
+    ),
     payments: (prismaCashShift.payments || []).map(mapPrismaPaymentToPayment),
   };
 

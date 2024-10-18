@@ -100,18 +100,16 @@ export const createCustomer = async (
   }
 };
 
-export const find = async (
-  documentNumber: string,
-): Promise<response<Customer>> => {
+export const findCustomer = async (id: string): Promise<response<Customer>> => {
   try {
     const customer = await prisma().customer.findUnique({
-      where: { documentNumber: documentNumber },
+      where: { id },
     });
 
     if (customer) {
       return { success: true, data: await prismaToCustomer(customer) };
     } else {
-      return { success: false, message: "Product not found" };
+      return { success: false, message: "Customer not found" };
     }
   } catch (error: any) {
     return { success: false, message: error.message };
@@ -166,7 +164,7 @@ export const getMany = async ({
   }
 };
 
-const prismaToCustomer = async (
+export const prismaToCustomer = async (
   prismaCustomer: PrismaCustomer,
 ): Promise<Customer> => {
   if (prismaCustomer.documentType === "RUC") {

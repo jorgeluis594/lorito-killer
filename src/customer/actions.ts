@@ -2,7 +2,7 @@
 
 import { type Customer } from "@/customer/types";
 import { response } from "@/lib/types";
-import {createCustomer as persistCustomer, find} from "@/customer/db_repository";
+import { createCustomer as persistCustomer } from "@/customer/db_repository";
 import gatewayCreator from "@/document/factpro/gateway";
 import { getSession } from "@/lib/auth";
 import { getBillingCredentialsFor } from "@/document/db_repository";
@@ -53,4 +53,13 @@ export const findCustomerByDocumentNumber = async (
   }
 
   return response;
+}
+
+export const findCustomerById = async (id: string ): Promise<response<Customer>> => {
+  const response = await findCustomer(id);
+
+  if(!response) { return {success: false, message: "No se encontro al cliente" }; }
+
+  return response
+
 }

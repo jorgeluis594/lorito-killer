@@ -15,6 +15,7 @@ import {
   PRISMA_UNIT_TYPE_MAPPER,
   UNIT_TYPE_MAPPER,
 } from "@/product/db_repository";
+import { prismaToCustomer } from "@/customer/db_repository";
 
 async function addOrderItem(
   orderId: string,
@@ -120,6 +121,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
 
     const createdOrder: Order = {
       ...createdOrderResponse,
+      customerId: createdOrderResponse.customerId!,
       companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
       status: order.status,
@@ -157,7 +159,10 @@ export const find = async (
   companyId: string,
 ): Promise<response<Order>> => {
   try {
-    const prismaOrder = await prisma().order.findUnique({ where: { id: id } });
+    const prismaOrder = await prisma().order.findUnique({
+      where: { id: id },
+      include: { customer: true },
+    });
     if (!prismaOrder || prismaOrder.companyId !== companyId) {
       return { success: false, message: "Order not found" };
     }
@@ -165,7 +170,15 @@ export const find = async (
     const [order] = await transformOrdersData([prismaOrder]);
     if (!order) return { success: false, message: "Order not found" };
 
-    return { success: true, data: order };
+    return {
+      success: true,
+      data: {
+        ...order,
+        customer: prismaOrder.customer
+          ? await prismaToCustomer(prismaOrder.customer)
+          : undefined,
+      },
+    };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
@@ -259,6 +272,7 @@ export async function transformOrdersData(
 
     return {
       ...prismaOrder,
+      customerId: prismaOrder.customerId!,
       companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(
