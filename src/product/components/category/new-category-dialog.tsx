@@ -122,7 +122,7 @@ export default function NewCategoryDialog({
                 size="sm"
                 onClick={form.handleSubmit(onSubmit)}
               >
-                Crear categoría
+                Agregar categoría
               </Button>
             </DialogFooter>
           </form>
