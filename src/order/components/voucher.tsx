@@ -26,6 +26,7 @@ import {
   shortLocalizeDate,
 } from "@/lib/utils";
 import { Company } from "@/company/types";
+import { Customer } from "@/customer/types";
 import { fullName } from "@/customer/utils";
 import { isBillableDocument } from "@/document/utils";
 

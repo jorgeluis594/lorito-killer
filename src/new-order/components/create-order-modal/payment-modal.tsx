@@ -77,8 +77,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         description: "Venta realizada con éxito, generando comprobante",
       });
       addOrder(response.data.order);
-      setOrderCreated(response.data.order);
-      setCreatedDocument(response.data.document);
+      reset();
+      onOpenChange(false);
+      window.open(`/api/orders/${response.data.order.id}/documents`, "_blank");
     } else {
       toast({
         variant: "destructive",
@@ -88,24 +89,8 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     setCreatingOrder(false);
   };
 
-  useEffect(() => {
-    getCompany().then((response) => {
-      if (response.success) {
-        setCompany(response.data);
-      } else {
-        toast({
-          variant: "destructive",
-          description:
-            "Error al cargar la información de la empresa, comuniquese con nostros para solucionar el problema",
-        });
-      }
-    });
-  }, []);
-
   const CreateOrderButton = ({
     amountIsInvalid,
-    paidAmount,
-    total,
   }: {
     amountIsInvalid: boolean;
     paidAmount: number;
