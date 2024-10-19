@@ -182,9 +182,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         </div>
         <DialogFooter>
           <CreateOrderButton
-            amountIsInvalid={getPaidAmount() !== order.netTotal}
+            amountIsInvalid={getPaidAmount() !== order.total}
             paidAmount={getPaidAmount()}
-            total={order.netTotal}
+            total={order.total}
           />
         </DialogFooter>
       </DialogContent>
