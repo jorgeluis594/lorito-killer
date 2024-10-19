@@ -14,6 +14,7 @@ import {
   DocumentGateway,
   DocumentMetadata,
 } from "@/document/use_cases/create-document";
+import {div} from "@/lib/utils";
 
 const url = process.env.FACTPRO_URL;
 
@@ -152,6 +153,13 @@ export default function gateway({
         total_exportacion: 0,
         total_inafectas: 0,
         total_gratuitas: 0,
+        descuentos: order.discount && {
+          codigo: "02",
+          descripcion: "Descuento general",
+          porcentaje: div(order.discountAmount)(order.netTotal),
+          monto: order.discountAmount,
+          base: order.netTotal,
+        }
       },
       items: order.orderItems.map((orderItem) =>
         orderItemToDocumentItem(orderItem),
@@ -229,6 +237,13 @@ export default function gateway({
         total_exportacion: 0,
         total_inafectas: 0,
         total_gratuitas: 0,
+        descuentos: order.discount && {
+          codigo: "02",
+          descripcion: "Descuento general",
+          porcentaje: div(order.discountAmount)(order.netTotal),
+          monto: order.discountAmount,
+          base: order.netTotal,
+        }
       },
       items: order.orderItems.map((orderItem) =>
         orderItemToDocumentItem(orderItem),
