@@ -108,8 +108,30 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
         justifyContent: "flex-end",
       }}
     >
-      <Text style={{ fontSize: "12px", fontWeight: "black" }}>Total: </Text>
-      <Text style={{ fontSize: "12px" }}>{formatPrice(document.total)}</Text>
+      <View>
+        <Text
+          style={{
+            fontSize: "12px",
+            fontWeight: "bold",
+            textAlign: "right",
+          }}
+        >
+          Descuento:{" "}
+        </Text>
+        <Text
+          style={{
+            fontSize: "12px",
+            fontWeight: "bold",
+            textAlign: "right",
+          }}
+        >
+          Total:{" "}
+        </Text>
+      </View>
+      <View>
+        <Text style={{ fontSize: "12px" }}>{formatPrice(document.discountAmount)}</Text>
+        <Text style={{ fontSize: "12px" }}>{formatPrice(document.total)}</Text>
+      </View>
     </View>
   </View>
 );
@@ -140,6 +162,15 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
             textAlign: "right",
           }}
         >
+          DESCUENTO:{" "}
+        </Text>
+        <Text
+          style={{
+            fontSize: "10px",
+            fontWeight: "bold",
+            textAlign: "right",
+          }}
+        >
           IGV:{" "}
         </Text>
         <Text
@@ -154,6 +185,7 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
       </View>
       <View>
         <Text style={{ fontSize: "10px" }}>{formatPrice(document.total)}</Text>
+        <Text style={{ fontSize: "10px" }}>{formatPrice(document.discountAmount)}</Text>
         <Text style={{ fontSize: "10px" }}>{formatPrice(0)}</Text>
         <Text style={{ fontSize: "10px" }}>{formatPrice(document.total)}</Text>
       </View>
