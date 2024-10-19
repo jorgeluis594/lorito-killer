@@ -131,23 +131,30 @@ model OrderItem {
   updatedAt    DateTime @updatedAt
 }
 
+enum DiscountType {
+  AMOUNT
+  PERCENT
+}
+
 model Order {
-  id           String      @id @default(uuid())
-  cashShiftId  String
-  companyId    String?
-  customerId   String?
-  customer     Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  company      Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  discount     Decimal?
-  total        Decimal
-  status       String
-  cashShift    CashShift   @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  payments     Payment[]
-  documents    Document[]
-  documentType String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  orderItems   OrderItem[]
+  id             String        @id @default(uuid())
+  cashShiftId    String
+  companyId      String?
+  customerId     String?
+  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  company        Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  discountAmount Decimal?
+  discountType   DiscountType?
+  discountValue  Decimal?
+  total          Decimal
+  status         String
+  cashShift      CashShift     @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  payments       Payment[]
+  documents      Document[]
+  documentType   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  orderItems     OrderItem[]
 }
 
 enum DocumentType {
@@ -208,7 +215,7 @@ model Company {
   cashShifts         CashShift[]
   orders             Order[]
   categories         Category[]
-  logos    Logo[]
+  logos              Logo[]
   stockTransfers     StockTransfer[]
   documents          Document[]
   subdomain          String?         @unique
