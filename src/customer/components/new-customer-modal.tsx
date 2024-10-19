@@ -41,7 +41,7 @@ import {
   useOrderFormStore,
 } from "@/new-order/order-form-provider";
 import { useEffect, useState } from "react";
-import {createCustomer, findCustomerByDocumentNumber, searchCustomer} from "@/customer/actions";
+import {createCustomer, searchCustomer} from "@/customer/actions";
 import DistrictSelector from "@/locality/components/district_selector";
 import { District } from "@/locality/types";
 
@@ -109,17 +109,6 @@ export default function NewCustomerModal() {
   const { setCustomer } = useOrderFormActions();
 
   const onSubmit = async (data: CustomerFormValues) => {
-    const responseSearch = await findCustomerByDocumentNumber(String(data.documentNumber))
-
-    if(responseSearch.success){
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: "El cliente ya esta registrado.",
-      });
-      return
-    }
-
     const res = await createCustomer(
       formValuesToCustomer(data, user!.companyId!),
     );
@@ -135,7 +124,7 @@ export default function NewCustomerModal() {
       toast({
         title: "Error",
         variant: "destructive",
-        description: "Error al crear el cliente " + res.message,
+        description: "El cliente ya esta registrado. ",
       });
     }
   };
@@ -147,20 +136,8 @@ export default function NewCustomerModal() {
     setOpen(isOpen);
   };
 
-  const documentNumberSearch = form.getValues("documentNumber");
-
   const handleSearch = async () => {
-    const responseSearch = await findCustomerByDocumentNumber(String(documentNumberSearch))
-
-    if(responseSearch.success){
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: "El cliente ya esta registrado.",
-      });
-      return
-    }
-
+    const documentNumberSearch = form.watch("documentNumber");
     const res = await searchCustomer(
       String(documentNumberSearch),
       order.documentType,

@@ -6,11 +6,19 @@ import {createCustomer as persistCustomer, findByDocumentNumber,} from "@/custom
 import gatewayCreator from "@/document/factpro/gateway";
 import { getSession } from "@/lib/auth";
 import { getBillingCredentialsFor } from "@/document/db_repository";
+import {log} from "@/lib/log";
 
 export const createCustomer = async (
   customer: Customer,
 ): Promise<response<Customer>> => {
   const session = await getSession();
+
+  const responseFind = await findByDocumentNumber(String(customer.documentNumber))
+
+  if(responseFind.success){
+    log.info("Customer is already registered", {customer, responseFind})
+    return {success: false, message: "Cliente ya registrado."}
+  }
 
   return persistCustomer({ ...customer, companyId: session.user.companyId });
 };
@@ -25,6 +33,13 @@ export const searchCustomer = async (
   );
   if (!billingCredentialsResponse.success) {
     return billingCredentialsResponse;
+  }
+
+  const responseFind = await findByDocumentNumber(documentNumber)
+
+  if(responseFind.success){
+    log.info("Customer is already registered", {documentNumber, responseFind})
+    return {success: false, message: "Cliente ya registrado."}
   }
 
   const { fetchCustomerByRuc, fetchCustomerByDNI } = gatewayCreator({
@@ -42,15 +57,3 @@ export const searchCustomer = async (
 
   return response;
 };
-
-export const findCustomerByDocumentNumber = async (
-  documentNumber: string
-) => {
-  const response = await findByDocumentNumber(documentNumber);
-
-  if (!response.success) {
-    return { success: false, message: "No se encontro al cliente" };
-  }
-
-  return response;
-}
