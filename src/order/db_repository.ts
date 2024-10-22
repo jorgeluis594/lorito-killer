@@ -136,7 +136,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
     const { discountType, discountValue, ...createdOrderData } = createdOrderResponse
 
     const createdOrder: Order = {
-      ...createdOrderResponse,
+      ...createdOrderData,
       customerId: createdOrderResponse.customerId!,
       companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
