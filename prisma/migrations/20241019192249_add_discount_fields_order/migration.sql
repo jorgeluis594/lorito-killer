@@ -9,6 +9,6 @@ CREATE TYPE "DiscountType" AS ENUM ('AMOUNT', 'PERCENT');
 
 -- AlterTable
 ALTER TABLE "Order" DROP COLUMN "discount",
-ADD COLUMN     "discountAmount" DECIMAL(65,30),
+ADD COLUMN     "discountAmount" DECIMAL(65,30) NOT NULL DEFAULT 0,
 ADD COLUMN     "discountType" "DiscountType",
 ADD COLUMN     "discountValue" DECIMAL(65,30);
