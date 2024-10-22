@@ -23,6 +23,7 @@ import {
 } from "@/document/db_repository";
 import type { Document } from "@/document/types";
 import prisma, { setPrismaClient } from "@/lib/prisma";
+import calculateDiscount from "@/order/use-cases/calculate_discount";
 
 export const create = async (
   userId: string,
@@ -60,10 +61,15 @@ export const create = async (
     };
   }
 
+  const discountResponse = calculateDiscount(order)
+  if (!discountResponse.success) {
+    return {success: false, message: "Error generando descuento"}
+  }
+
   return withinTransaction<{ order: Order; document: Document }>(
     async function () {
       const createOrderResponse = await createOrder({
-        ...order,
+        ...discountResponse.data,
         cashShiftId: openCashShift.id,
         companyId: session.user.companyId,
       });

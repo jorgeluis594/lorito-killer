@@ -30,6 +30,7 @@ import { Order } from "@/order/types";
 import { Company } from "@/company/types";
 import type { Document } from "@/document/types";
 import { useUserSession } from "@/lib/use-user-session";
+import DiscountFields from "@/new-order/components/create-order-modal/discount-fields";
 
 const PaymentViews = {
   none: NonePayment,
@@ -131,6 +132,8 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         <div className="my-2 relative">
           <p className="text-2xl font-medium leading-none text-center">
             <span className="text-xl font-light mr-2">Total</span>
+            {formatPrice(order.netTotal)}
+            {formatPrice(order.discountAmount)}
             {formatPrice(order.total)}
           </p>
           {paymentMode !== "none" && (
@@ -144,6 +147,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
             </Button>
           )}
           <PaymentView />
+          { paymentMode !== 'none' && <DiscountFields/> }
         </div>
         <DialogFooter>
           <CreateOrderButton

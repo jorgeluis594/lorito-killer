@@ -9,9 +9,10 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useCallback, useEffect, useState } from "react";
-import type {
+import {
+  AMOUNT, AmountDiscount,
   CashPayment as CashPaymentMethod,
-  PaymentMethod,
+  PaymentMethod, PERCENT, PercentDiscount,
   WalletPayment as WalletPaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
@@ -21,6 +22,22 @@ import {
 } from "@/shared/components/ui/toggle-group";
 import * as React from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import {Checkbox} from "@/shared/components/ui/checkbox";
+import {useDebounce} from "@/shared/components/ui/multiple-selector";
+import {
+  Select,
+  SelectContent,
+  SelectGroup, SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue
+} from "@/shared/components/ui/select";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/shared/components/ui/form";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import * as z from "zod";
+import * as zod from "zod";
+import {Button} from "@/shared/components/ui/button";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -67,10 +84,17 @@ type CashPaymentMethodState = Omit<CashPaymentMethod, "received_amount"> & {
   received_amount: number | null;
 };
 
+const DiscountFormSchema = zod.object({
+  discountType: zod.enum([AMOUNT, PERCENT]),
+  value: zod.coerce.number(),
+});
+
+type DiscountFormValues = z.infer<typeof DiscountFormSchema>;
+
 export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
-  const { cashShift } = useCashShiftStore((store) => store);
-  const { addPayment, removePayment } = useOrderFormActions();
+  const {cashShift} = useCashShiftStore((store) => store);
+  const {setDiscount, addPayment, removePayment} = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
@@ -106,11 +130,11 @@ export const CashPayment: React.FC = () => {
   }, [payment.received_amount, orderTotal]);
 
   useEffect(() => {
-    const { received_amount, ...rest } = payment;
+    const {received_amount, ...rest} = payment;
     if (received_amount === null) return;
 
     removePayment("cash");
-    addPayment({ ...rest, received_amount });
+    addPayment({...rest, received_amount});
   }, [payment]);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 
-import { Order, OrderItem, Payment, PaymentMethod } from "@/order/types";
+import {Discount, Order, OrderItem, Payment, PaymentMethod} from "@/order/types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
 import { CashShift } from "@/cash-shift/types";
@@ -15,6 +15,7 @@ export type OrderFormStore = {
 export type Actions = {
   addProduct: (product: Product, stock?: number) => void;
   setDocumentType: (documentType: DocumentType) => void;
+  setDiscount: (discount?: Discount) => void;
   setCustomer: (customer: Customer) => void;
   removeCustomer: () => void;
   getOrderItemByProduct: (productId: string) => OrderItem | undefined;
@@ -55,6 +56,9 @@ const defaultInitState: OrderFormStore = {
     payments: [],
     status: "pending",
     documentType: "ticket",
+    discount: undefined,
+    netTotal: 0,
+    discountAmount: 0,
     total: 0,
     customer: undefined,
   },

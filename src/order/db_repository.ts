@@ -9,7 +9,7 @@ import {
   type Order as PrismaOrder,
   type OrderItem as PrismaOrderItem,
 } from "@prisma/client";
-import { Payment } from "@/order/types";
+import { Payment, Discount } from "@/order/types";
 import PaymentMethod = $Enums.PaymentMethod;
 import {
   PRISMA_UNIT_TYPE_MAPPER,
@@ -104,32 +104,54 @@ function mapPaymentsToPrisma(payments: Payment[]): PaymentPrismaMatch[] {
   return payments.map(mapPaymentToPrisma);
 }
 
+const PRISMA_DISCOUNT_TYPE_MAPPER: Record<$Enums.DiscountType, Discount['type']> = {
+  'AMOUNT': "amount",
+  'PERCENT': "percent"
+}
+
+const DISCOUNT_TYPE_MAPPER: Record<Discount["type"], $Enums.DiscountType> = {
+  'amount': "AMOUNT",
+  'percent': "PERCENT"
+}
+
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
-    const { orderItems, payments, customer, ...orderData } = order;
+    const { orderItems, payments, customer, discount,...orderData } = order;
+
     const createdOrderResponse = await prisma().order.create({
       data: {
         ...orderData,
+        discountType: discount ? DISCOUNT_TYPE_MAPPER[discount.type] : null,
+        discountValue: discount?.value,
         customerId: customer?.id,
         payments: { create: mapPaymentsToPrisma(payments) as any },
       },
       include: { payments: true },
     });
+
     const createdOrderItemsResponses = await Promise.all(
       orderItems.map((oi) => addOrderItem(createdOrderResponse.id, oi)),
     );
 
+    const { discountType, discountValue, ...createdOrderData } = createdOrderResponse
+
     const createdOrder: Order = {
-      ...createdOrderResponse,
+      ...createdOrderData,
       customerId: createdOrderResponse.customerId!,
       companyId: createdOrderResponse.companyId || "some_company_id",
       total: createdOrderResponse.total.toNumber(),
+      netTotal: createdOrderResponse.netTotal.toNumber(),
+      discountAmount: createdOrderResponse.discountAmount.toNumber(),
       status: order.status,
       documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
       customer: customer,
     };
+
+    if (discountType && discountValue) {
+      createdOrder["discount"] = { type: PRISMA_DISCOUNT_TYPE_MAPPER[discountType], value: discountValue.toNumber() }
+    }
 
     createdOrder.orderItems = createdOrderItemsResponses
       .filter((oi): oi is successResponse<OrderItem> => oi.success)
@@ -270,6 +292,11 @@ export async function transformOrdersData(
       },
     );
 
+    let discount: Discount | undefined = undefined;
+    if (prismaOrder.discountValue && prismaOrder.discountType) {
+      discount = { type: PRISMA_DISCOUNT_TYPE_MAPPER[prismaOrder.discountType], value: prismaOrder.discountValue.toNumber() }
+    }
+
     return {
       ...prismaOrder,
       customerId: prismaOrder.customerId!,
@@ -278,7 +305,10 @@ export async function transformOrdersData(
       payments: (orderPayments[prismaOrder.id] || []).map(
         mapPrismaPaymentToPayment,
       ),
+      discount,
+      discountAmount: prismaOrder.discountAmount?.toNumber(),
       total: prismaOrder.total.toNumber(),
+      netTotal: prismaOrder.netTotal.toNumber(),
       status: prismaOrder.status,
       documentType: prismaOrder.documentType,
     };
