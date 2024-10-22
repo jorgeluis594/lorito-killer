@@ -51,13 +51,10 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
   const { getPaidAmount, reset, resetPayment } = useOrderFormActions();
-  const [company, setCompany] = useState<Company | null>(null);
   const { addOrder } = useCashShiftStore((state) => state);
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
   const [creatingOrder, setCreatingOrder] = useState(false);
-  const [orderCreated, setOrderCreated] = useState<Order | null>(null);
-  const [createdDocument, setCreatedDocument] = useState<Document | null>(null);
   const user = useUserSession();
 
   const handleOrderCreation = async () => {
@@ -77,8 +74,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         description: "Venta realizada con éxito, generando comprobante",
       });
       addOrder(response.data.order);
-      setOrderCreated(response.data.order);
-      setCreatedDocument(response.data.document);
+      reset();
+      onOpenChange(false);
+      window.open(`/api/orders/${response.data.order.id}/documents`, "_blank");
     } else {
       toast({
         variant: "destructive",
@@ -88,24 +86,8 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     setCreatingOrder(false);
   };
 
-  useEffect(() => {
-    getCompany().then((response) => {
-      if (response.success) {
-        setCompany(response.data);
-      } else {
-        toast({
-          variant: "destructive",
-          description:
-            "Error al cargar la información de la empresa, comuniquese con nostros para solucionar el problema",
-        });
-      }
-    });
-  }, []);
-
   const CreateOrderButton = ({
     amountIsInvalid,
-    paidAmount,
-    total,
   }: {
     amountIsInvalid: boolean;
     paidAmount: number;
@@ -164,20 +146,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               CAMBIAR MÉTODO
             </Button>
           )}
-          {orderCreated && createdDocument ? (
-            <PdfVoucherRedirection
-              order={orderCreated}
-              document={createdDocument}
-              company={company!}
-              onPdfCreated={() => {
-                onOpenChange(false);
-                reset();
-                setOrderCreated(null);
-              }}
-            />
-          ) : (
-            <PaymentView />
-          )}
+          <PaymentView />
           { paymentMode !== 'none' && <DiscountFields/> }
         </div>
         <DialogFooter>

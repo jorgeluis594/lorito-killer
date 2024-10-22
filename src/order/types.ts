@@ -39,6 +39,7 @@ export type Order = {
   id?: string;
   cashShiftId: string;
   companyId: string;
+  customerId?: string;
   orderItems: OrderItem[];
   netTotal: number;
   discountAmount: number;
