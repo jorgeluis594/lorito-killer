@@ -6,5 +6,4 @@
 
 */
 -- AlterTable
-ALTER TABLE "Order" ADD COLUMN     "netTotal" DECIMAL(65,30) NOT NULL,
-ALTER COLUMN "discountAmount" SET NOT NULL;
+ALTER TABLE "Order" ADD COLUMN     "netTotal" DECIMAL(65,30) NOT NULL;
