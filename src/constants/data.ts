@@ -14,6 +14,12 @@ export const navItems: NavItem[] = [
     label: "pedidos",
   },
   {
+    title: "Reporte de ventas",
+    href: "/dashboard/sales_reports",
+    icon: "salesReports",
+    label: "reporte de ventas",
+  },
+  {
     title: "Caja chica",
     href: "/dashboard/cash_shifts",
     icon: "cashRegister",
