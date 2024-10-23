@@ -16,7 +16,7 @@ export const createCustomer = async (
 ): Promise<response<Customer>> => {
   const session = await getSession();
 
-  const responseFind = await findByDocumentNumber(String(customer.documentNumber))
+  const responseFind = await findByDocumentNumber(session.user.companyId, String(customer.documentNumber))
 
   if(responseFind.success){
     log.info("Customer is already registered", {customer, responseFind})
@@ -38,7 +38,7 @@ export const searchCustomer = async (
     return billingCredentialsResponse;
   }
 
-  const responseFind = await findByDocumentNumber(documentNumber)
+  const responseFind = await findByDocumentNumber(session.user.companyId, documentNumber)
 
   if(responseFind.success){
     log.info("Customer is already registered", {documentNumber, responseFind})
