@@ -100,10 +100,13 @@ export const createCustomer = async (
   }
 };
 
-export const findByDocumentNumber = async (documentNumber: string): Promise<response<Customer>> => {
+export const findByDocumentNumber = async (
+  companyId: string,
+  documentNumber: string,
+): Promise<response<Customer>> => {
   try {
     const customer = await prisma().customer.findMany({
-      where: { documentNumber: documentNumber },
+      where: { documentNumber, companyId },
     });
 
     if (customer) {

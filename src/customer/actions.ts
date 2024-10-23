@@ -2,7 +2,10 @@
 
 import { type Customer } from "@/customer/types";
 import { response } from "@/lib/types";
-import {createCustomer as persistCustomer, findByDocumentNumber,} from "@/customer/db_repository";
+import {
+  createCustomer as persistCustomer,
+  findByDocumentNumber,
+} from "@/customer/db_repository";
 import gatewayCreator from "@/document/factpro/gateway";
 import { getSession } from "@/lib/auth";
 import { getBillingCredentialsFor } from "@/document/db_repository";
@@ -50,6 +53,20 @@ export const searchCustomer = async (
     documentType === "invoice" ? fetchCustomerByRuc : fetchCustomerByDNI;
 
   const response = await fetchFunction(documentNumber);
+
+  if (!response.success) {
+    return { success: false, message: "No se encontro al cliente" };
+  }
+
+  return response;
+};
+
+export const findCustomerByDocumentNumber = async (documentNumber: string) => {
+  const session = await getSession();
+  const response = await findByDocumentNumber(
+    session.user.companyId,
+    documentNumber,
+  );
 
   if (!response.success) {
     return { success: false, message: "No se encontro al cliente" };
