@@ -10,9 +10,9 @@ import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useCallback, useEffect, useState } from "react";
 import {
-  AMOUNT, AmountDiscount,
+  AMOUNT,
   CashPayment as CashPaymentMethod,
-  PaymentMethod, PERCENT, PercentDiscount,
+  PaymentMethod, PERCENT,
   WalletPayment as WalletPaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
@@ -22,22 +22,9 @@ import {
 } from "@/shared/components/ui/toggle-group";
 import * as React from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
-import {Checkbox} from "@/shared/components/ui/checkbox";
-import {useDebounce} from "@/shared/components/ui/multiple-selector";
-import {
-  Select,
-  SelectContent,
-  SelectGroup, SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue
-} from "@/shared/components/ui/select";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/shared/components/ui/form";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
 import * as z from "zod";
 import * as zod from "zod";
-import {Button} from "@/shared/components/ui/button";
+import { formatPrice } from "@/lib/utils";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -163,7 +150,7 @@ export const CashPayment: React.FC = () => {
         <div className="mt-5">
           Vuelto:
           <span className="text-lg font-medium text-destructive ml-3">
-            {payment.change}
+            {formatPrice(payment.change)}
           </span>
         </div>
       )}
