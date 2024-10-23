@@ -12,6 +12,7 @@ interface CartItemProps {
   increaseQuantityProduct: (orderItemId: string) => void;
   decreaseQuantityProduct: (orderItemId: string) => void;
   removeOrderItem: (orderItemId: string) => void;
+  restoreStockProduct: (productId: string, quantity: number) => void;
 }
 
 export default function CartItem({
@@ -21,6 +22,7 @@ export default function CartItem({
   increaseQuantityProduct,
   decreaseQuantityProduct,
   removeOrderItem,
+  restoreStockProduct,
 }: CartItemProps) {
   const onIncreaseIncreaseQuantity = () => {
     increaseQuantity(item.id!)
@@ -30,6 +32,11 @@ export default function CartItem({
     decreaseQuantity(item.id!)
     increaseQuantityProduct(item.productId)
   };
+
+  const removeProductToCart = () => {
+    removeOrderItem(item.id!)
+    restoreStockProduct(item.productId, item.quantity)
+  }
 
   const UnitQuantityComponent = () => (
     <div className="flex justify-around items-center">
@@ -64,7 +71,7 @@ export default function CartItem({
           type="button"
           variant="destructive"
           className="hidden group-hover:block ml-auto"
-          onClick={() => removeOrderItem(item.id!)}
+          onClick={removeProductToCart}
         >
           <Trash className="h-4 w-4"></Trash>
         </Button>

@@ -54,7 +54,7 @@ export default function Cart() {
     }
   };
 
-  const { increaseQuantityProduct, decreaseQuantityProduct} = useProductFormActions();
+  const { increaseQuantityProduct, decreaseQuantityProduct, restoreStockProduct} = useProductFormActions();
 
   useEffect(() => {
     reset();
@@ -122,6 +122,7 @@ export default function Cart() {
                   increaseQuantityProduct={increaseQuantityProduct}
                   decreaseQuantityProduct={decreaseQuantityProduct}
                   removeOrderItem={removeOrderItem}
+                  restoreStockProduct={restoreStockProduct}
                 />
               ))}
             </div>
