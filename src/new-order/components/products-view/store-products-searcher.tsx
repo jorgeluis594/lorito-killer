@@ -10,6 +10,7 @@ export type Actions = {
   setProducts: (products: Product[]) => void;
   increaseQuantityProduct: (productId: string) => void;
   decreaseQuantityProduct: (productId: string) => void;
+  restoreStockProduct: (productId: string, quantity: number) => void;
 }
 
 const defaultInitState: ProductFormStore = {

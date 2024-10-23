@@ -8,6 +8,7 @@ import {
   initProductFormStore, ProductFormStore
 } from "@/new-order/components/products-view/store-products-searcher";
 import {Product} from "@/product/types";
+import {log} from "@/lib/log";
 
 const ProductFormStoreContext = createContext<StoreApi<ProductFormStore> | null>(
   null,
@@ -91,10 +92,27 @@ export const useProductFormActions = (): Actions => {
       });
     }
   }
+  
+  const restoreStockProduct = (productId: string, quantity: number) => {
+    const { products } = productFormStoreContext.getState();
+    const product = products.find((product) => product.id === productId);
+    if (!product) {
+      log.error("product_item_not_found", {productId, quantity, product});
+      return;
+    }
+
+    if(product?.type === "SingleProduct"){
+      product.stock += quantity;
+      productFormStoreContext.setState(() => {
+        return { products: products.map(p => p.id === productId ? product : p) };
+      });
+    }
+  }
 
   return {
     setProducts,
     decreaseQuantityProduct,
     increaseQuantityProduct,
+    restoreStockProduct,
   }
 }
