@@ -58,6 +58,7 @@ export default function DiscountFields() {
     const value = !isDiscountAvailable;
     setIsDiscountAvailable(value);
     if (!value) {
+      setDiscountValue(0);
       setDiscount(undefined);
     }
   }
