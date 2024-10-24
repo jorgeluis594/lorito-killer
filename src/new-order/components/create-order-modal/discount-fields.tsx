@@ -1,61 +1,65 @@
-import {useEffect, useState} from "react";
-import {Button} from "@/shared/components/ui/button";
-import {TicketPercent} from "lucide-react"
-import {useOrderFormActions, useOrderFormStore} from "@/new-order/order-form-provider";
-import {Input, MoneyInput} from "@/shared/components/ui/input";
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/shared/components/ui/tabs";
-import {debounce} from "@/lib/utils";
-import {toast} from "@/shared/components/ui/use-toast";
+import { useEffect, useState } from "react";
+import { Button } from "@/shared/components/ui/button";
+import { TicketPercent } from "lucide-react";
+import {
+  useOrderFormActions,
+  useOrderFormStore,
+} from "@/new-order/order-form-provider";
+import { Input, MoneyInput } from "@/shared/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { toast } from "@/shared/components/ui/use-toast";
+import { Discount, Order } from "@/order/types";
 
 function isDiscountValid(order: Order & { discount: Discount }): boolean {
-  if (order)
+  if (order.discount.value <= 0) return false;
+
+  // Discount type is amount
+  if (order.discount.type === "amount") {
+    return order.discount.value <= order.netTotal;
+  }
+
+  // Discount type is percent
+  return order.discount.value <= 100;
 }
 
-export default function DiscountFields() {
+export default function DiscountFields({
+  defaultDiscount,
+}: {
+  defaultDiscount: Discount | undefined;
+}) {
   const { order } = useOrderFormStore((state) => state);
-  const [isDiscountAvailable, setIsDiscountAvailable] = useState<boolean>(false);
-  const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
-  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [isDiscountAvailable, setIsDiscountAvailable] =
+    useState<boolean>(!!defaultDiscount);
+  const [discountType, setDiscountType] = useState<"amount" | "percent">(
+    defaultDiscount?.type || "amount",
+  );
+  const [discountValue, setDiscountValue] = useState<number>(
+    defaultDiscount?.value || 0,
+  );
   const { setDiscount } = useOrderFormActions();
   const onDiscountTypeChange = (value: string) => {
-    if (value === 'amount' || value === 'percent') {
+    if (value === "amount" || value === "percent") {
       setDiscountType(value);
       setDiscountValue(0);
     }
-  }
+  };
 
-  const setDiscountDebouncing = debounce(setDiscount, 200);
   useEffect(() => {
-    if (discountValue) {
-      let validDiscount = true;
-
-      if (discountType === 'amount' && discountValue > order.netTotal) {
-        validDiscount = false;
-      } else if (discountType === 'percent' && (discountValue > 100 || discountValue < 0)) {
-        validDiscount = false;
-      }
-
-      if (validDiscount) {
-        setDiscountDebouncing({ type: discountType, value: discountValue });
-      } else {
-        if(discountType === 'amount'){
-          toast({
-            title: "Descuento no válido",
-            description: `El descuento no puede ser mayor que el total de la orden.`,
-            variant: "destructive",
-          });
-        }else{
-          toast({
-            title: "Descuento no válido",
-            description: `El descuento en porcentaje debe tener un numero válido.`,
-            variant: "destructive",
-          });
-        }
-        setDiscount(undefined);
-      }
-    } else {
-      setDiscount(undefined);
+    if (
+      !isDiscountValid({
+        ...order,
+        discount: { value: discountValue, type: discountType },
+      })
+    ) {
+      toast({
+        title: "Descuento no válido",
+        description:
+          "El descuento no puede ser mayor que el total de la orden.",
+        variant: "destructive",
+      });
     }
+
+    setDiscount({ type: discountType, value: discountValue });
   }, [discountValue, discountType]);
 
   const toggleIsDiscountAvailable = () => {
@@ -65,13 +69,26 @@ export default function DiscountFields() {
       setDiscountValue(0);
       setDiscount(undefined);
     }
-  }
+  };
 
   return (
     <>
       <div className="flex items-center space-x-2 mt-5">
-        {!isDiscountAvailable && <Button type="button" onClick={toggleIsDiscountAvailable} size="sm" ><TicketPercent className="w-4 h-4 mr-2"/> Agregar descuento</Button> }
-        {isDiscountAvailable && <Button type="button" variant="destructive" onClick={toggleIsDiscountAvailable} size="sm" ><TicketPercent className="w-4 h-4 mr-2"/> Eliminar descuento</Button> }
+        {!isDiscountAvailable && (
+          <Button type="button" onClick={toggleIsDiscountAvailable} size="sm">
+            <TicketPercent className="w-4 h-4 mr-2" /> Agregar descuento
+          </Button>
+        )}
+        {isDiscountAvailable && (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={toggleIsDiscountAvailable}
+            size="sm"
+          >
+            <TicketPercent className="w-4 h-4 mr-2" /> Eliminar descuento
+          </Button>
+        )}
       </div>
       {isDiscountAvailable && (
         <div className="flex items-center space-x-2 mt-2 transition animate-move-from-up-to-down">
@@ -89,13 +106,13 @@ export default function DiscountFields() {
               value={discountValue}
               onChange={(e) => setDiscountValue(Number(e.target.value))}
             />
-          ): (
+          ) : (
             <Input
-            type="number"
-            className="w-40"
-            placeholder="%"
-            value={discountValue}
-            onChange={(e) => setDiscountValue(Number(e.target.value))}
+              type="number"
+              className="w-40"
+              placeholder="%"
+              value={discountValue}
+              onChange={(e) => setDiscountValue(Number(e.target.value))}
             />
           )}
         </div>

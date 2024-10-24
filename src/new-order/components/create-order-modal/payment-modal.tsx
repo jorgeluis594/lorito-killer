@@ -139,8 +139,8 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
             </span>
             {order.discount && (
               <span className="text-lg text-red-500 block mt-1">
-              Descuento: {formatPrice(order.discountAmount)}
-            </span>
+                Descuento: {formatPrice(order.discountAmount)}
+              </span>
             )}
           </div>
           {paymentMode !== "none" && (
@@ -153,8 +153,10 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               CAMBIAR MÉTODO
             </Button>
           )}
-          <PaymentView/>
-          {paymentMode !== 'none' && <DiscountFields/>}
+          <PaymentView />
+          {paymentMode !== "none" && (
+            <DiscountFields defaultDiscount={order.discount} />
+          )}
         </div>
         <DialogFooter>
           <CreateOrderButton
