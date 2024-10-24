@@ -130,12 +130,19 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           <DialogTitle>Pagar pedido</DialogTitle>
         </DialogHeader>
         <div className="my-2 relative">
-          <p className="text-2xl font-medium leading-none text-center">
-            <span className="text-xl font-light mr-2">Total</span>
-            {formatPrice(order.netTotal)}
-            {formatPrice(order.discountAmount)}
-            {formatPrice(order.total)}
-          </p>
+          <div className="text-center">
+            <span className="text-3xl font-medium leading-none">
+              PRECIO TOTAL: {formatPrice(order.total)}
+            </span>
+            <span className="text-xl text-gray-600 block mt-1">
+              Importe Total: {formatPrice(order.netTotal)}
+            </span>
+            {order.discount && (
+              <span className="text-lg text-red-500 block mt-1">
+              Descuento: {formatPrice(order.discountAmount)}
+            </span>
+            )}
+          </div>
           {paymentMode !== "none" && (
             <Button
               type="button"
@@ -146,8 +153,8 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               CAMBIAR MÉTODO
             </Button>
           )}
-          <PaymentView />
-          { paymentMode !== 'none' && <DiscountFields/> }
+          <PaymentView/>
+          {paymentMode !== 'none' && <DiscountFields/>}
         </div>
         <DialogFooter>
           <CreateOrderButton
