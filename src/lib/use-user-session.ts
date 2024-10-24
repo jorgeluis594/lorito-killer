@@ -6,6 +6,6 @@ import { User } from "@/user/types";
 export const useUserSession = (): User | null => {
   const { data: session } = useSession();
   if (!session) return null;
-
+  console.log({ session });
   return session.user as User;
 };
