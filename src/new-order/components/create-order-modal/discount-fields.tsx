@@ -7,6 +7,10 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/shared/components/ui/t
 import {debounce} from "@/lib/utils";
 import {toast} from "@/shared/components/ui/use-toast";
 
+function isDiscountValid(order: Order & { discount: Discount }): boolean {
+  if (order)
+}
+
 export default function DiscountFields() {
   const { order } = useOrderFormStore((state) => state);
   const [isDiscountAvailable, setIsDiscountAvailable] = useState<boolean>(false);
