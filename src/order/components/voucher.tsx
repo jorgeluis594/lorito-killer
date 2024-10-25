@@ -117,6 +117,15 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
             textAlign: "right",
           }}
         >
+          Total sin descuento:{" "}
+        </Text>
+        <Text
+          style={{
+            fontSize: "12px",
+            fontWeight: "bold",
+            textAlign: "right",
+          }}
+        >
           Descuento:{" "}
         </Text>
         <Text
@@ -130,6 +139,7 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
         </Text>
       </View>
       <View>
+        <Text style={{ fontSize: "12px" }}>{formatPrice(document.netTotal)}</Text>
         <Text style={{ fontSize: "12px" }}>{formatPrice(document.discountAmount)}</Text>
         <Text style={{ fontSize: "12px" }}>{formatPrice(document.total)}</Text>
       </View>
