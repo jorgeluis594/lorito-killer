@@ -131,17 +131,34 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         </DialogHeader>
         <div className="my-2 relative">
           <div className="text-center">
-            <span className="text-3xl font-medium leading-none">
-              PRECIO TOTAL: {formatPrice(order.total)}
-            </span>
-            <span className="text-xl text-gray-600 block mt-1">
-              Importe Total: {formatPrice(order.netTotal)}
-            </span>
             {order.discount && (
-              <span className="text-lg text-red-500 block mt-1">
-                Descuento: {formatPrice(order.discountAmount)}
-              </span>
+              <div className="grid grid-cols-2 gap-1">
+                <div>
+                  <div className="text-xl text-gray-600 text-right">
+                    Total con descuento:
+                  </div>
+                  <div className="text-lg text-red-500 text-right mt-[-10px]">
+                    Descuento:
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xl text-gray-600 text-left">
+                    {formatPrice(order.netTotal)}
+                  </div>
+                  <div className="text-lg text-red-500 text-left mt-[-10px]">
+                    {formatPrice(order.discountAmount)}
+                  </div>
+                </div>
+              </div>
             )}
+            <div className="grid grid-cols-2 gap-1 mt-3">
+              <div className="text-3xl font-medium leading-none text-right">
+                PRECIO TOTAL:
+              </div>
+              <div className="text-3xl font-medium leading-none text-left">
+                {formatPrice(order.total)}
+              </div>
+            </div>
           </div>
           {paymentMode !== "none" && (
             <Button
@@ -153,9 +170,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               CAMBIAR MÉTODO
             </Button>
           )}
-          <PaymentView />
+          <PaymentView/>
           {paymentMode !== "none" && (
-            <DiscountFields defaultDiscount={order.discount} />
+            <DiscountFields defaultDiscount={order.discount}/>
           )}
         </div>
         <DialogFooter>
