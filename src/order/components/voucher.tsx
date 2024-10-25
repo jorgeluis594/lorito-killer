@@ -112,7 +112,7 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
       <View>
         <Text
           style={{
-            fontSize: "12px",
+            fontSize: "8px",
             fontWeight: "bold",
             textAlign: "right",
           }}
@@ -121,7 +121,7 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
         </Text>
         <Text
           style={{
-            fontSize: "12px",
+            fontSize: "8px",
             fontWeight: "bold",
             textAlign: "right",
           }}
@@ -139,8 +139,8 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
         </Text>
       </View>
       <View>
-        <Text style={{ fontSize: "12px" }}>{formatPrice(document.netTotal)}</Text>
-        <Text style={{ fontSize: "12px" }}>{formatPrice(document.discountAmount)}</Text>
+        <Text style={{ fontSize: "10px" }}>{formatPrice(document.netTotal)}</Text>
+        <Text style={{ fontSize: "10px" }}>{formatPrice(document.discountAmount)}</Text>
         <Text style={{ fontSize: "12px" }}>{formatPrice(document.total)}</Text>
       </View>
     </View>
@@ -159,7 +159,7 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
       <View>
         <Text
           style={{
-            fontSize: "10px",
+            fontSize: "8px",
             fontWeight: "bold",
             textAlign: "right",
           }}
@@ -168,7 +168,7 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
         </Text>
         <Text
           style={{
-            fontSize: "10px",
+            fontSize: "8px",
             fontWeight: "bold",
             textAlign: "right",
           }}
@@ -177,7 +177,7 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
         </Text>
         <Text
           style={{
-            fontSize: "10px",
+            fontSize: "8px",
             fontWeight: "bold",
             textAlign: "right",
           }}
@@ -195,9 +195,9 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
         </Text>
       </View>
       <View>
-        <Text style={{ fontSize: "10px" }}>{formatPrice(document.total)}</Text>
-        <Text style={{ fontSize: "10px" }}>{formatPrice(document.discountAmount)}</Text>
-        <Text style={{ fontSize: "10px" }}>{formatPrice(0)}</Text>
+        <Text style={{ fontSize: "8px" }}>{formatPrice(document.netTotal)}</Text>
+        <Text style={{ fontSize: "8px" }}>{formatPrice(document.discountAmount)}</Text>
+        <Text style={{ fontSize: "8px" }}>{formatPrice(0)}</Text>
         <Text style={{ fontSize: "10px" }}>{formatPrice(document.total)}</Text>
       </View>
     </View>

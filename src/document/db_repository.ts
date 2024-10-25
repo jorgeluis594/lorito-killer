@@ -45,7 +45,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       number: prismaDocument.number.toString(),
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
-      netTotal: +prismaDocument.total,
+      netTotal: +prismaDocument.netTotal,
     };
   } else if (prismaDocument.documentType == "RECEIPT") {
     document = {
@@ -97,6 +97,7 @@ export const createDocument = async (
         companyId: document.companyId,
         customerId: document.customerId,
         discountAmount: document.discountAmount,
+        netTotal: document.netTotal,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
         series: document.series,
