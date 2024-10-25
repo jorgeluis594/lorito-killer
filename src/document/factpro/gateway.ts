@@ -305,7 +305,7 @@ export default function gateway({
         companyId: order.companyId,
         orderId: order.id!,
         customerId: order.customer?.id,
-        netTotal: order.total,
+        netTotal: order.netTotal,
         taxTotal: 0,
         discountAmount: order.discountAmount,
         total: order.total,
