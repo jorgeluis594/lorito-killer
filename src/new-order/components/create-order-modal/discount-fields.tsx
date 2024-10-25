@@ -11,15 +11,13 @@ import { toast } from "@/shared/components/ui/use-toast";
 import { Discount, Order } from "@/order/types";
 
 function isDiscountValid(order: Order & { discount: Discount }): boolean {
-  if (order.discount.value <= 0) return false;
-
   // Discount type is amount
   if (order.discount.type === "amount") {
     return order.discount.value <= order.netTotal;
   }
 
   // Discount type is percent
-  return order.discount.value <= 100;
+  return order.discount.value <= 100 && order.discount.value > 0;
 }
 
 export default function DiscountFields({
@@ -45,18 +43,24 @@ export default function DiscountFields({
   };
 
   useEffect(() => {
-    if (
-      !isDiscountValid({
-        ...order,
-        discount: { value: discountValue, type: discountType },
-      })
-    ) {
-      toast({
-        title: "Descuento no válido",
-        description:
-          "El descuento no puede ser mayor que el total de la orden.",
-        variant: "destructive",
-      });
+    if(discountValue === 0) return setDiscount(undefined)
+
+    if (!isDiscountValid({...order,discount: { value: discountValue, type: discountType },})) {
+      if(discountType === 'amount'){
+        toast({
+          title: "Descuento no válido",
+          description: `El descuento no puede ser mayor que el total de la orden.`,
+          variant: "destructive",
+        });
+      }else{
+        toast({
+          title: "Descuento no válido",
+          description: `El descuento en porcentaje debe tener un numero válido.`,
+          variant: "destructive",
+        });
+      }
+      setDiscount(undefined);
+      return
     }
 
     setDiscount({ type: discountType, value: discountValue });
