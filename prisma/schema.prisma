@@ -170,6 +170,7 @@ model Document {
   customerId     String?
   companyId      String?
   discountAmount Decimal      @default(0)
+  netTotal       Decimal
   total          Decimal
   documentType   DocumentType
   series         String
