@@ -27,9 +27,9 @@ export default function LogoUpload({
   };
 
   return (
-    <div>
+    (<div>
       {!value && ( // Solo mostrar el UploadDropzone si no hay imagen cargada
-        <UploadDropzone
+        (<UploadDropzone
           className="dark:bg-zinc-800 py-2 ut-label:text-sm ut-allowed-content:ut-uploading:text-red-300"
           endpoint="imageUploader"
           config={{ mode: "auto" }}
@@ -54,11 +54,10 @@ export default function LogoUpload({
             });
           }}
           onUploadBegin={(name: string) => {}}
-        />
+        />)
       )}
-
       {value && ( // Mostrar la imagen solo si hay un valor
-        <div className="my-4 flex items-center justify-center gap-4">
+        (<div className="my-4 flex items-center justify-center gap-4">
           <div
             key={value.key}
             className="relative w-[180px] h-[180px] rounded-md overflow-hidden"
@@ -80,8 +79,8 @@ export default function LogoUpload({
               src={value.url || ""}
             />
           </div>
-        </div>
+        </div>)
       )}
-    </div>
+    </div>)
   );
 }

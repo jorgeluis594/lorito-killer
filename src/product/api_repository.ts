@@ -118,15 +118,16 @@ export const getMany = async <T extends ProductType | undefined>(
     ...data,
     data: data.data.map(
       (product): InferProductType<T> =>
-        ({
+        (({
           ...product,
           createdAt: new Date(product.createdAt!),
           updatedAt: new Date(product.updatedAt!),
+
           photos: (product.photos || []).map((photo) => ({
             ...photo,
             createdAt: new Date(photo.createdAt!),
-          })),
-        }) as InferProductType<T>,
+          }))
+        }) as InferProductType<T>),
     ),
   };
 };

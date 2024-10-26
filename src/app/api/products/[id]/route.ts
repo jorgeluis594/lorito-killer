@@ -8,10 +8,8 @@ import { SingleProduct } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   const productData: SingleProduct = await req.json();
 
@@ -42,10 +40,8 @@ export async function PUT(
   });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   const findProductResponse = await findProduct(
     params.id,
@@ -64,10 +60,8 @@ export async function DELETE(
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   let response = await findProduct(params.id, session.user.companyId);
   if (!response.success) {

@@ -8,10 +8,8 @@ import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { Category } from "@/category/types";
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const categoryData: Category = await req.json();
 
   const findProductResponse = await findCategory(params.id);
@@ -29,23 +27,21 @@ export async function PUT(
   });
 }
 
-export async function DELETE(
-    _req: Request,
-    { params }: { params: { id: string } },
-  ) {
-    const session = await getSession();
-    const findCategoryResponse = await findCategory(
-      params.id,
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const session = await getSession();
+  const findCategoryResponse = await findCategory(
+    params.id,
+  );
+  if (!findCategoryResponse.success) {
+    return NextResponse.json(
+      { success: false, message: "Product not found" },
+      { status: 404 },
     );
-    if (!findCategoryResponse.success) {
-      return NextResponse.json(
-        { success: false, message: "Product not found" },
-        { status: 404 },
-      );
-    }
-  
-    revalidatePath("/api/categories");
-  
-    const response = await deleteCategory(findCategoryResponse.data);
-    return NextResponse.json(response, { status: response.success ? 200 : 400 });
   }
+
+  revalidatePath("/api/categories");
+
+  const response = await deleteCategory(findCategoryResponse.data);
+  return NextResponse.json(response, { status: response.success ? 200 : 400 });
+}
