@@ -37,9 +37,9 @@ export default function DocumentSelector({
   return (
     <section>
       <div className="mb-2">
-        <Label>Tipo de documento</Label>
+        <Label>Documento tributario</Label>
         <p className="text-sm text-muted-foreground">
-          Seleccione los tipos a filtrar
+          Seleccione los tipos de documento a filtrar
         </p>
       </div>
       <div className="space-y-2">

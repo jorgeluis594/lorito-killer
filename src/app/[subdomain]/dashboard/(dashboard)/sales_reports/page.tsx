@@ -9,6 +9,7 @@ import { Download } from "lucide-react";
 import { getMany } from "@/document/db_repository";
 import { SearchParams } from "@/document/types";
 import { Suspense } from "react";
+import Filters from "@/sale_report/components/filter/filters";
 
 const breadcrumbItems = [
   { title: "Reporte de ventas", link: "/sales_reports" },
@@ -81,12 +82,13 @@ export default async function Page({ searchParams }: ParamsProps) {
       </div>
       <Separator />
       <div className="flex flex-row space-x-12 space-y-0 mt-8">
-        <aside className="w-1/5 space-y-2">
+        <aside className="w-1/5">
           <Button type="button">
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
-          <p>Aca van los filtros</p>
+
+          <Filters />
         </aside>
         <div className="flex-1 lg:max-w-7xl mt-6">
           <Suspense

@@ -22,6 +22,8 @@ export default async function Filters() {
     <div className="mt-6">
       <h2 className="text-xl font-bold tracking-tight mb-4">Filtros</h2>
 
+      <DateFilter />
+      <Separator className="my-5" />
       <DocumentSelector
         documentTypes={{
           ticket: true,
@@ -29,10 +31,8 @@ export default async function Filters() {
           receipt: !!billingCredentials.data.receiptSerialNumber, // Fix, check if company has at least one receipt serial number to allow filter by receipt
         }}
       />
-      <Separator className="my-4" />
+      <Separator className="my-5" />
       <CustomerSelector />
-      <Separator className="my-4" />
-      <DateFilter />
     </div>
   );
 }
