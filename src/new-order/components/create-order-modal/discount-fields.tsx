@@ -115,7 +115,7 @@ export default function DiscountFields({
               type="number"
               className="w-40"
               placeholder="%"
-              value={discountValue}
+              value={discountValue === 0 ? "" : discountValue}
               onChange={(e) => setDiscountValue(Number(e.target.value))}
             />
           )}
