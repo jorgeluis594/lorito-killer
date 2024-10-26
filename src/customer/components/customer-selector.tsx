@@ -17,17 +17,18 @@ import {
   CommandItem,
   CommandList,
 } from "@/shared/components/ui/command";
-import {CustomerType, DNI, InferCustomerType, NaturalCustomer, RUC} from "@/customer/types";
+import { CustomerType, DNI, InferCustomerType, RUC } from "@/customer/types";
 import { getMany } from "@/customer/api_repository";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { fullName } from "@/customer/utils";
-import {useOrderFormStore} from "@/new-order/order-form-provider";
+import { useOrderFormStore } from "@/new-order/order-form-provider";
 
 export interface CustomerSelectorProps<T extends CustomerType | undefined> {
   value?: InferCustomerType<T>;
   onSelect?: (customer: InferCustomerType<T>) => void;
   skipCustomerIds?: string[];
+  placeHolder?: string;
   customerType?: T;
 }
 
@@ -35,6 +36,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   value,
   onSelect,
   customerType,
+  placeHolder,
 }: CustomerSelectorProps<T>) {
   const order = useOrderFormStore((state) => state.order);
   const [open, setOpen] = useState(false);
@@ -42,8 +44,12 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   const [customers, setCustomers] = useState<InferCustomerType<T>[]>([]);
   const { toast } = useToast();
 
-  const naturalCustomer = customers.filter(customer => customer.documentType === DNI);
-  const businessCustomer = customers.filter(customer => customer.documentType === RUC);
+  const naturalCustomer = customers.filter(
+    (customer) => customer.documentType === DNI,
+  );
+  const businessCustomer = customers.filter(
+    (customer) => customer.documentType === RUC,
+  );
 
   const searchCustomers = async (q: string) => {
     const response = await getMany({ q: q, customerType });
@@ -81,9 +87,14 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           role="combobox"
           type="button"
           aria-expanded={open}
-          className="justify-between w-96"
+          className="justify-between w-full max-w-96"
         >
-          {value ? fullName(value) : order.documentType === "ticket" || order.documentType === "receipt" ? "Cliente General" : "Seleccione un Cliente "}
+          {value
+            ? fullName(value)
+            : order.documentType === "ticket" ||
+                order.documentType === "receipt"
+              ? placeHolder || "Cliente General"
+              : "Seleccione un Cliente "}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -97,26 +108,26 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           <CommandList>
             <CommandEmpty>No se encontro ningun cliente</CommandEmpty>
             <CommandGroup>
-              { order.documentType === "ticket" || order.documentType === "receipt"
-                ?
-                naturalCustomer.map((customer) => (
-                <CommandItem
-                  key={customer.id}
-                  value={customer.id}
-                  onSelect={onCustomerSelect}
-                >
-                  <span>{fullName(customer)}</span>
-                </CommandItem>))
-                :
-                businessCustomer.map((customer) => (
-                  <CommandItem
-                    key={customer.id}
-                    value={customer.id}
-                    onSelect={onCustomerSelect}
-                  >
-                    <span>{fullName(customer)}</span>
-                  </CommandItem>
-                ))}
+              {order.documentType === "ticket" ||
+              order.documentType === "receipt"
+                ? naturalCustomer.map((customer) => (
+                    <CommandItem
+                      key={customer.id}
+                      value={customer.id}
+                      onSelect={onCustomerSelect}
+                    >
+                      <span>{fullName(customer)}</span>
+                    </CommandItem>
+                  ))
+                : businessCustomer.map((customer) => (
+                    <CommandItem
+                      key={customer.id}
+                      value={customer.id}
+                      onSelect={onCustomerSelect}
+                    >
+                      <span>{fullName(customer)}</span>
+                    </CommandItem>
+                  ))}
             </CommandGroup>
           </CommandList>
         </Command>
