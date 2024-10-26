@@ -134,7 +134,7 @@ export default function OrderData({ order }: { order: Order }) {
               {order.discount && (
                 <>
                   <div className="flex justify-between mt-1">
-                    <p className="text-lg">Total sin descuento</p>
+                    <p className="text-lg">Subtotal</p>
                     <p className="text-lg">{formatPrice(order.netTotal)}</p>
                   </div>
                   <div className="flex justify-between mt-1">
@@ -144,8 +144,8 @@ export default function OrderData({ order }: { order: Order }) {
                 </>
               )}
               <div className="flex justify-between">
-                <p className="font-bold text-xl">Total</p>
-                <p className="font-bold text-xl">{formatPrice(order.total)}</p>
+                <p className="font-bold text-2xl">Total</p>
+                <p className="font-bold text-2xl">{formatPrice(order.total)}</p>
               </div>
             </div>
           </div>
