@@ -10,14 +10,15 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import CustomerSelector from "@/customer/components/customer-selector";
 import NewCustomerModal from "@/customer/components/new-customer-modal";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
-import CartItem from "@/new-order/components/cart/cart-item";
 import { formatPrice } from "@/lib/utils";
-import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import { useEffect, useState } from "react";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import {useProductFormActions} from "@/new-order/components/products-view/product-searcher-form-provider";
 import { toast } from "@/shared/components/ui/use-toast";
 import { useCompany } from "@/lib/use-company";
+import CartItem from "@/new-order/components/cart/cart-item";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
@@ -52,6 +53,8 @@ export default function Cart() {
       });
     }
   };
+
+  const { increaseQuantityProduct, decreaseQuantityProduct, restoreStockProduct} = useProductFormActions();
 
   useEffect(() => {
     reset();
@@ -116,7 +119,10 @@ export default function Cart() {
                   item={item}
                   increaseQuantity={increaseQuantity}
                   decreaseQuantity={decreaseQuantity}
+                  increaseQuantityProduct={increaseQuantityProduct}
+                  decreaseQuantityProduct={decreaseQuantityProduct}
                   removeOrderItem={removeOrderItem}
+                  restoreStockProduct={restoreStockProduct}
                 />
               ))}
             </div>

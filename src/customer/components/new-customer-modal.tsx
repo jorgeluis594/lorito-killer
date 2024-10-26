@@ -41,7 +41,7 @@ import {
   useOrderFormStore,
 } from "@/new-order/order-form-provider";
 import { useEffect, useState } from "react";
-import { createCustomer, searchCustomer } from "@/customer/actions";
+import {createCustomer, searchCustomer} from "@/customer/actions";
 import DistrictSelector from "@/locality/components/district_selector";
 import { District } from "@/locality/types";
 
@@ -124,7 +124,7 @@ export default function NewCustomerModal() {
       toast({
         title: "Error",
         variant: "destructive",
-        description: "Error al crear el cliente " + res.message,
+        description: "El cliente ya esta registrado. ",
       });
     }
   };
@@ -136,9 +136,8 @@ export default function NewCustomerModal() {
     setOpen(isOpen);
   };
 
-  const documentNumberSearch = form.getValues("documentNumber");
-
   const handleSearch = async () => {
+    const documentNumberSearch = form.watch("documentNumber");
     const res = await searchCustomer(
       String(documentNumberSearch),
       order.documentType,

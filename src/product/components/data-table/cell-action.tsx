@@ -18,6 +18,7 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { performProductMovementStockTransfer } from "@/stock-transfer/components/actions";
 import { useUserSession } from "@/lib/use-user-session";
+import {useProductsStore} from "@/product/components/products-store-provider";
 
 interface CellActionProps {
   product: Product;
@@ -30,6 +31,7 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const [targetMovementProduct, setTargetMovementProduct] =
     useState<SingleProduct | null>(null);
   const setProduct = useProductFormStore((store) => store.setProduct);
+  const deleteProductStore = useProductsStore((store) => store.deleteProduct)
   const router = useRouter();
   const { toast } = useToast();
   const user = useUserSession();
@@ -65,6 +67,7 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
     toast({
       title: "Producto eliminado",
     });
+    deleteProductStore(product.id!)
     router.refresh();
   };
 

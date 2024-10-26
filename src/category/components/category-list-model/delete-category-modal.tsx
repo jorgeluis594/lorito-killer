@@ -8,7 +8,12 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { Trash } from "lucide-react";
 import { AlertModal } from "@/shared/components/modal/alert-modal";
 import { useCategoryStore } from "../category-store-provider";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
 
 interface deleteCategoryModalProps {
   category: Category;
@@ -20,7 +25,9 @@ export default function DeleteCategoryModal({
   const user = useUserSession();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const deleteCategoryFromStore = useCategoryStore(store => store.deleteCategory)
+  const deleteCategoryFromStore = useCategoryStore(
+    (store) => store.deleteCategory,
+  );
   const { toast } = useToast();
 
   const onConfirm = async () => {
@@ -40,7 +47,7 @@ export default function DeleteCategoryModal({
     toast({
       title: "Categoría eliminada",
     });
-    deleteCategoryFromStore(category.id!)
+    deleteCategoryFromStore(category.id!);
   };
 
   return (
@@ -55,14 +62,16 @@ export default function DeleteCategoryModal({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Trash onClick={() => setOpen(true)} className="mr-2 h-4 w-4  text-destructive" />
+              <Trash
+                onClick={() => setOpen(true)}
+                className="mr-2 h-4 w-4  text-destructive"
+              />
             </TooltipTrigger>
             <TooltipContent>
               <p>Eliminar</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-
       </div>
     </>
   );

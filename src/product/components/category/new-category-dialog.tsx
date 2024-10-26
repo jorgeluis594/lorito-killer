@@ -29,6 +29,7 @@ import { CategorySchema } from "@/category/schema";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
+import {MenuSquare} from "lucide-react";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -80,13 +81,7 @@ export default function NewCategoryDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="mr-5 rounded-full w-6 h-6 flex items-center justify-center text-lg border-2 border-slate-400"
-        >
-          ＋
-        </Button>
+        <Button variant="default" className="text-xs md:text-sm">Nueva Categoria</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
