@@ -88,7 +88,7 @@ export default async function Page({ searchParams }: ParamsProps) {
             Exportar
           </Button>
 
-          <Filters />
+          <Filters searchParams={searchParams} />
         </aside>
         <div className="flex-1 lg:max-w-7xl mt-6">
           <Suspense

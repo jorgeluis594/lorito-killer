@@ -9,9 +9,8 @@ import {
   PaginationState,
   useReactTable,
 } from "@tanstack/react-table";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
-import { Input } from "@/shared/components/ui/input";
+import { useSearchParams } from "next/navigation";
+import React, { useState } from "react";
 import { ScrollArea, ScrollBar } from "@/shared/components/ui/scroll-area";
 import {
   Table,
@@ -36,12 +35,13 @@ import {
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import useSkipInitialEffect from "@/lib/use-skip-initial-effect";
+import useUpdateQueryString from "@/lib/use-update-query-string";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data?: TData[];
   loading?: boolean;
-  searchKey?: string;
   pageSizeOptions?: number[];
   pageCount: number;
   searchParams?: {
@@ -53,13 +53,11 @@ export default function DataTable<TData, TValue>({
   columns,
   data,
   loading,
-  searchKey,
   pageSizeOptions = [10, 20, 30, 40, 50],
   pageCount,
 }: DataTableProps<TData, TValue>) {
-  const router = useRouter();
-  const pathName = usePathname();
   const searchParams = useSearchParams();
+  const updateRoute = useUpdateQueryString();
 
   // Search params
   const page = searchParams?.get("page") ?? "1";
@@ -70,42 +68,11 @@ export default function DataTable<TData, TValue>({
   const perPageAsNumber = Number(perPage);
   const fallbackPerPage = isNaN(perPageAsNumber) ? 10 : perPageAsNumber;
 
-  const createQueryString = useCallback(
-    (params: Record<string, string | number | null>) => {
-      const newSearchParams = new URLSearchParams(searchParams?.toString());
-
-      for (const [key, value] of Object.entries(params)) {
-        if (value === null) {
-          newSearchParams.delete(key);
-        } else {
-          newSearchParams.set(key, String(value));
-        }
-      }
-
-      return newSearchParams.toString();
-    },
-    [searchParams],
-  );
-
   // Handle server-side pagination
   const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
     pageIndex: fallbackPage - 1,
     pageSize: fallbackPerPage,
   });
-
-  useEffect(() => {
-    router.push(
-      `${pathName}?${createQueryString({
-        page: pageIndex + 1,
-        limit: pageSize,
-      })}`,
-      {
-        scroll: false,
-      },
-    );
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex, pageSize]);
 
   const table = useReactTable({
     data: data || [],
@@ -122,54 +89,8 @@ export default function DataTable<TData, TValue>({
     manualFiltering: true,
   });
 
-  const searchValue =
-    searchKey && (table.getColumn(searchKey)?.getFilterValue() as string);
-
-  useEffect(() => {
-    if (!searchValue) return;
-
-    if (searchValue?.length > 0) {
-      router.push(
-        `${pathName}?${createQueryString({
-          page: null,
-          limit: null,
-          search: searchValue,
-        })}`,
-        {
-          scroll: false,
-        },
-      );
-    }
-    if (searchValue?.length === 0) {
-      router.push(
-        `${pathName}?${createQueryString({
-          page: null,
-          limit: null,
-          search: null,
-        })}`,
-        {
-          scroll: false,
-        },
-      );
-    }
-
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchValue]);
-
   return (
     <>
-      {searchKey && (
-        <Input
-          placeholder={`Search ${searchKey}...`}
-          value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(searchKey)?.setFilterValue(event.target.value)
-          }
-          className="w-full md:max-w-sm"
-        />
-      )}
       <ScrollArea className="h-[calc(80vh-220px)] rounded-md border">
         <Table className="relative">
           <TableHeader>
@@ -241,6 +162,7 @@ export default function DataTable<TData, TValue>({
                 value={`${table.getState().pagination.pageSize}`}
                 onValueChange={(value) => {
                   table.setPageSize(Number(value));
+                  updateRoute("size", value);
                 }}
               >
                 <SelectTrigger className="h-8 w-[70px]">
@@ -277,7 +199,10 @@ export default function DataTable<TData, TValue>({
               aria-label="Go to previous page"
               variant="outline"
               className="h-8 w-8 p-0"
-              onClick={() => table.previousPage()}
+              onClick={() => {
+                table.setPageIndex(pageIndex - 1);
+                updateRoute("page", pageIndex - 1);
+              }}
               disabled={!table.getCanPreviousPage()}
             >
               <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
@@ -286,7 +211,10 @@ export default function DataTable<TData, TValue>({
               aria-label="Go to next page"
               variant="outline"
               className="h-8 w-8 p-0"
-              onClick={() => table.nextPage()}
+              onClick={() => {
+                table.setPageIndex(pageIndex + 1);
+                updateRoute("page", pageIndex + 1);
+              }}
               disabled={!table.getCanNextPage()}
             >
               <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />

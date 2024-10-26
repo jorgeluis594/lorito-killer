@@ -1,20 +1,38 @@
 import { getBillingCredentialsFor } from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
-import { Label } from "@/shared/components/ui/label";
 import DocumentSelector from "@/sale_report/components/filter/document-selector";
 import { Separator } from "@/shared/components/ui/separator";
 import CustomerSelector from "@/sale_report/components/filter/customer-selector";
 import DateFilter from "@/sale_report/components/filter/date-filter";
+import { findCustomer } from "@/customer/db_repository";
+import { Customer } from "@/customer/types";
 
-type FiltersProps = {};
+type ParamsProps = {
+  searchParams: {
+    [key: string]: string | string[] | undefined;
+  };
+};
 
-export default async function Filters() {
+export default async function Filters({ searchParams }: ParamsProps) {
   const session = await getSession();
-  const billingCredentials = await getBillingCredentialsFor(
+  const billingCredentialsResponse = await getBillingCredentialsFor(
     session.user.companyId,
   );
 
-  if (!billingCredentials.success) {
+  let customer: Customer | undefined = undefined;
+
+  if (searchParams && searchParams.customerId) {
+    const customerResponse = await findCustomer(
+      searchParams.customerId as string,
+      session.user.companyId,
+    );
+
+    if (customerResponse.success) {
+      customer = customerResponse.data;
+    }
+  }
+
+  if (!billingCredentialsResponse.success) {
     return <div>Error cargando los filtros, comuniquese con soporte</div>;
   }
 
@@ -27,12 +45,12 @@ export default async function Filters() {
       <DocumentSelector
         documentTypes={{
           ticket: true,
-          invoice: !!billingCredentials.data.invoiceSerialNumber, // Fix, check if company has at least one invoice serial number to allow filter by invoice
-          receipt: !!billingCredentials.data.receiptSerialNumber, // Fix, check if company has at least one receipt serial number to allow filter by receipt
+          invoice: !!billingCredentialsResponse.data.invoiceSerialNumber, // Fix, check if company has at least one invoice serial number to allow filter by invoice
+          receipt: !!billingCredentialsResponse.data.receiptSerialNumber, // Fix, check if company has at least one receipt serial number to allow filter by receipt
         }}
       />
       <Separator className="my-5" />
-      <CustomerSelector />
+      <CustomerSelector customer={customer} />
     </div>
   );
 }
