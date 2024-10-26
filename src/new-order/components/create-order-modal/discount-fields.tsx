@@ -75,6 +75,18 @@ export default function DiscountFields({
     }
   };
 
+  const hadleChangePercentInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const value = e.currentTarget.value;
+
+    const filteredValue = value.replace(/[^0-9.]/g, '');
+
+    if (filteredValue === "" || parseFloat(filteredValue) >= 0) {
+      setDiscountValue(filteredValue === "" ? 0 : Number(filteredValue));
+    }
+
+    e.currentTarget.value = filteredValue;
+  }
+
   return (
     <>
       <div className="flex items-center space-x-2 mt-5">
@@ -116,7 +128,7 @@ export default function DiscountFields({
               className="w-40"
               placeholder="%"
               value={discountValue === 0 ? "" : discountValue}
-              onChange={(e) => setDiscountValue(Number(e.target.value))}
+              onChange={hadleChangePercentInput}
             />
           )}
         </div>
