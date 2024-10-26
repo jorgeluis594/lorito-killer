@@ -50,7 +50,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   onOpenChange,
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
-  const { getPaidAmount, reset, resetPayment } = useOrderFormActions();
+  const { getPaidAmount, reset, resetPayment, setDiscount } = useOrderFormActions();
   const { addOrder } = useCashShiftStore((state) => state);
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
@@ -117,9 +117,16 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
       );
     }
   };
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setDiscount(undefined);
+    }
+    onOpenChange(isOpen);
+  };
+
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className="md:max-w-4xl sm:max-w-3xl"
         onInteractOutside={(e) => {
