@@ -7,8 +7,9 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { correlative } from "@/document/utils";
 import { fullName } from "@/customer/utils";
+import { formatPrice } from "@/lib/utils";
 
-export const columns: ColumnDef<Document & { customer: Customer }>[] = [
+export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
   {
     accessorKey: "serialNumber",
     header: "CORRELATIVO",
@@ -17,7 +18,10 @@ export const columns: ColumnDef<Document & { customer: Customer }>[] = [
   {
     accessorKey: "customerName",
     header: "CLIENTE",
-    cell: ({ row }) => fullName(row.original.customer),
+    cell: ({ row }) =>
+      row.original.customer
+        ? fullName(row.original.customer)
+        : "Cliente general",
   },
   {
     accessorKey: "dateOfIssue",
@@ -28,5 +32,6 @@ export const columns: ColumnDef<Document & { customer: Customer }>[] = [
   {
     accessorKey: "total",
     header: "TOTAL",
+    cell: ({ row }) => formatPrice(row.original.total),
   },
 ];

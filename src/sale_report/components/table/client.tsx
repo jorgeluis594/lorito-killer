@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/shared/components/ui/scroll-area";
 import {
@@ -35,10 +35,12 @@ import {
   ChevronLeftIcon,
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+  data?: TData[];
+  loading?: boolean;
   searchKey?: string;
   pageSizeOptions?: number[];
   pageCount: number;
@@ -50,6 +52,7 @@ interface DataTableProps<TData, TValue> {
 export default function DataTable<TData, TValue>({
   columns,
   data,
+  loading,
   searchKey,
   pageSizeOptions = [10, 20, 30, 40, 50],
   pageCount,
@@ -63,7 +66,7 @@ export default function DataTable<TData, TValue>({
   const pageAsNumber = Number(page);
   const fallbackPage =
     isNaN(pageAsNumber) || pageAsNumber < 1 ? 1 : pageAsNumber;
-  const perPage = searchParams?.get("limit") ?? "10";
+  const perPage = searchParams?.get("size") ?? "10";
   const perPageAsNumber = Number(perPage);
   const fallbackPerPage = isNaN(perPageAsNumber) ? 10 : perPageAsNumber;
 
@@ -105,7 +108,7 @@ export default function DataTable<TData, TValue>({
   }, [pageIndex, pageSize]);
 
   const table = useReactTable({
-    data,
+    data: data || [],
     columns,
     pageCount: pageCount ?? -1,
     getCoreRowModel: getCoreRowModel(),
@@ -187,34 +190,38 @@ export default function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+          {loading ? (
+            <SkeletonBody columnsLength={columns.length} />
+          ) : (
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    Sin resultados.
+                  </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Sin resultados.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+              )}
+            </TableBody>
+          )}
         </Table>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -297,5 +304,21 @@ export default function DataTable<TData, TValue>({
         </div>
       </div>
     </>
+  );
+}
+
+function SkeletonBody({ columnsLength }: { columnsLength: number }) {
+  return (
+    <TableBody>
+      <TableRow>
+        <TableCell colSpan={columnsLength}>
+          {Array(4)
+            .fill(0)
+            .map((_, index) => (
+              <Skeleton key={index} className="w-full h-[1.5rem] my-5" />
+            ))}
+        </TableCell>
+      </TableRow>
+    </TableBody>
   );
 }
