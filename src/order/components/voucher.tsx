@@ -119,7 +119,7 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
                 textAlign: "right",
               }}
             >
-              Total sin descuento:{" "}
+              Subtotal:{" "}
             </Text>
             <Text
               style={{
@@ -185,17 +185,17 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
             >
               DESCUENTO:{" "}
             </Text>
-            <Text
-              style={{
-                fontSize: "8px",
-                fontWeight: "bold",
-                textAlign: "right",
-              }}
-            >
-              IGV:{" "}
-            </Text>
           </>
         )}
+        <Text
+          style={{
+            fontSize: "8px",
+            fontWeight: "bold",
+            textAlign: "right",
+          }}
+        >
+          IGV:{" "}
+        </Text>
         <Text
           style={{
             fontSize: "10px",
@@ -211,9 +211,9 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
         {document.discountAmount > 0 && (
           <>
             <Text style={{ fontSize: "8px" }}>{formatPrice(document.discountAmount)}</Text>
-            <Text style={{ fontSize: "8px" }}>{formatPrice(0)}</Text>
           </>
         )}
+        <Text style={{ fontSize: "8px" }}>{formatPrice(0)}</Text>
         <Text style={{ fontSize: "10px" }}>{formatPrice(document.total)}</Text>
       </View>
     </View>
