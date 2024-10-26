@@ -201,7 +201,7 @@ export default function DataTable<TData, TValue>({
               className="h-8 w-8 p-0"
               onClick={() => {
                 table.setPageIndex(pageIndex - 1);
-                updateRoute("page", pageIndex - 1);
+                updateRoute("page", pageIndex);
               }}
               disabled={!table.getCanPreviousPage()}
             >
@@ -213,7 +213,7 @@ export default function DataTable<TData, TValue>({
               className="h-8 w-8 p-0"
               onClick={() => {
                 table.setPageIndex(pageIndex + 1);
-                updateRoute("page", pageIndex + 1);
+                updateRoute("page", pageIndex + 2);
               }}
               disabled={!table.getCanNextPage()}
             >

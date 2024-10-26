@@ -185,6 +185,49 @@ export const getBillingCredentialsFor = async (
   };
 };
 
+const buildDocumentQuery = ({
+  companyId,
+  correlative,
+  startDate,
+  endDate,
+  customerId,
+}: Omit<SearchParams, "pageSize" | "pageNumber">) => {
+  return {
+    companyId,
+    ...(correlative && { number: parseInt(correlative.number) }),
+    ...(correlative && { series: correlative.series }),
+    ...(startDate && { dateOfIssue: { gte: startDate } }),
+    ...(endDate && { dateOfIssue: { lte: endDate } }),
+    ...(customerId && { customerId }),
+  };
+};
+
+export const getTotal = async ({
+  companyId,
+  correlative,
+  startDate,
+  endDate,
+  customerId,
+}: Omit<SearchParams, "pageSize" | "pageNumber">): Promise<
+  response<number>
+> => {
+  try {
+    const total = await prisma().document.count({
+      where: buildDocumentQuery({
+        companyId,
+        correlative,
+        startDate,
+        endDate,
+        customerId,
+      }),
+    });
+
+    return { success: true, data: total };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
 export const getMany = async ({
   companyId,
   correlative,
@@ -195,14 +238,13 @@ export const getMany = async ({
   pageSize,
 }: SearchParams): Promise<response<(Document & { customer?: Customer })[]>> => {
   const prismaDocuments = await prisma().document.findMany({
-    where: {
+    where: buildDocumentQuery({
       companyId,
-      ...(correlative && { number: parseInt(correlative.number) }),
-      ...(correlative && { series: correlative.series }),
-      ...(startDate && { dateOfIssue: { gte: startDate } }),
-      ...(endDate && { dateOfIssue: { lte: endDate } }),
-      ...(customerId && { customerId }),
-    },
+      correlative,
+      startDate,
+      endDate,
+      customerId,
+    }),
     skip: (pageNumber - 1) * pageSize,
     take: pageSize,
     orderBy: { dateOfIssue: "desc" },

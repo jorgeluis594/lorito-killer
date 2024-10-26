@@ -6,10 +6,12 @@ import { columns } from "@/sale_report/components/table/columns";
 import { getSession } from "@/lib/auth";
 import { Button } from "@/shared/components/ui/button";
 import { Download } from "lucide-react";
-import { getMany } from "@/document/db_repository";
+import { getMany, getTotal } from "@/document/db_repository";
 import { SearchParams } from "@/document/types";
 import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
+
+export const dynamic = "force-dynamic";
 
 const breadcrumbItems = [
   { title: "Reporte de ventas", link: "/sales_reports" },
@@ -29,7 +31,7 @@ const getSearchParams = async ({
   const params: SearchParams = {
     companyId: session.user.companyId,
     pageNumber: Number(searchParams.page) || 1,
-    pageSize: Number(searchParams.size) || 10,
+    pageSize: Number(searchParams.size) || 2,
   };
 
   if (searchParams.series && searchParams.number) {
@@ -55,11 +57,13 @@ const getSearchParams = async ({
 };
 
 async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
-  const documentsResponse = await getMany(
-    await getSearchParams({ searchParams }),
-  );
+  const documentQuery = await getSearchParams({ searchParams });
+  const [documentsResponse, documentCountResponse] = await Promise.all([
+    getMany(documentQuery),
+    getTotal(documentQuery),
+  ]);
 
-  if (!documentsResponse.success) {
+  if (!documentsResponse.success || !documentCountResponse.success) {
     return <p>Error cargando los documentos, comuniquese con soporte</p>;
   }
 
@@ -67,12 +71,14 @@ async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
     <DataTable
       data={documentsResponse.data}
       columns={columns}
-      pageCount={Number(searchParams.page) || 1}
+      pageCount={Math.ceil(documentCountResponse.data / documentQuery.pageSize)}
     />
   );
 }
 
+/*
 export default async function Page({ searchParams }: ParamsProps) {
+
   return (
     <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
       <BreadCrumb items={breadcrumbItems} />
@@ -100,4 +106,14 @@ export default async function Page({ searchParams }: ParamsProps) {
       </div>
     </div>
   );
+}
+*/
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { page } = await searchParams;
+  return <p>{page}</p>;
 }
