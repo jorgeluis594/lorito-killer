@@ -61,3 +61,13 @@ type DocumentMapper = {
 
 export type InferDocumentType<T extends keyof DocumentMapper> =
   DocumentMapper[T];
+
+export type SearchParams = {
+  companyId: string;
+  pageNumber: number;
+  pageSize: number;
+  correlative?: { number: string; series: string };
+  startDate?: Date;
+  endDate?: Date;
+  customerId?: string;
+};

@@ -4,6 +4,7 @@ import {
   DocumentType,
   INVOICE,
   RECEIPT,
+  SearchParams,
   TICKET,
 } from "@/document/types";
 import { response } from "@/lib/types";
@@ -182,16 +183,6 @@ export const getBillingCredentialsFor = async (
     success: true,
     data: { ...defaultCredentials, ...credentials },
   };
-};
-
-type SearchParams = {
-  companyId: string;
-  pageNumber: number;
-  pageSize: number;
-  correlative?: { number: string; series: string };
-  startDate?: Date;
-  endDate?: Date;
-  customerId?: string;
 };
 
 export const getMany = async ({
