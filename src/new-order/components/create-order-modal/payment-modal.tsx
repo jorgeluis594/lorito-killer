@@ -135,7 +135,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               <div className="grid grid-cols-2 gap-1">
                 <div>
                   <div className="text-xl text-gray-600 text-right">
-                    Total sin descuento:
+                    Subtotal:
                   </div>
                   <div className="text-lg text-red-500 text-right">
                     Descuento:
@@ -153,7 +153,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
             )}
             <div className="grid grid-cols-2 gap-1 mt-3">
               <div className="text-3xl font-medium leading-none text-right">
-                PRECIO TOTAL:
+                TOTAL:
               </div>
               <div className="text-3xl font-medium leading-none text-left">
                 {formatPrice(order.total)}
