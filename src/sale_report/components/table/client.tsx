@@ -162,7 +162,7 @@ export default function DataTable<TData, TValue>({
                 value={`${table.getState().pagination.pageSize}`}
                 onValueChange={(value) => {
                   table.setPageSize(Number(value));
-                  updateRoute("size", value);
+                  updateRoute({ size: value });
                 }}
               >
                 <SelectTrigger className="h-8 w-[70px]">
@@ -201,7 +201,7 @@ export default function DataTable<TData, TValue>({
               className="h-8 w-8 p-0"
               onClick={() => {
                 table.setPageIndex(pageIndex - 1);
-                updateRoute("page", pageIndex);
+                updateRoute({ page: pageIndex });
               }}
               disabled={!table.getCanPreviousPage()}
             >
@@ -213,7 +213,7 @@ export default function DataTable<TData, TValue>({
               className="h-8 w-8 p-0"
               onClick={() => {
                 table.setPageIndex(pageIndex + 1);
-                updateRoute("page", pageIndex + 2);
+                updateRoute({ page: pageIndex + 2 });
               }}
               disabled={!table.getCanNextPage()}
             >
