@@ -207,7 +207,7 @@ model Company {
   cashShifts         CashShift[]
   orders             Order[]
   categories         Category[]
-  logos    Logo[]
+  logos              Logo[]
   stockTransfers     StockTransfer[]
   documents          Document[]
   subdomain          String?         @unique

@@ -121,6 +121,25 @@ export const findCustomer = async (
   }
 };
 
+export const findByDocumentNumber = async (
+  companyId: string,
+  documentNumber: string,
+): Promise<response<Customer>> => {
+  try {
+    const customer = await prisma().customer.findMany({
+      where: { documentNumber, companyId },
+    });
+
+    if (customer) {
+      return { success: true, data: await prismaToCustomer(customer[0]) };
+    } else {
+      return { success: false, message: "Customer not found" };
+    }
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
 export const getMany = async ({
   companyId,
   q,

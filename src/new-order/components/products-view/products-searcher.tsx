@@ -23,9 +23,15 @@ import { sortOptions } from "@/product/constants";
 import { useSymbologyScanner } from "@use-symbology-scanner/react";
 import { findProduct } from "@/product/api_repository";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
+import {useProductsStore} from "@/product/components/products-store-provider";
+import {
+  ProductFormProvider, useProductFormActions,
+  useProductFormStore
+} from "@/new-order/components/products-view/product-searcher-form-provider";
 
 export default function ProductsSearcher() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const { setProducts } = useProductFormActions()
+  const products = useProductFormStore((store) => store.products);
   const [search, setSearch] = useState<string>("");
   const [sortValue, setSortValue] = useState<keyof SortOptions>("created_desc");
   const { categories } = useCategoryStore((store) => store);
