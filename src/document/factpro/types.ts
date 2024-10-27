@@ -55,6 +55,13 @@ export interface FactproDocument {
     total_gravadas: number;
     total_inafectas: number;
     total_gratuitas: number;
+    descuentos?: {
+      "codigo": string;
+      "descripcion": string;
+      "porcentaje": number;
+      "monto": number;
+      "base": number;
+    }
   };
   items: FactproDocumentItem[];
   acciones: {

@@ -109,8 +109,48 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
         justifyContent: "flex-end",
       }}
     >
-      <Text style={{ fontSize: "12px", fontWeight: "black" }}>Total: </Text>
-      <Text style={{ fontSize: "12px" }}>{formatPrice(document.total)}</Text>
+      <View>
+        {document.discountAmount > 0 && (
+          <>
+            <Text
+              style={{
+                fontSize: "8px",
+                fontWeight: "bold",
+                textAlign: "right",
+              }}
+            >
+              Subtotal:{" "}
+            </Text>
+            <Text
+              style={{
+                fontSize: "8px",
+                fontWeight: "bold",
+                textAlign: "right",
+              }}
+            >
+              Descuento:{" "}
+            </Text>
+          </>
+        )}
+        <Text
+          style={{
+            fontSize: "12px",
+            fontWeight: "bold",
+            textAlign: "right",
+          }}
+        >
+          Total:{" "}
+        </Text>
+      </View>
+      <View>
+        {document.discountAmount > 0 && (
+          <>
+            <Text style={{ fontSize: "10px" }}>{formatPrice(document.netTotal)}</Text>
+            <Text style={{ fontSize: "10px" }}>{formatPrice(document.discountAmount)}</Text>
+          </>
+        )}
+        <Text style={{ fontSize: "12px" }}>{formatPrice(document.total)}</Text>
+      </View>
     </View>
   </View>
 );
@@ -127,16 +167,29 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
       <View>
         <Text
           style={{
-            fontSize: "10px",
+            fontSize: "8px",
             fontWeight: "bold",
             textAlign: "right",
           }}
         >
           OP. Exoneradas:{" "}
         </Text>
+        {document.discountAmount > 0 && (
+          <>
+            <Text
+              style={{
+                fontSize: "8px",
+                fontWeight: "bold",
+                textAlign: "right",
+              }}
+            >
+              DESCUENTO:{" "}
+            </Text>
+          </>
+        )}
         <Text
           style={{
-            fontSize: "10px",
+            fontSize: "8px",
             fontWeight: "bold",
             textAlign: "right",
           }}
@@ -154,8 +207,13 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
         </Text>
       </View>
       <View>
-        <Text style={{ fontSize: "10px" }}>{formatPrice(document.total)}</Text>
-        <Text style={{ fontSize: "10px" }}>{formatPrice(0)}</Text>
+        <Text style={{ fontSize: "8px" }}>{formatPrice(document.netTotal)}</Text>
+        {document.discountAmount > 0 && (
+          <>
+            <Text style={{ fontSize: "8px" }}>{formatPrice(document.discountAmount)}</Text>
+          </>
+        )}
+        <Text style={{ fontSize: "8px" }}>{formatPrice(0)}</Text>
         <Text style={{ fontSize: "10px" }}>{formatPrice(document.total)}</Text>
       </View>
     </View>

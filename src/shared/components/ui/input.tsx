@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn, formatPrice } from "@/lib/utils";
-import { useReducer } from "react";
+import {useEffect, useReducer} from "react";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
@@ -30,6 +30,10 @@ const MoneyInput = React.forwardRef<HTMLInputElement, InputProps>(
       const digits = next.replace(/\D/g, "");
       return formatPrice(Number(digits) / 100);
     }, initialValue);
+
+    useEffect(() => {
+      setValue(formatPrice(Number(props.value)) || "");
+    }, [props.value]);
 
     function handleChange(
       realChangeFn: React.ChangeEventHandler<HTMLInputElement> | undefined,

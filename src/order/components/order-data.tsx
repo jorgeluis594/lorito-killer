@@ -73,36 +73,36 @@ export default function OrderData({ order }: { order: Order }) {
 
           <table className="table-auto border w-full mt-8">
             <thead>
-              <tr>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Producto
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Precio
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Cantidad
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Total
-                </th>
-              </tr>
+            <tr>
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Cantidad
+              </th>
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Producto
+              </th>
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Precio
+              </th>
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Total
+              </th>
+            </tr>
             </thead>
             <tbody>
-              {order.orderItems.map((orderItem) => (
-                <tr key={orderItem.id}>
-                  <td className="pl-2 border py-1">{orderItem.productName}</td>
-                  <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.productPrice)}
-                  </td>
-                  <td className="pl-2 border py-1">
-                    {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
-                  </td>
-                  <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.total)}
-                  </td>
-                </tr>
-              ))}
+            {order.orderItems.map((orderItem) => (
+              <tr key={orderItem.id}>
+                <td className="pl-2 border py-1">
+                  {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
+                </td>
+                <td className="pl-2 border py-1">{orderItem.productName}</td>
+                <td className="pl-2 border py-1">
+                  {formatPrice(orderItem.productPrice)}
+                </td>
+                <td className="pl-2 border py-1">
+                  {formatPrice(orderItem.total)}
+                </td>
+              </tr>
+            ))}
             </tbody>
           </table>
           <div className="w-full flex justify-between mt-8">
@@ -130,9 +130,23 @@ export default function OrderData({ order }: { order: Order }) {
                 ))}
               </tbody>
             </table>
-            <div className="w-56 flex justify-between">
-              <p className="font-bold text-xl">Total</p>
-              <p className="font-bold text-xl">{formatPrice(order.total)}</p>
+            <div className="w-56 flex flex-col">
+              {order.discount && (
+                <>
+                  <div className="flex justify-between mt-1">
+                    <p className="text-lg">Subtotal</p>
+                    <p className="text-lg">{formatPrice(order.netTotal)}</p>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <p className="text-lg">Descuento</p>
+                    <p className="text-lg">{formatPrice(order.discountAmount)}</p>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between">
+                <p className="font-bold text-2xl">Total</p>
+                <p className="font-bold text-2xl">{formatPrice(order.total)}</p>
+              </div>
             </div>
           </div>
         </CardContent>

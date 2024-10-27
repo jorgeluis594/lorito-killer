@@ -12,6 +12,7 @@ type DocumentBase = {
   orderId: string;
   netTotal: number;
   taxTotal: number;
+  discountAmount: number;
   total: number;
   documentType: DocumentType;
   series: string;

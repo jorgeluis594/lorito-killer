@@ -9,9 +9,10 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useCallback, useEffect, useState } from "react";
-import type {
+import {
+  AMOUNT,
   CashPayment as CashPaymentMethod,
-  PaymentMethod,
+  PaymentMethod, PERCENT,
   WalletPayment as WalletPaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
@@ -21,6 +22,9 @@ import {
 } from "@/shared/components/ui/toggle-group";
 import * as React from "react";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import * as z from "zod";
+import * as zod from "zod";
+import { formatPrice } from "@/lib/utils";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -67,10 +71,17 @@ type CashPaymentMethodState = Omit<CashPaymentMethod, "received_amount"> & {
   received_amount: number | null;
 };
 
+const DiscountFormSchema = zod.object({
+  discountType: zod.enum([AMOUNT, PERCENT]),
+  value: zod.coerce.number(),
+});
+
+type DiscountFormValues = z.infer<typeof DiscountFormSchema>;
+
 export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
-  const { cashShift } = useCashShiftStore((store) => store);
-  const { addPayment, removePayment } = useOrderFormActions();
+  const {cashShift} = useCashShiftStore((store) => store);
+  const {setDiscount, addPayment, removePayment} = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
@@ -106,11 +117,11 @@ export const CashPayment: React.FC = () => {
   }, [payment.received_amount, orderTotal]);
 
   useEffect(() => {
-    const { received_amount, ...rest } = payment;
+    const {received_amount, ...rest} = payment;
     if (received_amount === null) return;
 
     removePayment("cash");
-    addPayment({ ...rest, received_amount });
+    addPayment({...rest, received_amount});
   }, [payment]);
 
   useEffect(() => {
@@ -139,7 +150,7 @@ export const CashPayment: React.FC = () => {
         <div className="mt-5">
           Vuelto:
           <span className="text-lg font-medium text-destructive ml-3">
-            {payment.change}
+            {formatPrice(payment.change)}
           </span>
         </div>
       )}

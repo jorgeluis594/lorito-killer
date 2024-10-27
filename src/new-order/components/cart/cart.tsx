@@ -137,7 +137,7 @@ export default function Cart() {
             <div className="flex justify-between w-full">
               <p className="text-end text-xl font-bold">Vender!</p>
               <p className="text-end text-xl font-bold">
-                Total: {formatPrice(order.total)}
+                Total: {formatPrice(order.netTotal)}
               </p>
             </div>
           </Button>
