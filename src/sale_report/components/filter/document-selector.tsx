@@ -5,6 +5,7 @@ import { Label } from "@/shared/components/ui/label";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Checkbox } from "@/shared/components/ui/checkbox";
+import useUpdateQueryString from "@/lib/use-update-query-string";
 
 type DocumentSelectorProps = {
   documentTypes: Record<DocumentType, boolean>;
@@ -20,6 +21,7 @@ export default function DocumentSelector({
   documentTypes,
 }: DocumentSelectorProps) {
   const searchParams = useSearchParams();
+  const updateRoute = useUpdateQueryString();
 
   const defaultValues: Record<DocumentType, boolean> = Object.keys(
     documentTypes,
@@ -34,6 +36,7 @@ export default function DocumentSelector({
   );
 
   const [selectedDocuments, setSelectedDocuments] = useState(defaultValues);
+
   return (
     <section>
       <div className="mb-2">
@@ -52,12 +55,13 @@ export default function DocumentSelector({
               <Checkbox
                 checked={selectedDocuments[documentType as DocumentType]}
                 disabled={!available}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked) => {
                   setSelectedDocuments({
                     ...selectedDocuments,
                     [documentType]: checked,
-                  })
-                }
+                  });
+                  updateRoute(documentType, checked ? "true" : null);
+                }}
               />
               <Label className="font-normal">
                 {DocumentTranslations[documentType as DocumentType]}

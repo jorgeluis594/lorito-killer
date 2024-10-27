@@ -31,7 +31,7 @@ const getSearchParams = async ({
   const params: SearchParams = {
     companyId: session.user.companyId,
     pageNumber: Number(searchParams.page) || 1,
-    pageSize: Number(searchParams.size) || 2,
+    pageSize: Number(searchParams.size) || 10,
   };
 
   if (searchParams.series && searchParams.number) {
@@ -39,6 +39,18 @@ const getSearchParams = async ({
       number: searchParams.number as string,
       series: searchParams.series as string,
     };
+  }
+
+  if (searchParams.invoice && searchParams.invoice == "true") {
+    params.invoice = true;
+  }
+
+  if (searchParams.receipt && searchParams.receipt == "true") {
+    params.receipt = true;
+  }
+
+  if (searchParams.ticket && searchParams.ticket == "true") {
+    params.ticket = true;
   }
 
   if (searchParams.start) {
@@ -76,9 +88,7 @@ async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
   );
 }
 
-/*
 export default async function Page({ searchParams }: ParamsProps) {
-
   return (
     <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
       <BreadCrumb items={breadcrumbItems} />
@@ -106,14 +116,4 @@ export default async function Page({ searchParams }: ParamsProps) {
       </div>
     </div>
   );
-}
-*/
-
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const { page } = await searchParams;
-  return <p>{page}</p>;
 }
