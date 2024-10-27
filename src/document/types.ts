@@ -70,4 +70,7 @@ export type SearchParams = {
   startDate?: Date;
   endDate?: Date;
   customerId?: string;
+  invoice?: boolean;
+  receipt?: boolean;
+  ticket?: boolean;
 };

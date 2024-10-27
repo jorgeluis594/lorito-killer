@@ -191,7 +191,24 @@ const buildDocumentQuery = ({
   startDate,
   endDate,
   customerId,
+  ticket,
+  invoice,
+  receipt,
 }: Omit<SearchParams, "pageSize" | "pageNumber">) => {
+  const documentTypes: { documentType: PrismaDocumentType }[] = [];
+
+  if (ticket) {
+    documentTypes.push({ documentType: PrismaDocumentType.TICKET });
+  }
+
+  if (invoice) {
+    documentTypes.push({ documentType: PrismaDocumentType.INVOICE });
+  }
+
+  if (receipt) {
+    documentTypes.push({ documentType: PrismaDocumentType.RECEIPT });
+  }
+
   return {
     companyId,
     ...(correlative && { number: parseInt(correlative.number) }),
@@ -199,6 +216,7 @@ const buildDocumentQuery = ({
     ...(startDate && { dateOfIssue: { gte: startDate } }),
     ...(endDate && { dateOfIssue: { lte: endDate } }),
     ...(customerId && { customerId }),
+    ...((ticket || invoice || receipt) && { OR: documentTypes }),
   };
 };
 
@@ -208,6 +226,9 @@ export const getTotal = async ({
   startDate,
   endDate,
   customerId,
+  ticket,
+  invoice,
+  receipt,
 }: Omit<SearchParams, "pageSize" | "pageNumber">): Promise<
   response<number>
 > => {
@@ -219,6 +240,9 @@ export const getTotal = async ({
         startDate,
         endDate,
         customerId,
+        ticket,
+        invoice,
+        receipt,
       }),
     });
 
@@ -236,6 +260,9 @@ export const getMany = async ({
   customerId,
   pageNumber,
   pageSize,
+  ticket,
+  invoice,
+  receipt,
 }: SearchParams): Promise<response<(Document & { customer?: Customer })[]>> => {
   const prismaDocuments = await prisma().document.findMany({
     where: buildDocumentQuery({
@@ -244,6 +271,9 @@ export const getMany = async ({
       startDate,
       endDate,
       customerId,
+      ticket,
+      invoice,
+      receipt,
     }),
     skip: (pageNumber - 1) * pageSize,
     take: pageSize,
