@@ -29,7 +29,7 @@ export default function DocumentSelector({
     (acc, key) => {
       const documentKey = key as DocumentType;
       acc[documentKey] =
-        documentTypes[documentKey] && searchParams?.get("key") === "true";
+        documentTypes[documentKey] && searchParams?.get(key) === "true";
       return acc;
     },
     {} as Record<DocumentType, boolean>,

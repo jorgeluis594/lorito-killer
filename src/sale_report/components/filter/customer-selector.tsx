@@ -4,18 +4,21 @@ import { Label } from "@/shared/components/ui/label";
 import CustomerApiSelector from "@/customer/components/customer-selector";
 import { Customer } from "@/customer/types";
 import { useState } from "react";
+import useUpdateQueryString from "@/lib/use-update-query-string";
 
 interface CustomerSelectorProps {
   customer?: Customer;
 }
 
 export default function CustomerSelector({ customer }: CustomerSelectorProps) {
+  const updateRoute = useUpdateQueryString();
   const [currentCustomer, setCurrentCustomer] = useState<Customer | undefined>(
     customer,
   );
 
   const onCustomerChange = (customer: Customer) => {
     setCurrentCustomer(customer);
+    updateRoute({ customerId: customer.id });
   };
 
   return (
