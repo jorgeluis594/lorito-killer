@@ -4,8 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
 export default function useUpdateQueryString(): (
-  key: string,
-  value: string | number | null,
+  params: Record<string, string | number | null>,
 ) => void {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,8 +27,8 @@ export default function useUpdateQueryString(): (
     [searchParams],
   );
 
-  return (key: string, value: string | number | null) => {
-    router.push(`${pathName}?${createQueryString({ [key]: value })}`, {
+  return (params: Record<string, string | number | null>) => {
+    router.push(`${pathName}?${createQueryString(params)}`, {
       scroll: false,
     });
   };

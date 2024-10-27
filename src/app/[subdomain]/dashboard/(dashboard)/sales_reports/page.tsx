@@ -10,6 +10,7 @@ import { getMany, getTotal } from "@/document/db_repository";
 import { SearchParams } from "@/document/types";
 import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
+import { endOfDay, startOfDay } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
@@ -54,11 +55,11 @@ const getSearchParams = async ({
   }
 
   if (searchParams.start) {
-    params.startDate = new Date(searchParams.start as string);
+    params.startDate = startOfDay(new Date(searchParams.start as string));
   }
 
   if (searchParams.end) {
-    params.endDate = new Date(searchParams.end as string);
+    params.endDate = endOfDay(new Date(searchParams.end as string));
   }
 
   if (searchParams.customerId) {

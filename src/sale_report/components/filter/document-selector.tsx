@@ -60,7 +60,7 @@ export default function DocumentSelector({
                     ...selectedDocuments,
                     [documentType]: checked,
                   });
-                  updateRoute(documentType, checked ? "true" : null);
+                  updateRoute({ [documentType]: checked ? "true" : null });
                 }}
               />
               <Label className="font-normal">
