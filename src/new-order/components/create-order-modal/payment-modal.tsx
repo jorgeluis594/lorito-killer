@@ -20,16 +20,14 @@ import {
   CombinedPayment,
   WalletPayment,
 } from "./payment_views";
-import { create, getCompany } from "@/order/actions";
+import { create } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import PdfVoucherRedirection from "@/order/components/pdf-voucher-redirection";
-import { Order } from "@/order/types";
-import { Company } from "@/company/types";
-import type { Document } from "@/document/types";
 import { useUserSession } from "@/lib/use-user-session";
+import DiscountFields from "@/new-order/components/create-order-modal/discount-fields";
+import { useCompany } from "@/lib/use-company";
 
 const PaymentViews = {
   none: NonePayment,
@@ -44,17 +42,26 @@ interface CreateOrderModalProps {
   onOpenChange: (isOpen: boolean) => void;
 }
 
+const allowedCompanyIdsToSeDiscount = (
+  process.env.NEXT_PUBLIC_ALLOWED_DISCOUNT_COMPANY_IDS || ""
+).split(",");
+
+const companyHasDiscountFeature = (companyId: string) =>
+  allowedCompanyIdsToSeDiscount.includes(companyId);
+
 const PaymentModal: React.FC<CreateOrderModalProps> = ({
   isOpen,
   onOpenChange,
 }) => {
   const { order, paymentMode } = useOrderFormStore((state) => state);
-  const { getPaidAmount, reset, resetPayment } = useOrderFormActions();
+  const { getPaidAmount, reset, resetPayment, setDiscount } =
+    useOrderFormActions();
   const { addOrder } = useCashShiftStore((state) => state);
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
   const [creatingOrder, setCreatingOrder] = useState(false);
   const user = useUserSession();
+  const company = useCompany();
 
   const handleOrderCreation = async () => {
     if (!order.documentType) {
@@ -116,9 +123,15 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
       );
     }
   };
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setDiscount(undefined);
+    }
+    onOpenChange(isOpen);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className="md:max-w-4xl sm:max-w-3xl"
         onInteractOutside={(e) => {
@@ -129,10 +142,36 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           <DialogTitle>Pagar pedido</DialogTitle>
         </DialogHeader>
         <div className="my-2 relative">
-          <p className="text-2xl font-medium leading-none text-center">
-            <span className="text-xl font-light mr-2">Total</span>
-            {formatPrice(order.total)}
-          </p>
+          <div className="text-center">
+            {order.discount && (
+              <div className="grid grid-cols-2 gap-1">
+                <div>
+                  <div className="text-xl text-gray-600 text-right">
+                    Subtotal:
+                  </div>
+                  <div className="text-lg text-red-500 text-right">
+                    Descuento:
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xl text-gray-600 text-left">
+                    {formatPrice(order.netTotal)}
+                  </div>
+                  <div className="text-lg text-red-500 text-left">
+                    {formatPrice(order.discountAmount)}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-1 mt-3">
+              <div className="text-3xl font-medium leading-none text-right">
+                TOTAL:
+              </div>
+              <div className="text-3xl font-medium leading-none text-left">
+                {formatPrice(order.total)}
+              </div>
+            </div>
+          </div>
           {paymentMode !== "none" && (
             <Button
               type="button"
@@ -144,6 +183,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
             </Button>
           )}
           <PaymentView />
+          {paymentMode !== "none" && companyHasDiscountFeature(company.id) && (
+            <DiscountFields defaultDiscount={order.discount} />
+          )}
         </div>
         <DialogFooter>
           <CreateOrderButton

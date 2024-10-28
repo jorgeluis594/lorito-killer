@@ -68,12 +68,22 @@ const config = {
           "0%": { transform: "translateX(-20%)" },
           "100%": { transform: "translateX(0)" },
         },
+        "move-from-up-to-down": {
+          "0%": { transform: "translateY(-20%)" },
+          "100%": { transform: "translateY(0)" },
+        },
+        "fade": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "move-from-left-to-right":
           "move-from-left-to-right .2s ease-out forwards",
+        "move-from-up-to-down": "move-from-up-to-down .2s ease-out forwards",
+        "fade": "fade .2s ease-out forwards"
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],

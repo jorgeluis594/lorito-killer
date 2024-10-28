@@ -17,3 +17,7 @@ export const isBillableDocument = (
 ): document is Invoice | Receipt => {
   return isInvoice(document) || isReceipt(document);
 };
+
+export const correlative = (document: Document): string => {
+  return `${document.series}-${document.number.padStart(8, "0")}`;
+};

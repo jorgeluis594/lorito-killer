@@ -26,5 +26,10 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  return NextResponse.rewrite(new URL(`/${subdomain}${url.pathname}`, req.url));
+  return NextResponse.rewrite(
+    new URL(
+      `/${subdomain}${url.pathname}?${url.searchParams.toString()}`,
+      req.url,
+    ),
+  );
 }

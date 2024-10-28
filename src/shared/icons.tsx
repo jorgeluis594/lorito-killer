@@ -24,7 +24,6 @@ import {
   Settings,
   SunMedium,
   Trash,
-  Twitter,
   User,
   User2Icon,
   UserX2Icon,
@@ -36,6 +35,7 @@ import {
   PackageCheck,
 } from "lucide-react";
 import { FaCashRegister } from "react-icons/fa";
+import { HiOutlineDocumentReport } from "react-icons/hi";
 
 export type Icon = LucideIcon;
 
@@ -67,6 +67,7 @@ export const Icons = {
   moon: Moon,
   laptop: Laptop,
   blocks: Blocks,
+  salesReports: HiOutlineDocumentReport,
   gitHub: ({ ...props }: LucideProps) => (
     <svg
       aria-hidden="true"
@@ -84,7 +85,7 @@ export const Icons = {
       ></path>
     </svg>
   ),
-  twitter: Twitter,
+  twitter: X,
   check: Check,
   settings2: Settings2,
   shoppingCart: ShoppingCart,

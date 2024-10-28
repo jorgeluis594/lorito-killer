@@ -12,6 +12,7 @@ type DocumentBase = {
   orderId: string;
   netTotal: number;
   taxTotal: number;
+  discountAmount: number;
   total: number;
   documentType: DocumentType;
   series: string;
@@ -61,3 +62,16 @@ type DocumentMapper = {
 
 export type InferDocumentType<T extends keyof DocumentMapper> =
   DocumentMapper[T];
+
+export type SearchParams = {
+  companyId: string;
+  pageNumber: number;
+  pageSize: number;
+  correlative?: { number: string; series: string };
+  startDate?: Date;
+  endDate?: Date;
+  customerId?: string;
+  invoice?: boolean;
+  receipt?: boolean;
+  ticket?: boolean;
+};

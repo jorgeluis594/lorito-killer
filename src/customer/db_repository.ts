@@ -100,6 +100,27 @@ export const createCustomer = async (
   }
 };
 
+export const findCustomer = async (
+  id: string,
+  companyId?: string,
+): Promise<response<Customer>> => {
+  try {
+    const customer = await prisma().customer.findUnique({
+      where: { id },
+    });
+
+    if (!customer) return { success: false, message: "Customer not found" };
+
+    if (companyId && customer.companyId !== companyId) {
+      return { success: false, message: "Customer not found" };
+    }
+
+    return { success: true, data: await prismaToCustomer(customer) };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
 export const findByDocumentNumber = async (
   companyId: string,
   documentNumber: string,

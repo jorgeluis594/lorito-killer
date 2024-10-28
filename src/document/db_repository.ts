@@ -4,6 +4,7 @@ import {
   DocumentType,
   INVOICE,
   RECEIPT,
+  SearchParams,
   TICKET,
 } from "@/document/types";
 import { response } from "@/lib/types";
@@ -12,6 +13,8 @@ import { $Enums, Document as PrismaDocument } from "@prisma/client";
 import PrismaDocumentType = $Enums.DocumentType;
 import { errorResponse, isEmpty } from "@/lib/utils";
 import { log } from "@/lib/log";
+import { Customer } from "@/customer/types";
+import { findCustomer } from "@/customer/db_repository";
 
 export const DocumentTypeToPrismaMapper: Record<
   DocumentType,
@@ -38,13 +41,14 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       companyId: prismaDocument.companyId!,
       orderId: prismaDocument.orderId,
       customerId: prismaDocument.customerId || undefined,
+      discountAmount: +prismaDocument.discountAmount,
       total: +prismaDocument.total,
       documentType: "ticket",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
-      netTotal: +prismaDocument.total,
+      netTotal: +prismaDocument.netTotal,
     };
   } else if (prismaDocument.documentType == "RECEIPT") {
     document = {
@@ -52,6 +56,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       orderId: prismaDocument.orderId,
       companyId: prismaDocument.companyId!,
       customerId: prismaDocument.customerId || undefined,
+      discountAmount: +prismaDocument.discountAmount,
       total: +prismaDocument.total,
       documentType: "receipt",
       series: prismaDocument.series,
@@ -69,6 +74,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       orderId: prismaDocument.orderId,
       companyId: prismaDocument.companyId!,
       customerId: prismaDocument.customerId!,
+      discountAmount: +prismaDocument.discountAmount,
       total: +prismaDocument.total,
       documentType: "invoice",
       series: prismaDocument.series,
@@ -93,6 +99,8 @@ export const createDocument = async (
         orderId: document.orderId!,
         companyId: document.companyId,
         customerId: document.customerId,
+        discountAmount: document.discountAmount,
+        netTotal: document.netTotal,
         total: document.total,
         documentType: DocumentTypeToPrismaMapper[document.documentType],
         series: document.series,
@@ -180,4 +188,133 @@ export const getBillingCredentialsFor = async (
     success: true,
     data: { ...defaultCredentials, ...credentials },
   };
+};
+
+const buildDocumentQuery = ({
+  companyId,
+  correlative,
+  startDate,
+  endDate,
+  customerId,
+  ticket,
+  invoice,
+  receipt,
+}: Omit<SearchParams, "pageSize" | "pageNumber">) => {
+  const documentTypes: { documentType: PrismaDocumentType }[] = [];
+
+  if (ticket) {
+    documentTypes.push({ documentType: PrismaDocumentType.TICKET });
+  }
+
+  if (invoice) {
+    documentTypes.push({ documentType: PrismaDocumentType.INVOICE });
+  }
+
+  if (receipt) {
+    documentTypes.push({ documentType: PrismaDocumentType.RECEIPT });
+  }
+
+  return {
+    companyId,
+    ...(correlative && { number: parseInt(correlative.number) }),
+    ...(correlative && { series: correlative.series }),
+    ...(startDate && { dateOfIssue: { gte: startDate } }),
+    ...(endDate && { dateOfIssue: { lte: endDate } }),
+    ...(customerId && { customerId }),
+    ...((ticket || invoice || receipt) && { OR: documentTypes }),
+  };
+};
+
+export const getTotal = async ({
+  companyId,
+  correlative,
+  startDate,
+  endDate,
+  customerId,
+  ticket,
+  invoice,
+  receipt,
+}: Omit<SearchParams, "pageSize" | "pageNumber">): Promise<
+  response<number>
+> => {
+  try {
+    const total = await prisma().document.count({
+      where: buildDocumentQuery({
+        companyId,
+        correlative,
+        startDate,
+        endDate,
+        customerId,
+        ticket,
+        invoice,
+        receipt,
+      }),
+    });
+
+    return { success: true, data: total };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
+export const getMany = async ({
+  companyId,
+  correlative,
+  startDate,
+  endDate,
+  customerId,
+  pageNumber,
+  pageSize,
+  ticket,
+  invoice,
+  receipt,
+}: SearchParams): Promise<response<(Document & { customer?: Customer })[]>> => {
+  const prismaDocuments = await prisma().document.findMany({
+    where: buildDocumentQuery({
+      companyId,
+      correlative,
+      startDate,
+      endDate,
+      customerId,
+      ticket,
+      invoice,
+      receipt,
+    }),
+    skip: (pageNumber - 1) * pageSize,
+    take: pageSize,
+    orderBy: { dateOfIssue: "desc" },
+  });
+
+  const customerIds = prismaDocuments
+    .map((doc) => doc.customerId)
+    .filter((id): id is string => !!id);
+  const uniqueCustomerIds = Array.from(customerIds);
+
+  const customers = await Promise.all(
+    uniqueCustomerIds.map((id) => findCustomer(id)),
+  );
+
+  const customersMap: Record<string, Customer> = {};
+  customers.forEach((customer) => {
+    if (customer.success) {
+      customersMap[customer.data.id] = customer.data;
+    }
+  });
+
+  const documents = prismaDocuments.map(
+    (prismaDocument): Document & { customer?: Customer } => {
+      const customerId = prismaDocument.customerId || undefined;
+      const document: Document & { customer?: Customer } = {
+        ...prismaDocumentToDocument(prismaDocument),
+      };
+
+      if (customerId) {
+        document.customer = customersMap[customerId];
+      }
+
+      return document;
+    },
+  );
+
+  return { success: true, data: documents };
 };
