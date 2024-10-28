@@ -42,7 +42,7 @@ export default function DocumentSelector({
       <div className="mb-2">
         <Label>Documento tributario</Label>
         <p className="text-sm text-muted-foreground">
-          Seleccione los tipos de documento a filtrar
+          Seleccione los tipos de comprobantes a filtrar
         </p>
       </div>
       <div className="space-y-2">
