@@ -6,6 +6,7 @@ import type {
   SortKey,
 } from "./types";
 import { response } from "@/lib/types";
+import {log} from "@/lib/log";
 
 export const create = async (product: Product): Promise<response<Product>> => {
   const res = await fetch("/api/products", {
@@ -101,16 +102,18 @@ export const getMany = async <T extends ProductType | undefined>(
   if (params.limit) searchParams["limit"] = params.limit;
   if (params.productType) searchParams["productType"] = params.productType;
   const queryString = new URLSearchParams(searchParams).toString();
-
+  console.log(queryString)
   const res = await fetch(`/api/products?${queryString}`, {
     method: "GET",
   });
 
   if (!res.ok) {
+    log.error("products_error_recovered", {params,res});
     return { success: false, message: "Error fetching products" };
   }
   const data = (await res.json()) as response<Product[]>;
   if (!data.success) {
+    log.error("data_failed", {data});
     return data;
   }
 
