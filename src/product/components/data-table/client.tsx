@@ -1,7 +1,9 @@
 "use client";
+import { DataTable } from "@/shared/components/ui/data-table";
 import { Heading } from "@/shared/components/ui/heading";
 import { Separator } from "@/shared/components/ui/separator";
 import { Plus, Boxes } from "lucide-react";
+import { columns } from "./columns";
 import {
   PackageProductType,
   Product,
@@ -12,6 +14,7 @@ import React, { SyntheticEvent } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import ProductModalForm from "@/product/components/form/product-modal-form";
+import CategoriesModal from "@/category/components/category-list-model/category-modal";
 import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
 
 interface ProductsClientProps {
@@ -22,6 +25,7 @@ interface ProductsClientProps {
 
 export default function ProductsClient({
   data,
+  isLoading,
   onUpsertProductPerformed,
 }: ProductsClientProps) {
   const { resetProduct, setOpen, performingAction } = useProductFormStore(
@@ -89,6 +93,12 @@ export default function ProductsClient({
         </div>
       </div>
       <Separator />
+      <DataTable
+        searchKey="name"
+        columns={columns}
+        data={data ?? []}
+        isLoading={isLoading}
+      />
     </>
   );
 }

@@ -84,19 +84,3 @@ export type SortOptions = {
 };
 
 export type SortKey = keyof SortOptions;
-
-interface searchParams {
-  q: string;
-  categoryId?: string | null;
-}
-
-export type SearchParams = {
-  companyId: string;
-  sortBy?: ProductSortParams;
-  categoryId?: searchParams["categoryId"];
-  limit?: number;
-  q?: string | null;
-  productType?: TypeSingleProductType | TypePackageProductType;
-  pageNumber: number;
-  pageSize: number;
-};
