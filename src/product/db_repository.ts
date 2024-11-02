@@ -6,7 +6,7 @@ import {
   Photo,
   Product,
   ProductSearchParams,
-  ProductSortParams,
+  ProductSortParams, SearchParams,
   SingleProduct,
   SingleProductType,
   TypePackageProductType,
@@ -291,7 +291,7 @@ const prismaToProduct = async (
       companyId: prismaProduct.companyId || "some_company_id",
       type: SingleProductType,
       sku: prismaProduct.sku || undefined,
-      stock: prismaProduct.stock!.toNumber(),
+      stock: prismaProduct.stock!.toNumber() || 0,
       unitType: prismaProduct.unitType
         ? UNIT_TYPE_MAPPER[prismaProduct.unitType]
         : UNIT_UNIT_TYPE, // Single product is expected to have a unit type by default
@@ -516,4 +516,108 @@ export const search = async ({
   } catch (error: any) {
     return { success: false, message: error.message } as response;
   }
+};
+
+const buildProductQuery = ({
+  companyId,
+  sortBy,
+  categoryId,
+  limit,
+  q,
+  productType,
+}: Omit<SearchParams, "pageSize" | "pageNumber">) => {
+
+  return {
+    companyId,
+    ...(q && { q }),
+    ...(categoryId && { categoryId }),
+    ...(limit && { limit }),
+    ...(sortBy && { sortBy }),
+    ...(productType && { productType }),
+  };
+};
+
+export const getTotal = async ({
+  companyId,
+  sortBy,
+  categoryId,
+  limit,
+  q,
+}: Omit<SearchParams, "pageSize" | "pageNumber">): Promise<
+  response<number>
+> => {
+  try {
+    const total = await prisma().product.count({
+      where: buildProductQuery({
+        companyId,
+        sortBy,
+        categoryId,
+        limit,
+        q,
+      }),
+    });
+
+    return { success: true, data: total };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
+export const getManyToRender = async ({
+  companyId,
+  sortBy,
+  categoryId,
+  limit,
+  q,
+  productType,
+  pageNumber,
+  pageSize,
+}: SearchParams): Promise<response<Product[]>> => {
+
+  const query: Prisma.ProductFindManyArgs = {
+    where: buildProductQuery({
+      companyId,
+      sortBy,
+      categoryId,
+      limit,
+      q,
+      productType,
+    }),
+    orderBy: sortBy,
+    skip: (pageNumber - 1) * pageSize,
+    take: pageSize,
+  };
+
+  if (productType)
+    query.where = {
+      ...query.where,
+      isPackage: productType === PackageProductType,
+    };
+
+  if (categoryId)
+    query.where = {
+      ...query.where,
+      categories: { some: { id: categoryId } },
+    };
+  if (limit) query.take = limit;
+  if (q)
+    query.where = {
+      ...query.where,
+      name: { contains: q, mode: "insensitive" },
+    };
+
+  const result = await prisma().product.findMany({
+    ...query,
+    include: { photos: true, categories: true },
+  });
+
+  result.map(product => {
+    if (product.stock === null) {
+      console.log(product);
+    }
+  });
+
+  const products = await Promise.all(result.map(prismaToProduct));
+
+  return { success: true, data: products };
 };
