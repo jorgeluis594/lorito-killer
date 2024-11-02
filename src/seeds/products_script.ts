@@ -19,7 +19,7 @@ const loadLoritoProducts = async (pathName: string, companyId: string) => {
         purchasePrice: parseFloat(loritoProduct.purchase),
         type: SingleProductType,
         unitType: "unit",
-        stock: parseFloat(loritoProduct.stock),
+        stock: parseFloat(loritoProduct.stock) || 0,
         categories: []
       };
       acc.push(product);
@@ -35,7 +35,7 @@ const loadLoritoProducts = async (pathName: string, companyId: string) => {
           purchasePrice: parseFloat(loritoProduct.purchase),
           type: SingleProductType,
           unitType: "unit",
-          stock: parseFloat(loritoItem.stock),
+          stock: parseFloat(loritoItem.stock) || 0,
           categories: []
         };
         acc.push(product);
