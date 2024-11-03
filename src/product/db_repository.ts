@@ -189,6 +189,15 @@ export const create = async (product: Product): Promise<response<Product>> => {
   return { success: true, data: { ...response.data, ...product } };
 };
 
+export const getTotal = async ({
+  companyId,
+}: {
+  companyId: string;
+}): Promise<response<number>> => {
+  const total = await prisma().product.count({ where: { companyId } });
+  return { success: true, data: total };
+};
+
 const updateSingleProduct = async (
   product: SingleProduct,
 ): Promise<response<SingleProduct>> => {
@@ -318,6 +327,7 @@ export const getMany = async ({
   sortBy,
   categoryId,
   limit,
+  pageNumber,
   q,
   productType,
 }: {
@@ -325,6 +335,7 @@ export const getMany = async ({
   sortBy?: ProductSortParams;
   categoryId?: searchParams["categoryId"];
   limit?: number;
+  pageNumber?: number;
   q?: string | null;
   productType?: TypeSingleProductType | TypePackageProductType;
 }): Promise<response<Product[]>> => {
@@ -346,6 +357,7 @@ export const getMany = async ({
         categories: { some: { id: categoryId } },
       };
     if (limit) query.take = limit;
+    if (pageNumber && limit) query.skip = (pageNumber - 1) * limit;
     if (q)
       query.where = {
         ...query.where,
