@@ -103,15 +103,14 @@ export default function DataTable<TData, TValue>({
   };
 
   const onSearchKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    console.log("event.key", event.key);
     if (event.key === "Enter") {
       updateSearchRoute();
     }
   };
 
   const updateSearchRoute = () => {
-    if (searchText && searchText.length >= 0) {
-      updateRoute({ q: searchText.length ? searchText.trim() : null });
+    if (searchText != undefined) {
+      updateRoute({ q: searchText === "" ? null : searchText.trim() });
     }
   };
 
