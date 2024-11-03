@@ -8,7 +8,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import DataTable from "@/sale_report/components/table/client";
 import { columns } from "@/product/components/data-table/columns";
 import React, { Suspense } from "react";
-import { getMany, getTotal } from "@/product/db_repository";
+import { getMany, GetManyParams, getTotal } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import AddProductButtons from "@/product/components/add-single-product-button";
@@ -22,12 +22,18 @@ type ParamsProps = {
 
 async function ProductsWithSuspense({ searchParams }: ParamsProps) {
   const session = await getSession();
+  const params: GetManyParams = {
+    companyId: session.user.companyId,
+    pageNumber: Number(searchParams.page) || 1,
+    limit: Number(searchParams.size) || 10,
+  };
+
+  if (searchParams.q) {
+    params.q = searchParams.q as string;
+  }
+
   const [productsResponse, productsCountResponse] = await Promise.all([
-    getMany({
-      companyId: session.user.companyId,
-      pageNumber: Number(searchParams.page) || 1,
-      limit: Number(searchParams.size) || 10,
-    }),
+    getMany(params),
     getTotal({ companyId: session.user.companyId }),
   ]);
 
@@ -39,9 +45,11 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
     <DataTable
       data={productsResponse.data}
       columns={columns}
+      searchTextPlaceholder={"Buscar producto por nombre o sku"}
       pageCount={Math.ceil(
         productsCountResponse.data / (Number(searchParams.size) || 10),
       )}
+      allowSearch
     />
   );
 }

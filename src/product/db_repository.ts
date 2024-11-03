@@ -322,6 +322,16 @@ const prismaToProduct = async (
   }
 };
 
+export type GetManyParams = {
+  companyId: string;
+  sortBy?: ProductSortParams;
+  categoryId?: searchParams["categoryId"];
+  limit?: number;
+  pageNumber?: number;
+  q?: string | null;
+  productType?: TypeSingleProductType | TypePackageProductType;
+};
+
 export const getMany = async ({
   companyId,
   sortBy,
@@ -330,15 +340,7 @@ export const getMany = async ({
   pageNumber,
   q,
   productType,
-}: {
-  companyId: string;
-  sortBy?: ProductSortParams;
-  categoryId?: searchParams["categoryId"];
-  limit?: number;
-  pageNumber?: number;
-  q?: string | null;
-  productType?: TypeSingleProductType | TypePackageProductType;
-}): Promise<response<Product[]>> => {
+}: GetManyParams): Promise<response<Product[]>> => {
   try {
     const query: Prisma.ProductFindManyArgs = {
       where: { companyId },

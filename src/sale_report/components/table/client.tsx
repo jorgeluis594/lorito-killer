@@ -35,13 +35,16 @@ import {
   DoubleArrowRightIcon,
 } from "@radix-ui/react-icons";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import useSkipInitialEffect from "@/lib/use-skip-initial-effect";
 import useUpdateQueryString from "@/lib/use-update-query-string";
+import { Input } from "@/shared/components/ui/input";
+import { SearchIcon } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data?: TData[];
   loading?: boolean;
+  searchTextPlaceholder?: string;
+  allowSearch?: boolean;
   pageSizeOptions?: number[];
   pageCount: number;
   searchParams?: {
@@ -52,7 +55,9 @@ interface DataTableProps<TData, TValue> {
 export default function DataTable<TData, TValue>({
   columns,
   data,
+  searchTextPlaceholder,
   loading,
+  allowSearch = false,
   pageSizeOptions = [10, 20, 30, 40, 50],
   pageCount,
 }: DataTableProps<TData, TValue>) {
@@ -67,6 +72,10 @@ export default function DataTable<TData, TValue>({
   const perPage = searchParams?.get("size") ?? "10";
   const perPageAsNumber = Number(perPage);
   const fallbackPerPage = isNaN(perPageAsNumber) ? 10 : perPageAsNumber;
+
+  const [searchText, setSearchText] = useState<string | undefined>(
+    searchParams.get("q") || undefined,
+  );
 
   // Handle server-side pagination
   const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
@@ -89,8 +98,44 @@ export default function DataTable<TData, TValue>({
     manualFiltering: true,
   });
 
+  const onInputSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchText(event.target.value);
+  };
+
+  const onSearchKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    console.log("event.key", event.key);
+    if (event.key === "Enter") {
+      updateSearchRoute();
+    }
+  };
+
+  const updateSearchRoute = () => {
+    if (searchText && searchText.length >= 0) {
+      updateRoute({ q: searchText.length ? searchText.trim() : null });
+    }
+  };
+
   return (
     <>
+      {allowSearch && (
+        <div className="flex">
+          <Button
+            size="icon"
+            variant="outline"
+            className="mr-1"
+            onClick={updateSearchRoute}
+          >
+            <SearchIcon />
+          </Button>
+          <Input
+            placeholder={searchTextPlaceholder || `Buscueda por texto`}
+            value={searchText}
+            onChange={onInputSearchChange}
+            onKeyUp={onSearchKeyUp}
+            className="w-full md:max-w-sm"
+          />
+        </div>
+      )}
       <ScrollArea className="h-[calc(80vh-220px)] rounded-md border">
         <Table className="relative">
           <TableHeader>
