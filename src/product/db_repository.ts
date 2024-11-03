@@ -342,7 +342,7 @@ export const getMany = async ({
   try {
     const query: Prisma.ProductFindManyArgs = {
       where: { companyId },
-      orderBy: sortBy,
+      orderBy: sortBy ? [{ ...sortBy }, { stock: "desc" }] : { stock: "desc" },
     };
 
     if (productType)
