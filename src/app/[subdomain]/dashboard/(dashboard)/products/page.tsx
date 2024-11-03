@@ -1,19 +1,74 @@
 import BreadCrumb from "@/shared/breadcrumb";
-import ListProducts from "@/product/components/list-product";
-import {ProductFormStoreProvider} from "@/product/components/form/product-form-store-provider";
-import {ProductsStoreProvider} from "@/product/components/products-store-provider";
+import { ProductFormStoreProvider } from "@/product/components/form/product-form-store-provider";
+import { Heading } from "@/shared/components/ui/heading";
+import { Button } from "@/shared/components/ui/button";
+import { Boxes, Plus } from "lucide-react";
+import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
+import { Separator } from "@/shared/components/ui/separator";
+import DataTable from "@/sale_report/components/table/client";
+import { columns } from "@/product/components/data-table/columns";
+import React, { Suspense } from "react";
+import { getMany, getTotal } from "@/product/db_repository";
+import { getSession } from "@/lib/auth";
+import ProductModalForm from "@/product/components/form/product-modal-form";
+import AddProductButtons from "@/product/components/add-single-product-button";
+const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 
-const breadcrumbItems = [{title: "Productos", link: "/products"}];
+type ParamsProps = {
+  searchParams: {
+    [key: string]: string | string[] | undefined;
+  };
+};
 
-export default async function Page() {
+async function ProductsWithSuspense({ searchParams }: ParamsProps) {
+  const session = await getSession();
+  const [productsResponse, productsCountResponse] = await Promise.all([
+    getMany({
+      companyId: session.user.companyId,
+      pageNumber: Number(searchParams.page) || 1,
+      limit: Number(searchParams.size) || 10,
+    }),
+    getTotal({ companyId: session.user.companyId }),
+  ]);
+
+  if (!productsResponse.success || !productsCountResponse.success) {
+    return <p>Error cargando los documentos, comuniquese con soporte</p>;
+  }
+
   return (
-    <ProductsStoreProvider>
-      <ProductFormStoreProvider>
-        <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
-          <BreadCrumb items={breadcrumbItems}/>
-          <ListProducts/>
+    <DataTable
+      data={productsResponse.data}
+      columns={columns}
+      pageCount={Math.ceil(
+        productsCountResponse.data / (Number(searchParams.size) || 10),
+      )}
+    />
+  );
+}
+
+export default async function Page({ searchParams }: ParamsProps) {
+  const session = await getSession();
+  const totalResponse = await getTotal({ companyId: session.user.companyId });
+
+  return (
+    <ProductFormStoreProvider>
+      <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
+        <BreadCrumb items={breadcrumbItems} />
+        <div className="flex items-start justify-between">
+          <Heading
+            title={`Productos (${totalResponse.success ? totalResponse.data : "-"})`}
+            description="Gestiona tus productos!"
+          />
+          <AddProductButtons />
         </div>
-      </ProductFormStoreProvider>
-    </ProductsStoreProvider>
+        <Separator />
+        <ProductModalForm />
+        <Suspense
+          fallback={<DataTable loading columns={columns} pageCount={1} />}
+        >
+          <ProductsWithSuspense searchParams={searchParams} />
+        </Suspense>
+      </div>
+    </ProductFormStoreProvider>
   );
 }
