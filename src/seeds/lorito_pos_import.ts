@@ -12,7 +12,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   };
 
   const sendRequest = async (url: string): Promise<any> => {
-    console.log("From sendRequest");
+    console.log(`From sendRequest", fetching ${url}`);
     return await page.evaluate(async (url: string) => {
       const response = await fetch(url, {
         method: "GET",
@@ -25,6 +25,64 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     }, url);
   };
 
+  const getCategories = async () => {
+    const response = await sendRequest(
+      "https://ladoce.loritosoft.online/categories/records?column=name&customer_id=1&page=1&value",
+    );
+
+    const lastPage = parseInt(response.meta.last_page);
+    const data: any[] = [...response.data];
+    for (let i = 1; i <= lastPage; i++) {
+      const response = await sendRequest(
+        `https://ladoce.loritosoft.online/categories/records?column=name&customer_id=1&page=${i}&value`,
+      );
+
+      if (Array.isArray(response.data)) {
+        data.push(...response.data);
+      } else {
+        console.log("response.data is not an array", { response });
+      }
+      await sleep(1000);
+    }
+    return data;
+  };
+
+  const getProperty = async (id: string) => {
+    const response = await sendRequest(
+      `https://ladoce.loritosoft.online/items/record/${id}`,
+    );
+
+    return response.data;
+  };
+
+  const getProducts = async () => {
+    const response = await sendRequest(
+      "https://ladoce.loritosoft.online/items/records?column=description&customer_id&page=1&value",
+    );
+
+    const lastPage = parseInt(response.meta.last_page);
+    const data: any[] = [];
+    for (const item of response.data) {
+      const product = await getProperty(item.id);
+      await sleep(500);
+      data.push({ ...item, ...product });
+    }
+    for (let i = 1; i <= lastPage; i++) {
+      const response = await sendRequest(
+        `https://ladoce.loritosoft.online/items/records?column=description&customer_id&page=${i}&value`,
+      );
+
+      for (const item of response.data) {
+        const product = await getProperty(item.id);
+        await sleep(500);
+        data.push({ ...item, ...product });
+      }
+      await sleep(500);
+    }
+
+    return data;
+  };
+
   const browser = await puppeteer.launch({ headless: false });
   page = await browser.newPage();
 
@@ -33,23 +91,12 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     process.env.LADOCE_PASSWORD || "ladoce147",
   );
 
-  const response = await sendRequest(
-    "https://ladoce.loritosoft.online/items/records?column=description&customer_id&page=1&value",
-  );
-
-  const lastPage = parseInt(response.meta.last_page);
-  const data: any[] = [...response.data];
-  for (let i = 1; i <= lastPage; i++) {
-    const response = await sendRequest(
-      `https://ladoce.loritosoft.online/items/records?column=description&customer_id&page=${i}&value`,
-    );
-
-    data.push(...response.data);
-    await sleep(1000);
-  }
+  const categories = await getCategories();
+  const products = await getProducts();
   await browser.close();
   // write data to a file as json
   const fs = require("fs");
-  fs.writeFileSync("data.json", JSON.stringify(data, null, 2));
-  console.log("Listo buey");
+  fs.writeFileSync("categories.json", JSON.stringify(categories, null, 2));
+  fs.writeFileSync("products.json", JSON.stringify(products, null, 2));
+  console.log("**Done**");
 })();
