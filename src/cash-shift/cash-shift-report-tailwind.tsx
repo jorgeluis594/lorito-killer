@@ -1,4 +1,4 @@
-import { ClosedCashShift } from "@/cash-shift/types";
+import { CashShift } from "@/cash-shift/types";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Table,
@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { formatPrice } from "@/lib/utils";
 
 interface CashShiftReportTwProps {
-  cashShift: ClosedCashShift;
+  cashShift: CashShift;
 }
 
 export default function CashShiftReportTw({
@@ -68,7 +68,9 @@ export default function CashShiftReportTw({
               Hora y fecha de cierre:
             </th>
             <TableCell className="text-left border">
-              {format(cashShift.closedAt, "dd/MM/yyyy hh:mm aa")}
+              {cashShift.status == "closed"
+                ? format(cashShift.closedAt, "dd/MM/yyyy hh:mm aa")
+                : "Caja abierta"}
             </TableCell>
           </TableRow>
         </TableBody>
@@ -136,7 +138,9 @@ export default function CashShiftReportTw({
               Saldo final:
             </th>
             <TableCell className="border">
-              {formatPrice(cashShift.finalAmount)}
+              {cashShift.status === "closed"
+                ? formatPrice(cashShift.finalAmount)
+                : "-"}
             </TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Transferencia:

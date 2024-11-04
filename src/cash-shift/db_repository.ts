@@ -20,6 +20,7 @@ import {
 } from "@/order/db_repository";
 import PaymentMethod = $Enums.PaymentMethod;
 import { User } from "@/user/types";
+import { plus } from "@/lib/utils";
 
 // improve this
 export const userExists = async (userId: string) => {
@@ -87,6 +88,7 @@ export const getManyCashShifts = async (
 ): Promise<response<CashShiftWithOutOrders[]>> => {
   const cashShifts = await prisma().cashShift.findMany({
     where: { companyId },
+    include: { orders: true },
     orderBy: { openedAt: "desc" },
   });
 
@@ -104,6 +106,12 @@ export const getManyCashShifts = async (
       companyId: prismaCashShift.companyId || "some_company_id",
       status: prismaCashShift.status == "OPEN" ? "open" : "closed",
       initialAmount: Number(prismaCashShift.initialAmount),
+      amountInCashRegister: plus(prismaCashShift.initialAmount.toNumber())(
+        prismaCashShift.orders.reduce(
+          (total, order) => plus(total)(order.total.toNumber()),
+          0,
+        ),
+      ),
       finalAmount: prismaCashShift.finalAmount
         ? Number(prismaCashShift.finalAmount)
         : undefined,
@@ -162,6 +170,11 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     throw new Error("User not found");
   }
 
+  const totalSales = prismaCashShift.orders.reduce(
+    (total, order) => plus(total)(order.total.toNumber()),
+    0,
+  );
+
   const baseCashShift: CashShiftBase = {
     id: prismaCashShift.id,
     userId: prismaCashShift.userId,
@@ -169,6 +182,9 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     userName: user.name || "sin nombre",
     initialAmount: Number(prismaCashShift.initialAmount),
     totalSales: sumPaymentsAmount(prismaCashShift.payments),
+    amountInCashRegister: plus(prismaCashShift.initialAmount.toNumber())(
+      totalSales,
+    ),
     totalCashSales: sumPaymentsAmount(prismaCashShift.payments || [], "CASH"),
     totalDebitCardSales: sumPaymentsAmount(
       prismaCashShift.payments || [],

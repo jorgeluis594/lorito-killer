@@ -24,6 +24,7 @@ export const createCashShift = async (
     companyId: userResponse.data.companyId,
     userName: userResponse.data.name || "Usuario sin nombre",
     initialAmount: initialAmount,
+    amountInCashRegister: initialAmount,
     totalSales: 0,
     totalCashSales: 0,
     totalDebitCardSales: 0,

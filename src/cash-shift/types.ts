@@ -12,6 +12,7 @@ export type CashShiftBase = {
   totalDebitCardSales: number;
   totalCreditCardSales: number;
   totalWalletSales: number;
+  amountInCashRegister: number;
   orders: Order[];
   payments: Payment[];
   createdAt?: Date;
