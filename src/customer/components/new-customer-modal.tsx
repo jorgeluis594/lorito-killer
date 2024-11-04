@@ -41,15 +41,15 @@ import {
   useOrderFormStore,
 } from "@/new-order/order-form-provider";
 import { useEffect, useState } from "react";
-import {createCustomer, searchCustomer} from "@/customer/actions";
+import { createCustomer, searchCustomer } from "@/customer/actions";
 import DistrictSelector from "@/locality/components/district_selector";
 import { District } from "@/locality/types";
 
 const CustomerSchema = z.object({
   documentType: z.enum([DNI, RUC]).optional(),
   documentNumber: z.coerce
-    .number()
-    .max(99999999999, { message: "El número máximo de dígitos es 11." }),
+    .string()
+    .max(11, { message: "El número máximo de dígitos es 11." }),
   geoCode: z.string().optional(),
   fullName: z.string().min(3, {
     message: "El nombre del cliente debe tener al menos 3 caracteres",
