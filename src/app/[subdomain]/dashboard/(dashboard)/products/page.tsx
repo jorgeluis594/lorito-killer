@@ -64,7 +64,7 @@ export default async function Page({ searchParams }: ParamsProps) {
         <BreadCrumb items={breadcrumbItems} />
         <div className="flex items-start justify-between">
           <Heading
-            title={`Productos (${totalResponse.success ? totalResponse.data : "-"})`}
+            title={`Productos de prueba (${totalResponse.success ? totalResponse.data : "-"})`}
             description="Gestiona tus productos!"
           />
           <AddProductButtons />
