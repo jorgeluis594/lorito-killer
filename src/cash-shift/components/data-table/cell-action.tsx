@@ -30,16 +30,13 @@ export const CellAction: React.FC<CellActionProps> = ({ cashShift }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-
-          {cashShift.status === "closed" && (
-            <DropdownMenuItem
-              onClick={() =>
-                router.push(`/dashboard/cash_shifts/${cashShift.id}/reports`)
-              }
-            >
-              <FileBarChart2 className="mr-2 h-4 w-4" /> Reporte de caja
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            onClick={() =>
+              router.push(`/dashboard/cash_shifts/${cashShift.id}/reports`)
+            }
+          >
+            <FileBarChart2 className="mr-2 h-4 w-4" /> Reporte de caja
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
