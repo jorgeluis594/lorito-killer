@@ -14,7 +14,7 @@ import {
   DocumentGateway,
   DocumentMetadata,
 } from "@/document/use_cases/create-document";
-import {div} from "@/lib/utils";
+import { div } from "@/lib/utils";
 
 const url = process.env.FACTPRO_URL;
 
@@ -64,6 +64,8 @@ const sendDocument = async (
   orderId: string,
   token: string,
 ): Promise<response<FactproResponse>> => {
+  const startDate = new Date();
+  log.info("sending_factpro_document", { orderId });
   const res = await fetch(`${url!}/documentos`, {
     method: "POST",
     headers: {
@@ -76,7 +78,11 @@ const sendDocument = async (
   const resJson = await res.json();
 
   if (res.status === 200 && resJson.success) {
-    log.info("factpro_document_sent", { document: body, orderId });
+    log.info("factpro_document_sent", {
+      document: body,
+      orderId,
+      time: new Date().getTime() - startDate.getTime(),
+    });
     return {
       success: true,
       data: resJson,
@@ -86,6 +92,7 @@ const sendDocument = async (
   log.error("send_factpro_document_failed", {
     document: body,
     orderId,
+    time: new Date().getTime() - startDate.getTime(),
     factpro_response: resJson,
   });
   return { success: false, message: "Error creating document" };
@@ -159,7 +166,7 @@ export default function gateway({
           porcentaje: div(order.discountAmount)(order.netTotal),
           monto: order.discountAmount,
           base: order.netTotal,
-        }
+        },
       },
       items: order.orderItems.map((orderItem) =>
         orderItemToDocumentItem(orderItem),
@@ -244,7 +251,7 @@ export default function gateway({
           porcentaje: div(order.discountAmount)(order.netTotal),
           monto: order.discountAmount,
           base: order.netTotal,
-        }
+        },
       },
       items: order.orderItems.map((orderItem) =>
         orderItemToDocumentItem(orderItem),
