@@ -178,11 +178,17 @@ export default function CashShiftReportTw({
               <TableCell className="border">
                 {format(order.createdAt!, "dd/MM/yyyy hh:mm aa")}
               </TableCell>
-              <TableCell className="border">Nota de venta</TableCell>
+              <TableCell className="border">
+                {order.documentType === "receipt"
+                  ? "Boleta Electrónica"
+                  : order.documentType === "invoice"
+                    ? "Factura Electrónica"
+                    : "Nota de venta"}
+              </TableCell>
               <TableCell className="border">
                 {order.id!.substring(0, 8)}
               </TableCell>
-              <TableCell className="border"></TableCell>
+              <TableCell className="border">{cashShift.userName}</TableCell>
               <TableCell className="border">
                 {formatPrice(order.total)}
               </TableCell>
