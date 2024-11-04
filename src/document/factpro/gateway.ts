@@ -65,7 +65,7 @@ const sendDocument = async (
   token: string,
 ): Promise<response<FactproResponse>> => {
   const startDate = new Date();
-  log.info("sending_factpro_document", { orderId });
+  log.info("sending_factpro_document", { orderId, document: body });
   const res = await fetch(`${url!}/documentos`, {
     method: "POST",
     headers: {
