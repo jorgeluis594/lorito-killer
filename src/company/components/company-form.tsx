@@ -34,6 +34,9 @@ const CompanyFormSchema = zod.object({
   name: zod
     .string()
     .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
+  subName: zod
+    .string()
+    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
   email: zod.string().email({message: "El email no es válido"}),
   phone: zod
     .string()
@@ -42,6 +45,15 @@ const CompanyFormSchema = zod.object({
   address: zod
     .string()
     .min(6, {message: "La dirección debe tener al menos 6 caracteres"}),
+  department: zod
+    .string()
+    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
+  district: zod
+    .string()
+    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
+  provincial: zod
+    .string()
+    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
   logo: LogoSchema
     .optional(),
 });
@@ -141,6 +153,19 @@ export default function CompanyForm({ company }: { company: Company }) {
             />
             <FormField
               control={form.control}
+              name="subName"
+              render={({ field }) => (
+                <FormItem className="my-2 max-w-sm">
+                  <FormLabel>Nombre Comercial</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Dirección" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="ruc"
               render={({ field }) => (
                 <FormItem className="my-2 max-w-sm">
@@ -165,24 +190,65 @@ export default function CompanyForm({ company }: { company: Company }) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem className="my-2 max-w-sm">
-                  <FormLabel>Teléfono</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      max={999999999}
-                      placeholder="Teléfono"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div>
+              <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                  <FormItem className="my-2 max-w-sm">
+                    <FormLabel>Distrito</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="provincial"
+                render={({ field }) => (
+                  <FormItem className="my-2 max-w-sm">
+                    <FormLabel>Provincia</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem className="my-2 max-w-sm">
+                    <FormLabel>Departamento</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem className="my-2 max-w-sm">
+                    <FormLabel>Teléfono</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        max={999999999}
+                        placeholder="Teléfono"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="email"
