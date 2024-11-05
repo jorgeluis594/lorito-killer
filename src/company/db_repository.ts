@@ -39,6 +39,10 @@ export const updateCompany = async (
       data: {
         id: company.id,
         name: company.name,
+        subName: company.subName,
+        department: company.department,
+        district: company.district,
+        provincial: company.provincial,
         phone: company.phone,
         email: company.email,
         ruc: company.ruc || undefined,
