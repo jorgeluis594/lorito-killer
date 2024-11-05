@@ -57,6 +57,10 @@ const execute = async () => {
     data: {
       id: crypto.randomUUID(),
       name: "Company 1",
+      subName: "Subname 1",
+      department: "UCAYALI",
+      district: "CALLERIA",
+      provincial: "CORONEL PORTILLO",
       address: "Address 1",
       phone: "1234567890",
       email: "test@test.com",
