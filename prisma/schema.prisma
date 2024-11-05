@@ -208,6 +208,10 @@ model Customer {
 model Company {
   id                 String          @id @default(uuid())
   name               String
+  subName            String
+  department         String
+  district           String
+  provincial         String
   email              String
   phone              String
   address            String
