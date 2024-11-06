@@ -190,7 +190,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 </FormItem>
               )}
             />
-            <div>
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="district"
@@ -230,25 +230,25 @@ export default function CompanyForm({ company }: { company: Company }) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem className="my-2 max-w-sm">
-                    <FormLabel>Teléfono</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        max={999999999}
-                        placeholder="Teléfono"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem className="my-2 max-w-sm">
+                  <FormLabel>Teléfono</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      max={999999999}
+                      placeholder="Teléfono"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="email"
