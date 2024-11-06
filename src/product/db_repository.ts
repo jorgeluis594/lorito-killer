@@ -413,7 +413,7 @@ export const findBy = async (
     }
 
     const product = await prisma().product.findFirst({
-      where: { ...searchParams, include: { categories: true } },
+      where: { ...searchParams },
       include: { photos: true, categories: true },
     });
     if (!product) return { success: false, message: "Product not found" };
