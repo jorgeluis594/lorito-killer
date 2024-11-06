@@ -14,13 +14,15 @@ export const UNIT_TYPE_MAPPER = {
   unit: "und",
 } as const;
 
-export const EMPTY_SINGLE_PRODUCT: Omit<SingleProduct, "stock"> = {
+export const EMPTY_SINGLE_PRODUCT: SingleProduct = {
   companyId: "",
   type: SingleProductType,
+  sku: "",
   name: "",
   price: 0,
   purchasePrice: 0,
   unitType: UNIT_UNIT_TYPE,
+  stock: 0,
   description: "",
   photos: [],
   categories: [],
