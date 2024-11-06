@@ -5,7 +5,7 @@ export type Expense = {
   id: string;
   cashShiftId: string;
   amount: number;
-  description: string;
+  description?: string;
   createdAt: Date;
 };
 
