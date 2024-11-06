@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   documentSerialAndNumber: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -87,9 +87,9 @@ interface voucherProps {
 }
 
 const documentTypeToEs: Record<DocumentType, string> = {
-  [INVOICE]: "Factura electrónica",
-  [RECEIPT]: "Boleta de venta electrónica",
-  [TICKET]: "Nota de venta electrónica",
+  [INVOICE]: "FACTURA ELECTRÓNICA",
+  [RECEIPT]: "BOLETA ELECTRÓNICA",
+  [TICKET]: "NOTA DE VENTA ELECTRÓNICA",
 };
 
 const documentTypeToCustomerDocumentTypeES: Record<DocumentType, string> = {
@@ -241,9 +241,12 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
         ]}
       >
         {company.logo && (<Image src={company.logo.url} style={{ width: '40px'}}/>)}
-        <Text style={styles.header}>{company.name}</Text>
-        {company.ruc && <Text style={styles.description}>{company.ruc}</Text>}
-        <Text style={styles.description}>{company.address}</Text>
+        <Text style={styles.header}>{company.subName}</Text>
+        {company.ruc && <Text style={styles.description}>RUC {company.ruc}</Text>}
+        <Text style={{ fontSize: 9, textAlign: "center" }}>{company.district}-{company.provincial}-{company.department}</Text>
+        <Text style={styles.description}>D. Comercial: {company.address}</Text>
+        <Text style={styles.description}>{company.email}</Text>
+        <Text style={styles.description}>{company.phone}</Text>
 
       </View>
 
