@@ -47,8 +47,7 @@ export default function ProductsSearcher() {
       params["limit"] = 20;
     }
     const response = await getMany(params);
-
-    if (params["q"] !== search) return;
+    if (params["q"] !== undefined && params["q"] !== search) return;
 
     if (!response.success) {
       toast({
@@ -62,7 +61,7 @@ export default function ProductsSearcher() {
     setProducts(response.data);
   };
 
-  const onSearchSubmit = debounce(searchProduct, 200);
+  const onSearchSubmit = debounce(searchProduct, 300);
 
   const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
