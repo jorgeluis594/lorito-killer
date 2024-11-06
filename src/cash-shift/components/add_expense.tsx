@@ -1,0 +1,119 @@
+import { Button } from "@/shared/components/ui/button";
+import React from "react";
+import { HandCoins } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/shared/components/ui/form";
+import { Input, MoneyInput } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+
+const AddExpenseSchema = z.object({
+  amount: z.coerce.number().nonnegative("El monto no puede ser negativo"),
+  description: z.string().optional(),
+});
+
+type AddExpenseFormValues = z.infer<typeof AddExpenseSchema>;
+
+export default function AddExpense() {
+  const [open, setOpen] = React.useState(false);
+  const toggleOpen = () => setOpen(!open);
+
+  const form = useForm<AddExpenseFormValues>({
+    resolver: zodResolver(AddExpenseSchema),
+    defaultValues: { amount: 0, description: "" },
+  });
+
+  const onSubmit = async (data: AddExpenseFormValues) => {};
+
+  return (
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="outline" onClick={toggleOpen}>
+              <HandCoins className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Agrega gastos diarios a tu caja chica</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Agregar gasto</DialogTitle>
+            <DialogDescription>
+              Agrega tus gastos diarios y manten tus cuentas en orden
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form
+              id="expense-form"
+              className="mt-8 space-y-6"
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Monto</FormLabel>
+                    <FormControl>
+                      <MoneyInput placeholder="Monto del gasto" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Motivo</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={form.handleSubmit(onSubmit)}
+                >
+                  Agregar gasto
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
