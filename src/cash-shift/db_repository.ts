@@ -4,6 +4,7 @@ import {
   CashShift as PrismaCashSift,
   Order,
   Payment,
+  Expense as PrismaExpense,
   Prisma,
   ShiftStatus,
 } from "@prisma/client";
@@ -12,6 +13,7 @@ import type {
   CashShiftWithOutOrders,
   CashShift,
   CashShiftBase,
+  Expense,
 } from "./types";
 import { response } from "@/lib/types";
 import {
@@ -52,7 +54,7 @@ export const createCashShift = async <T extends CashShift>(
   try {
     const persistedCashShift = await prisma().cashShift.create({
       data: cashShiftToPrisma(cashShift),
-      include: { orders: true, payments: true },
+      include: { orders: true, payments: true, expenses: true },
     });
 
     return {
@@ -71,7 +73,7 @@ export const saveCashShift = async <T extends CashShift>(
     const persistedCashShift = await prisma().cashShift.update({
       where: { id: cashShift.id },
       data: cashShiftToPrisma(cashShift),
-      include: { orders: true, payments: true },
+      include: { orders: true, payments: true, expenses: true },
     });
 
     return {
@@ -88,7 +90,7 @@ export const getManyCashShifts = async (
 ): Promise<response<CashShiftWithOutOrders[]>> => {
   const cashShifts = await prisma().cashShift.findMany({
     where: { companyId },
-    include: { orders: true },
+    include: { orders: true, expenses: true },
     orderBy: { openedAt: "desc" },
   });
 
@@ -105,6 +107,15 @@ export const getManyCashShifts = async (
       userName: mappedUsers[prismaCashShift.userId].name || "sin nombre",
       companyId: prismaCashShift.companyId || "some_company_id",
       status: prismaCashShift.status == "OPEN" ? "open" : "closed",
+      expenses: prismaCashShift.expenses.map(
+        (expense): Expense => ({
+          id: expense.id,
+          cashShiftId: expense.cashShiftId,
+          amount: Number(expense.amount),
+          description: expense.description || undefined,
+          createdAt: expense.createdAt,
+        }),
+      ),
       initialAmount: Number(prismaCashShift.initialAmount),
       amountInCashRegister: plus(prismaCashShift.initialAmount.toNumber())(
         prismaCashShift.orders.reduce(
@@ -128,7 +139,7 @@ export const getLastOpenCashShift = async (
       status: "OPEN",
     },
     orderBy: { openedAt: "desc" },
-    include: { orders: true, payments: true },
+    include: { orders: true, payments: true, expenses: true },
   });
 
   if (!cashShift) {
@@ -146,7 +157,7 @@ export const findCashShift = async <T extends CashShift>(
 ): Promise<response<T>> => {
   const cashShift = await prisma().cashShift.findUnique({
     where: { id },
-    include: { orders: true, payments: true },
+    include: { orders: true, payments: true, expenses: true },
   });
 
   if (!cashShift) {
@@ -160,7 +171,11 @@ export const findCashShift = async <T extends CashShift>(
 };
 
 export const prismaCashShiftToCashShift = async <T extends CashShift>(
-  prismaCashShift: PrismaCashSift & { orders: Order[]; payments: Payment[] },
+  prismaCashShift: PrismaCashSift & {
+    orders: Order[];
+    payments: Payment[];
+    expenses: PrismaExpense[];
+  },
 ): Promise<T> => {
   const user = await prisma().user.findUnique({
     where: { id: prismaCashShift.userId },
@@ -175,6 +190,16 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     0,
   );
 
+  const expenses = prismaCashShift.expenses.map(
+    (expense): Expense => ({
+      id: expense.id,
+      cashShiftId: expense.cashShiftId,
+      amount: Number(expense.amount),
+      description: expense.description || undefined,
+      createdAt: expense.createdAt,
+    }),
+  );
+
   const baseCashShift: CashShiftBase = {
     id: prismaCashShift.id,
     userId: prismaCashShift.userId,
@@ -185,6 +210,7 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     amountInCashRegister: plus(prismaCashShift.initialAmount.toNumber())(
       totalSales,
     ),
+    expenses,
     totalCashSales: sumPaymentsAmount(prismaCashShift.payments || [], "CASH"),
     totalDebitCardSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
@@ -252,4 +278,32 @@ function sumPaymentsAmount(
 const cashShiftMapper: { open: "OPEN"; closed: "CLOSED" } = {
   open: "OPEN",
   closed: "CLOSED",
+};
+
+export const addExpense = async (
+  expense: Expense,
+): Promise<response<Expense>> => {
+  try {
+    const persistedExpense = await prisma().expense.create({
+      data: {
+        cashShiftId: expense.cashShiftId,
+        amount: expense.amount,
+        description: expense.description,
+        createdAt: expense.createdAt,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        id: persistedExpense.id,
+        cashShiftId: persistedExpense.cashShiftId,
+        amount: persistedExpense.amount.toNumber(),
+        description: persistedExpense.description || undefined,
+        createdAt: persistedExpense.createdAt,
+      },
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
 };

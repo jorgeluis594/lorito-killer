@@ -1,6 +1,14 @@
 import { Order, Payment } from "@/order/types";
 import { response } from "@/lib/types";
 
+export type Expense = {
+  id: string;
+  cashShiftId: string;
+  amount: number;
+  description?: string;
+  createdAt: Date;
+};
+
 export type CashShiftBase = {
   id: string;
   userId: string;
@@ -13,6 +21,7 @@ export type CashShiftBase = {
   totalCreditCardSales: number;
   totalWalletSales: number;
   amountInCashRegister: number;
+  expenses: Expense[];
   orders: Order[];
   payments: Payment[];
   createdAt?: Date;

@@ -14,8 +14,8 @@ import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
-import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
-import {useProductFormActions} from "@/new-order/components/products-view/product-searcher-form-provider";
+import { useProductFormActions } from "@/new-order/components/products-view/product-searcher-form-provider";
+import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
 import { toast } from "@/shared/components/ui/use-toast";
 import { useCompany } from "@/lib/use-company";
 import CartItem from "@/new-order/components/cart/cart-item";
@@ -25,7 +25,7 @@ export default function Cart() {
   const { setDocumentType } = useOrderFormActions();
   const company = useCompany();
 
-  const cashShift = useCashShiftStore((state) => state.cashShift);
+  const cashShift = useCashShift();
   const customer = useOrderFormStore((state) => state.order.customer);
 
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
@@ -54,7 +54,11 @@ export default function Cart() {
     }
   };
 
-  const { increaseQuantityProduct, decreaseQuantityProduct, restoreStockProduct} = useProductFormActions();
+  const {
+    increaseQuantityProduct,
+    decreaseQuantityProduct,
+    restoreStockProduct,
+  } = useProductFormActions();
 
   useEffect(() => {
     reset();

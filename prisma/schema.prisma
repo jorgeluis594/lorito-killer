@@ -102,6 +102,16 @@ enum ShiftStatus {
   CLOSED
 }
 
+model Expense {
+  id          String    @id @default(uuid())
+  cashShiftId String
+  cashShift   CashShift @relation(fields: [cashShiftId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  amount      Decimal
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model CashShift {
   id            String      @id @default(uuid())
   userId        String
@@ -115,6 +125,7 @@ model CashShift {
   status        ShiftStatus
   openedAt      DateTime
   closedAt      DateTime?
+  expenses      Expense[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
