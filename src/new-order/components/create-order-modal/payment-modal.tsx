@@ -22,7 +22,6 @@ import {
 } from "./payment_views";
 import { create } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
 import React, { useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";

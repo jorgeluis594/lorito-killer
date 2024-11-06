@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { closeCashShift } from "@/cash-shift/components/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useState } from "react";
-import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { ToastAction } from "@/shared/components/ui/toast";
@@ -45,7 +45,7 @@ interface CloseCashShiftFormProps {
 export default function CloseCashShiftForm({
   onCashShiftClosed,
 }: CloseCashShiftFormProps) {
-  const { cashShift, removeCashShift } = useCashShiftStore((store) => store);
+  const cashShift = useCashShift();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function CloseCashShiftForm({
         description: "Caja cerrada correctamente",
       });
       onCashShiftClosed();
-      removeCashShift();
+      router.refresh();
       form.reset();
       setOpen(false);
       router.push(`/dashboard/cash_shifts/${response.data.id}/reports`);

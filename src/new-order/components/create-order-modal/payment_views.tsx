@@ -12,7 +12,8 @@ import { useCallback, useEffect, useState } from "react";
 import {
   AMOUNT,
   CashPayment as CashPaymentMethod,
-  PaymentMethod, PERCENT,
+  PaymentMethod,
+  PERCENT,
   WalletPayment as WalletPaymentMethod,
 } from "@/order/types";
 import { BlankCashPayment } from "@/order/constants";
@@ -21,10 +22,9 @@ import {
   ToggleGroupItem,
 } from "@/shared/components/ui/toggle-group";
 import * as React from "react";
-import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import * as z from "zod";
-import * as zod from "zod";
 import { formatPrice } from "@/lib/utils";
+import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -71,17 +71,17 @@ type CashPaymentMethodState = Omit<CashPaymentMethod, "received_amount"> & {
   received_amount: number | null;
 };
 
-const DiscountFormSchema = zod.object({
-  discountType: zod.enum([AMOUNT, PERCENT]),
-  value: zod.coerce.number(),
+const DiscountFormSchema = z.object({
+  discountType: z.enum([AMOUNT, PERCENT]),
+  value: z.coerce.number(),
 });
 
 type DiscountFormValues = z.infer<typeof DiscountFormSchema>;
 
 export const CashPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
-  const {cashShift} = useCashShiftStore((store) => store);
-  const {setDiscount, addPayment, removePayment} = useOrderFormActions();
+  const cashShift = useCashShift();
+  const { addPayment, removePayment } = useOrderFormActions();
   const [payment, setPayment] = useState<CashPaymentMethodState>({
     ...BlankCashPayment,
     received_amount: null,
@@ -117,11 +117,11 @@ export const CashPayment: React.FC = () => {
   }, [payment.received_amount, orderTotal]);
 
   useEffect(() => {
-    const {received_amount, ...rest} = payment;
+    const { received_amount, ...rest } = payment;
     if (received_amount === null) return;
 
     removePayment("cash");
-    addPayment({...rest, received_amount});
+    addPayment({ ...rest, received_amount });
   }, [payment]);
 
   useEffect(() => {
@@ -161,7 +161,7 @@ export const CashPayment: React.FC = () => {
 export const WalletPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { addPayment } = useOrderFormActions();
-  const { cashShift } = useCashShiftStore((store) => store);
+  const cashShift = useCashShift();
   const [name, setName] = useState<string | null>(null);
   const [operationCode, setOperationCode] = useState<string | null>(null);
 
@@ -208,7 +208,7 @@ export const WalletPayment: React.FC = () => {
 export const CardPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const { addPayment, removePayment } = useOrderFormActions();
-  const { cashShift } = useCashShiftStore((store) => store);
+  const cashShift = useCashShift();
 
   const onCardChange = (
     value: PaymentMethod & ("debit_card" | "credit_card"),
@@ -260,7 +260,7 @@ export const CardPayment: React.FC = () => {
 
 export const CombinedPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
-  const { cashShift } = useCashShiftStore((store) => store);
+  const cashShift = useCashShift();
   const { removeAllPayments, addPayment } = useOrderFormActions();
   const [cashAmount, setCashAmount] = useState(0);
   const [creditCardAmount, setCreditCardAmount] = useState(0);
