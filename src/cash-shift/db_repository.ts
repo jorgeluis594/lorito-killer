@@ -279,3 +279,31 @@ const cashShiftMapper: { open: "OPEN"; closed: "CLOSED" } = {
   open: "OPEN",
   closed: "CLOSED",
 };
+
+export const addExpense = async (
+  expense: Expense,
+): Promise<response<Expense>> => {
+  try {
+    const persistedExpense = await prisma().expense.create({
+      data: {
+        cashShiftId: expense.cashShiftId,
+        amount: expense.amount,
+        description: expense.description,
+        createdAt: expense.createdAt,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        id: persistedExpense.id,
+        cashShiftId: persistedExpense.cashShiftId,
+        amount: persistedExpense.amount.toNumber(),
+        description: persistedExpense.description || undefined,
+        createdAt: persistedExpense.createdAt,
+      },
+    };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};

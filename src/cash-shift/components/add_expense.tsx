@@ -28,6 +28,10 @@ import {
 } from "@/shared/components/ui/form";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { addExpense } from "@/cash-shift/components/actions";
+import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
+import { useToast } from "@/shared/components/ui/use-toast";
+import { formatPrice } from "@/lib/utils";
 
 const AddExpenseSchema = z.object({
   amount: z.coerce.number().nonnegative("El monto no puede ser negativo"),
@@ -39,13 +43,40 @@ type AddExpenseFormValues = z.infer<typeof AddExpenseSchema>;
 export default function AddExpense() {
   const [open, setOpen] = React.useState(false);
   const toggleOpen = () => setOpen(!open);
+  const cashShift = useCashShift();
+  const { toast } = useToast();
+
+  if (!cashShift) throw new Error("Cash shift not found");
 
   const form = useForm<AddExpenseFormValues>({
     resolver: zodResolver(AddExpenseSchema),
     defaultValues: { amount: 0, description: "" },
   });
 
-  const onSubmit = async (data: AddExpenseFormValues) => {};
+  const onSubmit = async (data: AddExpenseFormValues) => {
+    const response = await addExpense({
+      id: crypto.randomUUID(),
+      cashShiftId: cashShift.id,
+      createdAt: new Date(),
+      amount: data.amount,
+      description: data.description,
+    });
+
+    if (!response.success) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Error al agregar gasto",
+      });
+      return;
+    }
+
+    toast({
+      description: `El gasto de ${formatPrice(response.data.amount)} se agrego con éxito`,
+    });
+    form.reset();
+    setOpen(false);
+  };
 
   return (
     <>
