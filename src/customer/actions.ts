@@ -64,7 +64,11 @@ export const searchCustomer = async (
   const response = await fetchFunction(documentNumber);
 
   if (!response.success) {
-    log.error("fetch_customer_failed", { documentNumber, response });
+    log.error("fetch_customer_failed", {
+      documentNumber,
+      response,
+      fetchFunction: fetchFunction.name,
+    });
     return { success: false, message: "No se encontro al cliente" };
   }
 
