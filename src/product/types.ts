@@ -1,4 +1,4 @@
-import { Category } from "@/category/types";
+import { Category } from "../category/types";
 
 export type Photo = {
   id?: string;

@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma from "../lib/prisma";
 import {
   KG_UNIT_TYPE,
   PackageProduct,
@@ -13,13 +13,13 @@ import {
   TypeSingleProductType,
   UNIT_UNIT_TYPE,
 } from "./types";
-import { response } from "@/lib/types";
+import { response } from "../lib/types";
 import {
   $Enums,
   Category as PrismaCategory,
   Prisma,
   Product as PrismaProduct,
-} from "@prisma/client";
+} from ".prisma/client";
 
 interface searchParams {
   q: string;
