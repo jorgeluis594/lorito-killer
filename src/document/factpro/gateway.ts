@@ -362,6 +362,10 @@ export default function gateway({
     );
 
     if (!response.ok) {
+      log.error("search_customer_failed", {
+        documentNumber,
+        response: await response.json(),
+      });
       return { success: false, message: "No customers found" };
     }
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { OpenCashShift, ClosedCashShift } from "@/cash-shift/types";
+import { OpenCashShift, ClosedCashShift, Expense } from "@/cash-shift/types";
 import cashShiftCreator from "@/cash-shift/use-cases/cash-shift-creator";
 import * as repository from "@/cash-shift/db_repository";
 import { response } from "@/lib/types";
@@ -32,6 +32,7 @@ export const createCashShift = async (
     totalWalletSales: 0,
     orders: [],
     payments: [],
+    expenses: [],
     status: "open",
     openedAt: new Date(),
   };
@@ -59,4 +60,10 @@ export const closeCashShift = async (
   }
 
   return response;
+};
+
+export const addExpense = async (
+  expense: Expense,
+): Promise<response<Expense>> => {
+  return await repository.addExpense(expense);
 };

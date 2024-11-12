@@ -360,11 +360,15 @@ export const getMany = async ({
       };
     if (limit) query.take = limit;
     if (pageNumber && limit) query.skip = (pageNumber - 1) * limit;
-    if (q)
+    if (q) {
+      const searchValues: string[] = q
+        .split(" ")
+        .filter((v) => v && v.length > 0);
       query.where = {
         ...query.where,
-        name: { contains: q, mode: "insensitive" },
+        name: { search: searchValues.join(" & ") },
       };
+    }
 
     const result = await prisma().product.findMany({
       ...query,
@@ -409,7 +413,7 @@ export const findBy = async (
     }
 
     const product = await prisma().product.findFirst({
-      where: { ...searchParams, include: { categories: true } },
+      where: { ...searchParams },
       include: { photos: true, categories: true },
     });
     if (!product) return { success: false, message: "Product not found" };

@@ -26,7 +26,7 @@ import { createCashShift } from "@/cash-shift/components/actions";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useState } from "react";
-import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
+import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
 import { useRouter } from "next/navigation";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
 import { signOut } from "next-auth/react";
@@ -47,7 +47,7 @@ export default function OpenCashShiftForm({
   onCashShiftOpened = undefined,
 }: OpenCashShiftFormProps) {
   const { data: session } = useSession();
-  const { setCashShift } = useCashShiftStore((store) => store);
+  const cashShift = useCashShift();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -87,10 +87,10 @@ export default function OpenCashShiftForm({
         description: "Caja abierta correctamente",
       });
       onCashShiftOpened && onCashShiftOpened();
-      setCashShift(response.data);
       serCashShiftToOrder(response.data);
       form.reset();
       setOpen(false);
+      router.refresh();
     }
   };
 
@@ -116,7 +116,7 @@ export default function OpenCashShiftForm({
                     <FormLabel>Monto inicial</FormLabel>
                     <FormControl>
                       <MoneyInput
-                        placeholder="Monto inicial" 
+                        placeholder="Monto inicial"
                         autoComplete="off"
                         type="number"
                         {...field}

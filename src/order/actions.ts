@@ -24,6 +24,7 @@ import {
 import type { Document } from "@/document/types";
 import prisma, { setPrismaClient } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
+import { log } from "@/lib/log";
 
 export const create = async (
   userId: string,
@@ -48,10 +49,15 @@ export const create = async (
 
   const openCashShift = openCashShiftResponse.data;
   if (openCashShift.id !== order.cashShiftId) {
-    return {
+    log.warn("order_cash_shift_mismatch", {
+      orderCashShiftId: order.cashShiftId,
+      lastOpenCashShiftId: openCashShift.id,
+    });
+    order.cashShiftId = openCashShift.id;
+    /*return {
       success: false,
       message: "La caja abierta no coincide con la caja de la venta",
-    };
+    };*/
   }
 
   if (openCashShift.userId !== session.user.id) {
@@ -61,9 +67,9 @@ export const create = async (
     };
   }
 
-  const discountResponse = calculateDiscount(order)
+  const discountResponse = calculateDiscount(order);
   if (!discountResponse.success) {
-    return {success: false, message: "Error generando descuento"}
+    return { success: false, message: "Error generando descuento" };
   }
 
   return withinTransaction<{ order: Order; document: Document }>(

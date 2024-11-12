@@ -22,7 +22,6 @@ import {
 } from "./payment_views";
 import { create } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { useCashShiftStore } from "@/cash-shift/components/cash-shift-store-provider";
 import React, { useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
@@ -56,7 +55,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const { order, paymentMode } = useOrderFormStore((state) => state);
   const { getPaidAmount, reset, resetPayment, setDiscount } =
     useOrderFormActions();
-  const { addOrder } = useCashShiftStore((state) => state);
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
   const [creatingOrder, setCreatingOrder] = useState(false);
@@ -79,7 +77,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         title: "En hora buena!",
         description: "Venta realizada con éxito, generando comprobante",
       });
-      addOrder(response.data.order);
       reset();
       onOpenChange(false);
       window.open(`/api/orders/${response.data.order.id}/documents`, "_blank");

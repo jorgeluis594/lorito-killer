@@ -15,7 +15,10 @@ export async function PUT(
   const session = await getSession();
   const productData: SingleProduct = await req.json();
 
-  const findProductResponse = await findProduct(params.id, session.user.companyId);
+  const findProductResponse = await findProduct(
+    params.id,
+    session.user.companyId,
+  );
   if (!findProductResponse.success) {
     return NextResponse.json(
       { success: false, message: "Product not found" },
@@ -69,6 +72,7 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   const session = await getSession();
+
   let response = await findProduct(params.id, session.user.companyId);
   if (!response.success) {
     response = await findBy({

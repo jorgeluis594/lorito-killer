@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import { Search } from "lucide-react";
-import { Product } from "@/product/types";
 import { getMany, type GetManyParams } from "@/product/api_repository";
 import { useToast } from "@/shared/components/ui/use-toast";
 import ProductList from "@/new-order/components/products-view/product-list";
@@ -20,17 +19,16 @@ import {
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { SortOptions } from "@/product/types";
 import { sortOptions } from "@/product/constants";
-import { useSymbologyScanner } from "@use-symbology-scanner/react";
 import { findProduct } from "@/product/api_repository";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
-import {useProductsStore} from "@/product/components/products-store-provider";
 import {
-  ProductFormProvider, useProductFormActions,
-  useProductFormStore
+  useProductFormActions,
+  useProductFormStore,
 } from "@/new-order/components/products-view/product-searcher-form-provider";
+import AddExpense from "@/cash-shift/components/add_expense";
 
 export default function ProductsSearcher() {
-  const { setProducts } = useProductFormActions()
+  const { setProducts } = useProductFormActions();
   const products = useProductFormStore((store) => store.products);
   const [search, setSearch] = useState<string>("");
   const [sortValue, setSortValue] = useState<keyof SortOptions>("created_desc");
@@ -49,19 +47,21 @@ export default function ProductsSearcher() {
       params["limit"] = 20;
     }
     const response = await getMany(params);
+    if (params["q"] !== undefined && params["q"] !== search) return;
 
-    if (response.success) {
-      setProducts(response.data);
-    } else {
+    if (!response.success) {
       toast({
         title: "Error",
         variant: "destructive",
         description: response.message,
       });
+      return;
     }
+
+    setProducts(response.data);
   };
 
-  const onSearchSubmit = debounce(searchProduct, 200);
+  const onSearchSubmit = debounce(searchProduct, 300);
 
   const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -89,32 +89,13 @@ export default function ProductsSearcher() {
 
   const barcodeInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleSymbol = (symbol: any, _matchedSymbologies: any) => {
-    if (isBarCodeValid(symbol, 3)) {
-      setSkuValue(symbol);
-      console.log("symbol", symbol);
-      findProduct(symbol).then((response) => {
-        if (!response.success) {
-          toast({
-            title: "Error",
-            variant: "destructive",
-            description: `Producto con sku: ${symbol} no encontrado`,
-          });
-          return;
-        }
-        console.log({ data: response.data });
-        addProduct(response.data);
-      });
-    }
-  };
-
   const skuValueRef = useRef(skuValue);
 
   useEffect(() => {
     skuValueRef.current = skuValue;
   }, [skuValue]);
 
-  const onKeyDown = (ev: KeyboardEvent) => {
+  const onKeyDown = (ev: React.KeyboardEvent) => {
     if (ev.keyCode === 13) {
       findProduct(skuValueRef.current).then((response) => {
         if (!response.success) {
@@ -137,17 +118,17 @@ export default function ProductsSearcher() {
   useEffect(() => {
     const currentElement = barcodeInputRef.current;
     if (currentElement) {
-      currentElement.addEventListener("keydown", onKeyDown);
+      const handleKeyDown = (ev: KeyboardEvent) =>
+        onKeyDown(ev as unknown as React.KeyboardEvent);
+      currentElement.addEventListener("keydown", handleKeyDown);
+      return () => {
+        currentElement.removeEventListener("keydown", handleKeyDown);
+      };
     }
-    return () => {
-      if (currentElement) {
-        currentElement.removeEventListener("keydown", onKeyDown);
-      }
-    };
-  }, []);
+  }, [barcodeInputRef.current, onKeyDown]);
 
   return (
-    <div className="h-full w-100 p-5 pb-0 grid grid-rows-[7rem_1fr]">
+    <div className="h-full w-100 p-5 pb-0 grid grid-rows-[7rem_1fr] relative">
       <div className="w-full border-b">
         <div className="w-1/2 md:grid md:grid-cols-2 gap-4 mb-2">
           <Select onValueChange={handleCategoryChange}>
@@ -199,6 +180,10 @@ export default function ProductsSearcher() {
             />
           </div>
         </div>
+      </div>
+
+      <div className="absolute top-4 right-4">
+        <AddExpense />
       </div>
 
       <ScrollArea className="mt-4">
