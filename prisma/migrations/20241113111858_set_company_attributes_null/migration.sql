@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE "Company" ALTER COLUMN "department" DROP NOT NULL,
-ALTER COLUMN "district" DROP NOT NULL,
-ALTER COLUMN "provincial" DROP NOT NULL,
-ALTER COLUMN "subName" DROP NOT NULL;

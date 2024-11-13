@@ -8,7 +8,7 @@
 
 */
 -- AlterTable
-ALTER TABLE "Company" ADD COLUMN     "department" TEXT NOT NULL,
-ADD COLUMN     "district" TEXT NOT NULL,
-ADD COLUMN     "provincial" TEXT NOT NULL,
-ADD COLUMN     "subName" TEXT NOT NULL;
+ALTER TABLE "Company" ADD COLUMN     "department" TEXT,
+ADD COLUMN     "district" TEXT,
+ADD COLUMN     "provincial" TEXT,
+ADD COLUMN     "subName" TEXT;
