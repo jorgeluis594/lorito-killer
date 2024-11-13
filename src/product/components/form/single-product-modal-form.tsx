@@ -120,7 +120,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(SingleProductSchema),
     defaultValues: formStore.isNew
-      ? {...EMPTY_SINGLE_PRODUCT, stock: undefined}
+      ? {...EMPTY_SINGLE_PRODUCT}
       : productData || EMPTY_SINGLE_PRODUCT,
   });
 
@@ -195,8 +195,9 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           variant: "destructive",
           description: "Error al actualizar el producto, " + res.message,
         });
-        formStore.resetProduct(SingleProductType);
       }
+      formStore.resetProduct(SingleProductType);
+      form.reset({...EMPTY_SINGLE_PRODUCT});
     } else {
       const res = await repository.create(transformToProduct(data));
       if (res.success) {
@@ -210,8 +211,9 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           variant: "destructive",
           description: "Error al registrar el producto, " + res.message,
         });
-        formStore.resetProduct(SingleProductType);
       }
+      formStore.resetProduct(SingleProductType);
+      form.reset({...EMPTY_SINGLE_PRODUCT});
     }
   };
 
