@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   documentSerialAndNumber: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -87,9 +87,9 @@ interface voucherProps {
 }
 
 const documentTypeToEs: Record<DocumentType, string> = {
-  [INVOICE]: "Factura electrónica",
-  [RECEIPT]: "Boleta de venta electrónica",
-  [TICKET]: "Nota de venta electrónica",
+  [INVOICE]: "FACTURA ELECTRÓNICA",
+  [RECEIPT]: "BOLETA ELECTRÓNICA",
+  [TICKET]: "NOTA DE VENTA ELECTRÓNICA",
 };
 
 const documentTypeToCustomerDocumentTypeES: Record<DocumentType, string> = {
@@ -145,8 +145,12 @@ const TicketTotals = ({ document }: { document: Ticket }) => (
       <View>
         {document.discountAmount > 0 && (
           <>
-            <Text style={{ fontSize: "10px" }}>{formatPrice(document.netTotal)}</Text>
-            <Text style={{ fontSize: "10px" }}>{formatPrice(document.discountAmount)}</Text>
+            <Text style={{ fontSize: "10px" }}>
+              {formatPrice(document.netTotal)}
+            </Text>
+            <Text style={{ fontSize: "10px" }}>
+              {formatPrice(document.discountAmount)}
+            </Text>
           </>
         )}
         <Text style={{ fontSize: "12px" }}>{formatPrice(document.total)}</Text>
@@ -207,10 +211,14 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
         </Text>
       </View>
       <View>
-        <Text style={{ fontSize: "8px" }}>{formatPrice(document.netTotal)}</Text>
+        <Text style={{ fontSize: "8px" }}>
+          {formatPrice(document.netTotal)}
+        </Text>
         {document.discountAmount > 0 && (
           <>
-            <Text style={{ fontSize: "8px" }}>{formatPrice(document.discountAmount)}</Text>
+            <Text style={{ fontSize: "8px" }}>
+              {formatPrice(document.discountAmount)}
+            </Text>
           </>
         )}
         <Text style={{ fontSize: "8px" }}>{formatPrice(0)}</Text>
@@ -236,15 +244,29 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
             marginTop: "18px",
             paddingBottom: "12px",
             borderBottom: "1px solid black",
-            alignItems: 'center',
+            alignItems: "center",
           },
         ]}
       >
-        {company.logo && (<Image src={company.logo.url} style={{ width: '40px'}}/>)}
-        <Text style={styles.header}>{company.name}</Text>
-        {company.ruc && <Text style={styles.description}>{company.ruc}</Text>}
-        <Text style={styles.description}>{company.address}</Text>
-
+        {company.logo && (
+          <Image src={company.logo.url} style={{ width: "40px" }} />
+        )}
+        <Text style={styles.header}>{company.subName}</Text>
+        {company.ruc && (
+          <Text style={styles.description}>RUC {company.ruc}</Text>
+        )}
+        <Text style={{ fontSize: 9, textAlign: "center" }}>
+          {[company.district, company.provincial, company.department]
+            .filter(Boolean)
+            .join("-")}
+        </Text>
+        {company.address && (
+          <Text style={styles.description}>
+            D. Comercial: {company.address}
+          </Text>
+        )}
+        <Text style={styles.description}>{company.email}</Text>
+        <Text style={styles.description}>{company.phone}</Text>
       </View>
 
       {/*Document series and number*/}

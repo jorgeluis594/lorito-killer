@@ -29,7 +29,7 @@ export default function ProductItemsSelector({
 
   const onProductChange = (newProductItem: ProductItem) => {
     const updatedValue = value.map((productItem) => {
-      if (productItem.id !== productItem.id) return productItem;
+      if (productItem.id !== newProductItem.id) return productItem;
 
       return newProductItem;
     });

@@ -9,18 +9,25 @@ export const createCompany = async (
   company: Company,
 ): Promise<response<Company>> => {
   try {
-    const {logo, ...companyData} = company
+    const { logo, ...companyData } = company;
     const storedCompany = await prisma().company.create({
-      data: {...companyData},
+      data: { ...companyData },
     });
 
-    if (logo) await prisma().logo.create({data: {...logo, companyId: storedCompany.id}})
+    if (logo)
+      await prisma().logo.create({
+        data: { ...logo, companyId: storedCompany.id },
+      });
 
     return {
       success: true,
       data: {
         ...company,
         ...storedCompany,
+        subName: storedCompany.subName || undefined,
+        department: storedCompany.department || undefined,
+        district: storedCompany.district || undefined,
+        provincial: storedCompany.provincial || undefined,
         ruc: storedCompany.ruc || undefined,
         subdomain: storedCompany.subdomain || "some_subdomain",
       },
@@ -39,6 +46,10 @@ export const updateCompany = async (
       data: {
         id: company.id,
         name: company.name,
+        subName: company.subName,
+        department: company.department,
+        district: company.district,
+        provincial: company.provincial,
         phone: company.phone,
         email: company.email,
         ruc: company.ruc || undefined,
@@ -52,6 +63,10 @@ export const updateCompany = async (
       data: {
         ...company,
         ...updatedCompany,
+        subName: updatedCompany.subName || undefined,
+        department: updatedCompany.department || undefined,
+        district: updatedCompany.district || undefined,
+        provincial: updatedCompany.provincial || undefined,
         ruc: updatedCompany.ruc || undefined,
         subdomain: company.subdomain || "some_subdomain",
       },
@@ -69,7 +84,7 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
   try {
     const company = await prisma().company.findUnique({
       where: { id },
-      include: {logos: true},
+      include: { logos: true },
     });
 
     if (!company) {
@@ -84,6 +99,10 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
         ...companyData,
         logo: company.logos[0],
         ruc: company.ruc || undefined,
+        subName: company.subName || undefined,
+        department: company.department || undefined,
+        district: company.district || undefined,
+        provincial: company.provincial || undefined,
         subdomain: company.subdomain || "some_subdomain",
         isBillingActivated:
           !!billingCredentials &&
@@ -102,11 +121,11 @@ export const getLogo = async (
   logoId: string,
 ): Promise<response<Logo>> => {
   try {
-    const logo = await prisma().logo.findUnique({where: {id: logoId}});
-    if (!logo) return {success: false, message: "Logo not found"};
-    return {success: true, data: logo};
+    const logo = await prisma().logo.findUnique({ where: { id: logoId } });
+    if (!logo) return { success: false, message: "Logo not found" };
+    return { success: true, data: logo };
   } catch (error: any) {
-    return {success: false, message: error.message};
+    return { success: false, message: error.message };
   }
 };
 
@@ -115,9 +134,11 @@ export const storeLogo = async (
   newLogo: Logo,
 ): Promise<response<Logo>> => {
   try {
-    const logo = await prisma().logo.findFirst({where: {companyId: newLogo.companyId}});
+    const logo = await prisma().logo.findFirst({
+      where: { companyId: newLogo.companyId },
+    });
     if (logo) {
-      await prisma().logo.delete({where: { id: logo.id}});
+      await prisma().logo.delete({ where: { id: logo.id } });
     }
     const createdLogo = await prisma().logo.create({
       data: {
@@ -128,10 +149,11 @@ export const storeLogo = async (
         type: newLogo.type,
         size: newLogo.size,
         companyId: companyId,
-      }})
-    return {success: true, data: createdLogo};
+      },
+    });
+    return { success: true, data: createdLogo };
   } catch (error: any) {
-    return {success: false, message: error.message};
+    return { success: false, message: error.message };
   }
 };
 
@@ -144,10 +166,10 @@ export const removeLogo = async (
 
   try {
     await prisma().logo.delete({
-      where: {id: logoId, companyId: companyId},
+      where: { id: logoId, companyId: companyId },
     });
-    return {success: true, data: logoResponse.data};
+    return { success: true, data: logoResponse.data };
   } catch (error: any) {
-    return {success: false, message: error.message};
+    return { success: false, message: error.message };
   }
 };
