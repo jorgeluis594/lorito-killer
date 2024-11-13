@@ -1,8 +1,8 @@
 "use client";
 
 import * as zod from "zod";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -11,12 +11,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/components/ui/form";
-import {Input} from "@/shared/components/ui/input";
-import {Button} from "@/shared/components/ui/button";
-import React, {useEffect, useState} from "react";
-import {updateCompany, removeLogo, storeLogo} from "@/company/components/actions";
-import {Company, Logo} from "@/company/types";
-import {useToast} from "@/shared/components/ui/use-toast";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import React, { useEffect, useState } from "react";
+import {
+  updateCompany,
+  removeLogo,
+  storeLogo,
+} from "@/company/components/actions";
+import { Company, Logo } from "@/company/types";
+import { useToast } from "@/shared/components/ui/use-toast";
 import LogoUpload from "@/company/components/file-upload/file-upload-logo";
 
 const LogoSchema = zod.object({
@@ -33,29 +37,32 @@ const LogoSchema = zod.object({
 const CompanyFormSchema = zod.object({
   name: zod
     .string()
-    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
+    .min(3, { message: "El nombre debe tener al menos 3 caracteres" }),
   subName: zod
     .string()
-    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
-  email: zod.string().email({message: "El email no es válido"}),
+    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
+    .optional(),
+  email: zod.string().email({ message: "El email no es válido" }),
   phone: zod
     .string()
     .min(6, { message: "El teléfono debe tener al menos 6 caracteres" }),
   ruc: zod.string().length(11, "El ruc debe tener 11 digitos").optional(),
   address: zod
     .string()
-    .min(6, {message: "La dirección debe tener al menos 6 caracteres"}),
+    .min(6, { message: "La dirección debe tener al menos 6 caracteres" }),
   department: zod
     .string()
-    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
+    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
+    .optional(),
   district: zod
     .string()
-    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
+    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
+    .optional(),
   provincial: zod
     .string()
-    .min(3, {message: "El nombre debe tener al menos 3 caracteres"}),
-  logo: LogoSchema
+    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
     .optional(),
+  logo: LogoSchema.optional(),
 });
 
 type CompanyFormValues = zod.infer<typeof CompanyFormSchema>;
@@ -96,10 +103,7 @@ export default function CompanyForm({ company }: { company: Company }) {
 
     if (currentLogo) {
       form.setValue("logo", newLogo);
-      const removeLogoResponse = await removeLogo(
-        company.id!,
-        currentLogo.id!,
-      );
+      const removeLogoResponse = await removeLogo(company.id!, currentLogo.id!);
       if (removeLogoResponse.success) {
         toast({
           description: "Logo eliminado con éxito",
@@ -114,10 +118,7 @@ export default function CompanyForm({ company }: { company: Company }) {
     }
 
     if (newLogo) {
-      const storeLogoResponse = await storeLogo(
-        company.id!,
-        newLogo,
-      );
+      const storeLogoResponse = await storeLogo(company.id!, newLogo);
       if (storeLogoResponse.success) {
         form.setValue("logo", storeLogoResponse.data);
         toast({
@@ -258,14 +259,14 @@ export default function CompanyForm({ company }: { company: Company }) {
                   <FormControl>
                     <Input placeholder="Correo electónico" {...field} />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="logo"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <LogoUpload
