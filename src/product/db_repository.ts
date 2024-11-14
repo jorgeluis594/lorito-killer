@@ -535,3 +535,14 @@ export const search = async ({
     return { success: false, message: error.message } as response;
   }
 };
+
+export const orderByProductIdCount = async (
+  productId: string,
+): Promise<response<number>> => {
+  try {
+    const count = await prisma().orderItem.count({ where: { productId } });
+    return { success: true, data: count };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
