@@ -9,7 +9,7 @@ import { SingleProduct } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
-import productRemoverCreator from "@/product/use-cases/product-delete";
+import productRemoverCreator from "@/product/use-cases/product-remover";
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } },
