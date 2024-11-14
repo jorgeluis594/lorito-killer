@@ -3,11 +3,13 @@ import {
   update as UpdateProduct,
   deleteProduct,
   findBy,
+  orderByProductIdCount,
 } from "@/product/db_repository";
 import { SingleProduct } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
+import productRemoverCreator from "@/product/use-cases/product-delete";
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } },
@@ -63,7 +65,10 @@ export async function DELETE(
 
   revalidatePath("/api/products");
 
-  const response = await deleteProduct(findProductResponse.data);
+  const response = await productRemoverCreator(
+    deleteProduct,
+    orderByProductIdCount,
+  )(findProductResponse.data);
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }
 
