@@ -3,6 +3,7 @@ import { correlative } from "@/document/utils";
 import { Document } from "@/document/types";
 import { fullName, isBusinessCustomer } from "@/customer/utils";
 import { plus } from "@/lib/utils";
+import { format } from "date-fns";
 
 const DOCUMENT_TYPE_MAPPER = {
   invoice: "Factura",
@@ -39,10 +40,11 @@ export const createWorkbookBuffer = async (documents: Document[]) => {
     reportSheet.addRow([
       DOCUMENT_TYPE_MAPPER[doc.documentType],
       correlative(doc),
-      doc.dateOfIssue,
+      format(doc.dateOfIssue, "dd/MM/yyyy hh:mm aa"),
       customer && isBusinessCustomer(customer) ? "Empresa" : "Natural",
       customer ? fullName(customer) : "Cliente general",
-      customer && isBusinessCustomer(customer) ? customer.documentNumber : "",
+      customer ? customer.documentNumber : "",
+      customer ? customer.documentNumber : "",
       doc.netTotal,
       doc.taxTotal,
       doc.total,

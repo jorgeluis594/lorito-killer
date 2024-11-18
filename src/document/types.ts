@@ -68,8 +68,8 @@ export type InferDocumentType<T extends keyof DocumentMapper> =
 
 export type SearchParams = {
   companyId: string;
-  pageNumber: number;
-  pageSize: number;
+  pageNumber?: number;
+  pageSize?: number;
   correlative?: { number: string; series: string };
   startDate?: Date;
   endDate?: Date;

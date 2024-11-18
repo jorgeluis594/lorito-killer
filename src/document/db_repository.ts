@@ -280,7 +280,7 @@ export const getMany = async ({
       invoice,
       receipt,
     }),
-    skip: (pageNumber - 1) * pageSize,
+    skip: pageNumber && pageSize && (pageNumber - 1) * pageSize,
     take: pageSize,
     orderBy: { dateOfIssue: "desc" },
   });

@@ -8,7 +8,7 @@ import { createWorkbookBuffer } from "@/document/renders/list_xlsx";
 type ParamsProps = Record<string, string | string[] | undefined>;
 
 const getSearchParams = async ({
-  searchParams,
+  searchParams = {},
 }: {
   searchParams: ParamsProps;
 }): Promise<SearchParams> => {
@@ -16,8 +16,6 @@ const getSearchParams = async ({
 
   const params: SearchParams = {
     companyId: session.user.companyId,
-    pageNumber: Number(searchParams.page) || 1,
-    pageSize: Number(searchParams.size) || 10,
   };
 
   if (searchParams.series && searchParams.number) {
