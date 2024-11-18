@@ -19,6 +19,7 @@ export type StockTransferBase = {
   userName?: string;
   companyId: string;
   value: number;
+  status: "pending" | "executed" | "rolled_back" | "cancelled";
   productId: string;
   type:
     | OrderStockTransferType
