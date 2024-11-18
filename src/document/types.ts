@@ -1,3 +1,5 @@
+import { Customer } from "@/customer/types";
+
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
 export const RECEIPT = "receipt";
@@ -17,6 +19,7 @@ type DocumentBase = {
   documentType: DocumentType;
   series: string;
   number: string;
+  customer?: Customer;
   dateOfIssue: Date;
   createdAt?: Date;
   updatedAt?: Date;
