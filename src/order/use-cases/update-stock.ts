@@ -45,7 +45,10 @@ export const updateStock = async (
   await Promise.all(
     stockTransfers.map((stockTransfer) =>
       Promise.all([
-        repository.createStockTransfer(stockTransfer),
+        repository.createStockTransfer({
+          ...stockTransfer,
+          status: "executed",
+        }),
         repository.updateStock(stockTransfer),
       ]),
     ),

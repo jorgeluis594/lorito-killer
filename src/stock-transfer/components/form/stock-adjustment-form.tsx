@@ -57,6 +57,7 @@ const adjustmentToStockTransfer = (
 ): TypeAdjustmentStockTransfer => ({
   id: adjustment.id!,
   userId: user.id,
+  status: "pending",
   companyId: user.companyId,
   productId: adjustment.productId!,
   productName: adjustment.productName || "DUMMY_PRODUCT_NAME",

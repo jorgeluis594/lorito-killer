@@ -47,7 +47,7 @@ export const processStockTransfer = async ({
   }
 
   const [createResponse, updateStockResponse] = await Promise.all([
-    repository.createStockTransfer(stockTransfer),
+    repository.createStockTransfer({ ...stockTransfer, status: "executed" }),
     repository.updateStock(stockTransfer),
   ]);
 

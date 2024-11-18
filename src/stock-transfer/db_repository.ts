@@ -7,6 +7,7 @@ import {
   TypeAdjustmentStockTransfer,
   AdjustmentStockTransfer,
   ProductMovementStockTransfer,
+  Status,
 } from "@/stock-transfer/types";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
@@ -18,6 +19,20 @@ const stockTransferTypeToPrismaMapper = {
   [ProductMovementStockTransferName]: $Enums.StockTransferType.PRODUCT_MOVEMENT,
   [AdjustmentStockTransfer]: $Enums.StockTransferType.ADJUSTMENT,
 };
+
+const PRISMA_TO_STATUS_MAPPER: Record<$Enums.StockTransferStatus, Status> = {
+  [$Enums.StockTransferStatus.PENDING]: "pending",
+  [$Enums.StockTransferStatus.EXECUTED]: "executed",
+  [$Enums.StockTransferStatus.ROLLED_BACK]: "rolled_back",
+  [$Enums.StockTransferStatus.CANCELLED]: "cancelled",
+} as const;
+
+const STATUS_TO_PRISMA_MAPPER: Record<Status, $Enums.StockTransferStatus> = {
+  pending: $Enums.StockTransferStatus.PENDING,
+  executed: $Enums.StockTransferStatus.EXECUTED,
+  rolled_back: $Enums.StockTransferStatus.ROLLED_BACK,
+  cancelled: $Enums.StockTransferStatus.CANCELLED,
+} as const;
 
 const prismaToStockTransferTypeMapper: Record<
   keyof typeof $Enums.StockTransferType,
@@ -35,6 +50,7 @@ const orderStockTransferPrismaDataBuilder = (
   return {
     data: {
       ...stockTransferData,
+      status: STATUS_TO_PRISMA_MAPPER[stockTransferData.status],
       data: { orderItemId },
       type: stockTransferTypeToPrismaMapper[stockTransfer.type],
     },
@@ -48,6 +64,7 @@ const adjustmentStockTransferPrismaDataBuilder = (
   return {
     data: {
       ...stockTransferData,
+      status: STATUS_TO_PRISMA_MAPPER[stockTransferData.status],
       data: { batchId },
       type: stockTransferTypeToPrismaMapper[stockTransferData.type],
     },
@@ -62,6 +79,7 @@ const productMovementStockTransferPrismaDataBuilder = (
   return {
     data: {
       ...stockTransferData,
+      status: STATUS_TO_PRISMA_MAPPER[stockTransferData.status],
       data: { fromProductId, toProductId },
       type: stockTransferTypeToPrismaMapper[stockTransferData.type],
     },
@@ -95,6 +113,7 @@ export const create = async (
       persistedStockTransfer = {
         ...storedStockTransfer,
         value: storedStockTransfer.value.toNumber(),
+        status: PRISMA_TO_STATUS_MAPPER[storedStockTransfer.status],
         type: OrderStockTransferName,
         productName: stockTransfer.productName,
         orderItemId: (storedStockTransfer.data as Record<string, string>)[
@@ -106,6 +125,7 @@ export const create = async (
     ) {
       persistedStockTransfer = {
         ...storedStockTransfer,
+        status: PRISMA_TO_STATUS_MAPPER[storedStockTransfer.status],
         value: storedStockTransfer.value.toNumber(),
         type: AdjustmentStockTransfer,
         productName: stockTransfer.productName,
@@ -118,6 +138,7 @@ export const create = async (
     ) {
       persistedStockTransfer = {
         ...storedStockTransfer,
+        status: PRISMA_TO_STATUS_MAPPER[storedStockTransfer.status],
         value: storedStockTransfer.value.toNumber(),
         type: ProductMovementStockTransferName,
         productName: stockTransfer.productName,
@@ -129,9 +150,10 @@ export const create = async (
         ],
       };
     } else {
-      throw new Error(
-        `Prisma type not implemented: ${storedStockTransfer.type}`,
-      );
+      return {
+        success: false,
+        message: `Prisma type not implemented: ${storedStockTransfer.type}`,
+      };
     }
 
     return {
@@ -225,6 +247,7 @@ export const getMany = async ({
             return {
               ...stockTransferData,
               ...userData,
+              status: PRISMA_TO_STATUS_MAPPER[stockTransferData.status],
               value: stockTransferData.value.toNumber(),
               type: OrderStockTransferName,
               productName: product.name,
@@ -236,6 +259,7 @@ export const getMany = async ({
             return {
               ...stockTransferData,
               ...userData,
+              status: PRISMA_TO_STATUS_MAPPER[stockTransferData.status],
               value: stockTransferData.value.toNumber(),
               type: AdjustmentStockTransfer,
               productName: product.name,
@@ -247,6 +271,7 @@ export const getMany = async ({
             return {
               ...stockTransferData,
               ...userData,
+              status: PRISMA_TO_STATUS_MAPPER[stockTransferData.status],
               value: stockTransferData.value.toNumber(),
               type: ProductMovementStockTransferName,
               productName: product.name,
