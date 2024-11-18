@@ -21,11 +21,11 @@ export default async function Page({ searchParams }: paramsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
   const session = await getSession();
-  const resultStockTransfers = await getMany(
-    session.user.companyId,
+  const resultStockTransfers = await getMany({
+    companyId: session.user.companyId,
     page,
     pageLimit,
-  );
+  });
 
   if (!resultStockTransfers.success) {
     return;

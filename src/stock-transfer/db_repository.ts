@@ -174,15 +174,38 @@ export const updateStock = async (
   }
 };
 
-export const getMany = async (
-  companyId: string,
-  page: number,
-  pageLimit: number,
-): Promise<response<StockTransfer[]>> => {
+export const getMany = async ({
+  companyId,
+  page,
+  pageLimit,
+  orderId,
+}: {
+  companyId: string;
+  page?: number;
+  pageLimit?: number;
+  orderId?: string;
+}): Promise<response<StockTransfer[]>> => {
   try {
+    let orderItemsIds: string[] = [];
+    if (orderId) {
+      orderItemsIds = (
+        await prisma().orderItem.findMany({
+          where: { orderId },
+          select: { id: true },
+        })
+      ).map((orderItem) => orderItem.id);
+    }
+
+    const extraConditions = orderItemsIds.map((oi) => ({
+      data: { path: ["orderItemId"], equals: oi },
+    }));
+
     const result = await prisma().stockTransfer.findMany({
-      where: { companyId },
-      skip: (page - 1) * pageLimit,
+      where: {
+        companyId,
+        OR: orderItemsIds.length ? extraConditions : undefined,
+      },
+      skip: page && pageLimit ? (page - 1) * pageLimit : undefined,
       orderBy: { createdAt: "desc" },
       take: pageLimit,
       include: { product: true, user: true },
