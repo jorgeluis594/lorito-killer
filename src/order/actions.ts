@@ -25,6 +25,7 @@ import type { Document } from "@/document/types";
 import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
+import cancel from "@/order/use-cases/cancel";
 
 export const create = async (
   userId: string,
@@ -124,3 +125,6 @@ export const getCompany = async (): Promise<response<Company>> => {
   const session = await getSession();
   return await findCompany(session.user.companyId);
 };
+
+export const cancelOrder = async (order: Order): Promise<response<Order>> =>
+  cancel(order);
