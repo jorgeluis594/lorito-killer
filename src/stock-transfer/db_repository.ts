@@ -233,6 +233,29 @@ export const updateStock = async (
   }
 };
 
+export const rollbackStock = async (
+  stockTransfer: StockTransfer,
+): Promise<response<undefined>> => {
+  try {
+    await prisma().product.update({
+      where: { id: stockTransfer.productId },
+      data: {
+        stock: {
+          decrement: stockTransfer.value,
+        },
+      },
+    });
+
+    return { success: true, data: undefined };
+  } catch (error: any) {
+    log.error("rollback_stock_transfer_failed", {
+      stockTransfer,
+      message: error.message,
+    });
+    return { success: false, message: "Error rolled back stock transfer" };
+  }
+};
+
 export const getMany = async ({
   companyId,
   page,
