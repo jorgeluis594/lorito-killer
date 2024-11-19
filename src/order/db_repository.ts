@@ -1,4 +1,4 @@
-import type { Order, OrderItem } from "@/order/types";
+import type { Order, OrderItem, Status as OrderStatus } from "@/order/types";
 import { response, successResponse } from "@/lib/types";
 import prisma from "@/lib/prisma";
 
@@ -16,6 +16,7 @@ import {
   UNIT_TYPE_MAPPER,
 } from "@/product/db_repository";
 import { prismaToCustomer } from "@/customer/db_repository";
+import { log } from "@/lib/log";
 
 async function addOrderItem(
   orderId: string,
@@ -36,6 +37,18 @@ async function addOrderItem(
     return { success: false, message: error.message };
   }
 }
+
+const STATUS_TO_PRISMA_MAPPER: Record<OrderStatus, $Enums.OrderStatus> = {
+  pending: "PENDING",
+  completed: "COMPLETED",
+  cancelled: "CANCELLED",
+};
+
+const PRISMA_TO_STATUS_MAPPER: Record<$Enums.OrderStatus, OrderStatus> = {
+  PENDING: "pending",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+};
 
 type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 type PaymentPrismaMatch = Optional<
@@ -104,23 +117,27 @@ function mapPaymentsToPrisma(payments: Payment[]): PaymentPrismaMatch[] {
   return payments.map(mapPaymentToPrisma);
 }
 
-const PRISMA_DISCOUNT_TYPE_MAPPER: Record<$Enums.DiscountType, Discount['type']> = {
-  'AMOUNT': "amount",
-  'PERCENT': "percent"
-}
+const PRISMA_DISCOUNT_TYPE_MAPPER: Record<
+  $Enums.DiscountType,
+  Discount["type"]
+> = {
+  AMOUNT: "amount",
+  PERCENT: "percent",
+};
 
 const DISCOUNT_TYPE_MAPPER: Record<Discount["type"], $Enums.DiscountType> = {
-  'amount': "AMOUNT",
-  'percent': "PERCENT"
-}
+  amount: "AMOUNT",
+  percent: "PERCENT",
+};
 
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
-    const { orderItems, payments, customer, discount,...orderData } = order;
+    const { orderItems, payments, customer, discount, ...orderData } = order;
 
     const createdOrderResponse = await prisma().order.create({
       data: {
         ...orderData,
+        status: STATUS_TO_PRISMA_MAPPER[order.status],
         discountType: discount ? DISCOUNT_TYPE_MAPPER[discount.type] : null,
         discountValue: discount?.value,
         customerId: customer?.id,
@@ -133,7 +150,8 @@ export const create = async (order: Order): Promise<response<Order>> => {
       orderItems.map((oi) => addOrderItem(createdOrderResponse.id, oi)),
     );
 
-    const { discountType, discountValue, ...createdOrderData } = createdOrderResponse
+    const { discountType, discountValue, ...createdOrderData } =
+      createdOrderResponse;
 
     const createdOrder: Order = {
       ...createdOrderData,
@@ -150,7 +168,10 @@ export const create = async (order: Order): Promise<response<Order>> => {
     };
 
     if (discountType && discountValue) {
-      createdOrder["discount"] = { type: PRISMA_DISCOUNT_TYPE_MAPPER[discountType], value: discountValue.toNumber() }
+      createdOrder["discount"] = {
+        type: PRISMA_DISCOUNT_TYPE_MAPPER[discountType],
+        value: discountValue.toNumber(),
+      };
     }
 
     createdOrder.orderItems = createdOrderItemsResponses
@@ -294,7 +315,10 @@ export async function transformOrdersData(
 
     let discount: Discount | undefined = undefined;
     if (prismaOrder.discountValue && prismaOrder.discountType) {
-      discount = { type: PRISMA_DISCOUNT_TYPE_MAPPER[prismaOrder.discountType], value: prismaOrder.discountValue.toNumber() }
+      discount = {
+        type: PRISMA_DISCOUNT_TYPE_MAPPER[prismaOrder.discountType],
+        value: prismaOrder.discountValue.toNumber(),
+      };
     }
 
     return {
@@ -313,6 +337,21 @@ export async function transformOrdersData(
       documentType: prismaOrder.documentType,
     };
   });
+}
+
+// For now only updates status
+export async function update(order: Order): Promise<response<Order>> {
+  try {
+    await prisma().order.update({
+      where: { id: order.id },
+      data: { status: STATUS_TO_PRISMA_MAPPER[order.status] },
+    });
+
+    return { success: true, data: { ...order } };
+  } catch (e: any) {
+    log.error("update_order_failed", { order, message: e.message });
+    return { success: false, message: e.message };
+  }
 }
 
 function isOrderStatus(

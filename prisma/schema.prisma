@@ -156,6 +156,12 @@ enum DiscountType {
   PERCENT
 }
 
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
 model Order {
   id             String        @id @default(uuid())
   cashShiftId    String
@@ -168,7 +174,7 @@ model Order {
   discountValue  Decimal?
   netTotal       Decimal
   total          Decimal
-  status         String
+  status         OrderStatus
   cashShift      CashShift     @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   payments       Payment[]
   documents      Document[]
