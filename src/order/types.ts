@@ -24,16 +24,18 @@ export const PERCENT = "percent";
 export type PercentType = typeof PERCENT;
 
 export type AmountDiscount = {
-  value: number,
-  type: AmountType
-}
+  value: number;
+  type: AmountType;
+};
 
 export type PercentDiscount = {
-  value: number,
-  type: PercentType
-}
+  value: number;
+  type: PercentType;
+};
 
-export type Discount = AmountDiscount | PercentDiscount
+export type Discount = AmountDiscount | PercentDiscount;
+
+export type Status = "pending" | "completed" | "cancelled";
 
 export type Order = {
   id?: string;
@@ -44,7 +46,7 @@ export type Order = {
   netTotal: number;
   discountAmount: number;
   total: number;
-  status: "pending" | "completed" | "cancelled";
+  status: Status;
   payments: Payment[];
   discount?: Discount;
   documentType: DocumentType;
