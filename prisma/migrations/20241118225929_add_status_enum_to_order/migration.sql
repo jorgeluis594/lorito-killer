@@ -14,7 +14,7 @@ ALTER TABLE "Order" RENAME COLUMN "status" TO "status_old";
 ALTER TABLE "Order" ADD COLUMN "status" "OrderStatus";
 
 -- Copy data from old column to new column using upper case
-UPDATE "Order" SET "status" = "status_old"::text::"OrderStatus";
+UPDATE "Order" SET "status" = UPPER("status_old")::text::"OrderStatus";
 
 -- Drop old column
 ALTER TABLE "Order" DROP COLUMN "status_old";

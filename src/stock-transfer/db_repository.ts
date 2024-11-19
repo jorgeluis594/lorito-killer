@@ -51,7 +51,8 @@ const prismaToStockTransferTypeMapper: Record<
 const orderStockTransferPrismaDataBuilder = (
   stockTransfer: OrderStockTransfer,
 ): StockTransferCreateArgs => {
-  const { orderItemId, productName, ...stockTransferData } = stockTransfer;
+  const { orderItemId, productName, userName, ...stockTransferData } =
+    stockTransfer;
   return {
     data: {
       ...stockTransferData,
@@ -158,11 +159,12 @@ export const update = async (
   stockTransfer: StockTransfer,
 ): Promise<response<StockTransfer>> => {
   const { data } = buildStockTransferData(stockTransfer);
+  const { userId, ...dataToUpdate } = data;
 
   try {
     const updatedStockTransfer = await prisma().stockTransfer.update({
       where: { id: stockTransfer.id },
-      data,
+      data: dataToUpdate,
     });
 
     return {
@@ -248,7 +250,7 @@ export const rollbackStock = async (
 
     return { success: true, data: undefined };
   } catch (error: any) {
-    log.error("rollback_stock_transfer_failed", {
+    log.error("repository_rollback_stock_transfer_failed", {
       stockTransfer,
       message: error.message,
     });
@@ -296,7 +298,7 @@ export const getMany = async ({
     return {
       success: true,
       data: result.map((prismaStockTransfer) => {
-        const { product, ...stockTransferData } = prismaStockTransfer;
+        const { product, user, ...stockTransferData } = prismaStockTransfer;
         const userData = {
           userId: prismaStockTransfer.userId,
           userName: prismaStockTransfer.user?.name || undefined,

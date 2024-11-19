@@ -285,10 +285,6 @@ export async function transformOrdersData(
   );
 
   return prismaOrders.map((prismaOrder: PrismaOrder) => {
-    if (!isOrderStatus(prismaOrder.status)) {
-      throw new Error(`Invalid order status: ${prismaOrder.status}`);
-    }
-
     if (!isOrderDocumentType(prismaOrder.documentType)) {
       throw new Error(
         `Invalid order documentType: ${prismaOrder.documentType}`,
@@ -324,6 +320,7 @@ export async function transformOrdersData(
     return {
       ...prismaOrder,
       customerId: prismaOrder.customerId!,
+      status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
       companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(
@@ -333,7 +330,6 @@ export async function transformOrdersData(
       discountAmount: prismaOrder.discountAmount?.toNumber(),
       total: prismaOrder.total.toNumber(),
       netTotal: prismaOrder.netTotal.toNumber(),
-      status: prismaOrder.status,
       documentType: prismaOrder.documentType,
     };
   });
@@ -352,14 +348,6 @@ export async function update(order: Order): Promise<response<Order>> {
     log.error("update_order_failed", { order, message: e.message });
     return { success: false, message: e.message };
   }
-}
-
-function isOrderStatus(
-  status: any,
-): status is "pending" | "completed" | "cancelled" {
-  return (
-    status === "pending" || status === "completed" || status === "cancelled"
-  );
 }
 
 function isOrderDocumentType(
