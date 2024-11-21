@@ -127,4 +127,4 @@ export const getCompany = async (): Promise<response<Company>> => {
 };
 
 export const cancelOrder = async (order: Order): Promise<response<Order>> =>
-  cancel(order);
+  withinTransaction(async () => cancel(order));

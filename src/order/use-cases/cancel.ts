@@ -5,7 +5,6 @@ import { response } from "@/lib/types";
 import { getMany, rollbackStock, update } from "@/stock-transfer/db_repository";
 import { update as updateOrder } from "@/order/db_repository";
 import { log } from "@/lib/log";
-import { withinTransaction } from "@/lib/prisma";
 import { StockTransfer } from "@/stock-transfer/types";
 
 const cancel = async (order: Order): Promise<response<Order>> => {
@@ -25,34 +24,32 @@ const cancel = async (order: Order): Promise<response<Order>> => {
     };
   }
 
-  return withinTransaction<Order>(async () => {
-    const results = await Promise.all(
-      stockTransfersResponse.data.map((stockTransfer) =>
-        performRollbackStockTransfer(stockTransfer, order.id!),
-      ),
-    );
+  const results = await Promise.all(
+    stockTransfersResponse.data.map((stockTransfer) =>
+      performRollbackStockTransfer(stockTransfer, order.id!),
+    ),
+  );
 
-    if (results.some((result) => !result.success)) {
-      log.error("rollback_stock_failed", {
-        orderId: order.id,
-        results,
-      });
-      return {
-        success: false,
-        message: "Error restaurando stock de la venta, comuniquese con soporte",
-      };
-    }
+  if (results.some((result) => !result.success)) {
+    log.error("rollback_stock_failed", {
+      orderId: order.id,
+      results,
+    });
+    return {
+      success: false,
+      message: "Error restaurando stock de la venta, comuniquese con soporte",
+    };
+  }
 
-    const updateOrderResponse = await updateOrder(order);
-    if (!updateOrderResponse.success) {
-      return {
-        success: false,
-        message: "Error actualizando la venta, comuniquese con soporte",
-      };
-    }
+  const updateOrderResponse = await updateOrder(order);
+  if (!updateOrderResponse.success) {
+    return {
+      success: false,
+      message: "Error actualizando la venta, comuniquese con soporte",
+    };
+  }
 
-    return { success: true, data: updateOrderResponse.data };
-  });
+  return { success: true, data: updateOrderResponse.data };
 };
 
 const performRollbackStockTransfer = async (
