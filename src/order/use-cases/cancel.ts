@@ -41,7 +41,10 @@ const cancel = async (order: Order): Promise<response<Order>> => {
     };
   }
 
-  const updateOrderResponse = await updateOrder(order);
+  const updateOrderResponse = await updateOrder({
+    ...order,
+    status: "cancelled",
+  });
   if (!updateOrderResponse.success) {
     return {
       success: false,
