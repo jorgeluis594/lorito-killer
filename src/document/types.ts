@@ -77,4 +77,5 @@ export type SearchParams = {
   invoice?: boolean;
   receipt?: boolean;
   ticket?: boolean;
+  orderId?: string | string[];
 };
