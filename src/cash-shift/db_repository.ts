@@ -170,6 +170,7 @@ export const findCashShift = async <T extends CashShift>(
   };
 };
 
+// todo: refactor this, the logic to calculate totals should be manage in its own use case
 export const prismaCashShiftToCashShift = async <T extends CashShift>(
   prismaCashShift: PrismaCashSift & {
     orders: Order[];
@@ -185,8 +186,17 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     throw new Error("User not found");
   }
 
+  const completedOrderIds = new Set(
+    prismaCashShift.orders
+      .filter((order) => order.status === "COMPLETED")
+      .map((order) => order.id),
+  );
+
   const totalSales = prismaCashShift.orders.reduce(
-    (total, order) => plus(total)(order.total.toNumber()),
+    (total, order) =>
+      completedOrderIds.has(order.id!)
+        ? plus(total)(order.total.toNumber())
+        : total,
     0,
   );
 
@@ -206,22 +216,29 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     companyId: prismaCashShift.companyId || "some_company_id",
     userName: user.name || "sin nombre",
     initialAmount: Number(prismaCashShift.initialAmount),
-    totalSales: sumPaymentsAmount(prismaCashShift.payments),
+    totalSales: sumPaymentsAmount(prismaCashShift.payments, completedOrderIds),
     amountInCashRegister: plus(prismaCashShift.initialAmount.toNumber())(
       totalSales,
     ),
     expenses,
-    totalCashSales: sumPaymentsAmount(prismaCashShift.payments || [], "CASH"),
+    totalCashSales: sumPaymentsAmount(
+      prismaCashShift.payments || [],
+      completedOrderIds,
+      "CASH",
+    ),
     totalDebitCardSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
+      completedOrderIds,
       "DEBIT_CARD",
     ),
     totalCreditCardSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
+      completedOrderIds,
       "CREDIT_CARD",
     ),
     totalWalletSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
+      completedOrderIds,
       "WALLET",
     ),
     orders: (await transformOrdersData(prismaCashShift.orders || [])).sort(
@@ -268,10 +285,15 @@ const cashShiftToPrisma = (
 
 function sumPaymentsAmount(
   payments: Payment[],
+  completedOrderIds: Set<string>,
   filter: PaymentMethod | null = null,
 ): number {
   return payments
-    .filter((payment) => (!!filter ? payment.method === filter : true))
+    .filter((payment) => {
+      if (!completedOrderIds.has(payment.orderId)) return false;
+
+      return !!filter ? payment.method === filter : true;
+    })
     .reduce((acc, payment) => acc + Number(payment.amount), 0);
 }
 
