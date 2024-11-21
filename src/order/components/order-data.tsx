@@ -14,6 +14,7 @@ import { differenceInMinutes } from "date-fns";
 import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
+import { Badge } from "@/shared/components/ui/badge";
 
 export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
@@ -22,15 +23,22 @@ export default async function OrderData({ order }: { order: Order }) {
     <div className="h-full mt-8 flex justify-center">
       <Card className={"w-11/12"}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mb-4">
-          <CardTitle>
-            {order.documentType === "receipt"
-              ? "Boleta Electrónica"
-              : order.documentType === "invoice"
-                ? "Factura Electrónica"
-                : "Nota de venta"}{" "}
-            {documentResponse.success
-              ? correlative(documentResponse.data)
-              : "documento no encontrado"}
+          <CardTitle className="flex flex-col items-start">
+            <span>
+              {order.documentType === "receipt"
+                ? "Boleta Electrónica"
+                : order.documentType === "invoice"
+                  ? "Factura Electrónica"
+                  : "Nota de venta"}{" "}
+              {documentResponse.success
+                ? correlative(documentResponse.data)
+                : "documento no encontrado"}
+            </span>
+            {order.status === "cancelled" && (
+              <Badge variant="destructive" className="mt-2">
+                Venta cancelada
+              </Badge>
+            )}
           </CardTitle>
           <div className="space-x-2">
             <a
@@ -42,7 +50,7 @@ export default async function OrderData({ order }: { order: Order }) {
               <Printer className="cursor-pointer" />
             </a>
 
-            {differenceInMinutes(new Date(), order.createdAt!) < 200 &&
+            {differenceInMinutes(new Date(), order.createdAt!) < 20 &&
               order.status === "completed" && (
                 <CancelOrderButton
                   order={order}
