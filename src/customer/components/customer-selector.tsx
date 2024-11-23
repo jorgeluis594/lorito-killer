@@ -87,7 +87,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           role="combobox"
           type="button"
           aria-expanded={open}
-          className="justify-between w-full max-w-96"
+          className="justify-between w-full"
         >
           {value
             ? fullName(value)
@@ -98,7 +98,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96">
+      <PopoverContent className="w-full">
         <Command shouldFilter={false}>
           <CommandInput
             value={search}

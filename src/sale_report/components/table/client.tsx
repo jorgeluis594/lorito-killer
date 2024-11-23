@@ -127,7 +127,7 @@ export default function DataTable<TData, TValue>({
             <SearchIcon />
           </Button>
           <Input
-            placeholder={searchTextPlaceholder || `Buscueda por texto`}
+            placeholder={searchTextPlaceholder || `Busqueda por texto`}
             value={searchText}
             onChange={onInputSearchChange}
             onKeyUp={onSearchKeyUp}
