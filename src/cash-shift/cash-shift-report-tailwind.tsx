@@ -16,9 +16,11 @@ interface CashShiftReportTwProps {
   cashShift: CashShift;
 }
 
-export default function CashShiftReportTw({
+export default function  CashShiftReportTw({
   cashShift,
 }: CashShiftReportTwProps) {
+
+  const totalExpense = cashShift.expenses.reduce((total, expense) => total + expense.amount, 0);
   return (
     <ScrollArea className="mt-3 h-full">
       <div className="my-5">
@@ -122,7 +124,9 @@ export default function CashShiftReportTw({
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Egreso (Gastos):
             </th>
-            <TableCell className="border"></TableCell>
+            <TableCell className="border">
+              {formatPrice(totalExpense)}
+            </TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Pagos con tarjeta:
             </th>
