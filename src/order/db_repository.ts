@@ -125,6 +125,8 @@ export const create = async (order: Order): Promise<response<Order>> => {
         discountValue: discount?.value,
         customerId: customer?.id,
         payments: { create: mapPaymentsToPrisma(payments) as any },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
       include: { payments: true },
     });
