@@ -159,7 +159,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Nombre Comercial</FormLabel>
                   <FormControl>
-                    <Input placeholder="Dirección" {...field} />
+                    <Input placeholder="Nombre Comercial" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
