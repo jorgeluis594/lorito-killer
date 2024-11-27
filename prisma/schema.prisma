@@ -82,19 +82,27 @@ enum StockTransferType {
   PRODUCT_MOVEMENT
 }
 
+enum StockTransferStatus {
+  PENDING
+  EXECUTED
+  ROLLED_BACK
+  CANCELLED
+}
+
 model StockTransfer {
-  id        String            @id @default(uuid())
+  id        String              @id @default(uuid())
   userId    String
-  user      User              @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  user      User                @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  status    StockTransferStatus @default(PENDING)
   productId String
-  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  product   Product             @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   companyId String
-  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  company   Company             @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   type      StockTransferType
   data      Json
   value     Decimal
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 }
 
 enum ShiftStatus {
@@ -148,6 +156,12 @@ enum DiscountType {
   PERCENT
 }
 
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
 model Order {
   id             String        @id @default(uuid())
   cashShiftId    String
@@ -160,7 +174,7 @@ model Order {
   discountValue  Decimal?
   netTotal       Decimal
   total          Decimal
-  status         String
+  status         OrderStatus
   cashShift      CashShift     @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   payments       Payment[]
   documents      Document[]

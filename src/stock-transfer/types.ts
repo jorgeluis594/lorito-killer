@@ -7,6 +7,7 @@ export type ProductMovementStockTransferType =
 
 export const AdjustmentStockTransfer = "AdjustmentStockTransfer";
 export type AdjustmentStockTransferType = typeof AdjustmentStockTransfer;
+export type Status = "pending" | "executed" | "rolled_back" | "cancelled";
 
 export type StockTransferType =
   | OrderStockTransferType
@@ -19,6 +20,7 @@ export type StockTransferBase = {
   userName?: string;
   companyId: string;
   value: number;
+  status: Status;
   productId: string;
   type:
     | OrderStockTransferType

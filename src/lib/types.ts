@@ -14,3 +14,6 @@ export type ErrorResponse = {
 export type response<DataType = any> =
   | successResponse<DataType>
   | ErrorResponse;
+
+export type ArrayElement<ArrayType extends readonly unknown[]> =
+  ArrayType[number];

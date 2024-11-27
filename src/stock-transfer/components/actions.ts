@@ -64,12 +64,14 @@ export const performProductMovementStockTransfer = async (
       productName: parentProduct.name,
       fromProductId: parentProduct.id!,
       toProductId: receiverProductResponse.data.id!,
+      status: "pending",
       createdAt: new Date(),
     },
     // Add stock to receiver product
     {
       id: crypto.randomUUID(),
       userId,
+      status: "pending",
       productId: receiverProductResponse.data.id!,
       companyId: receiverProductResponse.data.companyId!,
       value: parentProduct.stockConfig.quantity,
@@ -88,5 +90,9 @@ export const performProductMovementStockTransfer = async (
     return { success: false, message: "Error" };
   }
 
-  return { success: true, data: stockTransfers };
+  const performedStockTransfers = performStockTransferResponses
+    .map((r) => r.success && r.data)
+    .filter(Boolean) as StockTransfer[];
+
+  return { success: true, data: performedStockTransfers };
 };

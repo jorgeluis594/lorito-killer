@@ -1,3 +1,5 @@
+import { Customer } from "@/customer/types";
+
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
 export const RECEIPT = "receipt";
@@ -17,6 +19,7 @@ type DocumentBase = {
   documentType: DocumentType;
   series: string;
   number: string;
+  customer?: Customer;
   dateOfIssue: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -65,8 +68,8 @@ export type InferDocumentType<T extends keyof DocumentMapper> =
 
 export type SearchParams = {
   companyId: string;
-  pageNumber: number;
-  pageSize: number;
+  pageNumber?: number;
+  pageSize?: number;
   correlative?: { number: string; series: string };
   startDate?: Date;
   endDate?: Date;
@@ -74,4 +77,5 @@ export type SearchParams = {
   invoice?: boolean;
   receipt?: boolean;
   ticket?: boolean;
+  orderId?: string | string[];
 };

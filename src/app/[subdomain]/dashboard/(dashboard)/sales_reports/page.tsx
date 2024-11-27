@@ -4,13 +4,12 @@ import { Separator } from "@/shared/components/ui/separator";
 import DataTable from "@/sale_report/components/table/client";
 import { columns } from "@/sale_report/components/table/columns";
 import { getSession } from "@/lib/auth";
-import { Button } from "@/shared/components/ui/button";
-import { Download } from "lucide-react";
 import { getMany, getTotal } from "@/document/db_repository";
 import { SearchParams } from "@/document/types";
 import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
 import { endOfDay, startOfDay } from "date-fns";
+import DownloadXLSXButton from "@/sale_report/components/download_xlsx_button";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +83,9 @@ async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
     <DataTable
       data={documentsResponse.data}
       columns={columns}
-      pageCount={Math.ceil(documentCountResponse.data / documentQuery.pageSize)}
+      pageCount={Math.ceil(
+        documentCountResponse.data / documentQuery.pageSize!,
+      )}
     />
   );
 }
@@ -100,11 +101,7 @@ export default async function Page({ searchParams }: ParamsProps) {
       <Separator />
       <div className="flex flex-row space-x-12 space-y-0 mt-8">
         <aside className="w-1/5">
-          <Button type="button">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-
+          <DownloadXLSXButton />
           <Filters searchParams={searchParams} />
         </aside>
         <div className="flex-1 lg:max-w-7xl mt-6">

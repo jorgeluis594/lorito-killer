@@ -7,17 +7,37 @@ import {
   TypeAdjustmentStockTransfer,
   AdjustmentStockTransfer,
   ProductMovementStockTransfer,
+  Status,
 } from "@/stock-transfer/types";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import { $Enums, Prisma } from "@prisma/client";
+import {
+  $Enums,
+  Prisma,
+  StockTransfer as PrismaStockTransfer,
+} from "@prisma/client";
 import StockTransferCreateArgs = Prisma.StockTransferCreateArgs;
+import { log } from "@/lib/log";
 
 const stockTransferTypeToPrismaMapper = {
   [OrderStockTransferName]: $Enums.StockTransferType.ORDER,
   [ProductMovementStockTransferName]: $Enums.StockTransferType.PRODUCT_MOVEMENT,
   [AdjustmentStockTransfer]: $Enums.StockTransferType.ADJUSTMENT,
 };
+
+const PRISMA_TO_STATUS_MAPPER: Record<$Enums.StockTransferStatus, Status> = {
+  [$Enums.StockTransferStatus.PENDING]: "pending",
+  [$Enums.StockTransferStatus.EXECUTED]: "executed",
+  [$Enums.StockTransferStatus.ROLLED_BACK]: "rolled_back",
+  [$Enums.StockTransferStatus.CANCELLED]: "cancelled",
+} as const;
+
+const STATUS_TO_PRISMA_MAPPER: Record<Status, $Enums.StockTransferStatus> = {
+  pending: $Enums.StockTransferStatus.PENDING,
+  executed: $Enums.StockTransferStatus.EXECUTED,
+  rolled_back: $Enums.StockTransferStatus.ROLLED_BACK,
+  cancelled: $Enums.StockTransferStatus.CANCELLED,
+} as const;
 
 const prismaToStockTransferTypeMapper: Record<
   keyof typeof $Enums.StockTransferType,
@@ -31,10 +51,12 @@ const prismaToStockTransferTypeMapper: Record<
 const orderStockTransferPrismaDataBuilder = (
   stockTransfer: OrderStockTransfer,
 ): StockTransferCreateArgs => {
-  const { orderItemId, productName, ...stockTransferData } = stockTransfer;
+  const { orderItemId, productName, userName, ...stockTransferData } =
+    stockTransfer;
   return {
     data: {
       ...stockTransferData,
+      status: STATUS_TO_PRISMA_MAPPER[stockTransferData.status],
       data: { orderItemId },
       type: stockTransferTypeToPrismaMapper[stockTransfer.type],
     },
@@ -48,6 +70,7 @@ const adjustmentStockTransferPrismaDataBuilder = (
   return {
     data: {
       ...stockTransferData,
+      status: STATUS_TO_PRISMA_MAPPER[stockTransferData.status],
       data: { batchId },
       type: stockTransferTypeToPrismaMapper[stockTransferData.type],
     },
@@ -62,6 +85,7 @@ const productMovementStockTransferPrismaDataBuilder = (
   return {
     data: {
       ...stockTransferData,
+      status: STATUS_TO_PRISMA_MAPPER[stockTransferData.status],
       data: { fromProductId, toProductId },
       type: stockTransferTypeToPrismaMapper[stockTransferData.type],
     },
@@ -82,6 +106,84 @@ const buildStockTransferData = (
   throw new Error("Builder not implemented");
 };
 
+const buildStockTransferFromPrisma = (
+  prismaStockTransfer: PrismaStockTransfer,
+  productName: string,
+): StockTransfer => {
+  let stockTransfer: StockTransfer;
+
+  if (prismaStockTransfer.type === $Enums.StockTransferType.ORDER) {
+    stockTransfer = {
+      ...prismaStockTransfer,
+      value: prismaStockTransfer.value.toNumber(),
+      status: PRISMA_TO_STATUS_MAPPER[prismaStockTransfer.status],
+      type: OrderStockTransferName,
+      productName: productName,
+      orderItemId: (prismaStockTransfer.data as Record<string, string>)[
+        "orderItemId"
+      ],
+    };
+  } else if (prismaStockTransfer.type === $Enums.StockTransferType.ADJUSTMENT) {
+    stockTransfer = {
+      ...prismaStockTransfer,
+      status: PRISMA_TO_STATUS_MAPPER[prismaStockTransfer.status],
+      value: prismaStockTransfer.value.toNumber(),
+      type: AdjustmentStockTransfer,
+      productName: productName,
+      batchId: (prismaStockTransfer.data as Record<string, string>)["batchId"],
+    };
+  } else if (
+    prismaStockTransfer.type === $Enums.StockTransferType.PRODUCT_MOVEMENT
+  ) {
+    stockTransfer = {
+      ...prismaStockTransfer,
+      status: PRISMA_TO_STATUS_MAPPER[prismaStockTransfer.status],
+      value: prismaStockTransfer.value.toNumber(),
+      type: ProductMovementStockTransferName,
+      productName: productName,
+      fromProductId: (prismaStockTransfer.data as Record<string, string>)[
+        "fromProductId"
+      ],
+      toProductId: (prismaStockTransfer.data as Record<string, string>)[
+        "toProductId"
+      ],
+    };
+  } else {
+    throw new Error(`Prisma type not implemented: ${prismaStockTransfer.type}`);
+  }
+
+  return stockTransfer;
+};
+
+export const update = async (
+  stockTransfer: StockTransfer,
+): Promise<response<StockTransfer>> => {
+  const { data } = buildStockTransferData(stockTransfer);
+  const { userId, ...dataToUpdate } = data;
+
+  try {
+    const updatedStockTransfer = await prisma().stockTransfer.update({
+      where: { id: stockTransfer.id },
+      data: dataToUpdate,
+    });
+
+    return {
+      success: true,
+      data: buildStockTransferFromPrisma(
+        updatedStockTransfer,
+        stockTransfer.productName,
+      ),
+    };
+  } catch (error: any) {
+    log.error("update_stock_transfer_failed", {
+      stockTransfer,
+      data,
+      message: error.message,
+    });
+    return { success: false, message: error.message };
+  }
+};
+
 export const create = async (
   stockTransfer: StockTransfer,
 ): Promise<response<StockTransfer>> => {
@@ -89,54 +191,13 @@ export const create = async (
     const storedStockTransfer = await prisma().stockTransfer.create(
       buildStockTransferData(stockTransfer),
     );
-    let persistedStockTransfer: StockTransfer;
-
-    if (storedStockTransfer.type === $Enums.StockTransferType.ORDER) {
-      persistedStockTransfer = {
-        ...storedStockTransfer,
-        value: storedStockTransfer.value.toNumber(),
-        type: OrderStockTransferName,
-        productName: stockTransfer.productName,
-        orderItemId: (storedStockTransfer.data as Record<string, string>)[
-          "orderItemId"
-        ],
-      };
-    } else if (
-      storedStockTransfer.type === $Enums.StockTransferType.ADJUSTMENT
-    ) {
-      persistedStockTransfer = {
-        ...storedStockTransfer,
-        value: storedStockTransfer.value.toNumber(),
-        type: AdjustmentStockTransfer,
-        productName: stockTransfer.productName,
-        batchId: (storedStockTransfer.data as Record<string, string>)[
-          "batchId"
-        ],
-      };
-    } else if (
-      storedStockTransfer.type === $Enums.StockTransferType.PRODUCT_MOVEMENT
-    ) {
-      persistedStockTransfer = {
-        ...storedStockTransfer,
-        value: storedStockTransfer.value.toNumber(),
-        type: ProductMovementStockTransferName,
-        productName: stockTransfer.productName,
-        fromProductId: (storedStockTransfer.data as Record<string, string>)[
-          "fromProductId"
-        ],
-        toProductId: (storedStockTransfer.data as Record<string, string>)[
-          "toProductId"
-        ],
-      };
-    } else {
-      throw new Error(
-        `Prisma type not implemented: ${storedStockTransfer.type}`,
-      );
-    }
 
     return {
       success: true,
-      data: persistedStockTransfer,
+      data: buildStockTransferFromPrisma(
+        storedStockTransfer,
+        stockTransfer.productName,
+      ),
     };
   } catch (error: any) {
     return { success: false, message: error.message };
@@ -174,15 +235,61 @@ export const updateStock = async (
   }
 };
 
-export const getMany = async (
-  companyId: string,
-  page: number,
-  pageLimit: number,
-): Promise<response<StockTransfer[]>> => {
+export const rollbackStock = async (
+  stockTransfer: StockTransfer,
+): Promise<response<undefined>> => {
   try {
+    await prisma().product.update({
+      where: { id: stockTransfer.productId },
+      data: {
+        stock: {
+          decrement: stockTransfer.value,
+        },
+      },
+    });
+
+    return { success: true, data: undefined };
+  } catch (error: any) {
+    log.error("repository_rollback_stock_transfer_failed", {
+      stockTransfer,
+      message: error.message,
+    });
+    return { success: false, message: "Error rolled back stock transfer" };
+  }
+};
+
+export const getMany = async ({
+  companyId,
+  page,
+  pageLimit,
+  orderId,
+}: {
+  companyId: string;
+  page?: number;
+  pageLimit?: number;
+  orderId?: string;
+}): Promise<response<StockTransfer[]>> => {
+  try {
+    let orderItemsIds: string[] = [];
+    if (orderId) {
+      orderItemsIds = (
+        await prisma().orderItem.findMany({
+          where: { orderId },
+          select: { id: true },
+        })
+      ).map((orderItem) => orderItem.id);
+    }
+
+    const extraConditions = orderItemsIds.map((oi) => ({
+      data: { path: ["orderItemId"], equals: oi },
+    }));
+
     const result = await prisma().stockTransfer.findMany({
-      where: { companyId },
-      skip: (page - 1) * pageLimit,
+      where: {
+        companyId,
+        OR: orderItemsIds.length ? extraConditions : undefined,
+      },
+      skip: page && pageLimit ? (page - 1) * pageLimit : undefined,
       orderBy: { createdAt: "desc" },
       take: pageLimit,
       include: { product: true, user: true },
@@ -191,7 +298,7 @@ export const getMany = async (
     return {
       success: true,
       data: result.map((prismaStockTransfer) => {
-        const { product, ...stockTransferData } = prismaStockTransfer;
+        const { product, user, ...stockTransferData } = prismaStockTransfer;
         const userData = {
           userId: prismaStockTransfer.userId,
           userName: prismaStockTransfer.user?.name || undefined,
@@ -202,6 +309,7 @@ export const getMany = async (
             return {
               ...stockTransferData,
               ...userData,
+              status: PRISMA_TO_STATUS_MAPPER[stockTransferData.status],
               value: stockTransferData.value.toNumber(),
               type: OrderStockTransferName,
               productName: product.name,
@@ -213,6 +321,7 @@ export const getMany = async (
             return {
               ...stockTransferData,
               ...userData,
+              status: PRISMA_TO_STATUS_MAPPER[stockTransferData.status],
               value: stockTransferData.value.toNumber(),
               type: AdjustmentStockTransfer,
               productName: product.name,
@@ -224,6 +333,7 @@ export const getMany = async (
             return {
               ...stockTransferData,
               ...userData,
+              status: PRISMA_TO_STATUS_MAPPER[stockTransferData.status],
               value: stockTransferData.value.toNumber(),
               type: ProductMovementStockTransferName,
               productName: product.name,

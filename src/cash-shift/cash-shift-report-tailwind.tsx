@@ -11,16 +11,41 @@ import {
 } from "@/shared/components/ui/table";
 import { format } from "date-fns";
 import { formatPrice } from "@/lib/utils";
+import { getMany } from "@/document/db_repository";
+import { getSession } from "@/lib/auth";
+import { ArrayElement } from "@/lib/types";
+import { correlative } from "@/document/utils";
+import { Badge } from "@/shared/components/ui/badge";
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
 }
 
-export default function  CashShiftReportTw({
+export default async function CashShiftReportTw({
   cashShift,
 }: CashShiftReportTwProps) {
+  const totalExpense = cashShift.expenses.reduce(
+    (total, expense) => total + expense.amount,
+    0,
+  );
+  const session = await getSession();
 
-  const totalExpense = cashShift.expenses.reduce((total, expense) => total + expense.amount, 0);
+  const documentsResponse = await getMany({
+    companyId: session.user.companyId,
+    orderId: cashShift.orders.map((order) => order.id!),
+  });
+
+  if (!documentsResponse.success) {
+    return <p>Error cargando página, comuniquese con soporte</p>;
+  }
+
+  const documentMapper = documentsResponse.data.reduce<
+    Record<string, ArrayElement<(typeof documentsResponse)["data"]>>
+  >((acc, document) => {
+    acc[document.orderId] = document;
+    return acc;
+  }, {});
+
   return (
     <ScrollArea className="mt-3 h-full">
       <div className="my-5">
@@ -179,8 +204,11 @@ export default function  CashShiftReportTw({
           {cashShift.orders.map((order, index) => (
             <TableRow key={order.id}>
               <TableCell className="border">{index + 1}</TableCell>
-              <TableCell className="border">
+              <TableCell className="border flex flex-col items-start">
                 {format(order.createdAt!, "dd/MM/yyyy hh:mm aa")}
+                {order.status == "cancelled" && (
+                  <Badge variant="destructive">Venta anulada</Badge>
+                )}
               </TableCell>
               <TableCell className="border">
                 {order.documentType === "receipt"
@@ -190,7 +218,7 @@ export default function  CashShiftReportTw({
                     : "Nota de venta"}
               </TableCell>
               <TableCell className="border">
-                {order.id!.substring(0, 8)}
+                {correlative(documentMapper[order.id!])}
               </TableCell>
               <TableCell className="border">{cashShift.userName}</TableCell>
               <TableCell className="border">

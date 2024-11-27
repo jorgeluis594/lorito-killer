@@ -7,9 +7,10 @@ import Link from "next/link";
 
 interface OrderItemProps {
   order: Order;
+  correlative: string;
 }
 
-export default function OrderItem({ order }: OrderItemProps) {
+export default function OrderItem({ order, correlative }: OrderItemProps) {
   const path = usePathname();
   const href = `/dashboard/orders/${order.id}`;
 
@@ -25,7 +26,7 @@ export default function OrderItem({ order }: OrderItemProps) {
             : order.documentType === "invoice"
               ? "Factura Electrónica"
               : "Nota de venta"}{" "}
-          ({order.id!.substring(0, 8)})
+          ({correlative})
         </div>
         <div className="text-xs text-gray-500">
           {localizeDate(order.createdAt!)}
@@ -33,7 +34,11 @@ export default function OrderItem({ order }: OrderItemProps) {
       </div>
       <div>
         <div className="text-sm font-medium">{formatPrice(order.total)}</div>
-        <div className="text-xs text-gray-500 text-end">Pagado</div>
+        <div
+          className={`text-xs ${order.status == "cancelled" ? "text-destructive" : "text-gray-500"} text-end`}
+        >
+          {order.status == "cancelled" ? "Venta anulada" : "Pagado"}
+        </div>
       </div>
     </Link>
   );

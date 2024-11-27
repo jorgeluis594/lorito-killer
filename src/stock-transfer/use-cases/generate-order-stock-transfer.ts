@@ -84,6 +84,7 @@ const generatePackageProductStockTransfers = (
   return product.productItems.map((productItem) => ({
     id: crypto.randomUUID(),
     userId,
+    status: "pending",
     orderItemId: orderItem.id!,
     companyId: product.companyId,
     productName: productItem.productName,
@@ -103,6 +104,7 @@ const generateSingleProductStockTransfers = (
     {
       id: crypto.randomUUID(),
       userId,
+      status: "pending",
       orderItemId: orderItem.id!,
       companyId: product.companyId,
       createdAt: new Date(),
