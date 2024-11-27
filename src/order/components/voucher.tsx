@@ -232,7 +232,7 @@ const BillingTotals = ({ document }: { document: Invoice | Receipt }) => (
 const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
   <Document>
     <Page
-      size={{ width: 215, height: 595 }}
+      size={{ width: 215, height: 850 }}
       style={styles.page}
       orientation="portrait"
     >

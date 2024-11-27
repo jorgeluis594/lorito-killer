@@ -21,9 +21,11 @@ interface CashShiftReportTwProps {
   cashShift: CashShift;
 }
 
-export default async function CashShiftReportTw({
+export default async function  CashShiftReportTw({
   cashShift,
 }: CashShiftReportTwProps) {
+
+  const totalExpense = cashShift.expenses.reduce((total, expense) => total + expense.amount, 0);
   const session = await getSession();
 
   const documentsResponse = await getMany({
@@ -145,7 +147,9 @@ export default async function CashShiftReportTw({
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Egreso (Gastos):
             </th>
-            <TableCell className="border"></TableCell>
+            <TableCell className="border">
+              {formatPrice(totalExpense)}
+            </TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Pagos con tarjeta:
             </th>

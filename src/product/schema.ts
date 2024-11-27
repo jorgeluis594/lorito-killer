@@ -30,8 +30,7 @@ export const SingleProductSchema = z.object({
     .optional(),
   stock: z.coerce
     .number({ invalid_type_error: "Debe ingresar una cantidad" })
-    .nonnegative({ message: "Stock no puede tener valores negativos" })
-    .min(1, { message: "Valor mínimo de stock es 1" }),
+    .nonnegative({ message: "Stock no puede tener valores negativos" }),
   photos: z
     .array(PhotoSchema)
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
@@ -50,8 +49,7 @@ export const ProductItemSchema = z.object({
   productName: z.string(),
   quantity: z
     .number()
-    .int()
-    .min(1, { message: "La cantidad debe ser mayor a 0" }),
+    .int(),
 });
 
 export const PackageProductSchema = z.object({
@@ -75,8 +73,7 @@ export const PackageProductSchema = z.object({
     .optional(),
   categories: z.array(CategorySchema),
   productItems: z
-    .array(ProductItemSchema)
-    .min(1, { message: "Debe agregar al menos un producto" }),
+    .array(ProductItemSchema),
   updatedAt: z.date().optional(),
   createdAt: z.date().optional(),
 });
