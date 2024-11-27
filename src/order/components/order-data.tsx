@@ -36,7 +36,7 @@ export default async function OrderData({ order }: { order: Order }) {
             </span>
             {order.status === "cancelled" && (
               <Badge variant="destructive" className="mt-2">
-                Venta cancelada
+                Venta anulada
               </Badge>
             )}
           </CardTitle>

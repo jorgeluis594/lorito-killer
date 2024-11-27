@@ -37,7 +37,7 @@ export default function OrderItem({ order, correlative }: OrderItemProps) {
         <div
           className={`text-xs ${order.status == "cancelled" ? "text-destructive" : "text-gray-500"} text-end`}
         >
-          {order.status == "cancelled" ? "Cancelado" : "Pagado"}
+          {order.status == "cancelled" ? "Venta anulada" : "Pagado"}
         </div>
       </div>
     </Link>

@@ -21,11 +21,13 @@ interface CashShiftReportTwProps {
   cashShift: CashShift;
 }
 
-export default async function  CashShiftReportTw({
+export default async function CashShiftReportTw({
   cashShift,
 }: CashShiftReportTwProps) {
-
-  const totalExpense = cashShift.expenses.reduce((total, expense) => total + expense.amount, 0);
+  const totalExpense = cashShift.expenses.reduce(
+    (total, expense) => total + expense.amount,
+    0,
+  );
   const session = await getSession();
 
   const documentsResponse = await getMany({
@@ -205,7 +207,7 @@ export default async function  CashShiftReportTw({
               <TableCell className="border flex flex-col items-start">
                 {format(order.createdAt!, "dd/MM/yyyy hh:mm aa")}
                 {order.status == "cancelled" && (
-                  <Badge variant="destructive">Cancelada</Badge>
+                  <Badge variant="destructive">Venta anulada</Badge>
                 )}
               </TableCell>
               <TableCell className="border">

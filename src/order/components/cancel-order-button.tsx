@@ -39,8 +39,8 @@ const CancelOrderButton = ({
     }
 
     toast({
-      title: "Venta cancelada con éxito",
-      description: `La venta ${document ? correlative(document) : order.id} ha sido cancelada`,
+      title: "Venta anulada con éxito",
+      description: `La venta ${document ? correlative(document) : order.id} ha sido anulada`,
     });
   };
 
