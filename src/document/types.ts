@@ -22,6 +22,7 @@ type DocumentBase = {
   documentType: DocumentType;
   series: string;
   number: string;
+  cancellationReason: string;
   customer?: Customer;
   dateOfIssue: Date;
   status: DocumentStatus;
