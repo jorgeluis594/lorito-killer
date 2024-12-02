@@ -9,11 +9,11 @@ import { StockTransfer } from "@/stock-transfer/types";
 import {createDocument} from "@/document/use_cases/create-document";
 import billingDocumentGateway from "@/document/factpro/gateway";
 import {
-  createDocument as saveDocument,
+  createDocument as saveDocument, findDocument,
   getBillingCredentialsFor,
   getLatestDocumentNumber
 } from "@/document/db_repository";
-import {session} from "next-auth/core/routes";
+import { getSession } from "@/lib/auth";
 
 const cancel = async (order: Order): Promise<response<Order>> => {
   const stockTransfersResponse = await getMany({
@@ -60,6 +60,7 @@ const cancel = async (order: Order): Promise<response<Order>> => {
       message: "Error actualizando la venta, comuniquese con soporte",
     };
   }
+  const session = await getSession();
 
   const billingCredentialsResponse = await getBillingCredentialsFor(
     session.user.companyId,
@@ -73,28 +74,25 @@ const cancel = async (order: Order): Promise<response<Order>> => {
 
   const { billingToken } =
     billingCredentialsResponse.data;
-  const {deleteDocument} = billingDocumentGateway({ billingToken })
+  const {cancelDocument} = billingDocumentGateway({ billingToken })
 
-  //findocument
-  const deleteDocumentResponse = await deleteDocument(order.document)
-
-/*  const deleteReceiptResponse = await createDocument(
-    {
-      createDocument: saveDocument,
-      getLastDocumentNumber: getLatestDocumentNumber,
-    },
-    createOrderResponse.data,
-    billingSettings,
-  );*/
-/*  if (!deleteReceiptResponse.success) {
-    log.error("delete_external_receipt_failed", {
-      orderId: order.id,
-      message: deleteReceiptResponse.message,
-    });
+  const documentFound = await findDocument(order.document?.id!)
+  if(!documentFound.success){
+    log.error("document_not_found",{document})
     return {
       success: false,
-      message: "Error eliminando la boleta del servicio externo, comuniquese con soporte",
-    };*/
+      message: "No se encontraron credenciales de facturación",
+    };
+  }
+
+  const cancelDocumentResponse = await cancelDocument(documentFound.data)
+
+  if(!cancelDocumentResponse) {
+    log.error("document_not_cancelled",{cancelDocumentResponse})
+    return {
+      success: false,
+      message: "No se encontraron credenciales de facturación",
+    };
   }
 
   return { success: true, data: updateOrderResponse.data };
