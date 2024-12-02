@@ -1,7 +1,7 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
 import { format, parse } from "date-fns";
-import type { Invoice, Receipt, Ticket } from "@/document/types";
+import type { Invoice, Receipt, Ticket, Document } from "@/document/types";
 import {
   FactproDocument,
   FactproDocumentItem,
@@ -14,7 +14,9 @@ import {
   DocumentGateway,
   DocumentMetadata,
 } from "@/document/use_cases/create-document";
-import { div } from "@/lib/utils";
+import {div, errorResponse} from "@/lib/utils";
+import {findDocument} from "@/document/db_repository";
+import {isReceipt} from "@/document/utils";
 
 const url = process.env.FACTPRO_URL;
 
@@ -130,6 +132,9 @@ export default function gateway({
   fetchCustomerByDNI: (
     documentNumber: string,
   ) => Promise<response<NaturalCustomer>>;
+  deleteDocument: (
+    document: Document
+  ) => Promise<response<Document>>;
 } {
   const createInvoice = async (
     order: OrderWithBusinessCustomer,
@@ -426,11 +431,71 @@ export default function gateway({
     };
   };
 
+  const deleteTicket = async (document: Document): Promise<response<Document>> => {
+    const updateDocument({...document, status: 'cancelled'})
+    return errorResponse('asdasd')
+  }
+
+  const deleteReceipt = async (document: Document): Promise<response<Document>> => {
+    try {
+      const document = await findDocument(documentId);
+
+      if (!document.success) {
+        log.error("Document not found", { documentId, document });
+        throw new Error("Document not found");
+      }
+
+      const body = {
+        fecha_de_emision_de_documentos: document.data.dateOfIssue,
+        codigo_tipo_proceso: "3",
+        documentos: [
+          {
+            correlativo: `${document.data.series}-${document.data.number}`,
+            motivo_anulacion: cancellationReason,
+          },
+        ],
+      };
+
+      const res = await fetch(`${url!}/resumenes`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${billingToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        return { success: true, data: true }
+      } else {
+        return errorResponse('Error')
+      }
+    } catch (error) {
+      log.error("Error canceling receipt", { error, documentId, cancellationReason });
+      throw new Error(`Failed to cancel document: ${error}`);
+    }
+  };
+
+  const deleteDocument = async (document: Document): Promise<response<Document>> => {
+    let deleteFunction: (document: Document) => Promise<response<Document>>;
+
+    if (isReceipt(document)) {
+      deleteFunction = deleteReceipt;
+    } else {
+      deleteFunction = deleteTicket;
+    }
+
+    return deleteFunction(document)
+  }
+
   return {
     createInvoice,
     createReceipt,
     createTicket,
     fetchCustomerByRuc,
     fetchCustomerByDNI,
+    deleteDocument
   };
 }
