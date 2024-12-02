@@ -9,7 +9,7 @@ export const TICKET = "ticket";
 export type TicketType = typeof TICKET;
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
-type DocumentStatus = "registred" | "cancelled" | "pending cancellation";
+type DocumentStatus = "registred" | "cancelled" | "pending_cancellation";
 
 type DocumentBase = {
   id: string;
