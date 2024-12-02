@@ -1,4 +1,5 @@
 import { Customer } from "@/customer/types";
+import {Status} from "@/order/types";
 
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
@@ -7,6 +8,8 @@ export type ReceiptType = typeof RECEIPT;
 export const TICKET = "ticket";
 export type TicketType = typeof TICKET;
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
+
+type DocumentStatus = "registred" | "cancelled" | "pending cancellation";
 
 type DocumentBase = {
   id: string;
@@ -21,6 +24,7 @@ type DocumentBase = {
   number: string;
   customer?: Customer;
   dateOfIssue: Date;
+  status: DocumentStatus;
   createdAt?: Date;
   updatedAt?: Date;
 };
