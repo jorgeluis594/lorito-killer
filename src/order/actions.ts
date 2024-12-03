@@ -26,6 +26,7 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
+import { format, parse } from "date-fns";
 
 export const create = async (
   userId: string,
@@ -73,7 +74,11 @@ export const create = async (
     return { success: false, message: "Error generando descuento" };
   }
 
-  log.info("order_created", { isoDate: order.createdAt?.toISOString() });
+  log.info("order_created", {
+    isoDate: order.createdAt?.toISOString(),
+    fecha: format(order.createdAt, "yyyy-MM-dd"),
+    hora: format(order.createdAt!, "hh:mm:ss"),
+  });
 
   return withinTransaction<{ order: Order; document: Document }>(
     async function () {

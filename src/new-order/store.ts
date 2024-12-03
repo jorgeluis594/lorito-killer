@@ -1,6 +1,12 @@
 import { createStore } from "zustand/vanilla";
 
-import {Discount, Order, OrderItem, Payment, PaymentMethod} from "@/order/types";
+import {
+  Discount,
+  Order,
+  OrderItem,
+  Payment,
+  PaymentMethod,
+} from "@/order/types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
 import { CashShift } from "@/cash-shift/types";
@@ -49,6 +55,7 @@ export type Actions = {
 
 const defaultInitState: OrderFormStore = {
   order: {
+    createdAt: new Date(),
     cashShiftId: "",
     customerId: undefined,
     companyId: "",

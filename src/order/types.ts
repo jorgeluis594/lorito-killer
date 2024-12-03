@@ -52,7 +52,7 @@ export type Order = {
   documentType: DocumentType;
   document?: Document;
   customer?: Customer;
-  createdAt?: Date;
+  createdAt: Date;
   updatedAt?: Date;
 };
 
