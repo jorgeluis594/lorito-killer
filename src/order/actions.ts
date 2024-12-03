@@ -74,12 +74,6 @@ export const create = async (
     return { success: false, message: "Error generando descuento" };
   }
 
-  log.info("order_created", {
-    isoDate: order.createdAt?.toISOString(),
-    fecha: formatInTimeZone(order.createdAt, "America/Lima", "yyyy-MM-dd"),
-    hora: formatInTimeZone(order.createdAt, "America/Lima", "hh:mm:ss"),
-  });
-
   return withinTransaction<{ order: Order; document: Document }>(
     async function () {
       const createOrderResponse = await createOrder({

@@ -1,6 +1,5 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
-import { format, parse } from "date-fns";
 import type { Invoice, Receipt, Ticket } from "@/document/types";
 import {
   FactproDocument,
@@ -15,6 +14,7 @@ import {
   DocumentMetadata,
 } from "@/document/use_cases/create-document";
 import { div } from "@/lib/utils";
+import { formatInTimeZone } from "date-fns-tz";
 
 const url = process.env.FACTPRO_URL;
 
@@ -144,8 +144,16 @@ export default function gateway({
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
-      fecha_de_emision: format(order.createdAt!, "yyyy-MM-dd"),
-      hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
+      fecha_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "yyyy-MM-dd",
+      ),
+      hora_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "hh:mm:ss",
+      ),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
       datos_del_emisor: {
@@ -207,11 +215,7 @@ export default function gateway({
         number: body.numero,
         qr: response.data.data.qr,
         hash: response.data.data.hash,
-        dateOfIssue: parse(
-          `${body.fecha_de_emision} ${body.hora_de_emision}`,
-          "yyyy-MM-dd hh:mm:ss",
-          new Date(),
-        ),
+        dateOfIssue: order.createdAt,
       },
     };
   };
@@ -229,8 +233,16 @@ export default function gateway({
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
-      fecha_de_emision: format(order.createdAt!, "yyyy-MM-dd"),
-      hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
+      fecha_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "yyyy-MM-dd",
+      ),
+      hora_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "hh:mm:ss",
+      ),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
       datos_del_emisor: {
@@ -292,11 +304,7 @@ export default function gateway({
         number: body.numero,
         qr: response.data.data.qr,
         hash: response.data.data.hash,
-        dateOfIssue: parse(
-          `${body.fecha_de_emision} ${body.hora_de_emision}`,
-          "yyyy-MM-dd hh:mm:ss",
-          new Date(),
-        ),
+        dateOfIssue: order.createdAt,
       },
     };
   };

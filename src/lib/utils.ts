@@ -1,9 +1,9 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { PaymentMethod } from "@/order/types";
-import { format } from "date-fns";
 import Decimal from "decimal.js";
 import { ErrorResponse } from "@/lib/types";
+import { formatInTimeZone } from "date-fns-tz";
 
 const formater = new Intl.NumberFormat("es-PE", {
   style: "currency",
@@ -46,10 +46,10 @@ export const localizeDate = (data: Date) =>
   });
 
 export const shortLocalizeDate = (date: Date): string =>
-  format(date, "dd/MM/yyyy hh:mm aa");
+  formatInTimeZone(date, "America/Lima", "dd/MM/yyyy hh:mm aa");
 
 export const localizeOnlyDate = (date: Date): string =>
-  format(date, "dd//MM/yyy");
+  formatInTimeZone(date, "America/Lima", "dd//MM/yyy");
 
 export const isBarCodeValid = (
   barcode: string,
