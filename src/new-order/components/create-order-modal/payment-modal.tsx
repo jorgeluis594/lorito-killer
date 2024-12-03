@@ -71,7 +71,11 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     }
 
     setCreatingOrder(true);
-    const response = await create(user!.id, { ...order, status: "completed" });
+    const response = await create(user!.id, {
+      ...order,
+      status: "completed",
+      createdAt: new Date(),
+    });
     if (response.success) {
       toast({
         title: "En hora buena!",

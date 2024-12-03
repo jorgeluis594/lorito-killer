@@ -73,6 +73,8 @@ export const create = async (
     return { success: false, message: "Error generando descuento" };
   }
 
+  log.info("order_created", { isoDate: order.createdAt?.toISOString() });
+
   return withinTransaction<{ order: Order; document: Document }>(
     async function () {
       const createOrderResponse = await createOrder({
