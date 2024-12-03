@@ -333,7 +333,7 @@ export async function transformOrdersData(
       discount,
       discountAmount: prismaOrder.discountAmount?.toNumber(),
       total: prismaOrder.total.toNumber(),
-      cancellationReason: prismaOrder.cancellationReason,
+      cancellationReason: prismaOrder.cancellationReason || "",
       netTotal: prismaOrder.netTotal.toNumber(),
       documentType: prismaOrder.documentType,
     };
