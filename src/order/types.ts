@@ -46,7 +46,7 @@ export type Order = {
   netTotal: number;
   discountAmount: number;
   total: number;
-  cancellationReason: String;
+  cancellationReason?: string;
   status: Status;
   payments: Payment[];
   discount?: Discount;

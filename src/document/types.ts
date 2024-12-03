@@ -9,7 +9,7 @@ export const TICKET = "ticket";
 export type TicketType = typeof TICKET;
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
-type DocumentStatus = "registred" | "cancelled" | "pending_cancellation";
+export type DocumentStatus = "registered" | "cancelled" | "pending_cancellation";
 
 type DocumentBase = {
   id: string;
@@ -22,10 +22,10 @@ type DocumentBase = {
   documentType: DocumentType;
   series: string;
   number: string;
+  status: DocumentStatus;
   cancellationReason: string;
   customer?: Customer;
   dateOfIssue: Date;
-  status: DocumentStatus;
   createdAt?: Date;
   updatedAt?: Date;
 };
