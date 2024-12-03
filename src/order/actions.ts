@@ -26,7 +26,7 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
-import { format, parse } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 export const create = async (
   userId: string,
@@ -76,8 +76,8 @@ export const create = async (
 
   log.info("order_created", {
     isoDate: order.createdAt?.toISOString(),
-    fecha: format(order.createdAt, "yyyy-MM-dd"),
-    hora: format(order.createdAt!, "hh:mm:ss"),
+    fecha: formatInTimeZone(order.createdAt, "America/Lima", "yyyy-MM-dd"),
+    hora: formatInTimeZone(order.createdAt, "America/Lima", "hh:mm:ss"),
   });
 
   return withinTransaction<{ order: Order; document: Document }>(
