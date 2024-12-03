@@ -1,6 +1,6 @@
 import {
   BillingCredentials,
-  Document,
+  Document, DocumentStatus,
   DocumentType,
   INVOICE,
   RECEIPT,
@@ -15,6 +15,7 @@ import { errorResponse, isEmpty } from "@/lib/utils";
 import { log } from "@/lib/log";
 import { Customer } from "@/customer/types";
 import { findCustomer } from "@/customer/db_repository";
+import {isInvoice, isReceipt} from "@/document/utils";
 
 export const DocumentTypeToPrismaMapper: Record<
   DocumentType,
@@ -33,6 +34,19 @@ export const PrismaDocumentTypeMapper: Record<
   [PrismaDocumentType.TICKET]: TICKET,
 };
 
+const STATUS_TO_PRISMA_MAPPER: Record<DocumentStatus, $Enums.DocumentStatus> = {
+  registered: "REGISTERED",
+  cancelled: "CANCELLED",
+  pending_cancellation: "PENDING_CANCELLATION",
+};
+
+const PRISMA_TO_STATUS_MAPPER: Record<$Enums.DocumentStatus, DocumentStatus> = {
+  REGISTERED: "registered",
+  CANCELLED: "cancelled",
+  PENDING_CANCELLATION: "pending_cancellation",
+};
+
+
 const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
   let document: Document;
   if (prismaDocument.documentType == "TICKET") {
@@ -46,6 +60,8 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "ticket",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
+      status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
+      cancellationReason: prismaDocument.cancellationReason || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.netTotal,
@@ -61,6 +77,8 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "receipt",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
+      status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
+      cancellationReason: prismaDocument.cancellationReason || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -79,6 +97,8 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "invoice",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
+      status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
+      cancellationReason: prismaDocument.cancellationReason || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -105,6 +125,8 @@ export const createDocument = async (
         documentType: DocumentTypeToPrismaMapper[document.documentType],
         series: document.series,
         number: parseInt(document.number),
+        status: STATUS_TO_PRISMA_MAPPER[document.status],
+        cancellationReason: document.cancellationReason,
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
@@ -331,3 +353,36 @@ export const getMany = async ({
 
   return { success: true, data: documents };
 };
+
+export const update = async (document: Document): Promise<response<Document>> => {
+  try {
+    const updatedDocument = await prisma().document.update({
+      where: { id: document.id },
+      data: {
+        orderId: document.orderId!,
+        companyId: document.companyId,
+        customerId: document.customerId,
+        discountAmount: document.discountAmount,
+        netTotal: document.netTotal,
+        total: document.total,
+        documentType: DocumentTypeToPrismaMapper[document.documentType],
+        series: document.series,
+        number: parseInt(document.number),
+        status: STATUS_TO_PRISMA_MAPPER[document.status],
+        cancellationReason: document.cancellationReason,
+        dateOfIssue: document.dateOfIssue,
+        qr: document.documentType == "ticket" ? undefined : document.qr,
+        hash: document.documentType == "ticket" ? undefined : document.hash,
+      },
+    });
+
+    return { success: true, data: prismaDocumentToDocument(updatedDocument) };
+  } catch (e: any) {
+    log.error("update_document_failed", {
+      document: document,
+      orderId: document.orderId,
+      error_message: e.message,
+    });
+    return { success: false, message: e.message };
+  }
+}
