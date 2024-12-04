@@ -4,6 +4,7 @@ import { formatPrice } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Trash2 } from "lucide-react";
 import KgQuantity from "@/new-order/components/cart/kg-quantity";
+import { AddDiscountModal } from "@/new-order/components/cart/add-discount-modal";
 
 interface CartItemProps {
   item: OrderItem;
@@ -68,6 +69,7 @@ export default function CartItem({
           {formatPrice(item.total)}
         </p>
         <div className="hidden group-hover:flex justify-end space-x-2">
+          <AddDiscountModal orderItem={item} />
           <Button
             type="button"
             size="icon"
