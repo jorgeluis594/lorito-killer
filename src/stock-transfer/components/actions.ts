@@ -31,7 +31,7 @@ export const createAndProcessStockTransfers = async (
     ),
   );
 
-  revalidatePath("/[subdomain]/dashboard/stock_adjustments");
+  revalidatePath("/[subdomain]/dashboard/stock_adjustments", "page");
 
   return responses;
 };
