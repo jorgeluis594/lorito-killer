@@ -99,7 +99,7 @@ const sendDocument = async (
 };
 
 const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
-  return {
+  const item: FactproDocumentItem = {
     unidad: "NIU",
     codigo: orderItem.productSku || "",
     descripcion: orderItem.productName,
@@ -114,6 +114,20 @@ const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
     total_tax: 0,
     total: orderItem.total,
   };
+
+  if (orderItem.discountAmount) {
+    item.descuentos = {
+      codigo: "00",
+      descripcion: "Descuento",
+      porcentaje: parseFloat(
+        div(orderItem.discountAmount)(orderItem.netTotal).toFixed(4),
+      ),
+      monto: orderItem.discountAmount,
+      base: orderItem.netTotal,
+    };
+  }
+
+  return item;
 };
 
 // Api documentation https://docs.factpro.la/

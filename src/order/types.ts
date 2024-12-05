@@ -2,18 +2,26 @@ import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
 import type { BusinessCustomer, Customer } from "@/customer/types";
 import { DocumentType, InvoiceType, Document } from "@/document/types";
 
+export type Discountable = {
+  discount?: Discount;
+  discountAmount: number;
+  netTotal: number;
+  total: number;
+};
+
 export type OrderItem = {
-  id?: string;
+  id: string;
   productId: string;
   productSku?: string; // TODO: add orderCode to db repository
   productName: string;
   productPrice: number;
   quantity: number;
   unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
+  netTotal: number;
   total: number;
   createdAt?: Date;
   updatedAt?: Date;
-};
+} & Discountable;
 
 export const AMOUNT = "amount";
 

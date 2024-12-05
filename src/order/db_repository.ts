@@ -11,10 +11,7 @@ import {
 } from "@prisma/client";
 import { Payment, Discount } from "@/order/types";
 import PaymentMethod = $Enums.PaymentMethod;
-import {
-  PRISMA_UNIT_TYPE_MAPPER,
-  UNIT_TYPE_MAPPER,
-} from "@/product/db_repository";
+import { UNIT_TYPE_MAPPER } from "@/product/db_repository";
 import { prismaToCustomer } from "@/customer/db_repository";
 import { log } from "@/lib/log";
 
@@ -22,12 +19,15 @@ async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { productName, productSku, unitType, ...orderItemData } = orderItem;
+  const { productName, productSku, unitType, discount, ...orderItemData } =
+    orderItem;
 
   try {
     const persistedOrderItem = await prisma().orderItem.create({
       data: {
         ...orderItemData,
+        discountValue: discount?.value,
+        discountType: discount ? DISCOUNT_TYPE_MAPPER[discount.type] : null,
         orderId,
       },
     });
@@ -295,7 +295,14 @@ export async function transformOrdersData(
 
     const parsedOrderItems = (prismaOrderItemsMap[prismaOrder.id] || []).map(
       (oi: PrismaOrderItem) => {
-        const { orderId, ...orderItemData } = oi;
+        let discount: Discount | undefined = undefined;
+        if (oi.discountValue && oi.discountType) {
+          discount = {
+            type: PRISMA_DISCOUNT_TYPE_MAPPER[oi.discountType],
+            value: oi.discountValue.toNumber(),
+          };
+        }
+
         return {
           ...oi,
           unitType:
@@ -306,6 +313,9 @@ export async function transformOrdersData(
           productName: prismaProductsMap[oi.productId].name,
           productSku: prismaProductsMap[oi.productId].sku || undefined,
           productPrice: prismaProductsMap[oi.productId].price.toNumber(),
+          discount,
+          netTotal: oi.netTotal.toNumber(),
+          discountAmount: oi.discountAmount?.toNumber(),
           total: oi.total.toNumber(),
         };
       },

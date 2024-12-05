@@ -15,15 +15,16 @@ import {
   SingleProductType,
   UNIT_UNIT_TYPE,
 } from "@/product/types";
-import {Discount, OrderItem, Payment, PaymentMethod} from "@/order/types";
+import { Discount, OrderItem, Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { findProduct } from "@/product/api_repository";
 
-import { mul, plus } from "@/lib/utils";
+import { mul, plus, sub } from "@/lib/utils";
 import { Customer } from "@/customer/types";
 import { DocumentType } from "@/document/types";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
-import {log} from "@/lib/log";
+import { log } from "@/lib/log";
+import calculateOrderItemTotals from "@/order/use-cases/calculate-order-item-totals";
 
 const OrderFormStoreContext = createContext<StoreApi<OrderFormStore> | null>(
   null,
@@ -116,21 +117,21 @@ export const useOrderFormActions = (): Actions => {
   };
 
   const updateTotal = () => {
-    const {order} = orderFormStoreContext.getState();
+    const { order } = orderFormStoreContext.getState();
     order.netTotal = order.orderItems.reduce(
       (acc, item) => plus(acc)(item.total),
       0,
     );
 
-    const discountResponse = calculateDiscount(order)
+    const discountResponse = calculateDiscount(order);
     if (!discountResponse.success) {
       log.error("calculate_discount", {
-        discountResponse
-      })
-      return
+        discountResponse,
+      });
+      return;
     }
     orderFormStoreContext.setState(() => {
-      return {order: discountResponse.data};
+      return { order: discountResponse.data };
     });
   };
 
@@ -194,6 +195,7 @@ export const useOrderFormActions = (): Actions => {
     if (orderItem) {
       increaseQuantity(orderItem.id!);
     } else {
+      const netTotal = mul(product.price)(stock || 1);
       const orderItemId = crypto.randomUUID();
       const oi = {
         id: orderItemId,
@@ -203,7 +205,9 @@ export const useOrderFormActions = (): Actions => {
         unitType:
           product.type == SingleProductType ? product.unitType : UNIT_UNIT_TYPE,
         quantity: stock || 1,
-        total: mul(stock || 1)(product.price),
+        netTotal,
+        discountAmount: 0,
+        total: netTotal,
       };
 
       order.orderItems.push(oi);
@@ -288,10 +292,31 @@ export const useOrderFormActions = (): Actions => {
       return;
     }
 
+    const orderItems = order.orderItems.map((item) => {
+      if (item.id !== orderItemId) return item;
+
+      const response = calculateOrderItemTotals({
+        ...item,
+        quantity: item.quantity + 1,
+      });
+
+      if (!response.success) {
+        toast({
+          variant: "destructive",
+          title: "No se pudo incrementar la cantidad del producto",
+          description: response.message,
+        });
+
+        return item;
+      }
+
+      return response.data;
+    });
+
     orderItem.quantity += 1;
     orderItem.total = mul(orderItem.productPrice)(orderItem.quantity);
     orderFormStoreContext.setState(() => {
-      return { order: { ...order, orderItems: [...order.orderItems] } };
+      return { order: { ...order, orderItems: [...orderItems] } };
     });
 
     updateTotal();
@@ -318,16 +343,35 @@ export const useOrderFormActions = (): Actions => {
 
     if (orderItem.quantity == 1) {
       removeOrderItem(orderItemId);
-    } else {
-      orderItem.quantity--;
-      orderItem.total = mul(orderItem.productPrice)(orderItem.quantity);
-      orderFormStoreContext.setState(() => {
-        return { order: { ...order, orderItems: [...order.orderItems] } };
+      return;
+    }
+    const orderItems = order.orderItems.map((item) => {
+      if (item.id !== orderItemId) return item;
+
+      const response = calculateOrderItemTotals({
+        ...item,
+        quantity: sub(item.quantity)(1),
       });
 
-      updateTotal();
-      stockChecker(orderItemId);
-    }
+      if (!response.success) {
+        toast({
+          variant: "destructive",
+          title: "No se pudo disminuir la cantidad del producto",
+          description: response.message,
+        });
+
+        return item;
+      }
+
+      return response.data;
+    });
+
+    orderFormStoreContext.setState(() => {
+      return { order: { ...order, orderItems: [...orderItems] } };
+    });
+
+    updateTotal();
+    stockChecker(orderItemId);
   };
 
   const getPaidAmount = (): number => {
@@ -339,21 +383,61 @@ export const useOrderFormActions = (): Actions => {
   };
 
   const setDiscount = (discount?: Discount) => {
-    const {order} = orderFormStoreContext.getState();
+    const { order } = orderFormStoreContext.getState();
 
-    const discountResponse = calculateDiscount({ ...order, discount: discount })
+    const discountResponse = calculateDiscount({
+      ...order,
+      discount: discount,
+    });
     if (!discountResponse.success) {
       log.error("calculate_discount_failed", {
         discount,
-        discountResponse
-      })
-      return
+        discountResponse,
+      });
+      return;
     }
 
     orderFormStoreContext.setState({
       order: discountResponse.data,
     });
-  }
+  };
+
+  const setItemDiscount = (orderItemId: string, discount: Discount) => {
+    const { order } = orderFormStoreContext.getState();
+    const orderItem = order.orderItems.find((item) => item.id === orderItemId);
+
+    if (!orderItem) {
+      console.error("Order item not found");
+      return;
+    }
+
+    const orderItems = order.orderItems.map((item) => {
+      if (item.id !== orderItemId) return item;
+
+      const response = calculateDiscount({
+        ...item,
+        discount: discount,
+      });
+
+      if (!response.success) {
+        toast({
+          variant: "destructive",
+          title: "No se pudo aplicar el descuento al producto",
+          description: response.message,
+        });
+
+        return item;
+      }
+
+      return response.data;
+    });
+
+    orderFormStoreContext.setState(() => {
+      return { order: { ...order, orderItems: [...orderItems] } };
+    });
+
+    updateTotal();
+  };
 
   return {
     addProduct,
@@ -363,6 +447,7 @@ export const useOrderFormActions = (): Actions => {
     removeOrderItem,
     addOrderItem,
     updateOrderItem,
+    setItemDiscount,
     getOrderItemByProduct: (productId: string) => {
       const { order } = orderFormStoreContext.getState();
       return order.orderItems.find((item) => item.productId === productId);
