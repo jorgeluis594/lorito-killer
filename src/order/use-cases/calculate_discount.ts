@@ -22,7 +22,7 @@ export default function calculateDiscount<T extends Discountable>(
     if (discountAmount > discountAble.netTotal) {
       return {
         success: false,
-        message: "El descuento no puede ser mayor al total",
+        message: "El descuento no puede ser mayor al neto total",
       };
     }
 

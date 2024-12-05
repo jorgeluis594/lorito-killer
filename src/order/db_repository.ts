@@ -11,10 +11,7 @@ import {
 } from "@prisma/client";
 import { Payment, Discount } from "@/order/types";
 import PaymentMethod = $Enums.PaymentMethod;
-import {
-  PRISMA_UNIT_TYPE_MAPPER,
-  UNIT_TYPE_MAPPER,
-} from "@/product/db_repository";
+import { UNIT_TYPE_MAPPER } from "@/product/db_repository";
 import { prismaToCustomer } from "@/customer/db_repository";
 import { log } from "@/lib/log";
 

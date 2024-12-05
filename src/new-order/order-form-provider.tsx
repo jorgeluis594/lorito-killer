@@ -411,27 +411,32 @@ export const useOrderFormActions = (): Actions => {
       return;
     }
 
-    const discountResponse = calculateDiscount({
-      ...order,
-      orderItems: order.orderItems.map((item) => {
-        if (item.id === orderItemId) {
-          return { ...item, discount };
-        }
-        return item;
-      }),
-    });
+    const orderItems = order.orderItems.map((item) => {
+      if (item.id !== orderItemId) return item;
 
-    if (!discountResponse.success) {
-      log.error("calculate_discount_failed", {
-        discount,
-        discountResponse,
+      const response = calculateDiscount({
+        ...item,
+        discount: discount,
       });
-      return;
-    }
 
-    orderFormStoreContext.setState({
-      order: discountResponse.data,
+      if (!response.success) {
+        toast({
+          variant: "destructive",
+          title: "No se pudo aplicar el descuento al producto",
+          description: response.message,
+        });
+
+        return item;
+      }
+
+      return response.data;
     });
+
+    orderFormStoreContext.setState(() => {
+      return { order: { ...order, orderItems: [...orderItems] } };
+    });
+
+    updateTotal();
   };
 
   return {
@@ -442,6 +447,7 @@ export const useOrderFormActions = (): Actions => {
     removeOrderItem,
     addOrderItem,
     updateOrderItem,
+    setItemDiscount,
     getOrderItemByProduct: (productId: string) => {
       const { order } = orderFormStoreContext.getState();
       return order.orderItems.find((item) => item.productId === productId);

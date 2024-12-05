@@ -16,26 +16,36 @@ import { OrderItem } from "@/order/types";
 import { MdOutlineDiscount } from "react-icons/md";
 import { Label } from "@/shared/components/ui/label";
 import { MoneyInput } from "@/shared/components/ui/input";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { formatPrice, sub } from "@/lib/utils";
 import { Separator } from "@/shared/components/ui/separator";
+import { useOrderFormActions } from "@/new-order/order-form-provider";
 
-const validateDiscount = (discount: number, total: number) => {
-  return discount > 0 && discount <= total;
+const validateDiscount = (discount: number, netTotal: number) => {
+  return discount > 0 && discount <= netTotal;
 };
 
 export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
-  const [discountAmount, setDiscountAmount] = useState<number | undefined>();
+  const { setItemDiscount } = useOrderFormActions();
+  const [discountAmount, setDiscountAmount] = useState<number>(
+    orderItem.discountAmount,
+  );
   const [isDiscountValid, setIsDiscountValid] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
 
   const onDiscountAmountChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
     const discount = parseFloat(ev.target.value);
     setDiscountAmount(discount);
-    setIsDiscountValid(validateDiscount(discount, orderItem.total));
+    setIsDiscountValid(validateDiscount(discount, orderItem.netTotal));
+  };
+
+  const handleDiscountSubmit = () => {
+    setItemDiscount(orderItem.id, { type: "amount", value: discountAmount! });
+    setOpen(false);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="icon">
           <MdOutlineDiscount className="h-5 w-5" />
@@ -56,11 +66,11 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
               <p>Total:</p>
             </div>
             <div className="flex-1">
-              <p className="text-gray-600">{formatPrice(orderItem.total)}</p>
+              <p className="text-gray-600">{formatPrice(orderItem.netTotal)}</p>
               <p className="text-red-500 -ml-3">
                 - {formatPrice(discountAmount || 0)}
               </p>
-              <p>{formatPrice(sub(orderItem.total)(discountAmount || 0))}</p>
+              <p>{formatPrice(sub(orderItem.netTotal)(discountAmount || 0))}</p>
             </div>
           </div>
         </div>
@@ -73,7 +83,7 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
             onChange={onDiscountAmountChange}
           ></MoneyInput>
           <p className="text-sm text-foreground">
-            (Máximo permitido: {formatPrice(orderItem.total)})
+            (Máximo permitido: {formatPrice(orderItem.netTotal)})
           </p>
         </div>
         <DialogFooter>
@@ -83,7 +93,11 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
                 Cancelar y mantener precio original
               </Button>
             </DialogClose>
-            <Button type="button" disabled={!isDiscountValid}>
+            <Button
+              type="button"
+              disabled={!isDiscountValid}
+              onClick={handleDiscountSubmit}
+            >
               Agregar descuento
             </Button>
           </div>

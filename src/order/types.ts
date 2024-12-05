@@ -10,7 +10,7 @@ export type Discountable = {
 };
 
 export type OrderItem = {
-  id?: string;
+  id: string;
   productId: string;
   productSku?: string; // TODO: add orderCode to db repository
   productName: string;
