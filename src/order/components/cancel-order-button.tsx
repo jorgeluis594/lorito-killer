@@ -18,6 +18,7 @@ import {
 import { correlative } from "@/document/utils";
 import { cancelOrder } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
+import {useState} from "react";
 
 const CancelOrderButton = ({
   order,
@@ -27,8 +28,20 @@ const CancelOrderButton = ({
   document?: Document;
 }) => {
   const { toast } = useToast();
+  const [cancellationReason, setCancellationReason] = useState<string>('');
+
   const onClickHandle = async () => {
-    const cancelResponse = await cancelOrder(order);
+    if (!cancellationReason) {
+      toast({
+        title: "Error",
+        description: "Debe proporcionar una razón para la cancelación.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+
+    const cancelResponse = await cancelOrder(order, cancellationReason);
     if (!cancelResponse.success) {
       toast({
         title: "Error",
@@ -54,17 +67,28 @@ const CancelOrderButton = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            ¿Estas seguro de cancelar la venta{" "}
-            {document ? correlative(document) : order.id}
+            ¿Estás seguro de cancelar la venta{" "}
+            {document ? correlative(document) : order.id}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             No se puede deshacer la cancelación de la venta.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div>
+          <label htmlFor="cancellationReason">Razón de la cancelación:</label>
+          <textarea
+            id="cancellationReason"
+            value={cancellationReason}
+            onChange={(e) => setCancellationReason(e.target.value)}
+            placeholder="Ingrese una razón"
+            rows={4}
+            style={{ width: '100%' }}
+          />
+        </div>
         <AlertDialogFooter>
           <AlertDialogCancel>No, regresar</AlertDialogCancel>
           <AlertDialogAction onClick={onClickHandle}>
-            Si, cancelar
+            Sí, cancelar
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
