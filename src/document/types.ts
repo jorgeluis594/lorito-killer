@@ -11,6 +11,13 @@ export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
 export type DocumentStatus = "registered" | "cancelled" | "pending_cancellation";
 
+type StatusAttributes = {
+  status: Omit<DocumentStatus, "cancelled">
+} | {
+  status: "cancelled",
+  cancellationReason: string,
+}
+
 type DocumentBase = {
   id: string;
   companyId: string;
@@ -22,13 +29,11 @@ type DocumentBase = {
   documentType: DocumentType;
   series: string;
   number: string;
-  status: DocumentStatus;
-  cancellationReason: string;
   customer?: Customer;
   dateOfIssue: Date;
   createdAt?: Date;
   updatedAt?: Date;
-};
+} & StatusAttributes;
 
 export type Invoice = DocumentBase & {
   customerId: string;
@@ -84,3 +89,11 @@ export type SearchParams = {
   ticket?: boolean;
   orderId?: string | string[];
 };
+
+export type Registered<T extends Document> = T & { status: "registered" };
+
+export type RegisteredTicket = Registered<Ticket>
+
+export type RegisteredReceipt = Registered<Receipt>
+
+export type RegisteredInvoince = Registered<Invoice>
