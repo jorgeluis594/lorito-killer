@@ -37,7 +37,7 @@ export type Actions = {
   removePayment: (paymentMethod: PaymentMethod) => void;
   removeAllPayments: () => void;
   resetPayment: () => void;
-  setItemDiscount: (orderItemId: string, discount: Discount) => void;
+  setItemDiscount: (orderItemId: string, discount: Discount | null) => void;
   /**
    * Sets the cash shift and company ID in the order form.
    *

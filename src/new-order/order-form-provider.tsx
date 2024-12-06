@@ -402,7 +402,7 @@ export const useOrderFormActions = (): Actions => {
     });
   };
 
-  const setItemDiscount = (orderItemId: string, discount: Discount) => {
+  const setItemDiscount = (orderItemId: string, discount: Discount | null) => {
     const { order } = orderFormStoreContext.getState();
     const orderItem = order.orderItems.find((item) => item.id === orderItemId);
 
@@ -413,6 +413,14 @@ export const useOrderFormActions = (): Actions => {
 
     const orderItems = order.orderItems.map((item) => {
       if (item.id !== orderItemId) return item;
+      if (!discount) {
+        return {
+          ...item,
+          discount: undefined,
+          discountAmount: 0,
+          total: item.netTotal,
+        };
+      }
 
       const response = calculateDiscount({
         ...item,

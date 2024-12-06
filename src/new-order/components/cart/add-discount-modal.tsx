@@ -44,6 +44,11 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
     setOpen(false);
   };
 
+  const handleCancelButton = () => {
+    setItemDiscount(orderItem.id, null);
+    setOpen(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -88,11 +93,13 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
         </div>
         <DialogFooter>
           <div className="flex sm:justify-start space-x-3">
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancelar y mantener precio original
-              </Button>
-            </DialogClose>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelButton}
+            >
+              Cancelar y mantener precio original
+            </Button>
             <Button
               type="button"
               disabled={!isDiscountValid}
