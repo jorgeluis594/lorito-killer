@@ -3,7 +3,7 @@ import {
   Document, DocumentStatus,
   DocumentType,
   INVOICE,
-  RECEIPT,
+  RECEIPT, Registered,
   SearchParams,
   TICKET,
 } from "@/document/types";
@@ -61,7 +61,6 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
       status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
-      cancellationReason: prismaDocument.cancellationReason || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.netTotal,
@@ -78,7 +77,6 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
       status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
-      cancellationReason: prismaDocument.cancellationReason || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -98,7 +96,6 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
       status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
-      cancellationReason: prismaDocument.cancellationReason || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -112,7 +109,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
 
 export const createDocument = async (
   document: Document,
-): Promise<response<Document>> => {
+): Promise<response<Registered<Document>>> => {
   try {
     const createdDocument = await prisma().document.create({
       data: {
@@ -126,7 +123,6 @@ export const createDocument = async (
         series: document.series,
         number: parseInt(document.number),
         status: STATUS_TO_PRISMA_MAPPER[document.status],
-        cancellationReason: document.cancellationReason,
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
@@ -369,7 +365,6 @@ export const update = async (document: Document): Promise<response<Document>> =>
         series: document.series,
         number: parseInt(document.number),
         status: STATUS_TO_PRISMA_MAPPER[document.status],
-        cancellationReason: document.cancellationReason,
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
