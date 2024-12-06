@@ -11,11 +11,12 @@ import billingDocumentGateway from "@/document/factpro/gateway";
 import {
   createDocument as saveDocument, findDocument,
   getBillingCredentialsFor,
+  update as updateDocument,
   getLatestDocumentNumber
 } from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
 
-const cancel = async (order: Order): Promise<response<Order>> => {
+const cancel = async (order: Order, cancellationReason: string): Promise<response<Order>> => {
   const stockTransfersResponse = await getMany({
     companyId: order.companyId,
     orderId: order.id!,
@@ -53,6 +54,7 @@ const cancel = async (order: Order): Promise<response<Order>> => {
   const updateOrderResponse = await updateOrder({
     ...order,
     status: "cancelled",
+    cancellationReason: cancellationReason,
   });
   if (!updateOrderResponse.success) {
     return {
@@ -85,15 +87,16 @@ const cancel = async (order: Order): Promise<response<Order>> => {
     };
   }
 
-  const cancelDocumentResponse = await cancelDocument(documentFound.data)
+  const cancelDocumentResponse = await cancelDocument(documentFound.data, cancellationReason)
 
-  if(!cancelDocumentResponse) {
+  if(!cancelDocumentResponse.success) {
     log.error("document_not_cancelled",{cancelDocumentResponse})
     return {
       success: false,
       message: "No se encontraron credenciales de facturación",
     };
   }
+  const updatedDocument = await updateDocument(cancelDocumentResponse.data)
 
   return { success: true, data: updateOrderResponse.data };
 };
