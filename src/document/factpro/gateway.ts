@@ -1,7 +1,15 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
 import { format, parse } from "date-fns";
-import type { Invoice, Receipt, Ticket, Document } from "@/document/types";
+import {
+  Invoice,
+  Receipt,
+  Ticket,
+  Document,
+  RegisteredTicket,
+  RegisteredInvoince,
+  RegisteredReceipt
+} from "@/document/types";
 import {
   FactproDocument,
   FactproDocumentItem,
@@ -133,13 +141,14 @@ export default function gateway({
     documentNumber: string,
   ) => Promise<response<NaturalCustomer>>;
   cancelDocument: (
-    document: Document
+    document: Document,
+    cancellationReason: string
   ) => Promise<response<Document>>;
 } {
   const createInvoice = async (
     order: OrderWithBusinessCustomer,
     documentMetadata: DocumentMetadata,
-  ): Promise<response<Invoice>> => {
+  ): Promise<response<RegisteredInvoince>> => {
     if (!billingToken) {
       return { success: false, message: "Billing token not found" };
     }
@@ -211,7 +220,6 @@ export default function gateway({
         series: body.serie,
         number: body.numero,
         status: "registered",
-        cancellationReason: "",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
         dateOfIssue: parse(
@@ -226,7 +234,7 @@ export default function gateway({
   const createReceipt = async (
     order: Order,
     documentMetadata: DocumentMetadata,
-  ): Promise<response<Receipt>> => {
+  ): Promise<response<RegisteredReceipt>> => {
     if (!billingToken) {
       return { success: false, message: "Billing token not found" };
     }
@@ -298,7 +306,6 @@ export default function gateway({
         series: body.serie,
         number: body.numero,
         status: "registered",
-        cancellationReason: "",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
         dateOfIssue: parse(
@@ -313,7 +320,7 @@ export default function gateway({
   const createTicket = async (
     order: Order,
     documentMetadata: Omit<DocumentMetadata, "establishmentCode">,
-  ): Promise<response<Ticket>> => {
+  ): Promise<response<RegisteredTicket>> => {
     return {
       success: true,
       data: {
@@ -326,7 +333,6 @@ export default function gateway({
         discountAmount: order.discountAmount,
         total: order.total,
         status: "registered",
-        cancellationReason: "",
         documentType: "ticket",
         series: documentMetadata.serialNumber,
         number: documentMetadata.documentNumber.toString(),
@@ -437,64 +443,28 @@ export default function gateway({
     };
   };
 
-  const cancelTicket = async (document: Document): Promise<response<Document>> => {
-    const updateddDocument = await updateDocument({...document, status: 'cancelled'})
-    if(!updateddDocument.success){
-      log.error("update_document_failed",{document, updateddDocument})
+  const cancelTicket = async (document: Ticket, cancellationReason: string): Promise<response<Document>> => {
+    const updatedDocument = await updateDocument({...document,cancellationReason: cancellationReason, status: 'cancelled'})
+    if(!updatedDocument.success){
+      log.error("update_document_failed",{document, updatedDocument})
       return errorResponse('Update document failed')
     }
 
-    return {success: true, data: updateddDocument.data}
+    return {success: true, data: updatedDocument.data}
   }
 
-  const cancelReceipt = async (document: Document): Promise<response<Document>> => {
-    const body = {
-        fecha_de_emision_de_documentos: document.dateOfIssue,
-        codigo_tipo_proceso: "3",
-        documentos: [
-          {
-            correlativo: `${document.series}-${document.number}`,
-            motivo_anulacion: document.cancellationReason,
-          },
-        ],
-      };
-
-      const res = await fetch(`${url!}/resumenes`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${billingToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
-      const result = await res.json();
-
-    if (res.ok && result.success) {
-      const updateddDocument = await updateDocument({...document, status: 'cancelled'})
-      if(!updateddDocument.success){
-        log.error("update_document_failed",{document, updateddDocument})
-        return errorResponse('Update document failed')
-      }
-      return { success: true, data: updateddDocument.data }
-    } else {
-      const updateddDocument = await updateDocument({...document, status: 'pending_cancellation'})
-      if(!updateddDocument.success){
-        log.error("update_document_failed",{document, updateddDocument})
-        return errorResponse('Update document failed')
-      }
-      log.error('document_cancel_to_failed',{res,result})
-      return errorResponse('document_cancel_to_failed')
+  const cancelBillingDocument = async (document: Invoice | Receipt, cancellationReason: string): Promise<response<Document>> => {
+    if (document.status != 'registered') {
+      throw new Error('Invalid document, only registered documents are supported')
     }
-  };
 
-  const cancelInvoice = async (document: Document): Promise<response<Document>> => {
     const body = {
       fecha_de_emision_de_documentos: document.dateOfIssue,
+      codigo_tipo_proceso: isInvoice(document) ? "01" : '03',
       documentos: [
         {
           correlativo: `${document.series}-${document.number}`,
-          motivo_anulacion: document.cancellationReason,
+          motivo_anulacion: cancellationReason,
         },
       ],
     };
@@ -509,37 +479,19 @@ export default function gateway({
     });
 
     const result = await res.json();
-
-    if (res.ok && result.success) {
-      const updateddDocument = await updateDocument({...document, status: 'cancelled'})
-      if(!updateddDocument.success){
-        log.error("update_document_failed",{document, updateddDocument})
-        return errorResponse('Update document failed')
-      }
-      return { success: true, data: updateddDocument.data }
-    } else {
-      const updateddDocument = await updateDocument({...document, status: 'pending_cancellation'})
-      if(!updateddDocument){
-        log.error("update_document_failed",{document, updateddDocument})
-        return errorResponse('Update document failed')
-      }
-      log.error('document_cancel_to_failed',{res,result})
-      return errorResponse('document_cancel_to_failed')
+    if (!result.success) {
+      log.error('cancel_factpro_document_failed', { document, result });
+      return errorResponse(result.message);
     }
+
+    log.info('cancel_factpro_document_succeeded', { document, result });
+    return { success: true, data: { ...document, status: 'cancelled' } };
   };
 
-  const cancelDocument = async (document: Document): Promise<response<Document>> => {
-    let cancelFunction: (document: Document) => Promise<response<Document>>;
+  const cancelDocument = async (document: Document, cancellationReason: string): Promise<response<Document>> => {
+    if (isReceipt(document) || isInvoice(document)) return cancelBillingDocument(document, cancellationReason)
 
-    if (isReceipt(document)) {
-      cancelFunction = cancelReceipt;
-    }else if(isInvoice(document)){
-      cancelFunction = cancelInvoice;
-    } else {
-      cancelFunction = cancelTicket;
-    }
-
-    return cancelFunction(document)
+    return cancelTicket(document, cancellationReason)
   }
 
   return {
