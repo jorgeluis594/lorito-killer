@@ -12,7 +12,7 @@ export type DocumentType = InvoiceType | ReceiptType | TicketType;
 export type DocumentStatus = "registered" | "cancelled" | "pending_cancellation";
 
 type StatusAttributes = {
-  status: Omit<DocumentStatus, "cancelled">
+  status: DocumentStatus
 } | {
   status: "cancelled",
   cancellationReason: string,
