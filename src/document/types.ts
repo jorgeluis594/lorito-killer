@@ -9,10 +9,11 @@ export const TICKET = "ticket";
 export type TicketType = typeof TICKET;
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
+// documentación como código
 export type DocumentStatus = "registered" | "cancelled" | "pending_cancellation";
 
-type StatusAttributes = {
-  status: DocumentStatus
+export type StatusAttributes = {
+  status:  'registered' | 'pending_cancellation' // Omit<DocumentStatus, "cancelled">
 } | {
   status: "cancelled",
   cancellationReason: string,
