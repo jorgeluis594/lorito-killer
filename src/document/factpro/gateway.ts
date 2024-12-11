@@ -485,7 +485,7 @@ export default function gateway({
     }
 
     log.info('cancel_factpro_document_succeeded', { document, result });
-    return { success: true, data: { ...document, status: 'cancelled' } };
+    return { success: true, data: { ...document, status: 'cancelled', cancellationReason: cancellationReason } };
   };
 
   const cancelDocument = async (document: Document, cancellationReason: string): Promise<response<Document>> => {
