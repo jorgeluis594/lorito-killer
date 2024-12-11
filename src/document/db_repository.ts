@@ -4,7 +4,7 @@ import {
   DocumentType,
   INVOICE,
   RECEIPT, Registered,
-  SearchParams,
+  SearchParams, StatusAttributes,
   TICKET,
 } from "@/document/types";
 import { response } from "@/lib/types";
@@ -46,6 +46,17 @@ const PRISMA_TO_STATUS_MAPPER: Record<$Enums.DocumentStatus, DocumentStatus> = {
   PENDING_CANCELLATION: "pending_cancellation",
 };
 
+const statusAttributesForPrismaDocument = (prismaDocument: PrismaDocument): StatusAttributes => {
+  if (prismaDocument.status == 'CANCELLED') {
+    return { status: 'cancelled', cancellationReason: prismaDocument.cancellationReason! }
+  }
+
+  if (prismaDocument.status == 'PENDING_CANCELLATION') {
+    return { status: 'pending_cancellation' }
+  }
+
+  return { status: "registered" }
+}
 
 const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
   let document: Document;
@@ -60,10 +71,11 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "ticket",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
-      status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
+      // status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.netTotal,
+      ...statusAttributesForPrismaDocument(prismaDocument)
     };
   } else if (prismaDocument.documentType == "RECEIPT") {
     document = {
@@ -82,6 +94,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       netTotal: +prismaDocument.total,
       qr: prismaDocument.qr!,
       hash: prismaDocument.hash!,
+      ...statusAttributesForPrismaDocument(prismaDocument)
     };
   } else {
     // invoice case
