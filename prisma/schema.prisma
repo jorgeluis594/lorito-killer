@@ -139,16 +139,20 @@ model CashShift {
 }
 
 model OrderItem {
-  id           String   @id @default(uuid())
-  quantity     Decimal
-  total        Decimal
-  productId    String
-  orderId      String
-  productPrice Decimal
-  product      Product  @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String        @id @default(uuid())
+  quantity       Decimal
+  discountAmount Decimal
+  discountType   DiscountType?
+  discountValue  Decimal?
+  netTotal       Decimal
+  total          Decimal
+  productId      String
+  orderId        String
+  productPrice   Decimal
+  product        Product       @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 enum DiscountType {

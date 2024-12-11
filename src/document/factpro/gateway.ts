@@ -22,6 +22,7 @@ import {
   DocumentGateway,
   DocumentMetadata,
 } from "@/document/use_cases/create-document";
+import { formatInTimeZone } from "date-fns-tz";
 import {div, errorResponse} from "@/lib/utils";
 import {findDocument, update as updateDocument} from "@/document/db_repository";
 import {isInvoice, isReceipt} from "@/document/utils";
@@ -109,7 +110,7 @@ const sendDocument = async (
 };
 
 const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
-  return {
+  const item: FactproDocumentItem = {
     unidad: "NIU",
     codigo: orderItem.productSku || "",
     descripcion: orderItem.productName,
@@ -124,6 +125,20 @@ const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
     total_tax: 0,
     total: orderItem.total,
   };
+
+  if (orderItem.discountAmount) {
+    item.descuentos = {
+      codigo: "00",
+      descripcion: "Descuento",
+      porcentaje: parseFloat(
+        div(orderItem.discountAmount)(orderItem.netTotal).toFixed(4),
+      ),
+      monto: orderItem.discountAmount,
+      base: orderItem.netTotal,
+    };
+  }
+
+  return item;
 };
 
 // Api documentation https://docs.factpro.la/
@@ -158,8 +173,16 @@ export default function gateway({
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
-      fecha_de_emision: format(order.createdAt!, "yyyy-MM-dd"),
-      hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
+      fecha_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "yyyy-MM-dd",
+      ),
+      hora_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "hh:mm:ss",
+      ),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
       datos_del_emisor: {
@@ -222,11 +245,7 @@ export default function gateway({
         status: "registered",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
-        dateOfIssue: parse(
-          `${body.fecha_de_emision} ${body.hora_de_emision}`,
-          "yyyy-MM-dd hh:mm:ss",
-          new Date(),
-        ),
+        dateOfIssue: order.createdAt,
       },
     };
   };
@@ -244,8 +263,16 @@ export default function gateway({
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
       tipo_operacion: "0101", // By default
-      fecha_de_emision: format(order.createdAt!, "yyyy-MM-dd"),
-      hora_de_emision: format(order.createdAt!, "hh:mm:ss"),
+      fecha_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "yyyy-MM-dd",
+      ),
+      hora_de_emision: formatInTimeZone(
+        order.createdAt,
+        "America/Lima",
+        "hh:mm:ss",
+      ),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
       datos_del_emisor: {
@@ -308,11 +335,7 @@ export default function gateway({
         status: "registered",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
-        dateOfIssue: parse(
-          `${body.fecha_de_emision} ${body.hora_de_emision}`,
-          "yyyy-MM-dd hh:mm:ss",
-          new Date(),
-        ),
+        dateOfIssue: order.createdAt,
       },
     };
   };

@@ -1,6 +1,12 @@
 import { createStore } from "zustand/vanilla";
 
-import {Discount, Order, OrderItem, Payment, PaymentMethod} from "@/order/types";
+import {
+  Discount,
+  Order,
+  OrderItem,
+  Payment,
+  PaymentMethod,
+} from "@/order/types";
 import { Product } from "@/product/types";
 import { response } from "@/lib/types";
 import { CashShift } from "@/cash-shift/types";
@@ -31,6 +37,7 @@ export type Actions = {
   removePayment: (paymentMethod: PaymentMethod) => void;
   removeAllPayments: () => void;
   resetPayment: () => void;
+  setItemDiscount: (orderItemId: string, discount: Discount | null) => void;
   /**
    * Sets the cash shift and company ID in the order form.
    *
@@ -49,6 +56,7 @@ export type Actions = {
 
 const defaultInitState: OrderFormStore = {
   order: {
+    createdAt: new Date(),
     cashShiftId: "",
     customerId: undefined,
     companyId: "",

@@ -26,7 +26,6 @@ import {
   shortLocalizeDate,
 } from "@/lib/utils";
 import { Company } from "@/company/types";
-import { Customer } from "@/customer/types";
 import { fullName } from "@/customer/utils";
 import { isBillableDocument } from "@/document/utils";
 
@@ -346,43 +345,81 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
         </View>
 
         {order.orderItems.map((orderItem, index) => (
-          <View
-            key={index}
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              flexWrap: "wrap",
-              marginBottom: "3px",
-            }}
-          >
-            <Text
-              style={[
-                styles.listProductsText,
-                { width: "15%", textAlign: "center" },
-              ]}
+          <>
+            <View
+              key={index}
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                flexWrap: "wrap",
+                marginBottom: orderItem.discount ? "2px" : "6px",
+              }}
             >
-              {orderItem.quantity}
-            </Text>
-            <Text style={[styles.listProductsText, { width: "40%" }]}>
-              {orderItem.productName}
-            </Text>
-            <Text
-              style={[
-                styles.listProductsText,
-                { width: "22%", textAlign: "center" },
-              ]}
-            >
-              {formatPriceWithoutCurrency(orderItem.productPrice)}
-            </Text>
-            <Text
-              style={[
-                styles.listProductsText,
-                { width: "23%", textAlign: "right" },
-              ]}
-            >
-              {formatPriceWithoutCurrency(orderItem.total)}
-            </Text>
-          </View>
+              <Text
+                style={[
+                  styles.listProductsText,
+                  { width: "15%", textAlign: "center" },
+                ]}
+              >
+                {orderItem.quantity}
+              </Text>
+              <Text style={[styles.listProductsText, { width: "40%" }]}>
+                {orderItem.productName}
+              </Text>
+              <Text
+                style={[
+                  styles.listProductsText,
+                  { width: "22%", textAlign: "center" },
+                ]}
+              >
+                {formatPriceWithoutCurrency(orderItem.productPrice)}
+              </Text>
+              <Text
+                style={[
+                  styles.listProductsText,
+                  { width: "23%", textAlign: "right" },
+                ]}
+              >
+                {formatPriceWithoutCurrency(orderItem.netTotal)}
+              </Text>
+            </View>
+
+            {orderItem.discount && (
+              <View
+                key={index}
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  marginBottom: "6px",
+                }}
+              >
+                <Text
+                  style={[
+                    styles.listProductsText,
+                    { width: "15%", textAlign: "center" },
+                  ]}
+                ></Text>
+                <Text style={[styles.listProductsText, { width: "40%" }]}>
+                  Descuento
+                </Text>
+                <Text
+                  style={[
+                    styles.listProductsText,
+                    { width: "22%", textAlign: "center" },
+                  ]}
+                ></Text>
+                <Text
+                  style={[
+                    styles.listProductsText,
+                    { width: "23%", textAlign: "right" },
+                  ]}
+                >
+                  - {formatPriceWithoutCurrency(orderItem.discountAmount)}
+                </Text>
+              </View>
+            )}
+          </>
         ))}
       </View>
 

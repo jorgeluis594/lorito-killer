@@ -16,6 +16,13 @@ export interface FactproDocumentItem {
   porcentaje_tax: 18 | 0;
   total_tax: number;
   total: number;
+  descuentos?: {
+    codigo: string;
+    descripcion: string;
+    porcentaje: number;
+    monto: number;
+    base: number;
+  };
 }
 
 export interface FactproDocument {
@@ -56,12 +63,12 @@ export interface FactproDocument {
     total_inafectas: number;
     total_gratuitas: number;
     descuentos?: {
-      "codigo": string;
-      "descripcion": string;
-      "porcentaje": number;
-      "monto": number;
-      "base": number;
-    }
+      codigo: string;
+      descripcion: string;
+      porcentaje: number;
+      monto: number;
+      base: number;
+    };
   };
   items: FactproDocumentItem[];
   acciones: {
