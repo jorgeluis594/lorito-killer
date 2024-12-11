@@ -109,7 +109,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
 
 export const createDocument = async (
   document: Document,
-): Promise<response<Registered<Document>>> => {
+): Promise<response<Document>> => {
   try {
     const createdDocument = await prisma().document.create({
       data: {
