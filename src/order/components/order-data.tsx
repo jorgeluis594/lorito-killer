@@ -51,8 +51,7 @@ export default async function OrderData({ order }: { order: Order }) {
             </a>
 
             {differenceInMinutes(new Date(), order.createdAt!) < 20 &&
-              order.status === "completed" &&
-              order.documentType == "ticket" && (
+              order.status === "completed" && (
                 <CancelOrderButton
                   order={order}
                   document={
