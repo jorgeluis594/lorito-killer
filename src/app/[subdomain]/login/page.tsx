@@ -3,7 +3,7 @@ import UserAuthForm from "@/shared/user-auth-form";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "Authentication",
+  title: "Kogoz - Inicia sesión",
   description: "Authentication forms built using the components.",
 };
 
@@ -11,7 +11,7 @@ export default function AuthenticationPage() {
   return (
     <div className="relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-          <Image fill className="bg-slate-300" alt="Logo" src="/kogoz.svg" />
+          <Image fill className="bg-white w-36 h-auto" alt="Logo" src="/kogoz.svg" />
       </div>
       <div className="p-4 lg:p-8 h-full flex items-center">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
