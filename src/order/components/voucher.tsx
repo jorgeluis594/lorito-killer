@@ -248,10 +248,10 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
         ]}
       >
         {company.logo && (
-          <Image src={company.logo.url} style={{ width: "40px" }} />
+          <Image src={company.logo.url} style={{ width: "55px" }} />
         )}
         {company.subName && (
-          <Text style={styles.header}>{company.subName}</Text>
+          <Text style={{fontSize: 12, textAlign: "center", color: "black", fontWeight: "bold"}}>{company.subName}</Text>
         )}
         {(document.documentType === "receipt" || document.documentType === "invoice") && (
           <>
