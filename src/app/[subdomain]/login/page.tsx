@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 export default function AuthenticationPage() {
   return (
     <div className="relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-          <Image fill className="bg-white w-36 h-auto" alt="Logo" src="/kogoz.svg" />
+      <div className="relative hidden w-3/5 h-3/5 bg-muted p-10 dark:border-r lg:flex ml-52">
+          <Image fill className="bg-white" alt="Logo" src="/kogoz.svg" />
       </div>
       <div className="p-4 lg:p-8 h-full flex items-center">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
