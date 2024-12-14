@@ -8,7 +8,7 @@ import { getMany, getTotal } from "@/document/db_repository";
 import { SearchParams } from "@/document/types";
 import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
-import { endOfDay, startOfDay } from "date-fns";
+import { endOfDay, startOfDay } from "@/lib/utils";
 import DownloadXLSXButton from "@/sale_report/components/download_xlsx_button";
 
 export const dynamic = "force-dynamic";
