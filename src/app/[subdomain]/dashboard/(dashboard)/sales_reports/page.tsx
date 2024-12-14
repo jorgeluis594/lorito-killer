@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
 import { endOfDay, startOfDay } from "@/lib/utils";
 import DownloadXLSXButton from "@/sale_report/components/download_xlsx_button";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,12 @@ const getSearchParams = async ({
   if (searchParams.customerId) {
     params.customerId = searchParams.customerId as string;
   }
+
+  log.info("params", {
+    params,
+    startDate: searchParams.start,
+    endDate: searchParams.end,
+  });
 
   return params;
 };
