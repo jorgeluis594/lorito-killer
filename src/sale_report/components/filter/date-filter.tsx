@@ -1,10 +1,10 @@
 "use client";
 
 import { Label } from "@/shared/components/ui/label";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import DateRangePicker from "@/shared/components/ui/date-range-picker";
 import useUpdateQueryString from "@/lib/use-update-query-string";
-import { subDays } from "date-fns";
+import { endOfDay, startOfDay, subDays } from "date-fns";
 import { useSearchParams } from "next/navigation";
 
 export default function DateFilter() {
@@ -21,8 +21,8 @@ export default function DateFilter() {
   const onDateChange = (date: { from: Date; to: Date }) => {
     setDate(date);
     updateRoute({
-      start: date.from.toISOString(),
-      end: date.to.toISOString(),
+      start: startOfDay(date.from).toISOString(),
+      end: endOfDay(date.to).toISOString(),
     });
   };
 
