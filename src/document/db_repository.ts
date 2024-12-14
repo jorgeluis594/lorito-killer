@@ -281,6 +281,12 @@ export const getMany = async ({
   receipt,
   orderId,
 }: SearchParams): Promise<response<(Document & { customer?: Customer })[]>> => {
+  log.info("get_many_documents", {
+    startDate,
+    endDate,
+    localizedStart: startDate?.toLocaleString(),
+    localizedEnd: endDate?.toLocaleString(),
+  });
   const prismaDocuments = await prisma().document.findMany({
     where: buildDocumentQuery({
       companyId,
