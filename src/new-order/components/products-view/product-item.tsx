@@ -9,6 +9,7 @@ import { useOrderFormActions } from "@/new-order/order-form-provider";
 import { useState } from "react";
 import KgCalculatorForm from "@/new-order/components/cart/kg-calculator-form";
 import { useProductFormActions } from "@/new-order/components/products-view/product-searcher-form-provider";
+import {DescriptionProduct} from "@/new-order/components/products-view/description-product-item";
 
 export default function ProductItem({ product }: { product: Product }) {
   const photoUrl = product.photos![0]?.url || "";
@@ -63,6 +64,9 @@ export default function ProductItem({ product }: { product: Product }) {
         className="hover:absolute hover:h-auto hover:min-h-full hover:z-10 h-full w-full hover:max-h-none max-h-full group hover:shadow-xl transition duration-300"
       >
         <CardContent className="px-2">
+          <div className="flex justify-end mt-2">
+            <DescriptionProduct description={product.description}/>
+          </div>
           <div className="mt-4 mx-auto relative w-[100px] h-[100px] rounded-md overflow-hidden">
             <Image fill className="object-cover" alt="Image" src={photoUrl} />
           </div>
