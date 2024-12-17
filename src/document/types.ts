@@ -1,4 +1,5 @@
 import { Customer } from "@/customer/types";
+import {Status} from "@/order/types";
 
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
@@ -7,6 +8,16 @@ export type ReceiptType = typeof RECEIPT;
 export const TICKET = "ticket";
 export type TicketType = typeof TICKET;
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
+
+// documentación como código
+export type DocumentStatus = "registered" | "cancelled" | "pending_cancellation";
+
+export type StatusAttributes = {
+  status:  'registered' | 'pending_cancellation' // Omit<DocumentStatus, "cancelled">
+} | {
+  status: "cancelled",
+  cancellationReason: string,
+}
 
 type DocumentBase = {
   id: string;
@@ -23,7 +34,7 @@ type DocumentBase = {
   dateOfIssue: Date;
   createdAt?: Date;
   updatedAt?: Date;
-};
+} & StatusAttributes;
 
 export type Invoice = DocumentBase & {
   customerId: string;
@@ -79,3 +90,11 @@ export type SearchParams = {
   ticket?: boolean;
   orderId?: string | string[];
 };
+
+export type Registered<T extends Document> = T & { status: "registered" };
+
+export type RegisteredTicket = Registered<Ticket>
+
+export type RegisteredReceipt = Registered<Receipt>
+
+export type RegisteredInvoince = Registered<Invoice>
