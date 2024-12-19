@@ -20,7 +20,7 @@ export async function LogoImage() {
 
   return (
     <>
-      <Image fill className="object-cover" alt="Image" src={logoUrl}/>
+      <Image fill className="object-left object-contain w-full h-full" alt="Image" src={logoUrl}/>
     </>
   );
 }

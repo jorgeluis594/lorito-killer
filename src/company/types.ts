@@ -5,8 +5,8 @@ export type Company = {
   department?: string;
   district?: string;
   provincial?: string;
-  phone: string;
-  email: string;
+  phone?: string;
+  email?: string;
   ruc?: string;
   address: string;
   subdomain: string;
