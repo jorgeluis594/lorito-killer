@@ -21,7 +21,7 @@ export default function OrdersLayout({
         <nav className="h-14 flex items-center justify-between px-4">
           <div className="flex items-center">
             <MobileSidebar />
-            <div className="flex relative w-[56px] h-[56px] rounded-md overflow-hidden ml-2">
+            <div className="flex relative w-[150px] h-[56px] rounded-md overflow-hidden ml-2">
               <LogoImage />
             </div>
           </div>
