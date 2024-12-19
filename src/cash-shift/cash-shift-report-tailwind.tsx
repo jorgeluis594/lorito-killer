@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { format } from "date-fns";
-import { formatPrice } from "@/lib/utils";
+import {formatPrice, localizeDate, shortLocalizeDate} from "@/lib/utils";
 import { getMany } from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
 import { ArrayElement } from "@/lib/types";
@@ -82,7 +82,7 @@ export default async function CashShiftReportTw({
               Hora y fecha de apertura:
             </th>
             <TableCell className="text-left border">
-              {format(cashShift.openedAt, "dd/MM/yyyy hh:mm aa")}
+              {shortLocalizeDate(cashShift.openedAt)}
             </TableCell>
           </TableRow>
 
