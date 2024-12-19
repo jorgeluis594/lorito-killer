@@ -4,6 +4,8 @@ import { PaymentMethod } from "@/order/types";
 import Decimal from "decimal.js";
 import { ErrorResponse } from "@/lib/types";
 import { formatInTimeZone } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
+import { startOfDay as startOfDayFns, endOfDay as endOfDayFns } from "date-fns";
 
 const formater = new Intl.NumberFormat("es-PE", {
   style: "currency",
@@ -309,3 +311,13 @@ export const errorResponse = (message: string): ErrorResponse => ({
   success: false,
   message: message,
 });
+
+export const startOfDay = (date: Date) => {
+  const timeZoneDate = toZonedTime(date, "America/Lima");
+  return startOfDayFns(timeZoneDate);
+};
+
+export const endOfDay = (date: Date) => {
+  const timeZoneDate = toZonedTime(date, "America/Lima");
+  return endOfDayFns(timeZoneDate);
+};
