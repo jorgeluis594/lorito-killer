@@ -34,7 +34,7 @@ export default async function CashShiftReportTw({
   const companyResponse = await getCompany(session.user.companyId);
 
   if (!companyResponse.success) {
-    return console.log("Company not found");
+    return <p>Error cargando página, comuniquese con soporte</p>;
   }
 
 
