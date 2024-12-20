@@ -151,6 +151,7 @@ export const storeLogo = async (
         companyId: companyId,
       },
     });
+    log.info("logo_created",{createdLogo, logo})
     return { success: true, data: createdLogo };
   } catch (error: any) {
     return { success: false, message: error.message };
@@ -163,7 +164,7 @@ export const removeLogo = async (
 ): Promise<response<Logo>> => {
   const logoResponse = await getLogo(companyId, logoId);
   if (!logoResponse.success) return logoResponse;
-
+  log.info("logo_geted",{logoId,logoResponse})
   try {
     await prisma().logo.delete({
       where: { id: logoId, companyId: companyId },
