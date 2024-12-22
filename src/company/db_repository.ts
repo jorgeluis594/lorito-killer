@@ -135,7 +135,7 @@ export const storeLogo = async (
 ): Promise<response<Logo>> => {
   try {
     const logo = await prisma().logo.findFirst({
-      where: { companyId: newLogo.companyId },
+      where: { companyId: companyId },
     });
     if (logo) {
       await prisma().logo.delete({ where: { id: logo.id } });
