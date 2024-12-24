@@ -17,7 +17,7 @@ export default function LogoUpload({
   value,
 }: LogoUploadProps) {
   const { toast } = useToast();
-
+  console.log(value)
   const onDeleteFile = () => {
     onChange(undefined!);
   };
