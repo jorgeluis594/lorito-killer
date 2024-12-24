@@ -1,5 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
+import {log} from "@/lib/log";
 
 const f = createUploadthing();
 
@@ -17,6 +18,9 @@ export const ourFileRouter = {
       // If you throw, the user will not be able to upload
       if (!user) throw new UploadThingError("Unauthorized");
 
+      log.info("middleware_runned",{req,user})
+      console.log(req,user)
+
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: user.id };
     })
@@ -25,6 +29,9 @@ export const ourFileRouter = {
       console.log("Upload complete for userId:", metadata.userId);
 
       console.log("file url", file.url);
+
+      log.info("on_upload_completed",{metadata, file})
+      console.log(metadata,file);
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };
