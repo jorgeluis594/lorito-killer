@@ -23,6 +23,7 @@ export default function LogoUpload({
   };
 
   const onUpdateFile = (newFile: Logo) => {
+    console.log("onUpdateFile",newFile)
     onChange(newFile);
   };
 
@@ -43,6 +44,7 @@ export default function LogoUpload({
           }}
           onClientUploadComplete={(res: any | undefined) => {
             if (res) {
+              console.log("onClientUploadComplete",res[0])
               onUpdateFile(res[0]);
             }
           }}
