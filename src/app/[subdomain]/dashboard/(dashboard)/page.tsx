@@ -10,6 +10,8 @@ import {
 } from "@/shared/components/ui/card";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import TableData from "@/sales-dashboard/components/table-data";
+import BestSeller from "@/sales-dashboard/components/best-selling-product";
 
 export default function page() {
   return (
@@ -130,25 +132,8 @@ export default function page() {
               </Card>
             </div>
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4">
-                <CardHeader>
-                  <CardTitle>Overview</CardTitle>
-                </CardHeader>
-                <CardContent className="pl-2">
-                  <Overview />
-                </CardContent>
-              </Card>
-              <Card className="col-span-4 md:col-span-3">
-                <CardHeader>
-                  <CardTitle>Recent Sales</CardTitle>
-                  <CardDescription>
-                    You made 265 sales this month.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RecentSales />
-                </CardContent>
-              </Card>
+              <TableData />
+              <BestSeller />
             </div>
           </TabsContent>
         </Tabs>
