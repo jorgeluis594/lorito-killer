@@ -321,3 +321,8 @@ export const endOfDay = (date: Date) => {
   const timeZoneDate = toZonedTime(date, "America/Lima");
   return endOfDayFns(timeZoneDate);
 };
+
+export const objectToQueryString = (obj: Record<string, string>) => {
+  const query = new URLSearchParams(obj);
+  return query.toString();
+};
