@@ -41,7 +41,7 @@ export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
     header: "",
     cell: ({row}) => <a
         className={buttonVariants({variant: "ghost", size: "icon"})}
-        href={`/api/orders/${row.original.id}/documents`}
+        href={`/api/orders/${row.original.orderId}/documents`}
         target="_blank"
         rel="noopener noreferrer"
     >
