@@ -16,6 +16,7 @@ import { getSession } from "@/lib/auth";
 import { ArrayElement } from "@/lib/types";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
+import {getCompany} from "@/company/db_repository";
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
@@ -29,6 +30,13 @@ export default async function CashShiftReportTw({
     0,
   );
   const session = await getSession();
+
+  const companyResponse = await getCompany(session.user.companyId);
+
+  if (!companyResponse.success) {
+    return <p>Error cargando página, comuniquese con soporte</p>;
+  }
+
 
   const documentsResponse = await getMany({
     companyId: session.user.companyId,
@@ -64,7 +72,7 @@ export default async function CashShiftReportTw({
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Empresa:
             </th>
-            <TableCell className="border"></TableCell>
+            <TableCell className="border">{companyResponse.data.subName}</TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Fecha de reporte:
             </th>
@@ -77,7 +85,7 @@ export default async function CashShiftReportTw({
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Ruc:
             </th>
-            <TableCell className="border"></TableCell>
+            <TableCell className="border">{companyResponse.data.ruc}</TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Hora y fecha de apertura:
             </th>
@@ -90,7 +98,7 @@ export default async function CashShiftReportTw({
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Vendedor:
             </th>
-            <TableCell className="border"></TableCell>
+            <TableCell className="border">{session.user.name}</TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
               Hora y fecha de cierre:
             </th>
