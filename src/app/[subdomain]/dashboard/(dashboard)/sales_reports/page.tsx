@@ -8,8 +8,8 @@ import { getMany, getTotal } from "@/document/db_repository";
 import { SearchParams } from "@/document/types";
 import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
-import { endOfDay, startOfDay } from "date-fns";
 import DownloadXLSXButton from "@/sale_report/components/download_xlsx_button";
+import { objectToQueryString } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -54,11 +54,11 @@ const getSearchParams = async ({
   }
 
   if (searchParams.start) {
-    params.startDate = startOfDay(new Date(searchParams.start as string));
+    params.startDate = new Date(searchParams.start as string);
   }
 
   if (searchParams.end) {
-    params.endDate = endOfDay(new Date(searchParams.end as string));
+    params.endDate = new Date(searchParams.end as string);
   }
 
   if (searchParams.customerId) {
@@ -101,7 +101,11 @@ export default async function Page({ searchParams }: ParamsProps) {
       <Separator />
       <div className="flex flex-row space-x-12 space-y-0 mt-8">
         <aside className="w-1/5">
-          <DownloadXLSXButton />
+          <DownloadXLSXButton
+            queryString={objectToQueryString(
+              searchParams as Record<string, string>,
+            )}
+          />
           <Filters searchParams={searchParams} />
         </aside>
         <div className="flex-1 lg:max-w-7xl mt-6">

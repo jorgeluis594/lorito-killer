@@ -2,8 +2,7 @@ import ExcelJS from "exceljs";
 import { correlative } from "@/document/utils";
 import { Document } from "@/document/types";
 import { fullName, isBusinessCustomer } from "@/customer/utils";
-import { plus } from "@/lib/utils";
-import { format } from "date-fns";
+import { plus, shortLocalizeDate } from "@/lib/utils";
 
 const DOCUMENT_TYPE_MAPPER = {
   invoice: "Factura",
@@ -40,7 +39,7 @@ export const createWorkbookBuffer = async (documents: Document[]) => {
     reportSheet.addRow([
       DOCUMENT_TYPE_MAPPER[doc.documentType],
       correlative(doc),
-      format(doc.dateOfIssue, "dd/MM/yyyy hh:mm aa"),
+      shortLocalizeDate(doc.dateOfIssue),
       customer && isBusinessCustomer(customer) ? "Empresa" : "Natural",
       customer ? fullName(customer) : "Cliente general",
       customer ? customer.documentNumber : "",

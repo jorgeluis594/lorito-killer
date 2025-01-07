@@ -251,8 +251,8 @@ model Company {
   department         String?
   district           String?
   provincial         String?
-  email              String
-  phone              String
+  email              String?
+  phone              String?
   address            String
   ruc                String?
   customers          Customer[]
