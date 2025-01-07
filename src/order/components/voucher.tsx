@@ -322,6 +322,10 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
           {documentTypeToCustomerDocumentTypeES[document.documentType]}:{" "}
           {order.customer?.documentNumber}
         </Text>
+
+        <Text style={styles.text}>
+          Dirección: {order.customer?.address}
+        </Text>
       </View>
 
       {/*Document Details / Product list */}
