@@ -8,6 +8,8 @@ import { es } from "date-fns/locale";
 import { correlative } from "@/document/utils";
 import { fullName } from "@/customer/utils";
 import { formatPrice } from "@/lib/utils";
+import {buttonVariants} from "@/shared/components/ui/button";
+import {Printer} from "lucide-react";
 
 export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
   {
@@ -33,5 +35,17 @@ export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
     accessorKey: "total",
     header: "TOTAL",
     cell: ({ row }) => formatPrice(row.original.total),
+  },
+  {
+    accessorKey: "descarga",
+    header: "",
+    cell: ({row}) => <a
+        className={buttonVariants({variant: "ghost", size: "icon"})}
+        href={`/api/orders/${row.original.id}/documents`}
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+      <Printer className="cursor-pointer"/>
+    </a>,
   },
 ];
