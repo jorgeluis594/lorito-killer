@@ -71,7 +71,6 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "ticket",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
-      // status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.netTotal,
@@ -88,7 +87,6 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "receipt",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
-      status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -108,12 +106,12 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "invoice",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
-      status: PRISMA_TO_STATUS_MAPPER[prismaDocument.status],
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
       qr: prismaDocument.qr!,
       hash: prismaDocument.hash!,
+      ...statusAttributesForPrismaDocument(prismaDocument)
     };
   }
 
