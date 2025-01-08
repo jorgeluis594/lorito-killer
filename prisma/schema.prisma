@@ -246,7 +246,7 @@ model Customer {
 
 model Company {
   id                 String          @id @default(uuid())
-  name               String
+  name               String?
   subName            String?
   department         String?
   district           String?
