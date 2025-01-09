@@ -2,7 +2,9 @@ import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth-config";
 
 type Session = {
-  user: { name: string; email: string; id: string; companyId: string };
+  user:
+    | { name: string; email: string; id: string; companyId: string }
+    | undefined;
   name: string;
   email: string;
   sub: string;

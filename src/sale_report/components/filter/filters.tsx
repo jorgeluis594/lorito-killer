@@ -6,6 +6,7 @@ import CustomerSelector from "@/sale_report/components/filter/customer-selector"
 import DateFilter from "@/sale_report/components/filter/date-filter";
 import { findCustomer } from "@/customer/db_repository";
 import { Customer } from "@/customer/types";
+import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 type ParamsProps = {
   searchParams: {
@@ -15,6 +16,9 @@ type ParamsProps = {
 
 export default async function Filters({ searchParams }: ParamsProps) {
   const session = await getSession();
+  if (!session.user) {
+    return <SignOutRedirection />;
+  }
   const billingCredentialsResponse = await getBillingCredentialsFor(
     session.user.companyId,
   );

@@ -6,6 +6,7 @@ import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { getMany } from "@/document/db_repository";
 import { ArrayElement } from "@/lib/types";
 import { correlative } from "@/document/utils";
+import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 export default async function OrdersIndexLayout({
   children,
@@ -13,6 +14,8 @@ export default async function OrdersIndexLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
+  if (!session.user) return <SignOutRedirection />;
+
   const cashShiftResponse = await getLastOpenCashShift(session.user.id);
 
   if (!cashShiftResponse.success) {

@@ -6,6 +6,7 @@ import { columns } from "@/stock-transfer/components/table/columns";
 import { getMany, total } from "@/stock-transfer/db_repository";
 import { getSession } from "@/lib/auth";
 import AddStockAdjustmentModal from "@/stock-transfer/components/add-stock-adjustment-modal";
+import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 const breadcrumbItems = [
   { title: "Ajustes de stock", link: "/stock_adjustments" },
@@ -21,6 +22,8 @@ export default async function Page({ searchParams }: paramsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
   const session = await getSession();
+  if (!session.user) return <SignOutRedirection />;
+
   const resultStockTransfers = await getMany({
     companyId: session.user.companyId,
     page,

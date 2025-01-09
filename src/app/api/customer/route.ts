@@ -14,6 +14,10 @@ export async function GET(req: Request) {
   const param = searchParams.get("param");
   const customerType = searchParams.get("customerType") || undefined;
 
+  if (!user) {
+    return NextResponse.json({ success: false }, { status: 401 });
+  }
+
   const response = await getMany({
     q: param,
     companyId: user.companyId,
