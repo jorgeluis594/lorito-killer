@@ -30,6 +30,13 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const { user } = await getSession();
+  if (!user) {
+    return NextResponse.json(
+      { success: false, message: "Unauthenticated user" },
+      { status: 401 },
+    );
+  }
+
   const param = searchParams.get("param");
   const categoryId = searchParams.get("categoryId");
   const sortKey = searchParams.get("sortBy") as SortKey | null;

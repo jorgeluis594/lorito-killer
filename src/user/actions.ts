@@ -36,6 +36,9 @@ export const changePassword = async (
   newPassword: string,
 ): Promise<response<User>> => {
   const { user } = await getSession();
+  if (!user) {
+    return { success: false, message: "Usuario no autenticado" };
+  }
 
   const foundResponse = await repository.getUserByEmail(user.email);
   if (!foundResponse.success) {

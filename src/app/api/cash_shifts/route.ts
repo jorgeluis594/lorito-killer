@@ -7,7 +7,7 @@ export const revalidate = 0;
 export async function GET(req: Request) {
   const session = await getSession();
 
-  if (!(await userExists(session.user.id))) {
+  if (!session.user) {
     return NextResponse.json(
       { success: false, message: "Unathenticated user" },
       { status: 401 },

@@ -16,7 +16,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  if (!session) return;
+  if (!session.user) return <SignOutRedirection />;
 
   const [cashShiftResponse, userPresent, companyResponse] = await Promise.all([
     getLastOpenCashShift(session.user.id),

@@ -1,21 +1,22 @@
-import { getSession } from "@/lib/auth";
 import { getMany } from "@/document/db_repository";
 import { SearchParams } from "@/document/types";
 import { NextResponse } from "next/server";
 import { log } from "@/lib/log";
 import { createWorkbookBuffer } from "@/document/renders/list_xlsx";
+import { User } from "@/user/types";
+import { getSession } from "@/lib/auth";
 
 type ParamsProps = Record<string, string | string[] | undefined>;
 
 const getSearchParams = async ({
   searchParams = {},
+  user,
 }: {
   searchParams: ParamsProps;
+  user: User;
 }): Promise<SearchParams> => {
-  const session = await getSession();
-
   const params: SearchParams = {
-    companyId: session.user.companyId,
+    companyId: user.companyId,
   };
 
   if (searchParams.series && searchParams.number) {
@@ -53,7 +54,17 @@ const getSearchParams = async ({
 };
 
 export async function GET(_req: Request, { params }: { params: ParamsProps }) {
-  const documentQuery = await getSearchParams({ searchParams: params });
+  const session = await getSession();
+  if (!session.user) {
+    return NextResponse.json(
+      { success: false, message: "Unauthenticated user" },
+      { status: 401 },
+    );
+  }
+  const documentQuery = await getSearchParams({
+    searchParams: params,
+    user: session.user,
+  });
 
   const documentsResponse = await getMany(documentQuery);
 
