@@ -52,8 +52,10 @@ const getSearchParams = async ({
 
   return params;
 };
-
-export async function GET(_req: Request, { params }: { params: ParamsProps }) {
+// https://nextjs.org/docs/pages/building-your-application/routing/api-routes
+// https://0918-38-253-158-33.ngrok-free.app/api/sale_reports?ticket=true&start=2024-12-12T05%3A00%3A00.000Z&end=2025-01-08T04%3A59%3A59.999Z
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
   const session = await getSession();
   if (!session.user) {
     return NextResponse.json(
@@ -62,7 +64,7 @@ export async function GET(_req: Request, { params }: { params: ParamsProps }) {
     );
   }
   const documentQuery = await getSearchParams({
-    searchParams: params,
+    searchParams: Object.fromEntries(searchParams),
     user: session.user,
   });
 
