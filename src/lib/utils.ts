@@ -307,9 +307,13 @@ export const billableNumberToWords = (() => {
   };
 })();
 
-export const errorResponse = (message: string): ErrorResponse => ({
+export const errorResponse = (
+  message: string,
+  type?: "AuthError",
+): ErrorResponse => ({
   success: false,
   message: message,
+  type,
 });
 
 export const startOfDay = (date: Date) => {
