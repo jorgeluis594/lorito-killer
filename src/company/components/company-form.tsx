@@ -37,17 +37,14 @@ const LogoSchema = zod.object({
 const CompanyFormSchema = zod.object({
   name: zod
     .string()
-    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
-      .optional(),
+    .optional(),
   subName: zod
     .string()
-    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
     .optional(),
   email: zod.string().email({ message: "El email no es válido" }).optional(),
   phone: zod
     .string()
-    .min(6, { message: "El teléfono debe tener al menos 6 caracteres" })
-      .optional(),
+    .optional(),
   ruc: zod.string().length(11, "El ruc debe tener 11 digitos").optional(),
   address: zod
     .string()
