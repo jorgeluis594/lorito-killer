@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Trash2 } from "lucide-react";
 import KgQuantity from "@/new-order/components/cart/kg-quantity";
 import { AddDiscountModal } from "@/new-order/components/cart/add-discount-modal";
+import {useOrderFormActions} from "@/new-order/order-form-provider";
 
 interface CartItemProps {
   item: OrderItem;
@@ -25,6 +26,17 @@ export default function CartItem({
   removeOrderItem,
   restoreStockProduct,
 }: CartItemProps) {
+  const { updateOrderItem } = useOrderFormActions();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateQuantity(+e.target.value);
+  };
+
+  const updateQuantity = (quantity: number) => {
+    const updatedItem = { ...item, quantity };
+    updateOrderItem(updatedItem);
+  };
+
   const onIncreaseIncreaseQuantity = () => {
     increaseQuantity(item.id!);
     decreaseQuantityProduct(item.productId);
@@ -44,9 +56,13 @@ export default function CartItem({
       <Button variant="secondary" onClick={onDecreaseIncreaseQuantity}>
         <Minus className="h-2 w-2 cursor-pointer" />
       </Button>
-      <p className="text-small">{item.quantity}</p>
+      <input
+        value={item.quantity || 0}
+        onChange={handleChange}
+        className="text-small w-16 text-center border p-1"
+      />
       <Button variant="secondary" onClick={onIncreaseIncreaseQuantity}>
-        <Plus className="h-2 w-2 cursor-pointer" />
+        <Plus className="h-2 w-2 cursor-pointer"/>
       </Button>
     </div>
   );
