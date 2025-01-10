@@ -152,7 +152,7 @@ export const createDocument = async (
 };
 
 export const findDocument = async (id: string): Promise<response<Document>> => {
-  const document = await prisma().document.findUnique({ where: { id } });
+  const document = await prisma().document.findFirst({ where: { orderId: id } });
 
   if (!document) {
     return errorResponse("document not found");
@@ -382,6 +382,7 @@ export const update = async (document: Document): Promise<response<Document>> =>
         series: document.series,
         number: parseInt(document.number),
         status: STATUS_TO_PRISMA_MAPPER[document.status],
+        cancellationReason: document.status === "cancelled" ? document.cancellationReason : "",
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
