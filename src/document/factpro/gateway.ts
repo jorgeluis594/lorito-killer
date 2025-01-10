@@ -482,17 +482,13 @@ export default function gateway({
     }
 
     const body = {
-      fecha_de_emision_de_documentos: document.dateOfIssue,
-      codigo_tipo_proceso: isInvoice(document) ? "01" : '03',
-      documentos: [
-        {
-          correlativo: `${document.series}-${document.number}`,
-          motivo_anulacion: cancellationReason,
-        },
-      ],
+      tipo_documento: isInvoice(document) ? "01" : '03',
+      serie: document.series,
+      numero: document.number,
+      motivo: cancellationReason,
     };
 
-    const res = await fetch(`${url!}/resumenes`, {
+    const res = await fetch(`${url!}/anular`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${billingToken}`,
