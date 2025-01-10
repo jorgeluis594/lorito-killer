@@ -355,7 +355,7 @@ export async function update(order: Order): Promise<response<Order>> {
   try {
     await prisma().order.update({
       where: { id: order.id },
-      data: { status: STATUS_TO_PRISMA_MAPPER[order.status] },
+      data: { status: STATUS_TO_PRISMA_MAPPER[order.status], cancellationReason: order.cancellationReason },
     });
 
     return { success: true, data: { ...order } };
