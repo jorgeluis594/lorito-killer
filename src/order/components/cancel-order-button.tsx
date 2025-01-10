@@ -19,6 +19,9 @@ import { correlative } from "@/document/utils";
 import { cancelOrder } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
 import {useState} from "react";
+import {log} from "@/lib/log";
+import {Textarea} from "@/shared/components/ui/textarea";
+import {Label} from "@/shared/components/ui/label";
 
 const CancelOrderButton = ({
   order,
@@ -45,7 +48,7 @@ const CancelOrderButton = ({
     if (!cancelResponse.success) {
       toast({
         title: "Error",
-        description: `No se pudo cancelar la venta: ${cancelResponse.message}`,
+        description: `No se pudo cancelar la venta. Comuniquese con soporte.`,
         variant: "destructive",
       });
       return;
@@ -75,8 +78,8 @@ const CancelOrderButton = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div>
-          <label htmlFor="cancellationReason">Razón de la cancelación:</label>
-          <textarea
+          <Label htmlFor="cancellationReason">Razón de la cancelación:</Label>
+          <Textarea
             id="cancellationReason"
             value={cancellationReason}
             onChange={(e) => setCancellationReason(e.target.value)}
