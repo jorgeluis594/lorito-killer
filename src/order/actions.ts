@@ -127,5 +127,6 @@ export const getCompany = async (): Promise<response<Company>> => {
   return await findCompany(session.user.companyId);
 };
 
-export const cancelOrder = async (order: Order, cancellationReason: string): Promise<response<Order>> =>
-  withinTransaction(async () => cancel(order, cancellationReason));
+export const cancelOrder = async (order: Order, cancellationReason: string): Promise<response<Order>> => {
+  return cancel(order, cancellationReason);
+}
