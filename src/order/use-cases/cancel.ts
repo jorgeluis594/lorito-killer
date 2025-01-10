@@ -50,18 +50,6 @@ const cancel = async (order: Order, cancellationReason: string): Promise<respons
     };
   }
 
-
-  const updateOrderResponse = await updateOrder({
-    ...order,
-    status: "cancelled",
-    cancellationReason: cancellationReason,
-  });
-  if (!updateOrderResponse.success) {
-    return {
-      success: false,
-      message: "Error actualizando la venta, comuniquese con soporte",
-    };
-  }
   const session = await getSession();
 
   const billingCredentialsResponse = await getBillingCredentialsFor(
@@ -78,12 +66,12 @@ const cancel = async (order: Order, cancellationReason: string): Promise<respons
     billingCredentialsResponse.data;
   const {cancelDocument} = billingDocumentGateway({ billingToken })
 
-  const documentFound = await findDocument(order.document?.id!)
+  const documentFound = await findDocument(order.id!)
   if(!documentFound.success){
     log.error("document_not_found",{document})
     return {
       success: false,
-      message: "No se encontraron credenciales de facturación",
+      message: documentFound.message,
     };
   }
 
@@ -93,10 +81,22 @@ const cancel = async (order: Order, cancellationReason: string): Promise<respons
     log.error("document_not_cancelled",{cancelDocumentResponse})
     return {
       success: false,
-      message: "No se encontraron credenciales de facturación",
+      message: cancelDocumentResponse.message,
     };
   }
   const updatedDocument = await updateDocument(cancelDocumentResponse.data)
+
+  const updateOrderResponse = await updateOrder({
+    ...order,
+    status: "cancelled",
+    cancellationReason: cancellationReason,
+  });
+  if (!updateOrderResponse.success) {
+    return {
+      success: false,
+      message: "Error actualizando la venta, comuniquese con soporte",
+    };
+  }
 
   return { success: true, data: updateOrderResponse.data };
 };
