@@ -5,12 +5,10 @@ import { Button } from "@/shared/components/ui/button";
 import { Trash2 } from "lucide-react";
 import KgQuantity from "@/new-order/components/cart/kg-quantity";
 import { AddDiscountModal } from "@/new-order/components/cart/add-discount-modal";
-import {useOrderFormActions} from "@/new-order/order-form-provider";
-import {Input} from "@/shared/components/ui/input";
+import UnitQuantityComponent from "@/new-order/components/cart/unit-quantity";
 
 interface CartItemProps {
   item: OrderItem;
-  updatedOrderItem: (orderItem: OrderItem) => void;
   increaseQuantity: (orderItemId: string) => void;
   decreaseQuantity: (orderItemId: string) => void;
   increaseQuantityProduct: (orderItemId: string) => void;
@@ -21,7 +19,6 @@ interface CartItemProps {
 
 export default function CartItem({
   item,
-  updatedOrderItem,
   increaseQuantity,
   decreaseQuantity,
   increaseQuantityProduct,
@@ -29,16 +26,6 @@ export default function CartItem({
   removeOrderItem,
   restoreStockProduct,
 }: CartItemProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(0, +e.target.value || 0);
-    updateQuantity(value);
-  };
-
-  const updateQuantity = (quantity: number) => {
-    const updatedItem = { ...item, quantity };
-    updatedOrderItem(updatedItem);
-  };
-
   const onIncreaseIncreaseQuantity = () => {
     increaseQuantity(item.id!);
     decreaseQuantityProduct(item.productId);
@@ -53,22 +40,6 @@ export default function CartItem({
     restoreStockProduct(item.productId, item.quantity);
   };
 
-  const UnitQuantityComponent = () => (
-    <div className="flex justify-around items-center">
-      <Button variant="secondary" onClick={onDecreaseIncreaseQuantity}>
-        <Minus className="h-2 w-2 cursor-pointer" />
-      </Button>
-      <Input
-        value={item.quantity || 0}
-        onChange={handleChange}
-        className="text-small w-16 text-center border p-1"
-      />
-      <Button variant="secondary" onClick={onIncreaseIncreaseQuantity}>
-        <Plus className="h-2 w-2 cursor-pointer"/>
-      </Button>
-    </div>
-  );
-
   return (
     <div className="py-2 px-4 border-b grid grid-cols-[270px,1fr,140px] transition animate-move-from-left-to-right hover:bg-accent group">
       <div>
@@ -80,7 +51,7 @@ export default function CartItem({
       {item.unitType === "kg" ? (
         <KgQuantity orderItem={item} />
       ) : (
-        <UnitQuantityComponent />
+        <UnitQuantityComponent item={item} onIncreaseIncreaseQuantity={onIncreaseIncreaseQuantity} onDecreaseIncreaseQuantity={onDecreaseIncreaseQuantity} />
       )}
       <div>
         <p className="text-end text-xl font-medium group-hover:hidden">

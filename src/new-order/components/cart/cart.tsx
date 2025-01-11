@@ -35,7 +35,6 @@ export default function Cart() {
     reset,
     removeOrderItem,
     setCustomer,
-    updateOrderItem
   } = useOrderFormActions();
 
   const handleClickSell = () => {
@@ -122,7 +121,6 @@ export default function Cart() {
                 <CartItem
                   key={item.productId}
                   item={item}
-                  updatedOrderItem={updateOrderItem}
                   increaseQuantity={increaseQuantity}
                   decreaseQuantity={decreaseQuantity}
                   increaseQuantityProduct={increaseQuantityProduct}
