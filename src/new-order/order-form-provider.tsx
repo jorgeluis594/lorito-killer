@@ -160,7 +160,7 @@ export const useOrderFormActions = (): Actions => {
     if (!response.success) {
       toast({
         variant: "destructive",
-        title: "No se agregar la cantidad del producto",
+        title: "No se pudo agregar la cantidad del producto",
         description: response.message,
       });
       return
