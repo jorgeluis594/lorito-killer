@@ -15,7 +15,7 @@ import { Printer } from "lucide-react";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { fullName } from "@/customer/utils";
-import { differenceInMinutes } from "date-fns";
+import {differenceInDays, differenceInMinutes} from "date-fns";
 import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
@@ -57,7 +57,7 @@ export default async function OrderData({ order }: { order: Order }) {
               <Printer className="cursor-pointer" />
             </a>
 
-            {differenceInMinutes(new Date(), order.createdAt!) < 20 &&
+            {differenceInDays(new Date(), order.createdAt!) < 7 &&
               order.status === "completed" && (
                 <CancelOrderButton
                   order={order}
