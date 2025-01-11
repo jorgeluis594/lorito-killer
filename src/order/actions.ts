@@ -33,10 +33,13 @@ export const create = async (
   order: Order,
 ): Promise<response<{ order: Order; document: Document }>> => {
   // TODO: Implement order creator use case to manage the creation of an order logic
-  const session = await getSession();
-  const openCashShiftResponse = await getLastOpenCashShift(session.user.id);
+  const { user } = await getSession();
+  if (!user) {
+    return { success: false, message: "No hay usuario autenticado" };
+  }
+  const openCashShiftResponse = await getLastOpenCashShift(user.id);
   const billingCredentialsResponse = await getBillingCredentialsFor(
-    session.user.companyId,
+    user.companyId,
   );
   if (!billingCredentialsResponse.success) {
     return {
@@ -62,7 +65,7 @@ export const create = async (
     };*/
   }
 
-  if (openCashShift.userId !== session.user.id) {
+  if (openCashShift.userId !== user.id) {
     return {
       success: false,
       message: "La caja abierta no pertenece al usuario",
@@ -79,7 +82,7 @@ export const create = async (
       const createOrderResponse = await createOrder({
         ...discountResponse.data,
         cashShiftId: openCashShift.id,
-        companyId: session.user.companyId,
+        companyId: user.companyId,
       });
       if (!createOrderResponse.success) {
         return createOrderResponse;
@@ -124,6 +127,9 @@ export const create = async (
 
 export const getCompany = async (): Promise<response<Company>> => {
   const session = await getSession();
+  if (!session.user) {
+    return { success: false, message: "No hay usuario autenticado" };
+  }
   return await findCompany(session.user.companyId);
 };
 

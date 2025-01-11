@@ -20,7 +20,7 @@ export const authConfig: NextAuthOptions = {
       if (!session.user) return session;
 
       const persistedUser = await getUserByEmail(session.user.email!);
-      if (!persistedUser.success) return session;
+      if (!persistedUser.success) return { ...session, user: undefined };
 
       return {
         ...session,

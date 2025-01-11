@@ -6,11 +6,14 @@ import { notFound } from "next/navigation";
 import NewUserModal from "@/company/components/new-user-modal";
 import { Label } from "@/shared/components/ui/label";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 export const revalidate = 0;
 
 export default async function CompanySettingsPage() {
   const session = await getSession();
+  if (!session.user) return <SignOutRedirection />;
+
   const companyResponse = await getCompany(session.user.companyId);
 
   if (!companyResponse.success) {
