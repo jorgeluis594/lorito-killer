@@ -132,7 +132,7 @@ const DISCOUNT_TYPE_MAPPER: Record<Discount["type"], $Enums.DiscountType> = {
 
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
-    const { orderItems, payments, customer, discount, ...orderData } = order;
+    const { orderItems, payments, customer, discount, cancellationReason, ...orderData } = order;
 
     const createdOrderResponse = await prisma().order.create({
       data: {
@@ -141,6 +141,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
         discountType: discount ? DISCOUNT_TYPE_MAPPER[discount.type] : null,
         discountValue: discount?.value,
         customerId: customer?.id,
+        cancellationReason: cancellationReason || "",
         payments: { create: mapPaymentsToPrisma(payments) as any },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -163,6 +164,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       netTotal: createdOrderResponse.netTotal.toNumber(),
       discountAmount: createdOrderResponse.discountAmount.toNumber(),
       status: order.status,
+      cancellationReason: order.cancellationReason,
       documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
       orderItems: [],
@@ -341,6 +343,7 @@ export async function transformOrdersData(
       discount,
       discountAmount: prismaOrder.discountAmount?.toNumber(),
       total: prismaOrder.total.toNumber(),
+      cancellationReason: prismaOrder.cancellationReason || "",
       netTotal: prismaOrder.netTotal.toNumber(),
       documentType: prismaOrder.documentType,
     };
@@ -352,7 +355,7 @@ export async function update(order: Order): Promise<response<Order>> {
   try {
     await prisma().order.update({
       where: { id: order.id },
-      data: { status: STATUS_TO_PRISMA_MAPPER[order.status] },
+      data: { status: STATUS_TO_PRISMA_MAPPER[order.status], cancellationReason: order.cancellationReason },
     });
 
     return { success: true, data: { ...order } };

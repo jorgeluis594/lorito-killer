@@ -40,3 +40,6 @@ next-env.d.ts
 
 # ide
 .idea
+env.example
+package-lock.json
+package.json
