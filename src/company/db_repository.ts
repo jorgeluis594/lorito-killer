@@ -24,6 +24,7 @@ export const createCompany = async (
       data: {
         ...company,
         ...storedCompany,
+        name: storedCompany.name || undefined,
         subName: storedCompany.subName || undefined,
         phone: storedCompany.phone || undefined,
         email: storedCompany.email || undefined,
@@ -65,6 +66,7 @@ export const updateCompany = async (
       data: {
         ...company,
         ...updatedCompany,
+        name: updatedCompany.name || undefined,
         subName: updatedCompany.subName || undefined,
         phone: updatedCompany.phone || undefined,
         email: updatedCompany.email || undefined,
@@ -103,6 +105,7 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
         ...companyData,
         logo: company.logos[0],
         ruc: company.ruc || undefined,
+        name: company.name || undefined,
         subName: company.subName || undefined,
         phone: company.phone || undefined,
         email: company.email || undefined,
