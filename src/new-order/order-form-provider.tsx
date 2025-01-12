@@ -35,7 +35,7 @@ interface OrderFormProviderProps {
 }
 
 export const OrderFormProvider = ({ children }: OrderFormProviderProps) => {
-  const storeRef = useRef<StoreApi<OrderFormStore> | null>(null);
+  const storeRef = useRef<StoreApi<OrderFormStore>>(null);
   if (!storeRef.current) {
     storeRef.current = createOrderFormStore(initOrderFormStore());
   }
