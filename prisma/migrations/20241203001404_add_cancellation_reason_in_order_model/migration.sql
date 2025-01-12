@@ -5,4 +5,6 @@
 
 */
 -- AlterTable
-ALTER TABLE "Order" ADD COLUMN     "cancellationReason" TEXT NOT NULL;
+ALTER TABLE "Order" ADD COLUMN "cancellationReason" TEXT;
+
+UPDATE "Order" SET "cancellationReason" = '' WHERE "status" = 'CANCELLED';

@@ -6,8 +6,8 @@
 
 */
 -- CreateEnum
-CREATE TYPE "DocumentStatus" AS ENUM ('REGISTRED', 'CANCELLED', 'PENDING_CANCELLATION');
+CREATE TYPE "DocumentStatus" AS ENUM ('REGISTERED', 'CANCELLED', 'PENDING_CANCELLATION');
 
 -- AlterTable
-ALTER TABLE "Document" ADD COLUMN     "cancellationReason" TEXT NOT NULL,
-ADD COLUMN     "status" "DocumentStatus" NOT NULL;
+ALTER TABLE "Document" ADD COLUMN     "cancellationReason" TEXT,
+ADD COLUMN     "status" "DocumentStatus" DEFAULT 'REGISTERED';
