@@ -1,33 +1,36 @@
 import BreadCrumb from "@/shared/breadcrumb";
-import { Heading } from "@/shared/components/ui/heading";
-import { Separator } from "@/shared/components/ui/separator";
+import {Heading} from "@/shared/components/ui/heading";
+import {Separator} from "@/shared/components/ui/separator";
 import DataTable from "@/sale_report/components/table/client";
-import { columns } from "@/sale_report/components/table/columns";
-import { getSession } from "@/lib/auth";
-import { getMany, getTotal } from "@/document/db_repository";
-import { SearchParams } from "@/document/types";
-import { Suspense } from "react";
+import {columns} from "@/sale_report/components/table/columns";
+import {getSession} from "@/lib/auth";
+import {getMany, getTotal} from "@/document/db_repository";
+import {SearchParams} from "@/document/types";
+import {Suspense} from "react";
 import Filters from "@/sale_report/components/filter/filters";
 import DownloadXLSXButton from "@/sale_report/components/download_xlsx_button";
-import { errorResponse, objectToQueryString } from "@/lib/utils";
-import { response } from "@/lib/types";
+import {errorResponse, objectToQueryString} from "@/lib/utils";
+import {response} from "@/lib/types";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 export const dynamic = "force-dynamic";
 
 const breadcrumbItems = [
-  { title: "Reporte de ventas", link: "/sales_reports" },
+  {title: "Reporte de ventas", link: "/sales_reports"},
 ];
 
 type ParamsProps = {
-  searchParams: {
+  searchParams: Promise<{
     [key: string]: string | string[] | undefined;
-  };
+  }>;
 };
 
+
 const getSearchParams = async ({
-  searchParams,
-}: ParamsProps): Promise<response<SearchParams>> => {
+                                 searchParams,
+                               }: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}): Promise<response<SearchParams>> => {
   const session = await getSession();
   if (!session.user)
     return errorResponse("Usuario no autenticado", "AuthError");
@@ -69,13 +72,15 @@ const getSearchParams = async ({
     params.customerId = searchParams.customerId as string;
   }
 
-  return { success: true, data: params };
+  return {success: true, data: params};
 };
 
-async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
-  const documentQuery = await getSearchParams({ searchParams });
+async function DocumentsWithSuspense({searchParams}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  const documentQuery = await getSearchParams({searchParams});
   if (!documentQuery.success) {
-    return <SignOutRedirection />;
+    return <SignOutRedirection/>;
   }
 
   const [documentsResponse, documentCountResponse] = await Promise.all([
@@ -98,15 +103,16 @@ async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
   );
 }
 
-export default async function Page({ searchParams }: ParamsProps) {
+export default async function Page(props: ParamsProps) {
+  const searchParams = await props.searchParams;
   return (
     <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
-      <BreadCrumb items={breadcrumbItems} />
+      <BreadCrumb items={breadcrumbItems}/>
 
       <div className="flex items-start justify-between">
-        <Heading title="Reporte de ventas" />
+        <Heading title="Reporte de ventas"/>
       </div>
-      <Separator />
+      <Separator/>
       <div className="flex flex-row space-x-12 space-y-0 mt-8">
         <aside className="w-1/5">
           <DownloadXLSXButton
@@ -114,13 +120,13 @@ export default async function Page({ searchParams }: ParamsProps) {
               searchParams as Record<string, string>,
             )}
           />
-          <Filters searchParams={searchParams} />
+          <Filters searchParams={searchParams}/>
         </aside>
         <div className="flex-1 lg:max-w-7xl mt-6">
           <Suspense
-            fallback={<DataTable loading columns={columns} pageCount={1} />}
+            fallback={<DataTable loading columns={columns} pageCount={1}/>}
           >
-            <DocumentsWithSuspense searchParams={searchParams} />
+            <DocumentsWithSuspense searchParams={searchParams}/>
           </Suspense>
         </div>
       </div>

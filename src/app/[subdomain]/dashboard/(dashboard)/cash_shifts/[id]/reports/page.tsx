@@ -5,17 +5,24 @@ import CashShiftReportTw from "@/cash-shift/cash-shift-report-tailwind";
 import { findCashShift } from "@/cash-shift/db_repository";
 import { notFound } from "next/navigation";
 import { CashShift } from "@/cash-shift/types";
+import {Suspense} from "react";
 
 const breadcrumbItems = [
   { title: "Caja chica", link: "/cash_shifts" },
   { title: "Reportes", link: "/" },
 ];
 
-export default async function Page({
-  params: { id },
-}: {
-  params: { id: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    id
+  } = params;
+
   const cashShiftFoundResponse = await findCashShift<CashShift>(id);
   if (!cashShiftFoundResponse.success) {
     return notFound();
@@ -29,7 +36,9 @@ export default async function Page({
       </div>
       <Separator />
       <div className="h-[calc(100vh-theme(space.64))]">
-        <CashShiftReportTw cashShift={cashShiftFoundResponse.data} />
+        <Suspense fallback={<div>Loading...</div>}>
+          <CashShiftReportTw cashShift={cashShiftFoundResponse.data} />
+        </Suspense>
       </div>
     </div>
   );
