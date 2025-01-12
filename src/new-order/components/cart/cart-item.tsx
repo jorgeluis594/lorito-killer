@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Trash2 } from "lucide-react";
 import KgQuantity from "@/new-order/components/cart/kg-quantity";
 import { AddDiscountModal } from "@/new-order/components/cart/add-discount-modal";
+import UnitQuantityComponent from "@/new-order/components/cart/unit-quantity";
 
 interface CartItemProps {
   item: OrderItem;
@@ -39,18 +40,6 @@ export default function CartItem({
     restoreStockProduct(item.productId, item.quantity);
   };
 
-  const UnitQuantityComponent = () => (
-    <div className="flex justify-around items-center">
-      <Button variant="secondary" onClick={onDecreaseIncreaseQuantity}>
-        <Minus className="h-2 w-2 cursor-pointer" />
-      </Button>
-      <p className="text-small">{item.quantity}</p>
-      <Button variant="secondary" onClick={onIncreaseIncreaseQuantity}>
-        <Plus className="h-2 w-2 cursor-pointer" />
-      </Button>
-    </div>
-  );
-
   return (
     <div className="py-2 px-4 border-b grid grid-cols-[270px,1fr,140px] transition animate-move-from-left-to-right hover:bg-accent group">
       <div>
@@ -62,7 +51,7 @@ export default function CartItem({
       {item.unitType === "kg" ? (
         <KgQuantity orderItem={item} />
       ) : (
-        <UnitQuantityComponent />
+        <UnitQuantityComponent item={item} onIncreaseIncreaseQuantity={onIncreaseIncreaseQuantity} onDecreaseIncreaseQuantity={onDecreaseIncreaseQuantity} />
       )}
       <div>
         <p className="text-end text-xl font-medium group-hover:hidden">

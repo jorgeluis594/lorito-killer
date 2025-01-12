@@ -155,7 +155,18 @@ export const useOrderFormActions = (): Actions => {
     const index = order.orderItems.findIndex(
       (item) => item.id === orderItem.id,
     );
-    order.orderItems[index] = orderItem;
+    const response = calculateOrderItemTotals(orderItem);
+
+    if (!response.success) {
+      toast({
+        variant: "destructive",
+        title: "No se pudo agregar la cantidad del producto",
+        description: response.message,
+      });
+      return
+    }
+
+    order.orderItems[index] = response.data;
     orderFormStoreContext.setState({
       order: { ...order, orderItems: [...order.orderItems] },
     });
