@@ -2,8 +2,7 @@ import { Photo } from '@/product/types'
 import { find as findProduct, storePhotos } from "@/product/db_repository";
 import {NextResponse} from "next/server";
 
-export async function POST(req: Request, props: { params: Promise<{ id: string }>}) {
-  const params = await props.params;
+export async function POST(req: Request, { params }: { params: { id: string }}) {
   const photosData = await req.json() as Photo[]
   const { success: isProductFound} = await findProduct(params.id)
   if (!isProductFound) {

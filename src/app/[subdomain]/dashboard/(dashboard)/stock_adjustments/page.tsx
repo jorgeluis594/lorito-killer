@@ -13,13 +13,12 @@ const breadcrumbItems = [
 ];
 
 type paramsProps = {
-  searchParams: Promise<{
+  searchParams: {
     [key: string]: string | string[] | undefined;
-  }>;
+  };
 };
 
-export default async function Page(props: paramsProps) {
-  const searchParams = await props.searchParams;
+export default async function Page({ searchParams }: paramsProps) {
   const page = Number(searchParams.page) || 1;
   const pageLimit = Number(searchParams.limit) || 10;
   const session = await getSession();

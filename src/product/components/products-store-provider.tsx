@@ -52,7 +52,7 @@ const ProductsLoader = ({ children }: { children: ReactNode }) => {
 export const ProductsStoreProvider = ({
   children,
 }: ProductsStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<ProductsStore>>(null);
+  const storeRef = useRef<StoreApi<ProductsStore>>();
   if (!storeRef.current) {
     storeRef.current = createProductsStore();
   }

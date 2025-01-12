@@ -19,8 +19,10 @@ const generateQRBase64 = (qrValue: string): Promise<string> =>
     });
   });
 
-export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } },
+) {
   const session = await getSession();
   if (!session.user) {
     return NextResponse.json(

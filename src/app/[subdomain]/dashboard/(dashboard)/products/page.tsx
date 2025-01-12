@@ -13,15 +13,15 @@ import SignOutRedirection from "@/shared/components/sign-out-redirection";
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 
 type ParamsProps = {
-  searchParams: Promise<{
+  searchParams: {
     [key: string]: string | string[] | undefined;
-  }>;
+  };
 };
 
-async function ProductsWithSuspense(props: {searchParams: {[key: string]: string | string[] | undefined}}) {
+async function ProductsWithSuspense({ searchParams }: ParamsProps) {
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
-  const searchParams = props.searchParams;
+
   const params: GetManyParams = {
     companyId: session.user.companyId,
     pageNumber: Number(searchParams.page) || 1,
@@ -54,8 +54,7 @@ async function ProductsWithSuspense(props: {searchParams: {[key: string]: string
   );
 }
 
-export default async function Page(props: ParamsProps) {
-  const searchParams = await props.searchParams;
+export default async function Page({ searchParams }: ParamsProps) {
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 

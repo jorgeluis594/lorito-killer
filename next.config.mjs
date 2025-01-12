@@ -12,11 +12,13 @@ const nextConfig = {
     config.externals = [...config.externals, "bcrypt"];
     return config;
   },
-  serverExternalPackages: [
-    "pino",
-    "pino-pretty",
-    "@react-pdf/renderer",
-  ],
+  experimental: {
+    serverComponentsExternalPackages: [
+      "pino",
+      "pino-pretty",
+      "@react-pdf/renderer",
+    ],
+  },
 };
 
 export default nextConfig;
