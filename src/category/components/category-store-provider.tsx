@@ -19,7 +19,7 @@ export interface CategoryStoreProviderProps {
 export const CategoryStoreProvider = ({
   children,
 }: CategoryStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<CategoryStore>>();
+  const storeRef = useRef<StoreApi<CategoryStore>>(null);
   if (!storeRef.current) {
     storeRef.current = createCategoryStore(iniCategoriesParams());
   }

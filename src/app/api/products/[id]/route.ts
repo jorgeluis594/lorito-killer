@@ -10,10 +10,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import productRemoverCreator from "@/product/use-cases/product-remover";
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session.user) {
     return NextResponse.json(
@@ -53,10 +51,8 @@ export async function PUT(
   });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session.user) {
     return NextResponse.json(
@@ -84,10 +80,8 @@ export async function DELETE(
   return NextResponse.json(response, { status: response.success ? 200 : 400 });
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session.user) {
     return NextResponse.json(

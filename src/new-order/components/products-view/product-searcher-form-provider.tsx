@@ -19,7 +19,7 @@ interface ProductFormProviderProps {
 }
 
 export const ProductFormProvider = ({ children }: ProductFormProviderProps) => {
-  const storeRef = useRef<StoreApi<ProductFormStore>>();
+  const storeRef = useRef<StoreApi<ProductFormStore>>(null);
   if (!storeRef.current) {
     storeRef.current = createProductFormStore(initProductFormStore());
   }
