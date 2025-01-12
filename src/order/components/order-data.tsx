@@ -15,7 +15,7 @@ import { Printer } from "lucide-react";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { fullName } from "@/customer/utils";
-import { differenceInMinutes } from "date-fns";
+import {differenceInDays, differenceInHours, differenceInMinutes} from "date-fns";
 import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
@@ -57,14 +57,15 @@ export default async function OrderData({ order }: { order: Order }) {
               <Printer className="cursor-pointer" />
             </a>
 
-            {order.status === "completed" && order.documentType == "ticket" && (
-              <CancelOrderButton
-                order={order}
-                document={
-                  documentResponse.success ? documentResponse.data : undefined
-                }
-              />
-            )}
+            {differenceInHours(new Date(), order.createdAt!) < 168 &&
+              order.status === "completed" && (
+                <CancelOrderButton
+                  order={order}
+                  document={
+                    documentResponse.success ? documentResponse.data : undefined
+                  }
+                />
+              )}
           </div>
         </CardHeader>
         <CardContent>
