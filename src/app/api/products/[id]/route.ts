@@ -15,6 +15,12 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   const session = await getSession();
+  if (!session.user) {
+    return NextResponse.json(
+      { success: false, message: "Unauthenticated user" },
+      { status: 401 },
+    );
+  }
   const productData: SingleProduct = await req.json();
 
   const findProductResponse = await findProduct(
@@ -52,6 +58,12 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   const session = await getSession();
+  if (!session.user) {
+    return NextResponse.json(
+      { success: false, message: "Unauthenticated user" },
+      { status: 401 },
+    );
+  }
   const findProductResponse = await findProduct(
     params.id,
     session.user.companyId,
@@ -77,6 +89,12 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   const session = await getSession();
+  if (!session.user) {
+    return NextResponse.json(
+      { success: false, message: "Unauthenticated user" },
+      { status: 401 },
+    );
+  }
 
   let response = await findProduct(params.id, session.user.companyId);
   if (!response.success) {

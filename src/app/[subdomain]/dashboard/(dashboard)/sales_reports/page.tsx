@@ -9,6 +9,9 @@ import { SearchParams } from "@/document/types";
 import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
 import DownloadXLSXButton from "@/sale_report/components/download_xlsx_button";
+import { errorResponse, objectToQueryString } from "@/lib/utils";
+import { response } from "@/lib/types";
+import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +27,10 @@ type ParamsProps = {
 
 const getSearchParams = async ({
   searchParams,
-}: ParamsProps): Promise<SearchParams> => {
+}: ParamsProps): Promise<response<SearchParams>> => {
   const session = await getSession();
+  if (!session.user)
+    return errorResponse("Usuario no autenticado", "AuthError");
 
   const params: SearchParams = {
     companyId: session.user.companyId,
@@ -64,14 +69,18 @@ const getSearchParams = async ({
     params.customerId = searchParams.customerId as string;
   }
 
-  return params;
+  return { success: true, data: params };
 };
 
 async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
   const documentQuery = await getSearchParams({ searchParams });
+  if (!documentQuery.success) {
+    return <SignOutRedirection />;
+  }
+
   const [documentsResponse, documentCountResponse] = await Promise.all([
-    getMany(documentQuery),
-    getTotal(documentQuery),
+    getMany(documentQuery.data),
+    getTotal(documentQuery.data),
   ]);
 
   if (!documentsResponse.success || !documentCountResponse.success) {
@@ -83,7 +92,7 @@ async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
       data={documentsResponse.data}
       columns={columns}
       pageCount={Math.ceil(
-        documentCountResponse.data / documentQuery.pageSize!,
+        documentCountResponse.data / documentQuery.data.pageSize!,
       )}
     />
   );
@@ -100,7 +109,11 @@ export default async function Page({ searchParams }: ParamsProps) {
       <Separator />
       <div className="flex flex-row space-x-12 space-y-0 mt-8">
         <aside className="w-1/5">
-          <DownloadXLSXButton />
+          <DownloadXLSXButton
+            queryString={objectToQueryString(
+              searchParams as Record<string, string>,
+            )}
+          />
           <Filters searchParams={searchParams} />
         </aside>
         <div className="flex-1 lg:max-w-7xl mt-6">

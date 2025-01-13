@@ -1,9 +1,6 @@
 import BreadCrumb from "@/shared/breadcrumb";
 import { ProductFormStoreProvider } from "@/product/components/form/product-form-store-provider";
 import { Heading } from "@/shared/components/ui/heading";
-import { Button } from "@/shared/components/ui/button";
-import { Boxes, Plus } from "lucide-react";
-import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
 import { Separator } from "@/shared/components/ui/separator";
 import DataTable from "@/sale_report/components/table/client";
 import { columns } from "@/product/components/data-table/columns";
@@ -12,6 +9,7 @@ import { getMany, GetManyParams, getTotal } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import AddProductButtons from "@/product/components/add-single-product-button";
+import SignOutRedirection from "@/shared/components/sign-out-redirection";
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 
 type ParamsProps = {
@@ -22,6 +20,8 @@ type ParamsProps = {
 
 async function ProductsWithSuspense({ searchParams }: ParamsProps) {
   const session = await getSession();
+  if (!session.user) return <SignOutRedirection />;
+
   const params: GetManyParams = {
     companyId: session.user.companyId,
     pageNumber: Number(searchParams.page) || 1,
@@ -56,6 +56,8 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
 
 export default async function Page({ searchParams }: ParamsProps) {
   const session = await getSession();
+  if (!session.user) return <SignOutRedirection />;
+
   const totalResponse = await getTotal({ companyId: session.user.companyId });
 
   return (

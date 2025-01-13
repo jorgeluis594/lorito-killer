@@ -248,24 +248,35 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
         ]}
       >
         {company.logo && (
-          <Image src={company.logo.url} style={{ width: "40px" }} />
+          <Image src={company.logo.url} style={{ width: "55px" }} />
         )}
-        <Text style={styles.header}>{company.subName}</Text>
-        {company.ruc && (
-          <Text style={styles.description}>RUC {company.ruc}</Text>
+        {company.subName && (
+          <Text style={{fontSize: 12, textAlign: "center", color: "black", fontWeight: "bold"}}>{company.subName}</Text>
         )}
-        <Text style={{ fontSize: 9, textAlign: "center" }}>
-          {[company.district, company.provincial, company.department]
-            .filter(Boolean)
-            .join("-")}
-        </Text>
-        {company.address && (
-          <Text style={styles.description}>
-            D. Comercial: {company.address}
-          </Text>
+        {(document.documentType === "receipt" || document.documentType === "invoice") && (
+          <>
+            {company.name && (
+              <Text style={styles.description}>{company.name}</Text>
+            )}
+            {company.ruc && (
+              <Text style={styles.description}>RUC {company.ruc}</Text>
+            )}
+            <Text style={{ fontSize: 9, textAlign: "center" }}>
+              {[company.district, company.provincial, company.department]
+                .filter(Boolean)
+                .join("-")}
+            </Text>
+            {company.address && (
+              <Text style={styles.description}>{company.address}</Text>
+            )}
+            {company.email && (
+              <Text style={styles.description}>{company.email}</Text>
+            )}
+            {company.phone && (
+              <Text style={styles.description}>{company.phone}</Text>
+            )}
+          </>
         )}
-        <Text style={styles.description}>{company.email}</Text>
-        <Text style={styles.description}>{company.phone}</Text>
       </View>
 
       {/*Document series and number*/}
@@ -310,6 +321,10 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
         <Text style={styles.text}>
           {documentTypeToCustomerDocumentTypeES[document.documentType]}:{" "}
           {order.customer?.documentNumber}
+        </Text>
+
+        <Text style={styles.text}>
+          Dirección: {order.customer?.address}
         </Text>
       </View>
 

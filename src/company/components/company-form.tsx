@@ -37,15 +37,14 @@ const LogoSchema = zod.object({
 const CompanyFormSchema = zod.object({
   name: zod
     .string()
-    .min(3, { message: "El nombre debe tener al menos 3 caracteres" }),
+    .optional(),
   subName: zod
     .string()
-    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
     .optional(),
-  email: zod.string().email({ message: "El email no es válido" }),
+  email: zod.string().email({ message: "El email no es válido" }).optional(),
   phone: zod
     .string()
-    .min(6, { message: "El teléfono debe tener al menos 6 caracteres" }),
+    .optional(),
   ruc: zod.string().length(11, "El ruc debe tener 11 digitos").optional(),
   address: zod
     .string()
@@ -141,53 +140,55 @@ export default function CompanyForm({ company }: { company: Company }) {
           <div>
             <FormField
               control={form.control}
+              name="logo"
+              render={({field}) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      onChange={handleLogoUpdated}
+                      value={field.value}
+                    />
+                  </FormControl>
+                  <FormMessage/>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="name"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Razón Social</FormLabel>
                   <FormControl>
                     <Input placeholder="Razón social" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="subName"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Nombre Comercial</FormLabel>
                   <FormControl>
                     <Input placeholder="Nombre Comercial" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="ruc"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Ruc</FormLabel>
                   <FormControl>
                     <Input placeholder="ej: 10326545678" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem className="my-2 max-w-sm">
-                  <FormLabel>Dirección</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Dirección" {...field} />
-                  </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />
@@ -195,47 +196,73 @@ export default function CompanyForm({ company }: { company: Company }) {
               <FormField
                 control={form.control}
                 name="district"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem className="my-2 max-w-sm">
                     <FormLabel>Distrito</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
                 name="provincial"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem className="my-2 max-w-sm">
                     <FormLabel>Provincia</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
                 name="department"
-                render={({ field }) => (
+                render={({field}) => (
                   <FormItem className="my-2 max-w-sm">
                     <FormLabel>Departamento</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage/>
                   </FormItem>
                 )}
               />
             </div>
             <FormField
               control={form.control}
+              name="address"
+              render={({field}) => (
+                <FormItem className="my-2 max-w-sm">
+                  <FormLabel>Dirección</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Dirección" {...field} />
+                  </FormControl>
+                  <FormMessage/>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({field}) => (
+                <FormItem className="my-2 max-w-sm">
+                  <FormLabel>Correo electrónico</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Correo electónico" {...field} />
+                  </FormControl>
+                  <FormMessage/>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="phone"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem className="my-2 max-w-sm">
                   <FormLabel>Teléfono</FormLabel>
                   <FormControl>
@@ -246,35 +273,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="my-2 max-w-sm">
-                  <FormLabel>Correo electrónico</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Correo electónico" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="logo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <LogoUpload
-                      onChange={handleLogoUpdated}
-                      value={field.value}
-                    />
-                  </FormControl>
-                  <FormMessage />
+                  <FormMessage/>
                 </FormItem>
               )}
             />

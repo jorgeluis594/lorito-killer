@@ -1,12 +1,12 @@
 export type Company = {
   id: string;
-  name: string;
+  name?: string;
   subName?: string;
   department?: string;
   district?: string;
   provincial?: string;
-  phone: string;
-  email: string;
+  phone?: string;
+  email?: string;
   ruc?: string;
   address: string;
   subdomain: string;

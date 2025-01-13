@@ -24,6 +24,12 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   const session = await getSession();
+  if (!session.user) {
+    return NextResponse.json(
+      { success: false, message: "Unauthenticated user" },
+      { status: 401 },
+    );
+  }
   const [companyResponse, orderResponse, documentResponse] = await Promise.all([
     getCompany(session.user.companyId),
     find(params.id, session.user.companyId),

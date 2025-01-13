@@ -16,7 +16,7 @@ export default function useSignOut() {
 
     window.location.href =
       process.env.NODE_ENV == "production"
-        ? `https://${companyResponse.data.subdomain}.kogoz.pe/login`
+        ? `https://kogoz.pe/login`
         : `http://${window.location.host}/login`;
   };
 }

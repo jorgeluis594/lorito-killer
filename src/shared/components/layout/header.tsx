@@ -10,7 +10,7 @@ export default function Header() {
         <div className={cn("block lg:!hidden")}>
           <MobileSidebar/>
         </div>
-        <div className="flex items-center justify-center relative w-[56px] h-[56px] rounded-md overflow-hidden ml-20">
+        <div className="flex justify-start absolute w-[150px] h-[56px] rounded-md overflow-hidden">
           <LogoImage/>
         </div>
         <div className="flex items-center justify-end w-full">

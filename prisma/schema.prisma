@@ -167,25 +167,26 @@ enum OrderStatus {
 }
 
 model Order {
-  id             String        @id @default(uuid())
-  cashShiftId    String
-  companyId      String?
-  customerId     String?
-  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  company        Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  discountAmount Decimal
-  discountType   DiscountType?
-  discountValue  Decimal?
-  netTotal       Decimal
-  total          Decimal
-  status         OrderStatus
-  cashShift      CashShift     @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  payments       Payment[]
-  documents      Document[]
-  documentType   String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  orderItems     OrderItem[]
+  id                 String        @id @default(uuid())
+  cashShiftId        String
+  companyId          String?
+  customerId         String?
+  customer           Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  company            Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  discountAmount     Decimal
+  discountType       DiscountType?
+  discountValue      Decimal?
+  netTotal           Decimal
+  total              Decimal
+  status             OrderStatus
+  cancellationReason String?
+  cashShift          CashShift     @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  payments           Payment[]
+  documents          Document[]
+  documentType       String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  orderItems         OrderItem[]
 }
 
 enum DocumentType {
@@ -194,25 +195,33 @@ enum DocumentType {
   TICKET
 }
 
+enum DocumentStatus {
+  REGISTERED
+  CANCELLED
+  PENDING_CANCELLATION
+}
+
 model Document {
-  id             String       @id @default(uuid())
-  orderId        String
-  customerId     String?
-  companyId      String?
-  discountAmount Decimal      @default(0)
-  netTotal       Decimal
-  total          Decimal
-  documentType   DocumentType
-  series         String
-  number         Int
-  dateOfIssue    DateTime
-  qr             String?
-  hash           String?
-  order          Order        @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  company        Company?     @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id                 String         @id @default(uuid())
+  orderId            String
+  customerId         String?
+  companyId          String?
+  discountAmount     Decimal        @default(0)
+  netTotal           Decimal
+  total              Decimal
+  documentType       DocumentType
+  series             String
+  number             Int
+  dateOfIssue        DateTime
+  qr                 String?
+  hash               String?
+  status             DocumentStatus
+  cancellationReason String?
+  order              Order          @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  company            Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  customer           Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 }
 
 enum CustomerDocumentType {
@@ -237,13 +246,13 @@ model Customer {
 
 model Company {
   id                 String          @id @default(uuid())
-  name               String
+  name               String?
   subName            String?
   department         String?
   district           String?
   provincial         String?
-  email              String
-  phone              String
+  email              String?
+  phone              String?
   address            String
   ruc                String?
   customers          Customer[]

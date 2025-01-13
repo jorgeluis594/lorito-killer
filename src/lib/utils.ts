@@ -307,9 +307,13 @@ export const billableNumberToWords = (() => {
   };
 })();
 
-export const errorResponse = (message: string): ErrorResponse => ({
+export const errorResponse = (
+  message: string,
+  type?: "AuthError",
+): ErrorResponse => ({
   success: false,
   message: message,
+  type,
 });
 
 export const startOfDay = (date: Date) => {
@@ -321,3 +325,42 @@ export const endOfDay = (date: Date) => {
   const timeZoneDate = toZonedTime(date, "America/Lima");
   return endOfDayFns(timeZoneDate);
 };
+
+export const objectToQueryString = (obj: Record<string, string>) => {
+  const query = new URLSearchParams(obj);
+  return query.toString();
+};
+
+/**
+ * Parses the specified URLSearchParams and returns a record of requested keys.
+ *
+ * @remarks
+ * This function iterates over the provided keys and attempts to retrieve
+ * their values from the `URLSearchParams` instance. If a key is missing,
+ * it will have the value `undefined` in the returned object.
+ *
+ * @param queryParams - An instance of `URLSearchParams`
+ * @param keys - An array of strings corresponding to the keys to retrieve
+ * @returns A record whose keys are the given strings, and values are either
+ * the parameter value (as a string) or `undefined`
+ *
+ * @example
+ * ```ts
+ * const exampleParams = new URLSearchParams('foo=1&bar=2&baz=3');
+ * const result = parseQueryParams(exampleParams, ['foo', 'bar']);
+ * // {
+ * //   foo: '1',
+ * //   bar: '2'
+ * // }
+ * ```
+ */
+export function parseQueryParams<K extends string>(
+  queryParams: URLSearchParams,
+  keys: K[],
+): Record<K, string | undefined> {
+  const result = {} as Record<K, string | undefined>;
+  for (const key of keys) {
+    result[key] = queryParams.get(key) ?? undefined;
+  }
+  return result;
+}

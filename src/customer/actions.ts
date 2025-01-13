@@ -14,10 +14,11 @@ import { log } from "@/lib/log";
 export const createCustomer = async (
   customer: Customer,
 ): Promise<response<Customer>> => {
-  const session = await getSession();
+  const { user } = await getSession();
+  if (!user) return { success: false, message: "Unauthenticated user" };
 
   const responseFind = await findByDocumentNumber(
-    session.user.companyId,
+    user.companyId,
     String(customer.documentNumber),
   );
 
@@ -26,7 +27,7 @@ export const createCustomer = async (
     return { success: false, message: "Cliente ya registrado." };
   }
 
-  return persistCustomer({ ...customer, companyId: session.user.companyId });
+  return persistCustomer({ ...customer, companyId: user.companyId });
 };
 
 export const searchCustomer = async (
@@ -34,6 +35,9 @@ export const searchCustomer = async (
   documentType: string,
 ): Promise<response<Customer>> => {
   const session = await getSession();
+  if (!session.user) {
+    return { success: false, message: "Unauthenticated user" };
+  }
   const billingCredentialsResponse = await getBillingCredentialsFor(
     session.user.companyId,
   );
@@ -69,20 +73,6 @@ export const searchCustomer = async (
       response,
       fetchFunction: fetchFunction.name,
     });
-    return { success: false, message: "No se encontro al cliente" };
-  }
-
-  return response;
-};
-
-export const findCustomerByDocumentNumber = async (documentNumber: string) => {
-  const session = await getSession();
-  const response = await findByDocumentNumber(
-    session.user.companyId,
-    documentNumber,
-  );
-
-  if (!response.success) {
     return { success: false, message: "No se encontro al cliente" };
   }
 

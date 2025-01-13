@@ -15,7 +15,7 @@ import { Printer } from "lucide-react";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { fullName } from "@/customer/utils";
-import { differenceInMinutes } from "date-fns";
+import {differenceInDays, differenceInHours, differenceInMinutes} from "date-fns";
 import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
@@ -23,6 +23,8 @@ import { Badge } from "@/shared/components/ui/badge";
 
 export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
+
+  const hasADiscount = order.orderItems.some((orderItem) => orderItem.discountAmount > 0);
 
   return (
     <div className="h-full mt-8 flex justify-center">
@@ -55,14 +57,15 @@ export default async function OrderData({ order }: { order: Order }) {
               <Printer className="cursor-pointer" />
             </a>
 
-            {order.status === "completed" && order.documentType == "ticket" && (
-              <CancelOrderButton
-                order={order}
-                document={
-                  documentResponse.success ? documentResponse.data : undefined
-                }
-              />
-            )}
+            {differenceInHours(new Date(), order.createdAt!) < 168 &&
+              order.status === "completed" && (
+                <CancelOrderButton
+                  order={order}
+                  document={
+                    documentResponse.success ? documentResponse.data : undefined
+                  }
+                />
+              )}
           </div>
         </CardHeader>
         <CardContent>
@@ -105,36 +108,46 @@ export default async function OrderData({ order }: { order: Order }) {
 
           <table className="table-auto border w-full mt-8">
             <thead>
-              <tr>
+            <tr>
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Cantidad
+              </th>
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Producto
+              </th>
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Precio
+              </th>
+              {hasADiscount && (
                 <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Cantidad
+                  Descuento
                 </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Producto
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Precio
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Total
-                </th>
-              </tr>
+              )}
+              <th className="bg-slate-100 pl-2 border py-1 font-light">
+                Total
+              </th>
+            </tr>
             </thead>
             <tbody>
-              {order.orderItems.map((orderItem) => (
-                <tr key={orderItem.id}>
+            {order.orderItems.map((orderItem) => (
+              <tr key={orderItem.id}>
+                <td className="pl-2 border py-1">
+                  {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
+                </td>
+                <td className="pl-2 border py-1">{orderItem.productName}</td>
+                <td className="pl-2 border py-1">
+                  {formatPrice(orderItem.productPrice)}
+                </td>
+                {hasADiscount && (
                   <td className="pl-2 border py-1">
-                    {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
+                    {formatPrice(orderItem.discountAmount)}
                   </td>
-                  <td className="pl-2 border py-1">{orderItem.productName}</td>
-                  <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.productPrice)}
-                  </td>
-                  <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.total)}
-                  </td>
-                </tr>
-              ))}
+                )}
+                <td className="pl-2 border py-1">
+                  {formatPrice(orderItem.total)}
+                </td>
+              </tr>
+            ))}
             </tbody>
           </table>
           <div className="w-full flex justify-between mt-8">

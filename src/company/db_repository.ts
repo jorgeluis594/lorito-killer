@@ -24,7 +24,10 @@ export const createCompany = async (
       data: {
         ...company,
         ...storedCompany,
+        name: storedCompany.name || undefined,
         subName: storedCompany.subName || undefined,
+        phone: storedCompany.phone || undefined,
+        email: storedCompany.email || undefined,
         department: storedCompany.department || undefined,
         district: storedCompany.district || undefined,
         provincial: storedCompany.provincial || undefined,
@@ -63,7 +66,10 @@ export const updateCompany = async (
       data: {
         ...company,
         ...updatedCompany,
+        name: updatedCompany.name || undefined,
         subName: updatedCompany.subName || undefined,
+        phone: updatedCompany.phone || undefined,
+        email: updatedCompany.email || undefined,
         department: updatedCompany.department || undefined,
         district: updatedCompany.district || undefined,
         provincial: updatedCompany.provincial || undefined,
@@ -99,7 +105,10 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
         ...companyData,
         logo: company.logos[0],
         ruc: company.ruc || undefined,
+        name: company.name || undefined,
         subName: company.subName || undefined,
+        phone: company.phone || undefined,
+        email: company.email || undefined,
         department: company.department || undefined,
         district: company.district || undefined,
         provincial: company.provincial || undefined,
@@ -135,7 +144,7 @@ export const storeLogo = async (
 ): Promise<response<Logo>> => {
   try {
     const logo = await prisma().logo.findFirst({
-      where: { companyId: newLogo.companyId },
+      where: { companyId: companyId },
     });
     if (logo) {
       await prisma().logo.delete({ where: { id: logo.id } });
