@@ -10,7 +10,7 @@ export const create = async (
   try {
     const foundResponse = await findByName(category.companyId, category.name);
     if (foundResponse.success) {
-      return foundResponse;
+      return {success: false, message: "Esta categoria ya existe."};
     }
 
     const createdCategory = await prisma().category.create({ data: category });
