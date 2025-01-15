@@ -65,15 +65,16 @@ export default function NewCategoryDialog({
       addCategory(createdCategory.data);
       form.setValue("name", "");
       toast({
+        duration: 2000,
         description: `Categoria ${createdCategory.data.name} creada con exito`,
       });
       setOpen(false);
     } else {
-      alert(createdCategory.message);
       toast({
         title: "Error",
         variant: "destructive",
-        description: "Error al crear la categoria",
+        duration: 2000,
+        description: `Error al crear la categoria. ${createdCategory.message}`,
       });
     }
   };

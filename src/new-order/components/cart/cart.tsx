@@ -48,6 +48,7 @@ export default function Cart() {
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: "Se necesita elegir un cliente",
       });

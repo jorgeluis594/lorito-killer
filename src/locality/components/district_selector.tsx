@@ -52,6 +52,7 @@ export default function DistrictSelector({
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: response.message,
       });

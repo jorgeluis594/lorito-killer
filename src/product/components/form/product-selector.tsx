@@ -61,6 +61,7 @@ export default function ProductSelector<T extends ProductType | undefined>({
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: response.message,
       });

@@ -52,6 +52,7 @@ export default function ProductsSearcher() {
     if (!response.success) {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: response.message,
       });
@@ -101,6 +102,7 @@ export default function ProductsSearcher() {
         if (!response.success) {
           toast({
             title: "Error",
+            duration: 2000,
             variant: "destructive",
             description: `Producto con sku: ${skuValueRef.current} no encontrado`,
           });

@@ -63,6 +63,7 @@ export default function NewUserModal() {
     if (!user) {
       toast({
         title: "Error",
+        duration: 2000,
         description: "Debes iniciar sesión",
         variant: "destructive",
       });
@@ -85,6 +86,7 @@ export default function NewUserModal() {
     if (!response.success) {
       toast({
         title: "Error",
+        duration: 2000,
         description: "No se pudo crear el usuario, intente en unos minutos", // TODO: agregar manejo de errores
         variant: "destructive",
       });
@@ -94,6 +96,7 @@ export default function NewUserModal() {
     form.reset();
     toast({
       title: "Usuario creado",
+      duration: 2000,
       description: "El usuario ha sido creado exitosamente",
     });
     setOpen(false);

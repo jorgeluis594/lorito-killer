@@ -37,6 +37,7 @@ export default function DeleteCategoryModal({
     if (!deleteResponse.success) {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: deleteResponse.message,
       });
@@ -45,6 +46,7 @@ export default function DeleteCategoryModal({
 
     setOpen(false);
     toast({
+      duration: 2000,
       title: "Categoría eliminada",
     });
     deleteCategoryFromStore(category.id!);

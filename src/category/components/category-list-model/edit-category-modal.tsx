@@ -65,6 +65,7 @@ export default function EditCategoryModal({
     const res = await updateCategory(data);
     if (res.success) {
       toast({
+        duration: 2000,
         description: "Categoría actualizada con exito",
       });
       setOpen(false)
@@ -72,6 +73,7 @@ export default function EditCategoryModal({
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: "Error al actualizar el producto, " + res.message,
       });

@@ -118,12 +118,14 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
       });
       if (res.success) {
         toast({
+          duration: 2000,
           description: "Pack actualizado con exito",
         });
         onActionPerformed();
       } else {
         toast({
           title: "Error",
+          duration: 2000,
           variant: "destructive",
           description:
             "Error al actualizar el pack de productos, " + res.message,
@@ -134,12 +136,14 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
       const res = await repository.create(transformToProduct(data));
       if (res.success) {
         toast({
+          duration: 2000,
           description: "Pack creado con exito",
         });
         onActionPerformed();
       } else {
         toast({
           title: "Error",
+          duration: 2000,
           variant: "destructive",
           description:
             "Error al registrar el pack de productos, " + res.message,
@@ -182,11 +186,13 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
         );
         if (removePhotoResponse.success) {
           toast({
+            duration: 2000,
             description: "Photo eliminada con exito",
           });
         } else {
           toast({
             title: "Error",
+            duration: 2000,
             variant: "destructive",
             description: removePhotoResponse.message,
           });
@@ -202,11 +208,13 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
       if (storePhotoResponse.success) {
         form.setValue("photos", [...currentPhotos, ...storePhotoResponse.data]);
         toast({
+          duration: 2000,
           description: "Photos subidas con exito",
         });
       } else {
         toast({
           title: "Error",
+          duration: 2000,
           variant: "destructive",
           description: storePhotoResponse.message,
         });
@@ -225,11 +233,13 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
     );
     if (attachCategoryResponse.success) {
       toast({
+        duration: 2000,
         description: `Categoria ${category.name} agregada con exito`,
       });
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: `Error al agregar la categoria ${category.name}`,
       });
@@ -252,11 +262,13 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
     );
     if (removeCategoryResponse.success) {
       toast({
+        duration: 2000,
         description: `Categoria ${category.name} eliminada del producto con exito`,
       });
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: `Error al eliminar la categoria ${category.name}`,
       });

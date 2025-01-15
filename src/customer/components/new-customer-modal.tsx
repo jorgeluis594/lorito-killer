@@ -114,6 +114,7 @@ export default function NewCustomerModal() {
     );
     if (res.success) {
       toast({
+        duration: 2000,
         description: "Cliente creado con éxito",
       });
       form.reset();
@@ -123,6 +124,7 @@ export default function NewCustomerModal() {
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: "El cliente ya esta registrado. ",
       });
@@ -164,6 +166,7 @@ export default function NewCustomerModal() {
     } else {
       toast({
         title: "Error",
+        duration: 2000,
         variant: "destructive",
         description: res.message,
       });

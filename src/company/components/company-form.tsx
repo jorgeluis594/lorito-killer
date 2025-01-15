@@ -84,6 +84,7 @@ export default function CompanyForm({ company }: { company: Company }) {
     if (!response.success) {
       toast({
         title: "Error",
+        duration: 2000,
         description:
           "No se pudo actualizar la empresa, intentalo en unos minutos",
         variant: "destructive",
@@ -92,6 +93,7 @@ export default function CompanyForm({ company }: { company: Company }) {
     } else {
       toast({
         title: "Empresa actualizada",
+        duration: 2000,
         description: "Los datos de la empresa han sido actualizados",
       });
     }
@@ -105,11 +107,13 @@ export default function CompanyForm({ company }: { company: Company }) {
       const removeLogoResponse = await removeLogo(company.id!, currentLogo.id!);
       if (removeLogoResponse.success) {
         toast({
+          duration: 2000,
           description: "Logo eliminado con éxito",
         });
       } else {
         toast({
           title: "Error",
+          duration: 2000,
           variant: "destructive",
           description: removeLogoResponse.message,
         });
@@ -121,11 +125,13 @@ export default function CompanyForm({ company }: { company: Company }) {
       if (storeLogoResponse.success) {
         form.setValue("logo", storeLogoResponse.data);
         toast({
+          duration: 2000,
           description: "Logo actualizado con éxito",
         });
       } else {
         toast({
           title: "Error",
+          duration: 2000,
           variant: "destructive",
           description: storeLogoResponse.message,
         });

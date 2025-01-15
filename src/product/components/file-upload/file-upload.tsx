@@ -55,6 +55,7 @@ export default function FileUpload({
             onUploadError={(error: Error) => {
               toast({
                 title: "Error",
+                duration: 2000,
                 variant: "destructive",
                 description: error.message,
               });

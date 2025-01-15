@@ -38,6 +38,7 @@ const ProductsLoader = ({ children }: { children: ReactNode }) => {
         } else {
           setProducts([]);
           toast({
+            duration: 2000,
             description: "No se pudo obtener los productos",
           });
         }

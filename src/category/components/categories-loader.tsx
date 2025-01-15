@@ -22,6 +22,7 @@ export default function CategoriesLoader({
       if (!categoriesResponse.success) {
         toast({
           title: "Error",
+          duration: 2000,
           description: "Error cargando las categorías",
         });
       } else {

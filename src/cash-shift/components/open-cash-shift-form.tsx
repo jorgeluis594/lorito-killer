@@ -67,6 +67,7 @@ export default function OpenCashShiftForm({
     if (!response.success && response.type === "AuthError") {
       toast({
         title: "Error",
+        duration: 2000,
         description: "Inicia sesión de nuevo",
         variant: "destructive",
       });
@@ -77,6 +78,7 @@ export default function OpenCashShiftForm({
     if (!response.success) {
       toast({
         title: "Error",
+        duration: 2000,
         description: "Ocurrió un error al abrir la caja: " + response.message,
         variant: "destructive",
       });
@@ -84,6 +86,7 @@ export default function OpenCashShiftForm({
     } else {
       toast({
         title: "Exito!",
+        duration: 2000,
         description: "Caja abierta correctamente",
       });
       onCashShiftOpened && onCashShiftOpened();
