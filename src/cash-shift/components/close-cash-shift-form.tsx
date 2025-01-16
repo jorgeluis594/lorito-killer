@@ -82,6 +82,7 @@ export default function CloseCashShiftForm({
     if (data.finalAmount === 0) {
       toast({
         title: "El monto de cierre es 0",
+        duration: 4000,
         description: `Estas seguro de cerrar caja con ${formatPrice(data.finalAmount)}`,
         variant: "destructive",
         action: (

@@ -10,14 +10,13 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { format } from "date-fns";
-import { formatPrice, localizeDate, shortLocalizeDate } from "@/lib/utils";
+import { formatPrice, shortLocalizeDate } from "@/lib/utils";
 import { getMany } from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
 import { ArrayElement } from "@/lib/types";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { getCompany } from "@/company/db_repository";
-import { NextResponse } from "next/server";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 interface CashShiftReportTwProps {
@@ -110,7 +109,7 @@ export default async function CashShiftReportTw({
             </th>
             <TableCell className="text-left border">
               {cashShift.status == "closed"
-                ? format(cashShift.closedAt, "dd/MM/yyyy hh:mm aa")
+                ? shortLocalizeDate(cashShift.closedAt)
                 : "Caja abierta"}
             </TableCell>
           </TableRow>

@@ -69,11 +69,10 @@ export default function NewCategoryDialog({
       });
       setOpen(false);
     } else {
-      alert(createdCategory.message);
       toast({
         title: "Error",
         variant: "destructive",
-        description: "Error al crear la categoria",
+        description: `Error al crear la categoria. ${createdCategory.message}`,
       });
     }
   };
