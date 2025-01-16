@@ -146,7 +146,7 @@ export type ToastFunction = (props: Toast) => {
   update: (props: ToasterToast) => void;
 };
 
-const toast: ToastFunction = ({ duration = 200, ...props }: Toast) => {
+const toast: ToastFunction = ({ duration = 2000, ...props }: Toast) => {
   const id = genId();
 
   const update = (props: ToasterToast) =>
