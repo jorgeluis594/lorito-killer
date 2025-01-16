@@ -110,7 +110,7 @@ export default async function CashShiftReportTw({
             </th>
             <TableCell className="text-left border">
               {cashShift.status == "closed"
-                ? shortLocalizeDate(new Date(cashShift.closedAt))
+                ? shortLocalizeDate(new Date((cashShift.closedAt).setHours((cashShift.closedAt).getHours() - 5)))
                 : "Caja abierta"}
             </TableCell>
           </TableRow>
