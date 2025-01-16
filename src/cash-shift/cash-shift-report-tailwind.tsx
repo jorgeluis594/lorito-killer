@@ -10,15 +10,15 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { format } from "date-fns";
-import { formatPrice, localizeDate, shortLocalizeDate } from "@/lib/utils";
+import { formatPrice, shortLocalizeDate } from "@/lib/utils";
 import { getMany } from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
 import { ArrayElement } from "@/lib/types";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { getCompany } from "@/company/db_repository";
-import { NextResponse } from "next/server";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import {log} from "@/lib/log"
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
@@ -57,6 +57,13 @@ export default async function CashShiftReportTw({
     acc[document.orderId] = document;
     return acc;
   }, {});
+
+  {cashShift.status == "closed" && log.info("cash_shift_report_viewed", {
+    closedAt: cashShift.closedAt.toISOString(),
+    calizeDateWithDiff: shortLocalizeDate(new Date(cashShift.closedAt.getTime() - 5 * 60 * 60 * 1000)),
+    shortLocalizeDate: shortLocalizeDate(cashShift.closedAt)
+  })}
+
 
   return (
     <ScrollArea className="mt-3 h-full">
