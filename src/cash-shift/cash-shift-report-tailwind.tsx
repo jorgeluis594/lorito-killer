@@ -18,7 +18,6 @@ import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { getCompany } from "@/company/db_repository";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
-import {log} from "@/lib/log"
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
