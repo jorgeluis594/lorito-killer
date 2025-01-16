@@ -58,13 +58,6 @@ export default async function CashShiftReportTw({
     return acc;
   }, {});
 
-  {cashShift.status == "closed" && log.info("cash_shift_report_viewed", {
-    closedAt: cashShift.closedAt.toISOString(),
-    calizeDateWithDiff: shortLocalizeDate(new Date(cashShift.closedAt.getTime() - 5 * 60 * 60 * 1000)),
-    shortLocalizeDate: shortLocalizeDate(cashShift.closedAt)
-  })}
-
-
   return (
     <ScrollArea className="mt-3 h-full">
       <div className="my-5">

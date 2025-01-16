@@ -96,7 +96,6 @@ export default function StockAdjustmentForm({
     const responses = await createAndProcessStockTransfers(stockTransfers);
     if (responses.some((r) => !r.success)) {
       toast({
-        duration: 2000,
         description: "Algunos ajustes no pudieron ser procesados",
         variant: "destructive",
       });
@@ -104,7 +103,6 @@ export default function StockAdjustmentForm({
       onFormSubmit && onFormSubmit(data);
       router.refresh();
       toast({
-        duration: 2000,
         description: "Ajustes procesados correctamente",
       });
     }

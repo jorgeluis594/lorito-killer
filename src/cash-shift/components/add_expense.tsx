@@ -66,14 +66,12 @@ export default function AddExpense() {
       toast({
         title: "Error",
         variant: "destructive",
-        duration: 2000,
         description: "Error al agregar gasto",
       });
       return;
     }
 
     toast({
-      duration: 2000,
       description: `El gasto de ${formatPrice(response.data.amount)} se agrego con éxito`,
     });
     form.reset();

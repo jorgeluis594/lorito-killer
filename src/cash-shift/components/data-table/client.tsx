@@ -21,7 +21,6 @@ export default function TableClient() {
     if (!response.success) {
       toast({
         title: "Error",
-        duration: 2000,
         description:
           "Ocurrió un error al cargar las cajas: " + response.message,
         variant: "destructive",

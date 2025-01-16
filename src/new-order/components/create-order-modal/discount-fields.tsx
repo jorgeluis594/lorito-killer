@@ -49,14 +49,12 @@ export default function DiscountFields({
       if(discountType === 'amount'){
         toast({
           title: "Descuento no válido",
-          duration: 2000,
           description: `El descuento no puede ser mayor que el total de la orden.`,
           variant: "destructive",
         });
       }else{
         toast({
           title: "Descuento no válido",
-          duration: 2000,
           description: `El descuento en porcentaje debe tener un numero válido.`,
           variant: "destructive",
         });

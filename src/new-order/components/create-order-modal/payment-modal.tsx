@@ -64,7 +64,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const handleOrderCreation = async () => {
     if (!order.documentType) {
       toast({
-        duration: 2000,
         variant: "destructive",
         description: "Seleccione un tipo de documento",
       });
@@ -80,7 +79,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     if (response.success) {
       toast({
         title: "En hora buena!",
-        duration: 2000,
         description: "Venta realizada con éxito, generando comprobante",
       });
       reset();
@@ -88,7 +86,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
       window.open(`/api/orders/${response.data.order.id}/documents`, "_blank");
     } else {
       toast({
-        duration: 2000,
         variant: "destructive",
         description: response.message,
       });

@@ -66,7 +66,6 @@ export default function ChangePasswordForm() {
     } else if (!response.success) {
       toast({
         title: "Error",
-        duration: 2000,
         description:
           "No se pudo cambiar la contraseña, reintente en unos minutos",
         variant: "destructive",

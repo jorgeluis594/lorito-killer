@@ -59,7 +59,6 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
     } else {
       toast({
         title: "Error",
-        duration: 2000,
         variant: "destructive",
         description: response.message,
       });

@@ -37,7 +37,6 @@ const CancelOrderButton = ({
     if (!cancellationReason) {
       toast({
         title: "Error",
-        duration: 2000,
         description: "Debe proporcionar una razón para la cancelación.",
         variant: "destructive",
       });
@@ -49,7 +48,6 @@ const CancelOrderButton = ({
     if (!cancelResponse.success) {
       toast({
         title: "Error",
-        duration: 2000,
         description: `No se pudo cancelar la venta. Comuniquese con soporte.`,
         variant: "destructive",
       });
@@ -58,7 +56,6 @@ const CancelOrderButton = ({
 
     toast({
       title: "Venta anulada con éxito",
-      duration: 2000,
       description: `La venta ${document ? correlative(document) : order.id} ha sido anulada`,
     });
   };

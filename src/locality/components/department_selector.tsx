@@ -44,7 +44,6 @@ export default function DepartmentSelector<T extends LocalityType | undefined>({
     } else {
       toast({
         title: "Error",
-        duration: 2000,
         variant: "destructive",
         description: response.message,
       });

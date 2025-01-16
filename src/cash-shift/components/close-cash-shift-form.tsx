@@ -61,7 +61,6 @@ export default function CloseCashShiftForm({
     if (!response.success) {
       toast({
         title: "Error",
-        duration: 2000,
         description: "Ocurrió un error al cerrar la caja: " + response.message,
         variant: "destructive",
       });
@@ -69,7 +68,6 @@ export default function CloseCashShiftForm({
     } else {
       toast({
         title: "Exito!",
-        duration: 2000,
         description: "Caja cerrada correctamente",
       });
       onCashShiftClosed();

@@ -65,7 +65,6 @@ export default function NewCategoryDialog({
       addCategory(createdCategory.data);
       form.setValue("name", "");
       toast({
-        duration: 2000,
         description: `Categoria ${createdCategory.data.name} creada con exito`,
       });
       setOpen(false);
@@ -73,7 +72,6 @@ export default function NewCategoryDialog({
       toast({
         title: "Error",
         variant: "destructive",
-        duration: 2000,
         description: `Error al crear la categoria. ${createdCategory.message}`,
       });
     }
