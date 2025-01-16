@@ -47,10 +47,8 @@ export const localizeDate = (data: Date) =>
     minute: "2-digit",
   });
 
-export const shortLocalizeDate = (date: Date): string => {
-  const localDate = new Date(date);
-  return formatInTimeZone(localDate, "America/Lima", "dd/MM/yyyy hh:mm aa");
-};
+export const shortLocalizeDate = (date: Date): string =>
+  formatInTimeZone(date, "America/Lima", "dd/MM/yyyy hh:mm aa");
 
 export const localizeOnlyDate = (date: Date): string =>
   formatInTimeZone(date, "America/Lima", "dd//MM/yyy");
