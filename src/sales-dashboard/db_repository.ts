@@ -20,7 +20,7 @@ export const findSales = async (companyId: string, startOfMonth: Date, endOfMont
   return {success:true, data: {finalAmount: totalSales}}
 }
 
-export const findProductToSales = async (): Promise<response<boolean>> => {
+export const findProductToSales = async (): Promise<response<ProductToSales[]>> => {
 
   const orderItems = await prisma().orderItem.groupBy({
     by: ['productId'],
@@ -43,12 +43,16 @@ export const findProductToSales = async (): Promise<response<boolean>> => {
         in: productIds,
       },
     },
+    include: {
+      photos: true,
+    }
   });
 
   const productData = products.map(product => ({
     productId: product.id,
     name: product.name,
     price: product.price,
+    photos: product.photos,
   }));
 
   const productTotals = orderItems.map(item => {
@@ -57,12 +61,16 @@ export const findProductToSales = async (): Promise<response<boolean>> => {
     const price = product?.price || 0
     const totalPrice = +price * +quantity;
     return {
-      name: product?.name,
+      productId: item.productId,
+      productName: product?.name || "",
+      productPrice: +price,
+      quantity: +quantity || 0,
+      photos: product?.photos || [],
       total: totalPrice,
     };
   });
 
-  log.info("productInfo",{orderItems,productData, productTotals})
+  log.info("productInfo",{products})
 
-  return {success: false, message: "uwu"};
+  return {success: true, data: productTotals};
 }
