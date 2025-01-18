@@ -1,22 +1,21 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import {ProductToSales} from "@/sales-dashboard/type";
 
-export function RecentSales() {
+interface RecentSalesProps {
+  data: ProductToSales
+}
 
-
+export function RecentSales({ data }: RecentSalesProps) {
   return (
-    <div className="space-y-8">
-      <div className="flex items-center">
-        <Avatar className="h-9 w-9">
-          <AvatarImage src="/avatars/01.png" alt="Avatar" />
-        </Avatar>
-        <div className="ml-4 space-y-1">
-          <p className="text-sm font-medium leading-none">Olivia Martin</p>
-          <p className="text-sm text-muted-foreground">
-            olivia.martin@email.com
-          </p>
-        </div>
-        <div className="ml-auto font-medium">+$1,999.00</div>
+    <div className="flex items-center p-2 rounded-lg shadow-sm border border-gray-200 space-x-3">
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={data.photos?.[0]?.url} alt="Avatar" />
+      </Avatar>
+      <div className="flex-1 space-y-1">
+        <p className="text-md font-semibold">{data.productName}</p>
+        <p className="text-sm text-gray-500">Cantidad: {data.quantity}</p>
       </div>
+      <div className="font-medium text-lg text-primary">S/. {data.total}</div>
     </div>
   );
 }
