@@ -2,17 +2,42 @@
 
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/shared/components/ui/card";
 import {RecentSales} from "@/sales-dashboard/components/recent-sales";
+import {findProductToSalesAction} from "@/sales-dashboard/actions";
+import {useEffect, useState} from "react";
+import {ProductToSales} from "@/sales-dashboard/type";
+import {Photo} from "@/product/types";
+import {errorResponse} from "@/lib/utils";
+import {ScrollArea} from "@/shared/components/ui/scroll-area";
 
 export default function BestSeller() {
+  const [products, setProducts] = useState<Array<ProductToSales>>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  return(
+  useEffect(() => {
+    const fetchProductsToSale = async () => {
+      const findProductToSales = await findProductToSalesAction();
+      if (!findProductToSales.success) {
+        setLoading(false);
+        return;
+      }
+      setProducts(findProductToSales.data);
+      setLoading(false);
+    };
+    fetchProductsToSale();
+  }, []);
+
+  return (
     <Card className="col-span-4 md:col-span-3">
       <CardHeader>
         <CardTitle>Producto más vendido</CardTitle>
       </CardHeader>
       <CardContent>
-        <RecentSales />
+        <ScrollArea className="h-80">
+          {
+            products.map((product) => <RecentSales key={product.productId} data={product}/>)
+          }
+        </ScrollArea>
       </CardContent>
     </Card>
-  )
+  );
 }
