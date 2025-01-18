@@ -1,9 +1,10 @@
 "use client";
 
 import {Bar, BarChart, ResponsiveContainer, XAxis, YAxis} from "recharts";
-import {calculateSalesMonthly} from "@/sales-dashboard/use-case/calculate-sales-monthly";
+import {calculateSalesMonthly, findProductToSalesAction} from "@/sales-dashboard/actions";
 import {useEffect, useState} from "react";
 import {endOfMonth, startOfMonth} from "date-fns";
+import {getSession} from "@/lib/auth";
 
 const monthNames = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
@@ -13,11 +14,11 @@ export function Overview() {
 
   useEffect(() => {
     const fetchSales = async () => {
-
+      const findProduct = findProductToSalesAction()
       const months = [0,1,2,3,4,5,6,7,8,9,10,11]
 
       const dataSales = await Promise.all(months.map(async (month) => {
-        const year = 2024;
+        const year = 2025;
 
         const startOfMonthDate = startOfMonth(new Date(year, month))
         const endOfMonthDate = endOfMonth(new Date(year, month))
