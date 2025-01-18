@@ -1,5 +1,5 @@
 import { Overview } from "@/shared/overview";
-import { RecentSales } from "@/shared/recent-sales";
+import { RecentSales } from "@/sales-dashboard/components/recent-sales";
 
 import {
   Card,

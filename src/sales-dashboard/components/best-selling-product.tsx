@@ -1,17 +1,14 @@
 "use client";
 
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/shared/components/ui/card";
-import {RecentSales} from "@/shared/recent-sales";
+import {RecentSales} from "@/sales-dashboard/components/recent-sales";
 
 export default function BestSeller() {
 
   return(
     <Card className="col-span-4 md:col-span-3">
       <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>
-          You made 265 sales this month.
-        </CardDescription>
+        <CardTitle>Producto más vendido</CardTitle>
       </CardHeader>
       <CardContent>
         <RecentSales />
