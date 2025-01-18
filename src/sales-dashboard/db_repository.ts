@@ -70,7 +70,5 @@ export const findProductToSales = async (): Promise<response<ProductToSales[]>> 
     };
   });
 
-  log.info("productInfo",{products})
-
   return {success: true, data: productTotals};
 }
