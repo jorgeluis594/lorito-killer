@@ -35,8 +35,8 @@ function clientParamsBuilder(
   if (!customer) {
     return {
       cliente_tipo_documento: "1",
-      cliente_numero_documento: "00000000",
-      cliente_denominacion: "aaaa",
+      cliente_numero_documento: "11111111",
+      cliente_denominacion: "Clientes Varios",
       codigo_pais: "PE",
       ubigeo: "",
       cliente_direccion: "-",
