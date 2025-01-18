@@ -1,3 +1,5 @@
+import {Photo} from "@/product/types";
+
 export type Sales = {
   finalAmount: number
 };
@@ -7,6 +9,7 @@ export type ProductToSales = {
   productName: string,
   productPrice: number,
   quantity: number,
+  photos?: Photo[],
   total: number,
 }
 
