@@ -14,8 +14,7 @@ export function Overview() {
 
   useEffect(() => {
     const fetchSales = async () => {
-      const findProduct = findProductToSalesAction()
-      const months = [0,1,2,3,4,5,6,7,8,9,10,11]
+      const months = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
       const dataSales = await Promise.all(months.map(async (month) => {
         const year = 2025;
@@ -26,7 +25,7 @@ export function Overview() {
       }))
 
       const result = dataSales.map((responseSale, index) => {
-        if(!responseSale.success){
+        if (!responseSale.success) {
           return {
             name: monthNames[index],
             total: 0,
