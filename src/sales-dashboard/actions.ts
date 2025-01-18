@@ -1,7 +1,7 @@
 "use server";
 
 import {response} from "@/lib/types";
-import {Sales} from "@/sales-dashboard/type";
+import {ProductToSales, Sales} from "@/sales-dashboard/type";
 import {findProductToSales, findSales} from "@/sales-dashboard/db_repository";
 import {errorResponse} from "@/lib/utils";
 import {log} from "@/lib/log";
@@ -20,7 +20,6 @@ export const calculateSalesMonthly= async (startOfMonth: Date, endOfMonth: Date)
   return {success: true, data: {finalAmount: salesResponse.data.finalAmount}}
 }
 
-export const findProductToSalesAction = async (): Promise<response<boolean>> => {
-  const orderItems =  findProductToSales()
-  return orderItems
+export const findProductToSalesAction = async (): Promise<response<ProductToSales[]>> => {
+  return findProductToSales()
 }
