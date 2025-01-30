@@ -3,6 +3,7 @@ import { correlative } from "@/document/utils";
 import { Document } from "@/document/types";
 import { fullName, isBusinessCustomer } from "@/customer/utils";
 import {localizeOnlyDate, plus, shortLocalizeDate} from "@/lib/utils";
+import {Company} from "@/company/types";
 
 const DOCUMENT_TYPE_MAPPER = {
   invoice: "Factura",
@@ -156,7 +157,7 @@ const borderStyleLast = {
   right: { style: 'thin', color: {argb:'000000'}}
 } as ExcelJS.Borders;
 
-export const createWorkbookBufferSire = async (documents: Document[]) => {
+export const createWorkbookBufferSire = async (documents: Document[], company: Company) => {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Kogoz.pe";
   workbook.lastModifiedBy = "Kogoz.pe";
@@ -164,9 +165,9 @@ export const createWorkbookBufferSire = async (documents: Document[]) => {
   workbook.modified = new Date();
   const reportSheet = workbook.addWorksheet(REPORT_SHEET_TITLE);
 
-  reportSheet.addRow(["PERIODO:"]);
-  reportSheet.addRow(["RUC:"]);
-  reportSheet.addRow(["APELLIDOS Y NOMBRES, DENOMINACIÓN O RAZÓN SOCIAL:"]);
+  reportSheet.addRow(["PERIODO:","1"]);
+  reportSheet.addRow(["RUC:",company.ruc]);
+  reportSheet.addRow(["APELLIDOS Y NOMBRES, DENOMINACIÓN O RAZÓN SOCIAL:","","","","","",company.name]);
   reportSheet.addRow([]);
   reportSheet.addRow(REPORT_HEADERS_ONE);
   reportSheet.addRow(REPORT_HEADERS_TWO);
@@ -278,6 +279,14 @@ export const createWorkbookBufferSire = async (documents: Document[]) => {
       cell.border = borderStyle;
     });
   });
+
+  const total = documents.reduce((acc, doc) => plus(acc)(doc.total), 0);
+  const netTotal = documents.reduce((acc, doc) => plus(acc)(doc.netTotal), 0);
+
+  reportSheet.addRow([]);
+  reportSheet.addRow(["", "", "", "", "", "", "", "","","","","","","","", "Sub total", netTotal]);
+  reportSheet.addRow(["", "", "", "", "", "", "", "","","","","","","","", "Igv", 0]);
+  reportSheet.addRow(["", "", "", "", "", "", "", "","","","","","","","", "Total", total]);
 
   return workbook.xlsx.writeBuffer();
 };
