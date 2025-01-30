@@ -5,6 +5,8 @@ import { log } from "@/lib/log";
 import { createWorkbookBuffer } from "@/document/renders/list_xlsx";
 import { User } from "@/user/types";
 import { getSession } from "@/lib/auth";
+import {createWorkbookBufferSire} from "@/document/renders/sire_list_xlsx";
+import {getCompany} from "@/company/db_repository";
 
 type ParamsProps = Record<string, string | string[] | undefined>;
 
@@ -68,6 +70,19 @@ export async function GET(req: Request) {
     user: session.user,
   });
 
+  const companyResponse = await getCompany(session.user.companyId)
+
+  if(!companyResponse.success) {
+    log.error("get_company_failed", { response: companyResponse });
+
+    return NextResponse.json(
+      { error: "Error al obtener datos de la compañia" },
+      { status: 500 },
+    );
+  }
+
+  console.log(companyResponse.data)
+
   const documentsResponse = await getMany(documentQuery);
 
   if (!documentsResponse.success) {
@@ -79,7 +94,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const buffer = await createWorkbookBuffer(documentsResponse.data);
+  const buffer = await createWorkbookBufferSire(documentsResponse.data, companyResponse.data);
 
   return new NextResponse(buffer, {
     headers: {
