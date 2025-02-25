@@ -18,6 +18,7 @@ import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { getCompany } from "@/company/db_repository";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import {findOrderItems} from "@/cash-shift/components/actions";
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
@@ -47,6 +48,12 @@ export default async function CashShiftReportTw({
   });
 
   if (!documentsResponse.success) {
+    return <p>Error cargando página, comuniquese con soporte</p>;
+  }
+debugger
+  const grossProfit = await findOrderItems(cashShift.id)
+
+  if(!grossProfit.success) {
     return <p>Error cargando página, comuniquese con soporte</p>;
   }
 
@@ -185,9 +192,11 @@ export default async function CashShiftReportTw({
                 : "-"}
             </TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
-              Transferencia:
+              Utilidad bruta:
             </th>
-            <TableCell className="text-left border"></TableCell>
+            <TableCell className="text-left border">
+              {grossProfit.data ? formatPrice(grossProfit.data.utility) : "Datos no disponibles"}
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
