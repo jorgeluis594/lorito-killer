@@ -71,7 +71,6 @@ export const addExpense = async (
 export const findOrderItems = async (
   id: string,
 ): Promise<response<GrossProfit>> => {
-  debugger
   const orderItemsResponse = await repository.findOrderItems(id,);
 
   if(!orderItemsResponse.success) {

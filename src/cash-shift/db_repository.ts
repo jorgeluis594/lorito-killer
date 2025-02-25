@@ -333,7 +333,6 @@ export const addExpense = async (
 export const findOrderItems = async (
   id: string,
 ): Promise<response<OrderItemType[]>> => {
-  debugger
   const orderItems = await prisma().cashShift.findUnique({
     where: {
       id: id,
@@ -359,7 +358,7 @@ export const findOrderItems = async (
 
     return {
       id: o.id,
-      name: o.productName || "",
+      name: o.product.name || "",
       purchasePrice: +o.product.purchasePrice! || 0,
       price: +o.productPrice || 0,
       quantity: +o.quantity || 0,

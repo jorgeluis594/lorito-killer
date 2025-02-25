@@ -50,7 +50,7 @@ export default async function CashShiftReportTw({
   if (!documentsResponse.success) {
     return <p>Error cargando página, comuniquese con soporte</p>;
   }
-debugger
+
   const grossProfit = await findOrderItems(cashShift.id)
 
   if(!grossProfit.success) {
