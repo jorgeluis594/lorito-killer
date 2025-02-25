@@ -54,3 +54,18 @@ export type CashShiftWithOutOrders = Omit<
 >;
 
 export type CashShiftResponse = response<CashShift>;
+
+export type OrderItemType = {
+  id: string;
+  name: string;
+  purchasePrice: number;
+  price: number;
+  quantity: number;
+  total: number;
+  totalDifference: number;
+  createdAt: Date;
+}
+
+export type GrossProfit = {
+  utility: number;
+}
