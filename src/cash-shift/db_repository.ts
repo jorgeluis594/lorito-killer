@@ -368,9 +368,6 @@ export const findOrderItems = async (
     };
   })
 
-  console.log(id);
-  console.log(OrderItemsMapped);
-
   return {
     success: true,
     data: OrderItemsMapped
