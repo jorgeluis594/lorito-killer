@@ -218,7 +218,7 @@ export default async function CashShiftReportTw({
             <TableRow key={order.id}>
               <TableCell className="border">{index + 1}</TableCell>
               <TableCell className="border flex flex-col items-start">
-                {format(order.createdAt!, "dd/MM/yyyy hh:mm aa")}
+                {shortLocalizeDate(order.createdAt)}
                 {order.status == "cancelled" && (
                   <Badge variant="destructive">Venta anulada</Badge>
                 )}
