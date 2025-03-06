@@ -41,7 +41,7 @@ export default function CartItem({
   };
 
   return (
-    <div className="py-2 px-4 border-b grid grid-cols-[270px,1fr,140px] transition animate-move-from-left-to-right hover:bg-accent group">
+    <div className="py-2 px-4 border-b grid grid-cols-[240px,1fr,140px] transition animate-move-from-left-to-right hover:bg-accent group">
       <div>
         <p className="text-sm">{item.productName}</p>
         <p className="text-sm text-muted-foreground">
