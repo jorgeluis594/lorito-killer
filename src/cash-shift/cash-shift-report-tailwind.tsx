@@ -18,6 +18,7 @@ import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { getCompany } from "@/company/db_repository";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import {findOrderItems} from "@/cash-shift/components/actions";
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
@@ -47,6 +48,12 @@ export default async function CashShiftReportTw({
   });
 
   if (!documentsResponse.success) {
+    return <p>Error cargando página, comuniquese con soporte</p>;
+  }
+
+  const grossProfit = await findOrderItems(cashShift.id)
+
+  if(!grossProfit.success) {
     return <p>Error cargando página, comuniquese con soporte</p>;
   }
 
@@ -185,9 +192,23 @@ export default async function CashShiftReportTw({
                 : "-"}
             </TableCell>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
-              Transferencia:
             </th>
-            <TableCell className="text-left border"></TableCell>
+            <TableCell className="border">
+            </TableCell>
+          </TableRow>
+
+          <TableRow>
+            <th className="px-4 text-end align-middle font-medium border bg-accent">
+              Utilidad bruta:
+            </th>
+            <TableCell className="text-left border">
+              {grossProfit.data ? formatPrice(grossProfit.data.utility - totalExpense) : "Datos no disponibles"}
+            </TableCell>
+
+            <th className="px-4 text-end align-middle font-medium border bg-accent">
+            </th>
+            <TableCell className="border">
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
@@ -218,7 +239,7 @@ export default async function CashShiftReportTw({
             <TableRow key={order.id}>
               <TableCell className="border">{index + 1}</TableCell>
               <TableCell className="border flex flex-col items-start">
-                {format(order.createdAt!, "dd/MM/yyyy hh:mm aa")}
+                {shortLocalizeDate(order.createdAt)}
                 {order.status == "cancelled" && (
                   <Badge variant="destructive">Venta anulada</Badge>
                 )}

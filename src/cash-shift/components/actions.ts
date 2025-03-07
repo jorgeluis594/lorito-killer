@@ -1,6 +1,6 @@
 "use server";
 
-import { OpenCashShift, ClosedCashShift, Expense } from "@/cash-shift/types";
+import {OpenCashShift, ClosedCashShift, Expense, GrossProfit} from "@/cash-shift/types";
 import cashShiftCreator from "@/cash-shift/use-cases/cash-shift-creator";
 import * as repository from "@/cash-shift/db_repository";
 import { response } from "@/lib/types";
@@ -66,4 +66,24 @@ export const addExpense = async (
   expense: Expense,
 ): Promise<response<Expense>> => {
   return await repository.addExpense(expense);
+};
+
+export const findOrderItems = async (
+  id: string,
+): Promise<response<GrossProfit>> => {
+  const orderItemsResponse = await repository.findOrderItems(id,);
+
+  if(!orderItemsResponse.success) {
+    throw new Error("Order items not found");
+  }
+
+  const totalDifferenceSum = orderItemsResponse.data.reduce((acc, item) => {
+    return acc + item.totalDifference;
+  }, 0);
+
+  const grossProfit: GrossProfit = {
+    utility: totalDifferenceSum,
+  };
+
+  return { success: true, data: grossProfit}
 };

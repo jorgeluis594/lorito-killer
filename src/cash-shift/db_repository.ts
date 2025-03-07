@@ -8,12 +8,12 @@ import {
   Prisma,
   ShiftStatus,
 } from "@prisma/client";
-import type {
+import {
   OpenCashShift,
   CashShiftWithOutOrders,
   CashShift,
   CashShiftBase,
-  Expense,
+  Expense, CashShiftResponse, OrderItemType,
 } from "./types";
 import { response } from "@/lib/types";
 import {
@@ -329,3 +329,47 @@ export const addExpense = async (
     return { success: false, message: error.message };
   }
 };
+
+export const findOrderItems = async (
+  id: string,
+): Promise<response<OrderItemType[]>> => {
+  const orderItems = await prisma().cashShift.findUnique({
+    where: {
+      id: id,
+    },
+    include: {
+      orders: {
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const itemsArray = orderItems!.orders.flatMap(order => order.orderItems);
+
+  const OrderItemsMapped = itemsArray.map((o) => {
+    const purchaseTotal = +o.product.purchasePrice! * +o.quantity || 0;
+    const totalDifference = +o.total - purchaseTotal || 0;
+
+    return {
+      id: o.id,
+      name: o.product.name || "",
+      purchasePrice: +o.product.purchasePrice! || 0,
+      price: +o.productPrice || 0,
+      quantity: +o.quantity || 0,
+      total: +o.total || 0,
+      totalDifference: totalDifference,
+      createdAt: o.createdAt,
+    };
+  })
+
+  return {
+    success: true,
+    data: OrderItemsMapped
+  }
+}
