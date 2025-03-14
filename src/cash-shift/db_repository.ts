@@ -13,7 +13,7 @@ import {
   CashShiftWithOutOrders,
   CashShift,
   CashShiftBase,
-  Expense, CashShiftResponse, OrderItemType,
+  Expense, GrossProfit, OrderTotal,
 } from "./types";
 import { response } from "@/lib/types";
 import {
@@ -332,8 +332,8 @@ export const addExpense = async (
 
 export const findOrderItems = async (
   id: string,
-): Promise<response<OrderItemType[]>> => {
-  const orderItems = await prisma().cashShift.findUnique({
+): Promise<response<OrderTotal[]>> => {
+  const ordersToCashisft = await prisma().cashShift.findUnique({
     where: {
       id: id,
     },
@@ -350,26 +350,40 @@ export const findOrderItems = async (
     },
   });
 
-  const itemsArray = orderItems!.orders.flatMap(order => order.orderItems);
+  const orders = ordersToCashisft!.orders
 
-  const OrderItemsMapped = itemsArray.map((o) => {
-    const purchaseTotal = +o.product.purchasePrice! * +o.quantity || 0;
-    const totalDifference = +o.total - purchaseTotal || 0;
+  const ordersMap = orders.map((order) => {
+
+    const isCancelled = order.status === "CANCELLED";
+
+    const orderTotal = order.orderItems.reduce((total, o) => {
+      const purchaseTotal = +o.product.purchasePrice! * +o.quantity || 0;
+      const totalDifference = +o.total - purchaseTotal || 0;
+
+      total.totalPrice += purchaseTotal;
+      total.totalDifference += totalDifference;
+
+      return total;
+    }, {
+      totalPrice: 0,
+      totalDifference: 0
+    });
+
+    if (isCancelled) {
+      orderTotal.totalPrice -= orderTotal.totalPrice;
+      orderTotal.totalDifference -= orderTotal.totalDifference;
+    }
 
     return {
-      id: o.id,
-      name: o.product.name || "",
-      purchasePrice: +o.product.purchasePrice! || 0,
-      price: +o.productPrice || 0,
-      quantity: +o.quantity || 0,
-      total: +o.total || 0,
-      totalDifference: totalDifference,
-      createdAt: o.createdAt,
+      totalAmount: orderTotal.totalPrice,
+      totalDiference: orderTotal.totalDifference,
     };
   })
 
+  console.log(ordersMap);
+
   return {
     success: true,
-    data: OrderItemsMapped
+    data: ordersMap
   }
 }

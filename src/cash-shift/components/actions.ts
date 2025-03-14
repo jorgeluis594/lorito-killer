@@ -71,18 +71,19 @@ export const addExpense = async (
 export const findOrderItems = async (
   id: string,
 ): Promise<response<GrossProfit>> => {
-  const orderItemsResponse = await repository.findOrderItems(id,);
+  const ordersResponse = await repository.findOrderItems(id);
 
-  if(!orderItemsResponse.success) {
+  if(!ordersResponse.success) {
     throw new Error("Order items not found");
   }
 
-  const totalDifferenceSum = orderItemsResponse.data.reduce((acc, item) => {
-    return acc + item.totalDifference;
+  const totalDifferenceSum = ordersResponse.data.reduce((acc, item) => {
+    return acc + item.totalDiference;
   }, 0);
 
   const grossProfit: GrossProfit = {
     utility: totalDifferenceSum,
+
   };
 
   return { success: true, data: grossProfit}
