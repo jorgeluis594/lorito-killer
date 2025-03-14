@@ -380,8 +380,6 @@ export const findOrderItems = async (
     };
   })
 
-  console.log(ordersMap);
-
   return {
     success: true,
     data: ordersMap
