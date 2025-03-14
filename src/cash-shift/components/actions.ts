@@ -68,10 +68,10 @@ export const addExpense = async (
   return await repository.addExpense(expense);
 };
 
-export const findOrderItems = async (
+export const findUtility = async (
   id: string,
 ): Promise<response<GrossProfit>> => {
-  const ordersResponse = await repository.findOrderItems(id);
+  const ordersResponse = await repository.findOrders(id);
 
   if(!ordersResponse.success) {
     throw new Error("Order items not found");

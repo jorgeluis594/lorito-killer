@@ -330,7 +330,7 @@ export const addExpense = async (
   }
 };
 
-export const findOrderItems = async (
+export const findOrders = async (
   id: string,
 ): Promise<response<OrderTotal[]>> => {
   const ordersToCashisft = await prisma().cashShift.findUnique({
