@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/table";
 import { format } from "date-fns";
 import { formatPrice, shortLocalizeDate } from "@/lib/utils";
-import { getMany } from "@/document/db_repository";
+import {getMany, getTotal} from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
 import { ArrayElement } from "@/lib/types";
 import { correlative } from "@/document/utils";
@@ -36,24 +36,16 @@ export default async function CashShiftReportTw({
     return <SignOutRedirection />;
   }
 
-  const companyResponse = await getCompany(session.user.companyId);
+  const [companyResponse, documentsResponse, grossProfitResponse] = await Promise.all([
+    getCompany(session.user.companyId),
+    getMany({
+      companyId: session.user.companyId,
+      orderId: cashShift.orders.map((order) => order.id!),
+    }),
+    await findOrderItems(cashShift.id),
+  ]);
 
-  if (!companyResponse.success) {
-    return <p>Error cargando página, comuniquese con soporte</p>;
-  }
-
-  const documentsResponse = await getMany({
-    companyId: session.user.companyId,
-    orderId: cashShift.orders.map((order) => order.id!),
-  });
-
-  if (!documentsResponse.success) {
-    return <p>Error cargando página, comuniquese con soporte</p>;
-  }
-
-  const grossProfit = await findOrderItems(cashShift.id)
-
-  if(!grossProfit.success) {
+  if (!companyResponse.success || !documentsResponse.success || !grossProfitResponse.success) {
     return <p>Error cargando página, comuniquese con soporte</p>;
   }
 
@@ -202,7 +194,7 @@ export default async function CashShiftReportTw({
               Utilidad bruta:
             </th>
             <TableCell className="text-left border">
-              {grossProfit.data ? formatPrice(grossProfit.data.utility - totalExpense) : "Datos no disponibles"}
+              {grossProfitResponse.data ? formatPrice(grossProfitResponse.data.utility - totalExpense) : "Datos no disponibles"}
             </TableCell>
 
             <th className="px-4 text-end align-middle font-medium border bg-accent">
