@@ -191,7 +191,7 @@ export default async function CashShiftReportTw({
 
           <TableRow>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
-              Utilidad bruta:
+              Utilidad:
             </th>
             <TableCell className="text-left border">
               {grossProfit ? formatPrice(grossProfit.utility - totalExpense) : "Datos no disponibles"}
