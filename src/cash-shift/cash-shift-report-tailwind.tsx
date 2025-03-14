@@ -1,4 +1,4 @@
-import {CashShift, GrossProfit} from "@/cash-shift/types";
+import {CashShift} from "@/cash-shift/types";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Table,
@@ -18,15 +18,14 @@ import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { getCompany } from "@/company/db_repository";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import {findUtility} from "@/cash-shift/components/actions";
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
-  grossProfit: GrossProfit;
 }
 
 export default async function CashShiftReportTw({
   cashShift,
-  grossProfit,
 }: CashShiftReportTwProps) {
   const totalExpense = cashShift.expenses.reduce(
     (total, expense) => total + expense.amount,
@@ -37,15 +36,16 @@ export default async function CashShiftReportTw({
     return <SignOutRedirection />;
   }
 
-  const [companyResponse, documentsResponse] = await Promise.all([
+  const [companyResponse, documentsResponse, grossProfitResponse] = await Promise.all([
     getCompany(session.user.companyId),
     getMany({
       companyId: session.user.companyId,
       orderId: cashShift.orders.map((order) => order.id!),
     }),
+    findUtility(cashShift.id),
   ]);
 
-  if (!companyResponse.success || !documentsResponse.success) {
+  if (!companyResponse.success || !documentsResponse.success || !grossProfitResponse.success) {
     return <p>Error cargando página, comuniquese con soporte</p>;
   }
 
@@ -194,7 +194,7 @@ export default async function CashShiftReportTw({
               Utilidad:
             </th>
             <TableCell className="text-left border">
-              {grossProfit ? formatPrice(grossProfit.utility - totalExpense) : "Datos no disponibles"}
+              {grossProfitResponse ? formatPrice(grossProfitResponse.data.utility - totalExpense) : "Datos no disponibles"}
             </TableCell>
 
             <th className="px-4 text-end align-middle font-medium border bg-accent">

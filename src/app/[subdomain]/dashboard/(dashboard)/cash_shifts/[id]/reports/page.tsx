@@ -22,11 +22,6 @@ export default async function Page({
     return notFound();
   }
 
-  const grossProfitResponse = await findUtility(id)
-  if (!grossProfitResponse.success) {
-    return notFound();
-  }
-
   return (
     <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
       <BreadCrumb items={breadcrumbItems} />
@@ -35,7 +30,7 @@ export default async function Page({
       </div>
       <Separator />
       <div className="h-[calc(100vh-theme(space.64))]">
-        <CashShiftReportTw cashShift={cashShiftFoundResponse.data} grossProfit={grossProfitResponse.data}  />
+        <CashShiftReportTw cashShift={cashShiftFoundResponse.data} />
       </div>
     </div>
   );
