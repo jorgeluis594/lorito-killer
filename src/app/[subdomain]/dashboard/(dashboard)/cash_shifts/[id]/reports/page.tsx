@@ -5,6 +5,7 @@ import CashShiftReportTw from "@/cash-shift/cash-shift-report-tailwind";
 import { findCashShift } from "@/cash-shift/db_repository";
 import { notFound } from "next/navigation";
 import { CashShift } from "@/cash-shift/types";
+import {findUtility} from "@/cash-shift/components/actions";
 
 const breadcrumbItems = [
   { title: "Caja chica", link: "/cash_shifts" },
