@@ -9,7 +9,7 @@ import {SearchParams} from "@/document/types";
 import {getSession} from "@/lib/auth";
 import {errorResponse} from "@/lib/utils";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
-import {findExpenses} from "@/sales-dashboard/db_repository";
+import {findExpenses, findSales} from "@/sales-dashboard/db_repository";
 
 type ParamsProps = {
   searchParams: {
@@ -45,16 +45,17 @@ async function SalesExpenseProfitCardWithSuspense({searchParams}: ParamsProps) {
     return <SignOutRedirection/>;
   }
 
-  const [expensesResponse] = await Promise.all([
+  const [expensesResponse, totalSalesResponse] = await Promise.all([
     findExpenses(dateQuery.data),
+    findSales(dateQuery.data),
   ]);
 
-  if (!expensesResponse.success) {
+  if (!expensesResponse.success || !totalSalesResponse.success) {
     return <p>Error cargando datos, comuniquese con soporte</p>;
   }
 
   return (
-    <SalesExpenseProfitCard expenses={expensesResponse.data.expenseTotal}/>
+    <SalesExpenseProfitCard sales={totalSalesResponse.data.finalAmount} expenses={expensesResponse.data.expenseTotal}/>
   );
 }
 

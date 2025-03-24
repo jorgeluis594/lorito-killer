@@ -12,22 +12,29 @@ const findCashShift = async (
   endDate: Date
 ) => {
    return prisma().cashShift.findMany({
-     where: {companyId: companyId, createdAt: { gte: startDate,lte: endDate}},
+     where: {companyId: companyId, openedAt: { gte: startDate,lte: endDate}},
       include: {
+       orders: true,
        expenses: true,
     }
    })
 }
 
-export const findSales = async (companyId: string, startDate: Date, endDate: Date): Promise<response<Sales>> => {
-  const salesFound = await findCashShift(companyId, startDate, endDate);
+export const findSales = async ({
+  companyId,
+  startDate,
+  endDate
+}: SearchParams): Promise<response<Sales>> => {
+  const salesFound = await findCashShift(companyId, startDate!, endDate!);
 
   const salesMapped = salesFound.map((c) => ({
-    finalAmount: c.finalAmount?.toNumber() || null,
+    totalOrdersAmount: c.orders.reduce((sum, order) => {
+      return plus(sum)(+order.netTotal || 0);
+    }, 0),
   }));
 
   const totalSales = salesMapped.reduce((sum, sale) => {
-    return plus(sum)(sale.finalAmount || 0);
+    return plus(sum)(sale.totalOrdersAmount || 0);
   }, 0);
 
   return {success:true, data: {finalAmount: totalSales}}
