@@ -1,14 +1,27 @@
 import {response} from "@/lib/types";
 import prisma from "@/lib/prisma";
-import {ProductToSales, Sales} from "@/sales-dashboard/type";
-import {plus} from "@/lib/utils";
+import {ExpenseAmount, ProductToSales, Sales} from "@/sales-dashboard/type";
+import {errorResponse, plus} from "@/lib/utils";
 import {log} from "@/lib/log";
 import {OrderItem} from "@/order/types";
+import {SearchParams} from "@/document/types";
 
-export const findSales = async (companyId: string, startOfMonth: Date, endOfMonth: Date): Promise<response<Sales>> => {
-  const salesFound = (
-    await prisma().cashShift.findMany({where: {companyId: companyId, closedAt: { gte: startOfMonth,lte: endOfMonth}} })
-  )
+const findCashShift = async (
+  companyId: string,
+  startDate: Date,
+  endDate: Date
+) => {
+   return prisma().cashShift.findMany({
+     where: {companyId: companyId, createdAt: { gte: startDate,lte: endDate}},
+      include: {
+       expenses: true,
+    }
+   })
+}
+
+export const findSales = async (companyId: string, startDate: Date, endDate: Date): Promise<response<Sales>> => {
+  const salesFound = await findCashShift(companyId, startDate, endDate);
+
   const salesMapped = salesFound.map((c) => ({
     finalAmount: c.finalAmount?.toNumber() || null,
   }));
@@ -71,4 +84,23 @@ export const findProductToSales = async (): Promise<response<ProductToSales[]>> 
   });
 
   return {success: true, data: productTotals};
+}
+
+export const findExpenses = async ({
+  companyId,
+  startDate,
+  endDate,
+}: SearchParams): Promise<response<ExpenseAmount>> =>{
+
+  const salesFound = await findCashShift(companyId, startDate!, endDate!);
+
+  const salesMappedToExpenses = salesFound.map((c) => ({
+    amountExpense: c.expenses.map((e) => e.amount)
+  }));
+
+  const totalExpenses = salesMappedToExpenses.reduce((sum, expense) => {
+    return plus(sum)(+expense.amountExpense || 0);
+  }, 0);
+
+  return {success:true, data: {expenseTotal: totalExpenses}}
 }
