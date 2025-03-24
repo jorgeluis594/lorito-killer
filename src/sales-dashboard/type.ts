@@ -4,6 +4,10 @@ export type Sales = {
   finalAmount: number
 };
 
+export type ExpenseAmount = {
+  expenseTotal: number
+}
+
 export type ProductToSales = {
   productId: string,
   productName: string,
