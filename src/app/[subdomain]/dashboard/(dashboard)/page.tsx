@@ -2,7 +2,7 @@ import {ScrollArea} from "@/shared/components/ui/scroll-area";
 import TableData from "@/sales-dashboard/components/table-data";
 import BestSeller from "@/sales-dashboard/components/best-selling-product";
 import React from "react";
-import DateFilterBar from "@/sales-dashboard/components/date-filter-bar";
+import DateFilterSelect from "@/sales-dashboard/components/date-filter-select";
 import {SalesExpenseProfitCard} from "@/sales-dashboard/components/sales-expense-profit-card";
 import {response} from "@/lib/types";
 import {SearchParams} from "@/document/types";
@@ -65,7 +65,7 @@ export default function page({searchParams}: ParamsProps) {
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-4xl font-bold tracking-tight text-gray-800">Datos</h2>
         </div>
-        <DateFilterBar/>
+        <DateFilterSelect/>
         <SalesExpenseProfitCardWithSuspense searchParams={searchParams}/>
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
           <TableData/>
