@@ -39,9 +39,13 @@ export const findSales = async ({
   return {success:true, data: {finalAmount: totalSales}}
 }
 
-export const findProductToSales = async (): Promise<response<ProductToSales[]>> => {
+export const findProductToSales = async (
+  startDate:Date,
+  endDate: Date
+): Promise<response<ProductToSales[]>> => {
 
   const orderItems = await prisma().orderItem.groupBy({
+    where: {createdAt: { gte: startDate,lte: endDate}},
     by: ['productId'],
     _sum: {
       quantity: true,
@@ -130,8 +134,6 @@ export const findOrdersUtility = async ({
   const ordersMap = ordersResponse.map((order) => {
     const isCancelled = order.status === "CANCELLED";
 
-    console.log(order.orderItems)
-
     const orderTotal = order.orderItems.reduce((total, o) => {
       const purchaseTotal = +o.product.purchasePrice! * +o.quantity || 0;
       const totalDifference = +o.total - purchaseTotal || 0;
@@ -143,17 +145,15 @@ export const findOrdersUtility = async ({
     }, {
       totalPrice: 0,
       totalDifference: 0
-    }) || { totalPrice: 0, totalDifference: 0 };
+    });
 
     if (isCancelled) {
       orderTotal.totalPrice -= orderTotal.totalPrice;
       orderTotal.totalDifference -= orderTotal.totalDifference;
     }
 
-    const utility = orderTotal.totalPrice - orderTotal.totalDifference;
-    console.log(utility);
     return {
-      utility,
+      utility: orderTotal.totalDifference,
     };
 
   })
