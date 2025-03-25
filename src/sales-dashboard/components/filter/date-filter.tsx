@@ -7,11 +7,8 @@ import {addDays, endOfDay, startOfDay, startOfWeek, subDays} from "date-fns";
 import {useSearchParams} from "next/navigation";
 import {fromDate} from "@internationalized/date";
 
-interface DateFilterDashboardProps {
-  period: string
-}
 
-export default function DateFilterDashboard({period}:DateFilterDashboardProps) {
+export default function DateFilterDashboard() {
   const updateRoute = useUpdateQueryString();
   const searchParams = useSearchParams();
   const from = searchParams.get("start");
