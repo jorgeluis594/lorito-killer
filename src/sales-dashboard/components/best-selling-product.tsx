@@ -9,13 +9,18 @@ import {Photo} from "@/product/types";
 import {errorResponse} from "@/lib/utils";
 import {ScrollArea} from "@/shared/components/ui/scroll-area";
 
-export default function BestSeller() {
+interface BestSellerProps {
+  startDate: Date;
+  endDate: Date;
+}
+
+export default function BestSeller({startDate,endDate}:BestSellerProps) {
   const [products, setProducts] = useState<Array<ProductToSales>>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchProductsToSale = async () => {
-      const findProductToSales = await findProductToSalesAction();
+      const findProductToSales = await findProductToSalesAction(startDate,endDate);
       if (!findProductToSales.success) {
         setLoading(false);
         return;
@@ -24,7 +29,7 @@ export default function BestSeller() {
       setLoading(false);
     };
     fetchProductsToSale();
-  }, []);
+  }, [startDate,endDate]);
 
   return (
     <Card className="col-span-4 md:col-span-3">
