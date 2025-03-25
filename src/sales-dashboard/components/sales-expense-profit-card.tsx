@@ -49,7 +49,7 @@ export function SalesExpenseProfitCard({sales, expenses, utility}:SalesExpensePr
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-300">
               <Banknote size={40} color="#105d11"/>
             </div>
-            <div className="text-2xl font-bold">{formatPrice(utility || 0)}</div>
+            <div className="text-2xl font-bold">{formatPrice(utility-expenses || 0)}</div>
           </div>
         </CardContent>
       </Card>
