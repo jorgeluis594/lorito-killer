@@ -4,6 +4,10 @@ export type Sales = {
   finalAmount: number
 };
 
+export type SalesDaily = {
+  salesByHour: number[];
+};
+
 export type SalesWeekly = {
   salesByDay: number[];
 };
