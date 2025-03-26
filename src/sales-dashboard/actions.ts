@@ -1,7 +1,7 @@
 "use server";
 
 import {response} from "@/lib/types";
-import {ProductToSales, Sales, SalesWeekly} from "@/sales-dashboard/type";
+import {ProductToSales, Sales, SalesDaily, SalesWeekly} from "@/sales-dashboard/type";
 import {
   findProductToSales, findSalesDaily,
   findSalesMonthly,
@@ -11,7 +11,7 @@ import {errorResponse} from "@/lib/utils";
 import {log} from "@/lib/log";
 import {getSession} from "@/lib/auth";
 
-export const calculateSalesDaily= async (startOfDay: Date, endOfDay: Date): Promise<response<SalesWeekly>> => {
+export const calculateSalesDaily= async (startOfDay: Date, endOfDay: Date): Promise<response<SalesDaily>> => {
 
   const session = await getSession();
   const salesResponse = await findSalesDaily(session.user?.companyId!, startOfDay, endOfDay)
@@ -21,7 +21,7 @@ export const calculateSalesDaily= async (startOfDay: Date, endOfDay: Date): Prom
     return errorResponse("Sales not found")
   }
 
-  return {success: true, data: {salesByDay: salesResponse.data.salesByDay,}}
+  return {success: true, data: {salesByHour: salesResponse.data.salesByHour,}}
 }
 
 export const calculateSalesWeekly= async (startDate: Date, endDate: Date): Promise<response<SalesWeekly>> => {
