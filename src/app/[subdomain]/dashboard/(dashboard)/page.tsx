@@ -5,7 +5,11 @@ import {SearchParams} from "@/document/types";
 import {getSession} from "@/lib/auth";
 import {errorResponse} from "@/lib/utils";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
-import {findExpenses, findOrdersUtility, findProductToSales, findSales} from "@/sales-dashboard/db_repository";
+import {
+  findExpenses,
+  findOrdersUtility,
+  findTotalSales
+} from "@/sales-dashboard/db_repository";
 import DashboardData from "@/sales-dashboard/components/dashboard-data";
 
 type ParamsProps = {
@@ -27,10 +31,14 @@ const getSearchParams = async ({
 
   if (searchParams.start) {
     params.startDate = new Date(searchParams.start as string);
+  }else {
+    params.startDate = new Date();
   }
 
   if (searchParams.end) {
     params.endDate = new Date(searchParams.end as string);
+  } else {
+    params.endDate = new Date();
   }
 
   return {success: true, data: params};
@@ -41,10 +49,11 @@ async function DashboardDataWithSuspense({searchParams}: ParamsProps) {
   if (!dataQuery.success) {
     return <SignOutRedirection/>;
   }
+  console.log(dataQuery.data.startDate, dataQuery.data.endDate);
 
   const [expensesResponse, totalSalesResponse, utilityResponse] = await Promise.all([
     findExpenses(dataQuery.data),
-    findSales(dataQuery.data),
+    findTotalSales(dataQuery.data),
     findOrdersUtility(dataQuery.data),
   ]);
 
