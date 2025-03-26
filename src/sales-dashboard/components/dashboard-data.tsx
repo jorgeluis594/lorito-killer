@@ -16,7 +16,7 @@ interface DashboardData {
 }
 
 export default function DashboardData({sales, expenses, utility,startDate,endDate}:DashboardData) {
-  const [period, setPeriod] = useState<string>("")
+  const [period, setPeriod] = useState<string>("weekly")
 
   const handleSelectChange = (value: string) => {
     setPeriod(value);
@@ -26,12 +26,12 @@ export default function DashboardData({sales, expenses, utility,startDate,endDat
     <>
       <div className="flex flex-row gap-4">
         <div>
-          <Select onValueChange={handleSelectChange}>
+          <Select onValueChange={handleSelectChange} defaultValue={period}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Seleccione periodo"/>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Diario</SelectItem>
+              <SelectItem value="daily">Diario</SelectItem>
               <SelectItem value="weekly">Semanal</SelectItem>
               <SelectItem value="monthly">Mensual</SelectItem>
               <SelectItem value="annual">Anual</SelectItem>
