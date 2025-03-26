@@ -16,7 +16,7 @@ interface DashboardData {
 }
 
 export default function DashboardData({sales, expenses, utility,startDate,endDate}:DashboardData) {
-  const [period, setPeriod] = useState<string>("weekly")
+  const [period, setPeriod] = useState<string>("daily")
 
   const handleSelectChange = (value: string) => {
     setPeriod(value);
@@ -34,8 +34,6 @@ export default function DashboardData({sales, expenses, utility,startDate,endDat
               <SelectItem value="daily">Diario</SelectItem>
               <SelectItem value="weekly">Semanal</SelectItem>
               <SelectItem value="monthly">Mensual</SelectItem>
-              <SelectItem value="annual">Anual</SelectItem>
-              <SelectItem value="personalized">Personalizado</SelectItem>
             </SelectContent>
           </Select>
         </div>
