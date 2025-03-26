@@ -1,6 +1,6 @@
 import {response} from "@/lib/types";
 import prisma from "@/lib/prisma";
-import {ExpenseAmount, ProductToSales, Sales, SalesWeekly} from "@/sales-dashboard/type";
+import {ExpenseAmount, ProductToSales, Sales, SalesDaily, SalesWeekly} from "@/sales-dashboard/type";
 import { plus} from "@/lib/utils";
 import {SearchParams} from "@/document/types";
 import {GrossProfit} from "@/cash-shift/types";
@@ -24,13 +24,26 @@ export const findSalesDaily = async (
   companyId: string,
   startOfDay: Date,
   endOfDay: Date,
-): Promise<response<SalesWeekly>> => {
+): Promise<response<SalesDaily>> => {
   const salesFound = await findCashShift(companyId, startOfDay!, endOfDay!);
 
-  console.log(salesFound)
+  const salesByHour = Array(24).fill(0);
 
-  return {success:false, message:"a"}
-}
+  salesFound.forEach((c) => {
+    const date = new Date(c.createdAt);
+    const hour = date.getHours();
+
+    const totalAmount = c.orders.reduce((sum, order) => {
+      return plus(sum)(+order.netTotal || 0);
+    }, 0);
+
+    salesByHour[hour] += totalAmount;
+  });
+
+  console.log(salesByHour);
+
+  return { success: true, data: { salesByHour } };
+};
 
 export const findSalesWeekly = async (
   companyId: string,
