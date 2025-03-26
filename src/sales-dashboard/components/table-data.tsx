@@ -4,7 +4,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/shared/components/ui/c
 import {useEffect, useState} from "react";
 import {Bar, BarChart, ResponsiveContainer, XAxis, YAxis} from "recharts";
 import {calculateSalesDaily, calculateSalesMonthly, calculateSalesWeekly} from "@/sales-dashboard/actions";
-import {endOfMonth, endOfWeek, startOfMonth, startOfWeek} from "date-fns";
+import {endOfDay, endOfMonth, endOfWeek, startOfDay, startOfMonth, startOfWeek} from "date-fns";
 
 interface TableDataProps {
   period: string;
@@ -21,29 +21,45 @@ export default function TableData({period, sales}: TableDataProps) {
     const fetchSales = async () => {
 
       if(period === "daily"){
-        const days = Array.from({ length: 7 }, (_, i) => i);
+        const hours = Array.from({ length: 24 }, (_, i) => i);
 
-        const dataSales = await Promise.all(days.map(async (dayOffset) => {
-          const date = new Date();
-          date.setDate(date.getDate() - dayOffset);
+        const startOfDaily = startOfDay(new Date());
+        const endOfDaily = endOfDay(new Date());
 
-          const startOfDay = new Date(date.setHours(0, 0, 0, 0));
-          const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+        const dataSales = await Promise.all(hours.map(async (hour) => {
+          const startOfHour = new Date(startOfDaily);
+          startOfHour.setHours(hour, 0, 0, 0);
 
-          return calculateSalesDaily(startOfDay, endOfDay);
-        }))
+          const endOfHour = new Date(endOfDaily);
+          endOfHour.setHours(hour, 59, 59, 999);
+
+          return calculateSalesDaily(startOfHour, endOfHour);
+        }));
+
+        const result = dataSales.map((responseSale, index) => {
+          if (!responseSale.success) {
+            return {
+              name: `${index}:00`,
+              total: 0,
+            };
+          }
+
+          return {
+            name: `${index}:00`,
+            total: responseSale.data.salesByHour[index],
+          };
+        });
+
+        setSales(result);
       }
 
       if(period === "weekly") {
-        const days = [0, 1, 2, 3, 4, 5, 6]
+        const days = Array.from({ length: 7 }, (_, i) => i);
 
-        const dataSales = await Promise.all(days.map(async (day) => {
+        const startOfWeekDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+        const endOfWeekDate = endOfWeek(new Date(), { weekStartsOn: 1 });
 
-          const startOfMonthDate = startOfWeek(new Date(), { weekStartsOn: 1 });
-          const endOfMonthDate = endOfWeek(new Date(), { weekStartsOn: 1 });
-
-          return calculateSalesWeekly(startOfMonthDate, endOfMonthDate);
-        }))
+        const dataSales = await Promise.all(days.map(() => calculateSalesWeekly(startOfWeekDate, endOfWeekDate)));
 
         const result = dataSales.map((responseSale, index) => {
           if (!responseSale.success) {
@@ -63,7 +79,7 @@ export default function TableData({period, sales}: TableDataProps) {
       }
 
       if(period === "monthly"){
-        const months = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        const months = Array.from({ length: 12 }, (_, i) => i);
 
         const dataSales = await Promise.all(months.map(async (month) => {
           const year = new Date().getFullYear();
