@@ -1,9 +1,10 @@
 import {response} from "@/lib/types";
 import prisma from "@/lib/prisma";
-import {ExpenseAmount, ProductToSales, Sales} from "@/sales-dashboard/type";
+import {ExpenseAmount, ProductToSales, Sales, SalesWeekly} from "@/sales-dashboard/type";
 import { plus} from "@/lib/utils";
 import {SearchParams} from "@/document/types";
 import {GrossProfit} from "@/cash-shift/types";
+import {log} from "@/lib/log";
 
 const findCashShift = async (
   companyId: string,
@@ -19,7 +20,64 @@ const findCashShift = async (
    })
 }
 
-export const findSales = async ({
+export const findSalesDaily = async (
+  companyId: string,
+  startOfDay: Date,
+  endOfDay: Date,
+): Promise<response<SalesWeekly>> => {
+  const salesFound = await findCashShift(companyId, startOfDay!, endOfDay!);
+
+  console.log(salesFound)
+
+  return {success:false, message:"a"}
+}
+
+export const findSalesWeekly = async (
+  companyId: string,
+  startDate: Date,
+  endDate: Date,
+): Promise<response<SalesWeekly>> => {
+  const salesFound = await findCashShift(companyId, startDate!, endDate!);
+
+  const salesByDay = Array(7).fill(0);
+
+  salesFound.forEach((c) => {
+    const date = new Date(c.createdAt);
+    const dayOfWeek = date.getDay()-1;
+    log.info("date",{date,dayOfWeek});
+
+    const totalAmount = c.orders.reduce((sum, order) => {
+      return plus(sum)(+order.netTotal || 0);
+    }, 0);
+
+    salesByDay[dayOfWeek] += totalAmount;
+  });
+
+  return {success:true, data: { salesByDay }}
+}
+
+
+export const findSalesMonthly = async (
+  companyId: string,
+  startDate: Date,
+  endDate: Date,
+): Promise<response<Sales>> => {
+  const salesFound = await findCashShift(companyId, startDate!, endDate!);
+
+  const salesMapped = salesFound.map((c) => ({
+    totalOrdersAmount: c.orders.reduce((sum, order) => {
+      return plus(sum)(+order.netTotal || 0);
+    }, 0),
+  }));
+
+  const totalSales = salesMapped.reduce((sum, sale) => {
+    return plus(sum)(sale.totalOrdersAmount || 0);
+  }, 0);
+
+  return {success:true, data: {finalAmount: totalSales}}
+}
+
+export const findTotalSales = async ({
   companyId,
   startDate,
   endDate
