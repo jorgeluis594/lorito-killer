@@ -33,12 +33,14 @@ const getSearchParams = async ({
     params.startDate = new Date(searchParams.start as string);
   }else {
     params.startDate = new Date();
+    params.startDate.setHours(0, 0, 0, 0);
   }
 
   if (searchParams.end) {
     params.endDate = new Date(searchParams.end as string);
   } else {
     params.endDate = new Date();
+    params.endDate.setHours(23, 59, 59, 999);
   }
 
   return {success: true, data: params};
@@ -49,7 +51,6 @@ async function DashboardDataWithSuspense({searchParams}: ParamsProps) {
   if (!dataQuery.success) {
     return <SignOutRedirection/>;
   }
-  console.log(dataQuery.data.startDate, dataQuery.data.endDate);
 
   const [expensesResponse, totalSalesResponse, utilityResponse] = await Promise.all([
     findExpenses(dataQuery.data),
