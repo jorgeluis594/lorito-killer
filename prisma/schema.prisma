@@ -140,7 +140,7 @@ model CashShift {
 
 model OrderItem {
   id             String        @id @default(uuid())
-  productName    String
+  productName    String?
   quantity       Decimal
   discountAmount Decimal
   discountType   DiscountType?
