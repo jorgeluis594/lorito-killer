@@ -3,9 +3,8 @@
 import {useState} from "react";
 import DateRangePicker from "@/shared/components/ui/date-range-picker";
 import useUpdateQueryString from "@/lib/use-update-query-string";
-import {addDays, endOfDay, startOfDay, startOfWeek, subDays} from "date-fns";
+import {endOfDay, startOfDay} from "date-fns";
 import {useSearchParams} from "next/navigation";
-import {fromDate} from "@internationalized/date";
 
 
 export default function DateFilterDashboard() {
@@ -15,7 +14,7 @@ export default function DateFilterDashboard() {
   const to = searchParams.get("end");
 
   const [date, setDate] = useState<{ from: Date; to: Date } | undefined>({
-    from: from ? new Date(from) : subDays(new Date(), 20),
+    from: from ? new Date(from) : new Date(),
     to: to ? new Date(to) : new Date(),
   });
 
