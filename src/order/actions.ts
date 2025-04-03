@@ -85,6 +85,7 @@ export const create = async (
         companyId: user.companyId,
       });
       if (!createOrderResponse.success) {
+        log.error("create_order_failed",{})
         return createOrderResponse;
       }
 

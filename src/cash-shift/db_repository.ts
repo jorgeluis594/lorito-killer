@@ -23,6 +23,7 @@ import {
 import PaymentMethod = $Enums.PaymentMethod;
 import { User } from "@/user/types";
 import { plus } from "@/lib/utils";
+import {log} from "@/lib/log";
 
 // improve this
 export const userExists = async (userId: string) => {
@@ -246,6 +247,8 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     ),
     payments: (prismaCashShift.payments || []).map(mapPrismaPaymentToPayment),
   };
+
+  log.info("cashshift_base_created",{baseCashShift})
 
   if (prismaCashShift.status === "OPEN") {
     return {
