@@ -182,6 +182,8 @@ export const create = async (order: Order): Promise<response<Order>> => {
       .filter((oi): oi is successResponse<OrderItem> => oi.success)
       .map((oi) => oi.data);
 
+    log.info("order_created",{order,createdOrder})
+
     return { success: true, data: createdOrder };
   } catch (e: any) {
     return { success: false, message: e.message };

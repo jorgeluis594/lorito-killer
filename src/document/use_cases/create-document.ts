@@ -87,6 +87,7 @@ export const createDocument = async (
         order,
         documentMetadata,
       );
+      log.error("ticket_created",{order,documentMetadata, documentResponse})
       break;
     case "receipt":
       if (!establishmentCode) {
@@ -97,6 +98,8 @@ export const createDocument = async (
         ...restMetadata,
         establishmentCode,
       });
+
+      log.error("ticket_created",{order,documentMetadata, documentResponse})
       break;
     case "invoice":
       if (!hasBusinessCustomer(order)) {
@@ -114,6 +117,8 @@ export const createDocument = async (
         ...restMetadata,
         establishmentCode,
       });
+
+      log.error("ticket_created",{order,documentMetadata, documentResponse})
       break;
     default:
       throw new Error("Invalid document type");
@@ -129,6 +134,8 @@ export const createDocument = async (
   if (!persistedDocumentResponse.success) {
     return serverError;
   }
+
+  log.error("document_persisted",{persistedDocumentResponse, documentResponse})
 
   return persistedDocumentResponse;
 };
