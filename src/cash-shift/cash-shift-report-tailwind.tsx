@@ -1,4 +1,4 @@
-import { CashShift } from "@/cash-shift/types";
+import {CashShift} from "@/cash-shift/types";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Table,
@@ -11,14 +11,14 @@ import {
 } from "@/shared/components/ui/table";
 import { format } from "date-fns";
 import { formatPrice, shortLocalizeDate } from "@/lib/utils";
-import { getMany } from "@/document/db_repository";
+import {getMany, getTotal} from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
 import { ArrayElement } from "@/lib/types";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { getCompany } from "@/company/db_repository";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
-import {findOrderItems} from "@/cash-shift/components/actions";
+import {findUtility} from "@/cash-shift/components/actions";
 
 interface CashShiftReportTwProps {
   cashShift: CashShift;
@@ -36,24 +36,16 @@ export default async function CashShiftReportTw({
     return <SignOutRedirection />;
   }
 
-  const companyResponse = await getCompany(session.user.companyId);
+  const [companyResponse, documentsResponse, grossProfitResponse] = await Promise.all([
+    getCompany(session.user.companyId),
+    getMany({
+      companyId: session.user.companyId,
+      orderId: cashShift.orders.map((order) => order.id!),
+    }),
+    findUtility(cashShift.id),
+  ]);
 
-  if (!companyResponse.success) {
-    return <p>Error cargando página, comuniquese con soporte</p>;
-  }
-
-  const documentsResponse = await getMany({
-    companyId: session.user.companyId,
-    orderId: cashShift.orders.map((order) => order.id!),
-  });
-
-  if (!documentsResponse.success) {
-    return <p>Error cargando página, comuniquese con soporte</p>;
-  }
-
-  const grossProfit = await findOrderItems(cashShift.id)
-
-  if(!grossProfit.success) {
+  if (!companyResponse.success || !documentsResponse.success || !grossProfitResponse.success) {
     return <p>Error cargando página, comuniquese con soporte</p>;
   }
 
@@ -199,10 +191,10 @@ export default async function CashShiftReportTw({
 
           <TableRow>
             <th className="px-4 text-end align-middle font-medium border bg-accent">
-              Utilidad bruta:
+              Utilidad:
             </th>
             <TableCell className="text-left border">
-              {grossProfit.data ? formatPrice(grossProfit.data.utility - totalExpense) : "Datos no disponibles"}
+              {grossProfitResponse ? formatPrice(grossProfitResponse.data.utility - totalExpense) : "Datos no disponibles"}
             </TableCell>
 
             <th className="px-4 text-end align-middle font-medium border bg-accent">
