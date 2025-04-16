@@ -4,6 +4,7 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "@/app/api/uploadthing/core";
 import {ScrollArea} from "@/shared/components/ui/scroll-area";
+import {MobileSidebar} from "@/shared/components/layout/mobile-sidebar";
 
 export default function DashboardLayout({
   children,
@@ -14,13 +15,18 @@ export default function DashboardLayout({
     <>
       <Header/>
       <div className="flex h-screen overflow-hidden">
-        <Sidebar/>
-          <main className="w-full pt-14">
-            <ScrollArea className="h-full">
+        <div className="hidden md:flex">
+          <Sidebar/>
+        </div>
+        <div className="md:hidden fixed top-4 left-4 z-50">
+          <MobileSidebar/>
+        </div>
+        <main className="w-full pt-14">
+          <ScrollArea className="h-full">
             <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)}/>
             {children}
-            </ScrollArea>
-          </main>
+          </ScrollArea>
+        </main>
       </div>
     </>
   );
