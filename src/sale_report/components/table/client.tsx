@@ -215,7 +215,7 @@ export default function DataTable<TData, TValue>({
                         : ''}
                     </p>
                   )}
-                  <p className={`text-sm text-gray-900 font-semibold`}>
+                  <p className="text-sm text-gray-900 font-semibold">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </p>
                 </div>
