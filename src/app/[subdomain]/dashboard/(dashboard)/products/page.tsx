@@ -62,23 +62,23 @@ export default async function Page({ searchParams }: ParamsProps) {
 
   return (
     <ProductFormStoreProvider>
-      <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
-        <BreadCrumb items={breadcrumbItems} />
-        <div className="flex items-start justify-between">
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <BreadCrumb items={breadcrumbItems}/>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start">
           <Heading
             title={`Productos (${totalResponse.success ? totalResponse.data : "-"})`}
             description="Gestiona tus productos!"
           />
-          <AddProductButtons />
+          <AddProductButtons/>
         </div>
-        <Separator />
-        <ProductModalForm />
+        <Separator/>
+        <ProductModalForm/>
         <Suspense
-          fallback={<DataTable loading columns={columns} pageCount={1} />}
+          fallback={<DataTable loading columns={columns} pageCount={1}/>}
         >
-          <ProductsWithSuspense searchParams={searchParams} />
+          <ProductsWithSuspense searchParams={searchParams}/>
         </Suspense>
       </div>
     </ProductFormStoreProvider>
-  );
+);
 }
