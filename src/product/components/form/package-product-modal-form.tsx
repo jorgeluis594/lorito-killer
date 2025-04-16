@@ -265,7 +265,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
 
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
-      <DialogContent className="sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
+      <DialogContent className="w-full h-full sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
             <Heading title={title} />
