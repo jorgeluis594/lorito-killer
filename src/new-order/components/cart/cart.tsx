@@ -111,7 +111,7 @@ export default function Cart() {
           </div>
         </div>
         <ScrollArea className="border-b">
-          <div className="py-3 h-full">
+          <div className="py-3 h-[370px]">
             <div>
               {order.orderItems.map((item) => (
                 <CartItem
