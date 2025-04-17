@@ -35,28 +35,28 @@ export const NonePayment: React.FC = () => {
       <p className="text-lg text-center mt-8">Selecciona un medio de pago</p>
       <div className="grid grid-cols-2 w-fit gap-6 mx-auto mt-4">
         <div
-          className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
+          className="border col-span-1 md:h-28 md:w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
           onClick={() => setPaymentMode("cash")}
         >
           <HandCoins className="w-12 h-12" />
           <p className="w-full text-center">EFECTIVO</p>
         </div>
         <div
-          className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
+          className="border col-span-1 md:h-28 md:w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
           onClick={() => setPaymentMode("wallet")}
         >
           <Smartphone className="w-12 h-12" />
           <p className="w-full text-center">YAPE</p>
         </div>
         <div
-          className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
+          className="border col-span-1 md:h-28 md:w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
           onClick={() => setPaymentMode("card")}
         >
-          <CreditCard className="w-12 h-12" />
+          <CreditCard className="md:w-12 md:h-12" />
           <p className="w-full text-center">TARJETA</p>
         </div>
         <div
-          className="border col-span-1 h-28 w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
+          className="border col-span-1 md:h-28 md:w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
           onClick={() => setPaymentMode("combine")}
         >
           <PiggyBank className="w-12 h-12" />
@@ -230,6 +230,7 @@ export const CardPayment: React.FC = () => {
         <MoneyInput
           placeholder="Ingrese monto"
           type="number"
+          className="w-full"
           value={orderTotal}
           disabled
         />
@@ -238,18 +239,18 @@ export const CardPayment: React.FC = () => {
         type="single"
         size="lg"
         variant="outline"
-        className="gap-0"
+        className="gap-0 w-full"
         onValueChange={onCardChange}
       >
         <ToggleGroupItem
           value={"debit_card"}
-          className="rounded-tr-none rounded-br-none w-48"
+          className="rounded-tr-none rounded-br-none w-full md:w-48"
         >
           Débito
         </ToggleGroupItem>
         <ToggleGroupItem
           value="credit_card"
-          className="rounded-tl-none rounded-bl-none w-48"
+          className="rounded-tl-none rounded-bl-none w-full md:w-48"
         >
           Crédito
         </ToggleGroupItem>
