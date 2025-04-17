@@ -26,6 +26,7 @@ import {
   useProductFormStore,
 } from "@/new-order/components/products-view/product-searcher-form-provider";
 import AddExpense from "@/cash-shift/components/add_expense";
+import CartMobile from "@/new-order/components/cart/cart-mobile";
 
 export default function ProductsSearcher() {
   const { setProducts } = useProductFormActions();
@@ -126,14 +127,13 @@ export default function ProductsSearcher() {
       };
     }
   }, [barcodeInputRef.current, onKeyDown]);
-
   return (
     <div className="h-full w-100 p-5 pb-0 grid grid-rows-[7rem_1fr] relative">
       <div className="w-full border-b">
-        <div className="w-1/2 md:grid md:grid-cols-2 gap-4 mb-2">
+        <div className="w-full md:w-1/2 flex flex-cols-3 md:grid md:grid-cols-3 gap-4 mb-2">
           <Select onValueChange={handleCategoryChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Seleccione categoría" />
+              <SelectValue placeholder="Seleccione categoría"/>
             </SelectTrigger>
             <SelectContent>
               <SelectItem key="all" value="all">
@@ -148,23 +148,27 @@ export default function ProductsSearcher() {
           </Select>
 
           <Select onValueChange={handleSortChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Ordernar por" />
+            <SelectTrigger className="w-1/5 md:w-full">
+              <SelectValue placeholder="Ordernar por"/>
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(sortOptions).map(([key, { name }]) => (
+              {Object.entries(sortOptions).map(([key, {name}]) => (
                 <SelectItem key={key} value={key}>
                   {name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          <div className="md:absolute top-4 right-4">
+            <AddExpense/>
+          </div>
         </div>
         <div className="flex w-full items-center space-x-2">
           <Button type="button" onClick={onSearchSubmit}>
             <Search className="h-4 w-5" />
           </Button>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="flex flex-cols-4 md:grid md:grid-cols-4 gap-3">
             <Input
               placeholder="Nombre del producto"
               className="col-span-2"
@@ -172,7 +176,7 @@ export default function ProductsSearcher() {
             />
             <Input
               placeholder="Código de barra"
-              className="col-span-1"
+              className="col-span-1 w-1/3 md:w-full"
               autoFocus={true}
               value={skuValue}
               onChange={(e) => setSkuValue(e.target.value)}
@@ -182,13 +186,17 @@ export default function ProductsSearcher() {
         </div>
       </div>
 
-      <div className="absolute top-4 right-4">
-        <AddExpense />
-      </div>
 
-      <ScrollArea className="mt-4">
-        <ProductList products={products} />
-      </ScrollArea>
+      <div className="md:mt-2">
+        <div className="md:hidden flex justify-center mt-4">
+          <CartMobile />
+        </div>
+        <div>
+            <ScrollArea className="mt-2 md:mt-2">
+              <ProductList products={products} />
+            </ScrollArea>
+        </div>
+      </div>
     </div>
   );
 }
