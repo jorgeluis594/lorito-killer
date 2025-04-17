@@ -67,7 +67,7 @@ export default function Cart() {
           value={order.documentType}
           onValueChange={(value) => setDocumentType(value as DocumentType)}
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-3 mt-7 md:mt-0">
             <TabsTrigger value="ticket">Nota de Venta</TabsTrigger>
             <TabsTrigger value="receipt" disabled={!company.isBillingActivated}>
               Boleta
