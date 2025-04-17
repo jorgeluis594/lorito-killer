@@ -22,7 +22,7 @@ export default function CartMobile() {
           Mostrar Carrito
         </Button>
       </DialogTrigger>
-      <DialogContent variant="right" className="flex flex-col max-w-[35rem]">
+      <DialogContent variant="right" className="p-2">
         <Cart />
       </DialogContent>
     </Dialog>
