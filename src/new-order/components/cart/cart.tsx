@@ -60,13 +60,9 @@ export default function Cart() {
     restoreStockProduct,
   } = useProductFormActions();
 
-  useEffect(() => {
-    reset();
-  }, []);
-
   return (
     <>
-      <div className="h-full border-l grid grid-rows-[min-content_min-content_min-content_1fr_min-content]">
+      <div className="h-full md:border-l grid grid-rows-[min-content_min-content_min-content_1fr_min-content]">
         <Tabs
           value={order.documentType}
           onValueChange={(value) => setDocumentType(value as DocumentType)}
