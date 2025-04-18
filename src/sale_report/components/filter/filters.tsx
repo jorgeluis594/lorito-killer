@@ -1,12 +1,9 @@
 import { getBillingCredentialsFor } from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
-import DocumentSelector from "@/sale_report/components/filter/document-selector";
-import { Separator } from "@/shared/components/ui/separator";
-import CustomerSelector from "@/sale_report/components/filter/customer-selector";
-import DateFilter from "@/sale_report/components/filter/date-filter";
 import { findCustomer } from "@/customer/db_repository";
 import { Customer } from "@/customer/types";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import FiltersWithHiddenButton from "@/sale_report/components/filter/filters-with-hidden-button";
 
 type ParamsProps = {
   searchParams: {
@@ -42,19 +39,7 @@ export default async function Filters({ searchParams }: ParamsProps) {
 
   return (
     <div className="mt-6">
-      <h2 className="text-xl font-bold tracking-tight mb-4">Filtros</h2>
-
-      <DateFilter />
-      <Separator className="my-5" />
-      <DocumentSelector
-        documentTypes={{
-          ticket: true,
-          invoice: !!billingCredentialsResponse.data.invoiceSerialNumber, // Fix, check if company has at least one invoice serial number to allow filter by invoice
-          receipt: !!billingCredentialsResponse.data.receiptSerialNumber, // Fix, check if company has at least one receipt serial number to allow filter by receipt
-        }}
-      />
-      <Separator className="my-5" />
-      <CustomerSelector customer={customer} />
+      <FiltersWithHiddenButton billingCredentials={billingCredentialsResponse.data} customer={customer} />
     </div>
   );
 }

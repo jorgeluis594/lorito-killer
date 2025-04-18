@@ -107,8 +107,8 @@ export default async function Page({ searchParams }: ParamsProps) {
         <Heading title="Reporte de ventas" />
       </div>
       <Separator />
-      <div className="flex flex-row space-x-12 space-y-0 mt-8">
-        <aside className="w-1/5">
+      <div className="items-center md:flex md:flex-row md:space-x-12 md:space-y-0 md:mt-8">
+        <aside className="md:w-1/5">
           <DownloadXLSXButton
             queryString={objectToQueryString(
               searchParams as Record<string, string>,
