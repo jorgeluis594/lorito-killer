@@ -18,13 +18,6 @@ interface FiltersWithHiddenButtonProps {
 
 export default function FiltersWithHiddenButton({billingCredentials, customer}:FiltersWithHiddenButtonProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const isMdUp = useMediaQuery("(min-width: 768px)");
-
-  useEffect(() => {
-    if (isMdUp) {
-      setIsVisible(true);
-    }
-  }, [isMdUp]);
 
   return (
     <>
@@ -43,7 +36,7 @@ export default function FiltersWithHiddenButton({billingCredentials, customer}:F
           </Button>
         </div>
       </div>
-      {(isMdUp || isVisible) && (
+      {isVisible && (
         <div>
           <DateFilter />
           <Separator className="my-5" />
