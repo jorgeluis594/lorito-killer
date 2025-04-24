@@ -143,7 +143,7 @@ export default function StockAdjustmentForm({
                 <FormItem>
                   <FormLabel>Observación</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Textarea className="w-72 md:w-full" {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -157,10 +157,12 @@ export default function StockAdjustmentForm({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <StockAdjustmentFields
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                <div className="max-w-[800px] overflow-auto">
+                  <StockAdjustmentFields
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                </div>
               </FormControl>
             </FormItem>
           )}
