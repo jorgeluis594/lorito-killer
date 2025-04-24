@@ -32,6 +32,7 @@ import { Button } from "./button";
 import { ScrollArea, ScrollBar } from "./scroll-area";
 import { Icons } from "@/shared/icons";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import CardResponsive from "@/shared/components/ui/card-responsive";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -116,7 +117,7 @@ export function DataTable<TData, TValue>({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
-              <Icons.settings2 className="mr-2 h-4 w-4" />
+              <Icons.settings2 className="mr-2 h-4 w-4"/>
               Columnas
             </Button>
           </DropdownMenuTrigger>
@@ -142,32 +143,37 @@ export function DataTable<TData, TValue>({
         </DropdownMenu>
       </div>
 
-      <ScrollArea className="rounded-md border h-[calc(75vh-220px)]">
-        <Table className="relative">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
+      <div className="hidden md:block">
+        <ScrollArea className="rounded-md border h-[calc(75vh-220px)]">
+          <Table className="relative">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? <DataTableSkeleton /> : <ProductRows />}
-          </TableBody>
-        </Table>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? <DataTableSkeleton/> : <ProductRows/>}
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal"/>
+        </ScrollArea>
+      </div>
+
+      <CardResponsive table={table}/>
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="space-x-2">
           <Button
