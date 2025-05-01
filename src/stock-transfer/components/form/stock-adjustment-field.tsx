@@ -95,7 +95,7 @@ export default function StockAdjustmentField({
             )}
         </span>
       </div>
-      <div className="col-span-1 flex items-center justify-center">
+      <div className="col-span-1 flex md:items-center justify-center">
         <Button
           variant="destructive"
           size="icon"

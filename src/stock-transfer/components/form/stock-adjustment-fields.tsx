@@ -36,47 +36,50 @@ export default function StockAdjustmentFields({
   };
 
   return (
-    <div>
-      <div className="grid grid-cols-12 gap-2 bg-accent p-3">
-        <div className="col-span-3">
-          <span className={labelVariants()}>Producto</span>
+    <div className="overflow-y-auto w-screen md:w-full">
+      <div className="min-w-max">
+        <div className="grid grid-cols-12 gap-2 bg-accent p-3">
+          <div className="col-span-3">
+            <span className={labelVariants()}>Producto</span>
+          </div>
+          <div className="col-span-2">
+            <span className={labelVariants()}>Cantidad actual</span>
+          </div>
+          <div className="col-span-2">
+            <span className={labelVariants()}>Tipo de ajuste </span>
+          </div>
+          <div className="col-span-2">
+            <span className={labelVariants()}>Cantidad</span>
+          </div>
+          <div className="col-span-2">
+            <span className={labelVariants()}>Cantidad final</span>
+          </div>
+          <div>
+          </div>
         </div>
-        <div className="col-span-2">
-          <span className={labelVariants()}>Cantidad actual</span>
-        </div>
-        <div className="col-span-2">
-          <span className={labelVariants()}>Tipo de ajuste </span>
-        </div>
-        <div className="col-span-2">
-          <span className={labelVariants()}>Cantidad</span>
-        </div>
-        <div className="col-span-2">
-          <span className={labelVariants()}>Cantidad final</span>
-        </div>
-        <div></div>
+        {value.map((adjustment, idx) => (
+          <div key={adjustment.id}>
+            {idx > 0 && <Separator/>}
+            <StockAdjustmentField
+              adjustment={adjustment}
+              onChange={onAdjustmentChange}
+              onRemove={onAdjustmentRemove}
+              skipProductIds={value
+                .filter((a) => a.productId)
+                .map((a) => a.productId!)}
+            />
+          </div>
+        ))}
+        <Button
+          variant="outline"
+          type="button"
+          className="mt-3"
+          onClick={onAdjustmentAdd}
+        >
+          <Plus className="h-4 w-4 mr-2"/>
+          Agregar item
+        </Button>
       </div>
-      {value.map((adjustment, idx) => (
-        <div key={adjustment.id}>
-          {idx > 0 && <Separator />}
-          <StockAdjustmentField
-            adjustment={adjustment}
-            onChange={onAdjustmentChange}
-            onRemove={onAdjustmentRemove}
-            skipProductIds={value
-              .filter((a) => a.productId)
-              .map((a) => a.productId!)}
-          />
-        </div>
-      ))}
-      <Button
-        variant="outline"
-        type="button"
-        className="mt-3"
-        onClick={onAdjustmentAdd}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Agregar item
-      </Button>
     </div>
   );
 }
