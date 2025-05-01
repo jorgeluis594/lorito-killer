@@ -38,7 +38,7 @@ export default async function Page({ searchParams }: paramsProps) {
     <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
       <BreadCrumb items={breadcrumbItems} />
 
-      <div className="flex flex-col md:items-start md:justify-between">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between">
         <Heading
           title="Movimientos de Stock"
           description="Agrega o regulariza el stock de tus productos"
