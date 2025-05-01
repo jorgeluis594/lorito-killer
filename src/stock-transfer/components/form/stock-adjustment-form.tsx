@@ -157,12 +157,10 @@ export default function StockAdjustmentForm({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <div className="max-w-[800px] overflow-auto">
                   <StockAdjustmentFields
                     value={field.value}
                     onChange={field.onChange}
                   />
-                </div>
               </FormControl>
             </FormItem>
           )}
