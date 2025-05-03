@@ -6,10 +6,9 @@ import CustomerSelector from "@/sale_report/components/filter/customer-selector"
 import DateFilter from "@/sale_report/components/filter/date-filter";
 import {ChevronDown} from "lucide-react";
 import {Button} from "@/shared/components/ui/button";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {Customer} from "@/customer/types";
 import {BillingCredentials} from "@/document/types";
-import {useMediaQuery} from "usehooks-ts";
 
 interface FiltersWithHiddenButtonProps {
   billingCredentials: BillingCredentials;
