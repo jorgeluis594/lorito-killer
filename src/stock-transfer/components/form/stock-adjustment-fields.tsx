@@ -37,7 +37,7 @@ export default function StockAdjustmentFields({
 
   return (
     <div className="overflow-y-auto w-screen md:w-full">
-      <div className="min-w-max">
+      <div className="min-w-[1900px] md:min-w-[1000px]">
         <div className="grid grid-cols-12 gap-2 bg-accent p-3">
           <div className="col-span-3">
             <span className={labelVariants()}>Producto</span>

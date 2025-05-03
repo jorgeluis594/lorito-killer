@@ -166,7 +166,7 @@ export default function StockAdjustmentForm({
           )}
         />
         {adjustments.length > 0 && (
-          <div className="flex justify-end">
+          <div className="flex justify-center mr-5 md:justify-end">
             <Button>
               <Save className="h-4 w-4 mr-2" /> Guardar
             </Button>
