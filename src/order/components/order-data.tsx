@@ -28,7 +28,7 @@ export default async function OrderData({ order }: { order: Order }) {
 
   return (
     <div className="h-full mt-8 flex justify-center">
-      <Card className={"w-11/12"}>
+      <Card className={"w-screen md:w-11/12"}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mb-4">
           <CardTitle className="flex flex-col items-start">
             <span>
@@ -47,7 +47,7 @@ export default async function OrderData({ order }: { order: Order }) {
               </Badge>
             )}
           </CardTitle>
-          <div className="space-x-2">
+          <div className="flex space-x-2">
             <a
               className={buttonVariants({ variant: "ghost", size: "icon" })}
               href={`/api/orders/${order.id}/documents`}
@@ -106,73 +106,75 @@ export default async function OrderData({ order }: { order: Order }) {
             </tbody>
           </table>
 
-          <table className="table-auto border w-full mt-8">
-            <thead>
-            <tr>
-              <th className="bg-slate-100 pl-2 border py-1 font-light">
-                Cantidad
-              </th>
-              <th className="bg-slate-100 pl-2 border py-1 font-light">
-                Producto
-              </th>
-              <th className="bg-slate-100 pl-2 border py-1 font-light">
-                Precio
-              </th>
-              {hasADiscount && (
+          <div className="overflow-y-auto w-screen md:w-full">
+            <table className="table-auto border min-w-[600px] md:w-full mt-8">
+              <thead>
+              <tr>
                 <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Descuento
+                  Cantidad
                 </th>
-              )}
-              <th className="bg-slate-100 pl-2 border py-1 font-light">
-                Total
-              </th>
-            </tr>
-            </thead>
-            <tbody>
-            {order.orderItems.map((orderItem) => (
-              <tr key={orderItem.id}>
-                <td className="pl-2 border py-1">
-                  {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
-                </td>
-                <td className="pl-2 border py-1">{orderItem.productName}</td>
-                <td className="pl-2 border py-1">
-                  {formatPrice(orderItem.productPrice)}
-                </td>
+                <th className="bg-slate-100 pl-2 border py-1 font-light">
+                  Producto
+                </th>
+                <th className="bg-slate-100 pl-2 border py-1 font-light">
+                  Precio
+                </th>
                 {hasADiscount && (
-                  <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.discountAmount)}
-                  </td>
+                  <th className="bg-slate-100 pl-2 border py-1 font-light">
+                    Descuento
+                  </th>
                 )}
-                <td className="pl-2 border py-1">
-                  {formatPrice(orderItem.total)}
-                </td>
+                <th className="bg-slate-100 pl-2 border py-1 font-light">
+                  Total
+                </th>
               </tr>
-            ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+              {order.orderItems.map((orderItem) => (
+                <tr key={orderItem.id}>
+                  <td className="pl-2 border py-1">
+                    {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
+                  </td>
+                  <td className="pl-2 border py-1">{orderItem.productName}</td>
+                  <td className="pl-2 border py-1">
+                    {formatPrice(orderItem.productPrice)}
+                  </td>
+                  {hasADiscount && (
+                    <td className="pl-2 border py-1">
+                      {formatPrice(orderItem.discountAmount)}
+                    </td>
+                  )}
+                  <td className="pl-2 border py-1">
+                    {formatPrice(orderItem.total)}
+                  </td>
+                </tr>
+              ))}
+              </tbody>
+            </table>
+          </div>
           <div className="w-full flex justify-between mt-8">
             <table className="table-auto border w-64">
               <thead>
-                <tr>
-                  <th className="bg-slate-100 pl-2 border py-1 font-light">
-                    Método de pago
-                  </th>
-                  <th className="bg-slate-100 pl-2 border py-1 font-light">
-                    Monto
-                  </th>
-                </tr>
+              <tr>
+                <th className="bg-slate-100 pl-2 border py-1 font-light">
+                  Método de pago
+                </th>
+                <th className="bg-slate-100 pl-2 border py-1 font-light">
+                  Monto
+                </th>
+              </tr>
               </thead>
               <tbody>
-                {order.payments.map((payment) => (
-                  <tr key={payment.id}>
-                    <td className="pl-2 border py-1">
-                      {paymentMethodToText(payment.method)}
-                    </td>
-                    <td className="pl-2 border py-1">
-                      {formatPrice(payment.amount)}
-                    </td>
-                  </tr>
-                ))}
+              {order.payments.map((payment) => (
+                <tr key={payment.id}>
+                  <td className="pl-2 border py-1">
+                    {paymentMethodToText(payment.method)}
+                  </td>
+                  <td className="pl-2 border py-1">
+                    {formatPrice(payment.amount)}
+                  </td>
+                </tr>
+              ))}
               </tbody>
             </table>
             <div className="w-56 flex flex-col">
