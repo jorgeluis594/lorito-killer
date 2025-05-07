@@ -195,150 +195,150 @@ export default function NewCustomerModal() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center col-span-1">
+            <div className="grid grid-rows-2 md:grid-rows-none md:grid-cols-2 md:gap-4">
+              <div className="flex items-center md:col-span-1">
                 <FormField
                   control={form.control}
                   name="documentNumber"
-                  render={({ field }) => (
+                  render={({field}) => (
                     <FormItem className="flex-1">
                       <FormLabel>Numero de documento</FormLabel>
                       <FormControl>
                         <Input autoComplete="off" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage/>
                     </FormItem>
                   )}
                 />
                 <Button
                   type="button"
-                  className="h-10 w-14 flex mt-8 items-center px-4"
+                  className="mt-8 md:h-10 md:w-14 flex md:mt-8 items-center md:px-4"
                   onClick={handleSearch}
                 >
-                  <Search />
+                  <Search/>
                 </Button>
               </div>
-              <FormField
-                control={form.control}
-                name="documentType"
-                render={({ field }) => (
-                  <FormItem className="col-span-1">
-                    <FormLabel>Tipo de Documento</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={
-                        order.documentType === "receipt" ||
-                        order.documentType === "ticket"
-                          ? DNI
-                          : RUC
-                      }
-                      disabled
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {order.documentType === "receipt" ||
-                        order.documentType === "ticket" ? (
-                          <SelectItem value={DNI}>DNI</SelectItem>
-                        ) : (
-                          <SelectItem value={RUC}>RUC</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {order.documentType === "ticket" ||
-                    order.documentType === "receipt"
-                      ? "Nombre"
-                      : "Razón Social"}
-                  </FormLabel>
-                  <FormControl>
-                    <Input autoComplete="off" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-1">
                 <FormField
                   control={form.control}
-                  name="geoCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Distrito</FormLabel>
-                      <FormControl>
-                        <DistrictSelector
-                          value={locality}
-                          onSelect={(locality) => {
-                            setLocality(locality);
-                            field.onChange({
-                              target: { value: locality.geoCode },
-                            });
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
+                  name="documentType"
+                  render={({field}) => (
+                    <FormItem className="col-span-1 mt-4">
+                      <FormLabel>Tipo de Documento</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={
+                          order.documentType === "receipt" ||
+                          order.documentType === "ticket"
+                            ? DNI
+                            : RUC
+                        }
+                        disabled
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue/>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {order.documentType === "receipt" ||
+                          order.documentType === "ticket" ? (
+                            <SelectItem value={DNI}>DNI</SelectItem>
+                          ) : (
+                            <SelectItem value={RUC}>RUC</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage/>
                     </FormItem>
                   )}
                 />
+            </div>
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({field}) => (
+                  <FormItem>
+                    <FormLabel>
+                      {order.documentType === "ticket" ||
+                      order.documentType === "receipt"
+                        ? "Nombre"
+                        : "Razón Social"}
+                    </FormLabel>
+                    <FormControl>
+                      <Input autoComplete="off" {...field} />
+                    </FormControl>
+                    <FormMessage/>
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-1">
+                  <FormField
+                    control={form.control}
+                    name="geoCode"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormLabel>Distrito</FormLabel>
+                        <FormControl>
+                          <DistrictSelector
+                            value={locality}
+                            onSelect={(locality) => {
+                              setLocality(locality);
+                              field.onChange({
+                                target: {value: locality.geoCode},
+                              });
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage/>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="col-span-1">
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({field}) => (
+                      <FormItem>
+                        <FormLabel>Dirección</FormLabel>
+                        <FormControl>
+                          <Input autoComplete="off" {...field} />
+                        </FormControl>
+                        <FormMessage/>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              <div className="col-span-2">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="address"
-                  render={({ field }) => (
+                  name="email"
+                  render={({field}) => (
                     <FormItem>
-                      <FormLabel>Dirección</FormLabel>
+                      <FormLabel>Correo</FormLabel>
                       <FormControl>
                         <Input autoComplete="off" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage/>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({field}) => (
+                    <FormItem>
+                      <FormLabel>Teléfono</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="off" {...field} />
+                      </FormControl>
+                      <FormMessage/>
                     </FormItem>
                   )}
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Correo</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teléfono</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
           </form>
         </Form>
         <DialogFooter className="mt-auto">

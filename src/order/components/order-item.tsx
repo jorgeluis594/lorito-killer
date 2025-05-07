@@ -17,7 +17,7 @@ export default function OrderItem({ order, correlative }: OrderItemProps) {
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100 transition-colors ${path == href ? "bg-gray-100" : ""}`}
+      className={`w-screen md:w-auto flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100 transition-colors ${path == href ? "bg-gray-100" : ""}`}
     >
       <div>
         <div className="text-sm font-medium">

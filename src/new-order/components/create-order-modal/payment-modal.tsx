@@ -134,7 +134,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="md:max-w-4xl sm:max-w-3xl"
+        className="w-full md:max-w-4xl sm:max-w-3xl"
         onInteractOutside={(e) => {
           e.preventDefault(); // Prevents close modal when clicking outside of modal
         }}
@@ -144,44 +144,26 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         </DialogHeader>
         <div className="my-2 relative">
           <div className="text-center">
-            {order.discount && (
-              <div className="grid grid-cols-2 gap-1">
-                <div>
-                  <div className="text-xl text-gray-600 text-right">
-                    Subtotal:
-                  </div>
-                  <div className="text-lg text-red-500 text-right">
-                    Descuento:
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xl text-gray-600 text-left">
-                    {formatPrice(order.netTotal)}
-                  </div>
-                  <div className="text-lg text-red-500 text-left">
-                    {formatPrice(order.discountAmount)}
-                  </div>
-                </div>
-              </div>
-            )}
             <div className="grid grid-cols-2 gap-1 mt-3">
-              <div className="text-3xl font-medium leading-none text-right">
+              <div className="text-3xl font-medium leading-none md:text-right ">
                 TOTAL:
               </div>
-              <div className="text-3xl font-medium leading-none text-left">
+              <div className="text-3xl font-medium leading-none md:text-left ml-[-82px] md:ml-0">
                 {formatPrice(order.total)}
               </div>
             </div>
           </div>
           {paymentMode !== "none" && (
+            <div className="flex justify-center mt-2">
             <Button
               type="button"
               variant="link"
               onClick={resetPayment}
-              className="absolute top-0 right-0 py-0"
+              className="mt-2 md:absolute md:top-0 md:right-0 md:py-0"
             >
               CAMBIAR MÉTODO
             </Button>
+            </div>
           )}
           <PaymentView />
           {paymentMode !== "none" && companyHasDiscountFeature(company.id) && (

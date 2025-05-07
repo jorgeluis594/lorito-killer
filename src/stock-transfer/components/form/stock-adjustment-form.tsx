@@ -143,7 +143,7 @@ export default function StockAdjustmentForm({
                 <FormItem>
                   <FormLabel>Observación</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Textarea className="w-72 md:w-full" {...field} />
                   </FormControl>
                 </FormItem>
               )}
@@ -157,16 +157,16 @@ export default function StockAdjustmentForm({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <StockAdjustmentFields
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                  <StockAdjustmentFields
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
               </FormControl>
             </FormItem>
           )}
         />
         {adjustments.length > 0 && (
-          <div className="flex justify-end">
+          <div className="flex justify-center mr-5 md:justify-end">
             <Button>
               <Save className="h-4 w-4 mr-2" /> Guardar
             </Button>
