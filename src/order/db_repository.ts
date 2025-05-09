@@ -190,19 +190,6 @@ export const create = async (order: Order): Promise<response<Order>> => {
   }
 };
 
-export const getOrders = async (): Promise<response<Order[]>> => {
-  try {
-    const orders = await prisma().order.findMany({});
-
-    return {
-      success: true,
-      data: await transformOrdersData(orders),
-    };
-  } catch (e: any) {
-    return { success: false, message: e.message };
-  }
-};
-
 export const find = async (
   id: string,
   companyId: string,
