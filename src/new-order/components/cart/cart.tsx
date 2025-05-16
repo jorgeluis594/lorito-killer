@@ -60,18 +60,14 @@ export default function Cart() {
     restoreStockProduct,
   } = useProductFormActions();
 
-  useEffect(() => {
-    reset();
-  }, []);
-
   return (
     <>
-      <div className="h-full border-l grid grid-rows-[min-content_min-content_min-content_1fr_min-content]">
+      <div className="h-full md:border-l grid grid-rows-[min-content_min-content_min-content_1fr_min-content]">
         <Tabs
           value={order.documentType}
           onValueChange={(value) => setDocumentType(value as DocumentType)}
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-3 mt-7 md:mt-0">
             <TabsTrigger value="ticket">Nota de Venta</TabsTrigger>
             <TabsTrigger value="receipt" disabled={!company.isBillingActivated}>
               Boleta
@@ -115,7 +111,7 @@ export default function Cart() {
           </div>
         </div>
         <ScrollArea className="border-b">
-          <div className="py-3 h-full">
+          <div className="py-3 h-[370px]">
             <div>
               {order.orderItems.map((item) => (
                 <CartItem

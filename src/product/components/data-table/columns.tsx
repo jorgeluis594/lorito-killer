@@ -14,7 +14,7 @@ export const columns: ColumnDef<Product>[] = [
     accessorKey: "categories",
     header: "CATEGORÍAS",
     cell: ({ row }) =>
-      row.original.categories.map((category) => category.name).join(", "),
+      row.original.categories.map((category) => category.name).join(", ") || "---",
   },
   {
     accessorKey: "stock",
@@ -38,6 +38,7 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "sku",
     header: "CÓDIGO",
+    cell: ({ row }) => row.original.sku || "---",
   },
   {
     id: "actions",

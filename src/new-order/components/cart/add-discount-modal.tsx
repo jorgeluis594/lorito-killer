@@ -63,7 +63,8 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
             Producto: <strong>{orderItem.productName}</strong>
           </DialogDescription>
         </DialogHeader>
-        <div className="w-full">
+
+        <div className="w-full mt-2">
           <div className="flex space-x-5">
             <div className="flex-none">
               <p className="text-gray-600">Subtotal:</p>
@@ -80,23 +81,26 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
           </div>
         </div>
         <Separator className="my-2" />
+
         <div className="w-full mb-4">
           <Label htmlFor="discountAmount">Ingrese el descuento:</Label>
           <MoneyInput
             id="discountAmount"
             value={discountAmount}
             onChange={onDiscountAmountChange}
-          ></MoneyInput>
+          />
           <p className="text-sm text-foreground">
             (Máximo permitido: {formatPrice(orderItem.netTotal)})
           </p>
         </div>
+
         <DialogFooter>
-          <div className="flex sm:justify-start space-x-3">
+          <div className="flex flex-col sm:flex-row sm:justify-start space-y-2 sm:space-y-0 sm:space-x-3 w-full">
             <Button
               type="button"
               variant="outline"
               onClick={handleCancelButton}
+              className="w-full sm:w-auto"
             >
               Cancelar y mantener precio original
             </Button>
@@ -104,6 +108,7 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
               type="button"
               disabled={!isDiscountValid}
               onClick={handleDiscountSubmit}
+              className="w-full sm:w-auto"
             >
               Agregar descuento
             </Button>

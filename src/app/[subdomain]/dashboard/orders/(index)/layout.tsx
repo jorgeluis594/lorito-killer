@@ -41,8 +41,8 @@ export default async function OrdersIndexLayout({
   return (
     <ScrollArea>
       <div className="h-[calc(100vh-theme(space.14))]">
-        <div className="grid grid-cols-[380px_1fr] h-full">
-          <div className="h-full border-r">
+        <div className="grid md:grid-cols-[380px_1fr] h-full">
+          <div className="overflow-auto h-72 md:h-full border-r">
             {cashShiftResponse.data.orders.map((order) => (
               <OrderItem
                 key={order.id}

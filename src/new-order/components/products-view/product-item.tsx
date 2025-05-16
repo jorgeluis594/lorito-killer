@@ -60,7 +60,7 @@ export default function ProductItem({ product }: { product: Product }) {
       )}
       <Card
         onClick={onAddProductToCart}
-        className="hover:absolute hover:h-auto hover:min-h-full hover:z-10 h-full w-full hover:max-h-none max-h-full group hover:shadow-xl transition duration-300"
+        className="hover:absolute hover:h-auto hover:min-h-full hover:z-10 h-auto w-full hover:max-h-none max-h-full group hover:shadow-xl transition duration-300"
       >
         <CardContent className="px-2">
           <div className="mt-4 mx-auto relative w-[100px] h-[100px] rounded-md overflow-hidden">
