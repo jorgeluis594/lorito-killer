@@ -192,7 +192,7 @@ export default function ProductsSearcher() {
           <CartMobile />
         </div>
         <div>
-            <ScrollArea className="mt-2 md:mt-2">
+            <ScrollArea className="h-screen mt-2 md:mt-2">
               <ProductList products={products} />
             </ScrollArea>
         </div>
