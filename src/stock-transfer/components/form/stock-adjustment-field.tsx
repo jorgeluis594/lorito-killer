@@ -13,6 +13,7 @@ import { Input } from "@/shared/components/ui/input";
 import { mul, plus } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Trash } from "lucide-react";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/shared/components/ui/tooltip";
 
 interface StockAdjustmentFieldProps {
   adjustment: Adjustment;
@@ -49,14 +50,26 @@ export default function StockAdjustmentField({
 
   return (
     <div key={adjustment.id} className="grid grid-cols-12 gap-4 my-2">
-      <div className="col-span-3 flex items-center">
-        <ProductSelector
-          value={currentProduct}
-          onSelect={setCurrentProduct}
-          productType="SingleProduct"
-          skipProductIds={skipProductIds}
-        />
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="col-span-3 flex items-center truncate">
+              <ProductSelector
+                value={currentProduct}
+                onSelect={setCurrentProduct}
+                productType="SingleProduct"
+                skipProductIds={skipProductIds}
+              />
+            </div>
+          </TooltipTrigger>
+          {currentProduct?.name && (
+            <TooltipContent>
+              <p>{currentProduct.name}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
+
       <div className="col-span-2 flex items-center">
         <span>{currentProduct && currentProduct.stock}</span>
       </div>

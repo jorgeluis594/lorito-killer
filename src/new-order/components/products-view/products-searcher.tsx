@@ -128,7 +128,7 @@ export default function ProductsSearcher() {
     }
   }, [barcodeInputRef.current, onKeyDown]);
   return (
-    <div className="h-full w-100 p-5 pb-0 grid grid-rows-[7rem_1fr] relative">
+    <div className="h-screen w-100 p-5 pb-0 grid grid-rows-[7rem_1fr] relative">
       <div className="w-full border-b">
         <div className="w-full md:w-1/2 flex flex-cols-3 md:grid md:grid-cols-3 gap-4 mb-2">
           <Select onValueChange={handleCategoryChange}>
@@ -187,12 +187,12 @@ export default function ProductsSearcher() {
       </div>
 
 
-      <div className="md:mt-2">
+      <div className="md:mt-2 overflow-hidden">
         <div className="md:hidden flex justify-center mt-4">
           <CartMobile />
         </div>
-        <div>
-            <ScrollArea className="mt-2 md:mt-2">
+        <div className="md:h-full">
+            <ScrollArea className="md:h-full mt-2 md:mt-2">
               <ProductList products={products} />
             </ScrollArea>
         </div>
