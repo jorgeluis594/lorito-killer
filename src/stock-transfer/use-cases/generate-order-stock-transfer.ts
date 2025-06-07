@@ -11,6 +11,7 @@ import {
 } from "@/product/types";
 import { response, successResponse } from "@/lib/types";
 import { mul, plus } from "@/lib/utils";
+import { log } from "@/lib/log";
 
 type FindProduct = (productId: string) => Promise<response<Product>>;
 
@@ -53,6 +54,7 @@ const generateOrderItemStockTransfer = async (
 ): Promise<response<OrderStockTransfer[]>> => {
   const productFoundResponse = await findProduct(orderItem.productId);
   if (!productFoundResponse.success) {
+    log.error("product_not_found", { orderItemId: orderItem.id, productId: orderItem.productId });
     return productFoundResponse;
   }
 
