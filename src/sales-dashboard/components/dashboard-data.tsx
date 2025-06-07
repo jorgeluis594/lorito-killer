@@ -27,7 +27,7 @@ export default function DashboardData({sales, expenses, utility,startDate,endDat
       <div className="flex flex-row gap-4">
         <div>
           <Select onValueChange={handleSelectChange} defaultValue={period}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-auto md:w-[180px]">
               <SelectValue placeholder="Seleccione periodo"/>
             </SelectTrigger>
             <SelectContent>
