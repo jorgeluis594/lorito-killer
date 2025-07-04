@@ -40,8 +40,6 @@ export const findSalesDaily = async (
     salesByHour[hour] += totalAmount;
   });
 
-  console.log(salesByHour);
-
   return { success: true, data: { salesByHour } };
 };
 
@@ -57,7 +55,6 @@ export const findSalesWeekly = async (
   salesFound.forEach((c) => {
     const date = new Date(c.createdAt);
     const dayOfWeek = date.getDay()-1;
-    log.info("date",{date,dayOfWeek});
 
     const totalAmount = c.orders.reduce((sum, order) => {
       return plus(sum)(+order.netTotal || 0);
