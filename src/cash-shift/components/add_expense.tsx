@@ -34,8 +34,8 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { formatPrice } from "@/lib/utils";
 
 const AddExpenseSchema = z.object({
-  amount: z.coerce.number().nonnegative("El monto no puede ser negativo"),
-  description: z.string().optional(),
+  amount: z.coerce.number().nonnegative("El monto no puede ser negativo").min(0.01, "El monto debe ser mayor a cero"),
+  description: z.string().min(5, "Debe ingresar al menos 5 caracteres para el motivo"),
 });
 
 type AddExpenseFormValues = z.infer<typeof AddExpenseSchema>;
