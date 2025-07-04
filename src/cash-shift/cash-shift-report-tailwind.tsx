@@ -218,17 +218,17 @@ export default async function CashShiftReportTw({
         <h2 className="text-lg font-medium">Gastos</h2>
       </div>
       <div className="overflow-auto w-screen pr-7">
-        <Table className="max-w-[1100px] mt-2">
+        <Table className="min-w-[1100px] max-w-[1100px] mt-2">
           <TableCaption>
             Este cuadro representa la información general de cada gasto realizado.
           </TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="text-center border">Nº</TableHead>
-              <TableHead className="text-center border">
+              <TableHead className="text-center border w-1/4">
                 Hora y fecha de registro
               </TableHead>
-              <TableHead className="text-center border">
+              <TableHead className="text-center border w-2/4">
                 Motivo
               </TableHead>
               <TableHead className="text-center border">Monto</TableHead>
