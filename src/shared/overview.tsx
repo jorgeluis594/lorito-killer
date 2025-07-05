@@ -1,78 +1,67 @@
 "use client";
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import {Bar, BarChart, ResponsiveContainer, XAxis, YAxis} from "recharts";
+import {calculateSalesMonthly, findProductToSalesAction} from "@/sales-dashboard/actions";
+import {useEffect, useState} from "react";
+import {endOfMonth, startOfMonth} from "date-fns";
+import {getSession} from "@/lib/auth";
 
-const data = [
-  {
-    name: "Jan",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Feb",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Mar",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Apr",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "May",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jun",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jul",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Aug",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Sep",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Oct",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Nov",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Dec",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-];
+const monthNames = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
 export function Overview() {
+
+  const [sales, setSales] = useState<Array<{ name: string, total: number }>>([]);
+
+  useEffect(() => {
+    const fetchSales = async () => {
+      const months = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+      const dataSales = await Promise.all(months.map(async (month) => {
+        const year = 2025;
+
+        const startOfMonthDate = startOfMonth(new Date(year, month))
+        const endOfMonthDate = endOfMonth(new Date(year, month))
+        return calculateSalesMonthly(startOfMonthDate, endOfMonthDate);
+      }))
+
+      const result = dataSales.map((responseSale, index) => {
+        if (!responseSale.success) {
+          return {
+            name: monthNames[index],
+            total: 0,
+          }
+        }
+
+        return {
+          name: monthNames[index],
+          total: responseSale.data.finalAmount,
+        }
+      })
+
+      setSales(result)
+    };
+    fetchSales();
+  }, []);
+
   return (
     <ResponsiveContainer width="100%" height={350}>
-  <BarChart data={data}>
-  <XAxis
-    dataKey="name"
-  stroke="#888888"
-  fontSize={12}
-  tickLine={false}
-  axisLine={false}
-  />
-  <YAxis
-  stroke="#888888"
-  fontSize={12}
-  tickLine={false}
-  axisLine={false}
-  tickFormatter={(value) => `$${value}`}
-  />
-  <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
-  </BarChart>
-  </ResponsiveContainer>
-);
+      <BarChart data={sales}>
+        <XAxis
+          dataKey="name"
+          stroke="#888888"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+        />
+        <YAxis
+          stroke="#888888"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => `S/.${value}`}
+        />
+        <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]}/>
+      </BarChart>
+    </ResponsiveContainer>
+  );
 }
