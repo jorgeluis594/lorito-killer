@@ -56,7 +56,6 @@ export default async function CashShiftReportTw({
   if(!grossProfit.success) {
     return <p>Error cargando página, comuniquese con soporte</p>;
   }
-
   const documentMapper = documentsResponse.data.reduce<
     Record<string, ArrayElement<(typeof documentsResponse)["data"]>>
   >((acc, document) => {
@@ -200,7 +199,7 @@ export default async function CashShiftReportTw({
 
             <TableRow>
               <th className="px-4 text-end align-middle font-medium border bg-accent">
-                Utilidad bruta:
+                Utilidad:
               </th>
               <TableCell className="text-left border">
                 {grossProfit.data ? formatPrice(grossProfit.data.utility - totalExpense) : "Datos no disponibles"}
@@ -211,6 +210,45 @@ export default async function CashShiftReportTw({
               <TableCell className="border">
               </TableCell>
             </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-medium">Gastos</h2>
+      </div>
+      <div className="overflow-auto w-screen pr-7">
+        <Table className="min-w-[1100px] max-w-[1100px] mt-2">
+          <TableCaption>
+            Este cuadro representa la información general de cada gasto realizado.
+          </TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-center border">Nº</TableHead>
+              <TableHead className="text-center border w-1/4">
+                Hora y fecha de registro
+              </TableHead>
+              <TableHead className="text-center border w-2/4">
+                Motivo
+              </TableHead>
+              <TableHead className="text-center border">Monto</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {cashShift.expenses.map((expense, index) => (
+              <TableRow key={expense.id}>
+                <TableCell className="border">{index + 1}</TableCell>
+                <TableCell className="border flex flex-col items-start">
+                  {shortLocalizeDate(expense.createdAt)}
+                </TableCell>
+                <TableCell className="border">
+                  {expense.description}
+                </TableCell>
+                <TableCell className="border">
+                  {formatPrice(expense.amount)}
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
@@ -267,5 +305,5 @@ export default async function CashShiftReportTw({
         </Table>
       </div>
     </ScrollArea>
-);
+  );
 }

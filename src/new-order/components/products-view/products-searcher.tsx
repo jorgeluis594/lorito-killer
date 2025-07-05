@@ -161,7 +161,7 @@ export default function ProductsSearcher() {
           </Select>
 
           <div className="md:absolute top-4 right-4">
-            <AddExpense/>
+            <p>Gastos</p><AddExpense/>
           </div>
         </div>
         <div className="flex w-full items-center space-x-2">
