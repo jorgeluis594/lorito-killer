@@ -52,7 +52,7 @@ export async function GET(
   }
 
   const document = documentResponse.data;
-  const qr = isBillableDocument(document)
+  const qr = isBillableDocument(document) && document.qr !== ""
     ? await generateQRBase64(document.qr)
     : undefined;
 
@@ -65,11 +65,15 @@ export async function GET(
 
   const chunks: Buffer[] = [];
   for await (const chunk of stream) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+    if (typeof chunk === "string") {
+      chunks.push(Buffer.from(chunk));
+    } else {
+      chunks.push(chunk as Buffer);
+    }
   }
-  const buffer = Buffer.concat(chunks);
+  const buffer = Buffer.concat(chunks as any);
 
-  return new NextResponse(buffer, {
+  return new NextResponse(buffer as any, {
     headers: { "Content-Type": "application/pdf" },
   });
 }

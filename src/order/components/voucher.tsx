@@ -457,10 +457,10 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
 
       <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
         <View style={{ width: "35%" }}>
-          {qrBase64 && <Image style={{ width: "90%" }} src={qrBase64} />}
+          {qrBase64 && qrBase64 !== "" && <Image style={{ width: "90%" }} src={qrBase64} />}
         </View>
         <View style={{ width: "65%" }}>
-          {isBillableDocument(document) && (
+          {isBillableDocument(document) && document.hash && (
             <>
               <Text style={[styles.bold, styles.text]}>Código hash:</Text>
               <Text style={styles.text}>{document.hash}</Text>
