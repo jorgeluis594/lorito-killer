@@ -399,3 +399,54 @@ export const update = async (document: Document): Promise<response<Document>> =>
     return { success: false, message: e.message };
   }
 }
+
+export const updateDocument = async (
+  documentId: string,
+  data: {
+    issuedToTaxEntity?: boolean;
+    issuedAt?: Date;
+    qr?: string;
+    hash?: string;
+  }
+): Promise<response<Document>> => {
+  try {
+    const updatedDocument = await prisma().document.update({
+      where: { id: documentId },
+      data: {
+        issuedToTaxEntity: data.issuedToTaxEntity,
+        issuedAt: data.issuedAt,
+        qr: data.qr,
+        hash: data.hash,
+      },
+    });
+
+    return { success: true, data: prismaDocumentToDocument(updatedDocument) };
+  } catch (e: any) {
+    log.error("update_document_status_failed", {
+      documentId,
+      data,
+      error_message: e.message,
+    });
+    return { success: false, message: e.message };
+  }
+}
+
+export const findDocumentById = async (documentId: string): Promise<response<Document>> => {
+  try {
+    const document = await prisma().document.findUnique({ 
+      where: { id: documentId } 
+    });
+
+    if (!document) {
+      return errorResponse("Document not found");
+    }
+
+    return { success: true, data: prismaDocumentToDocument(document) };
+  } catch (e: any) {
+    log.error("find_document_by_id_failed", {
+      documentId,
+      error_message: e.message,
+    });
+    return { success: false, message: e.message };
+  }
+}

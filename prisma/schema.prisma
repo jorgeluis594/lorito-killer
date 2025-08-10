@@ -217,6 +217,8 @@ model Document {
   hash               String?
   status             DocumentStatus
   cancellationReason String?
+  issuedToTaxEntity  Boolean        @default(false)
+  issuedAt           DateTime?
   order              Order          @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   company            Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   customer           Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)

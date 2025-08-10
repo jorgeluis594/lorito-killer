@@ -14,8 +14,7 @@ import {
 import { updateStock } from "@/order/use-cases/update-stock";
 import { getSession } from "@/lib/auth";
 import { Company } from "@/company/types";
-import { createDocument } from "@/document/use_cases/create-document";
-import billingDocumentGateway from "@/document/factpro/gateway";
+import { buildAndPersistDocument } from "@/document/use_cases/build-and-persist-document";
 import {
   createDocument as saveDocument,
   getLatestDocumentNumber,
@@ -27,6 +26,7 @@ import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
 import { formatInTimeZone } from "date-fns-tz";
+import { inngest } from "@/lib/inngest";
 
 export const create = async (
   userId: string,
@@ -102,8 +102,9 @@ export const create = async (
 
       const { billingToken, ...billingSettings } =
         billingCredentialsResponse.data;
-      const documentResponse = await createDocument(
-        billingDocumentGateway({ billingToken }),
+      
+      // Build and persist document
+      const documentResponse = await buildAndPersistDocument(
         {
           createDocument: saveDocument,
           getLastDocumentNumber: getLatestDocumentNumber,
@@ -113,6 +114,22 @@ export const create = async (
       );
       if (!documentResponse.success) {
         return documentResponse;
+      }
+
+      // Trigger async tax entity submission (slow operation)
+      try {
+      await inngest.send({
+        name: "document/send-to-tax-entity",
+        data: {
+          orderId: createOrderResponse.data.id,
+          companyId: user.companyId,
+            documentId: documentResponse.data.id,
+          },
+        });
+      } catch (error) {
+        log.error("document_send_to_tax_entity_failed", {
+          error,
+        });
       }
 
       return {
