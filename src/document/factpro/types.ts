@@ -107,6 +107,35 @@ export interface FactproSuccessResponse {
   };
 }
 
+export type FactproDocumentConsult = {
+  exito: boolean; //true,
+  mensaje: string | null; //null
+  data: {
+    numero: string; //"F100-61",
+    archivo: string; //"20466590247-01-F100-61",
+    letras: string; //"Cien  con 00/100 ",
+    hash: string; //"Slhxy95DqLmoi5vxDpC7u6c89b4=",
+    qr: string; //"Nkz9Sy8AAAAASUVORK5CYII=",
+    tipo_estado: string; //"05",
+    descripcion_estado: string; //"ACEPTADO"
+  },
+  archivos: {
+    pdf: string; //"https://api.factpro.la/invoice/20460590200-01-F100-61.pdf",
+    xml: string; //"https://api.factpro.la/invoice/20460590200-01-F100-61.xml",
+    cdr: string; //"https://api.factpro.la/invoice/20460590200-01-F100-61.cdr"
+  },
+  eventos: [
+    {
+      date: string; //"2025-07-11 14:08:51.151033",
+      description: string; //"El documento ha sido registrado y enviado"
+    },
+    {
+      date: string; //"2025-07-11 14:11:45.428059",
+      description: string; //"La Factura numero F100-61, ha sido aceptada"
+    }
+  ]
+}
+
 export interface FactproErrorResponse {
   success: false;
 }
