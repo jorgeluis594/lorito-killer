@@ -11,7 +11,7 @@ import {
   RegisteredReceipt
 } from "@/document/types";
 import {
-  FactproDocument,
+  FactproDocument, FactproDocumentConsult,
   FactproDocumentItem,
   FactproResponse,
 } from "@/document/factpro/types";
@@ -159,6 +159,10 @@ export default function gateway({
     document: Document,
     cancellationReason: string
   ) => Promise<response<Document>>;
+  getFactproDocumentConsult: (
+    serie: number,
+    number: number
+  ) => Promise<response<FactproDocumentConsult>>;
 } {
   const createInvoice = async (
     order: OrderWithBusinessCustomer,
@@ -513,12 +517,71 @@ export default function gateway({
     return cancelTicket(document, cancellationReason)
   }
 
+  const getFactproDocumentConsult = async (serie: number, number: number): Promise<response<FactproDocumentConsult>> => {
+
+    const response = await fetch(
+      "https://api.factpro.la/api/v3/consulta",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${customerSearchToken}`,
+        },
+        body: JSON.stringify({serie, numero: number}),
+      },
+    );
+
+    if (!response.ok) {
+      log.error("get_factpro_document_failed", {
+        serie,
+        number,
+        response: await response.json(),
+      });
+      return { success: false, message: "No document found" };
+    }
+
+    const data: FactproDocumentConsult = await response.json();
+
+    return{
+      success: true,
+      data: {
+        exito: data.exito,
+        mensaje: data.mensaje,
+        data: {
+          numero: data.data.numero,
+          archivo: data.data.archivo,
+          letras: data.data.letras,
+          hash: data.data.hash,
+          qr: data.data.qr,
+          tipo_estado: data.data.tipo_estado,
+          descripcion_estado: data.data.descripcion_estado,
+        },
+        archivos: {
+          pdf: data.archivos.pdf,
+          xml: data.archivos.xml,
+          cdr: data.archivos.cdr,
+        },
+        eventos: [
+          {
+            date: data.eventos[0].date,
+            description: data.eventos[0].description,
+          },
+          {
+            date: data.eventos[1].date,
+            description: data.eventos[1].description
+          }
+        ]
+      }
+    }
+  }
+
   return {
     createInvoice,
     createReceipt,
     createTicket,
     fetchCustomerByRuc,
     fetchCustomerByDNI,
-    cancelDocument
+    cancelDocument,
+    getFactproDocumentConsult
   };
 }
