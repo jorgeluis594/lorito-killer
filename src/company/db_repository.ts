@@ -113,6 +113,7 @@ export const getCompany = async (id: string): Promise<response<Company>> => {
         district: company.district || undefined,
         provincial: company.provincial || undefined,
         subdomain: company.subdomain || "some_subdomain",
+        active: company.active,
         isBillingActivated:
           !!billingCredentials &&
           !!(billingCredentials as unknown as BillingCredentials)[

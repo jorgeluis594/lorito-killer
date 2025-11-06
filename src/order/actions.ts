@@ -37,6 +37,17 @@ export const create = async (
   if (!user) {
     return { success: false, message: "No hay usuario autenticado" };
   }
+
+  // Check if company is active
+  const companyResponse = await findCompany(user.companyId);
+  if (!companyResponse.success || !companyResponse.data.active) {
+    return {
+      success: false,
+      message: "Tu suscripción presenta un pago pendiente. Actualiza tu situación para seguir usando el servicio.",
+      type: "CompanyInactive",
+    };
+  }
+
   const openCashShiftResponse = await getLastOpenCashShift(user.id);
   const billingCredentialsResponse = await getBillingCredentialsFor(
     user.companyId,

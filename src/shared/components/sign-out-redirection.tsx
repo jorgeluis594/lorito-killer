@@ -8,7 +8,7 @@ export default function SignOutRedirection() {
     signOut().then(() => {
       window.location.href = window.location.origin
     })
-  })
+  }, [signOut])
 
   return <p>Cerrando sesión</p>
 }

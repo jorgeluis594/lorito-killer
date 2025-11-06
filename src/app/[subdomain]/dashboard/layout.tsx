@@ -7,6 +7,7 @@ import React from "react";
 import { getSession } from "@/lib/auth";
 import { getCompany } from "@/company/db_repository";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import InactiveCompanyRedirection from "@/shared/components/inactive-company-redirection";
 import { ProductFormProvider } from "@/new-order/components/products-view/product-searcher-form-provider";
 import { getLastOpenCashShift, userExists } from "@/cash-shift/db_repository";
 
@@ -26,6 +27,9 @@ export default async function DashboardLayout({
   ]);
   if (!companyResponse.success) {
     return <SignOutRedirection />;
+  }
+  if (!companyResponse.data.active) {
+    return <InactiveCompanyRedirection />;
   }
 
   return (
