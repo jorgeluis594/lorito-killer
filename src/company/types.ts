@@ -10,6 +10,7 @@ export type Company = {
   ruc?: string;
   address: string;
   subdomain: string;
+  active: boolean;
   isBillingActivated: boolean;
   logo?: Logo;
 };

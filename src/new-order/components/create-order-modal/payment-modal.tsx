@@ -27,6 +27,7 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
 import DiscountFields from "@/new-order/components/create-order-modal/discount-fields";
 import { useCompany } from "@/lib/use-company";
+import useSignOut from "@/lib/use-sign-out";
 
 const PaymentViews = {
   none: NonePayment,
@@ -60,6 +61,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const [creatingOrder, setCreatingOrder] = useState(false);
   const user = useUserSession();
   const company = useCompany();
+  const signOut = useSignOut();
 
   const handleOrderCreation = async () => {
     if (!order.documentType) {
@@ -85,10 +87,21 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
       onOpenChange(false);
       window.open(`/api/orders/${response.data.order.id}/documents`, "_blank");
     } else {
-      toast({
-        variant: "destructive",
-        description: response.message,
-      });
+      if (response.type === "CompanyInactive") {
+        toast({
+          variant: "destructive",
+          title: "Cuenta suspendida",
+          description: response.message,
+          duration: 10000,
+        });
+        await signOut();
+        window.location.href = window.location.origin;
+      } else {
+        toast({
+          variant: "destructive",
+          description: response.message,
+        });
+      }
     }
     setCreatingOrder(false);
   };
