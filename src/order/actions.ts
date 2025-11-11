@@ -26,6 +26,8 @@ import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
 import { inngest } from "@/lib/inngest";
+import billingDocumentGateway from "@/document/factpro/gateway";
+import {FactproDocumentConsult} from "@/document/factpro/types";
 
 export const create = async (
   userId: string,
@@ -149,6 +151,25 @@ export const getCompany = async (): Promise<response<Company>> => {
   }
   return await findCompany(session.user.companyId);
 };
+
+export const getXmlDocument = async (document: Document): Promise<response<FactproDocumentConsult>> => {
+  const billingCredentialsResponse = await getBillingCredentialsFor(
+    document.companyId,
+  );
+  if (!billingCredentialsResponse.success) {
+    return {
+      success: false,
+      message: "No se encontraron credenciales de facturación",
+    };
+  }
+
+  const { billingToken } = billingCredentialsResponse.data;
+  const { getFactproDocumentConsult } = billingDocumentGateway({ billingToken });
+
+  const result = await getFactproDocumentConsult(document.series, document.number);
+
+  return result;
+}
 
 export const cancelOrder = async (order: Order, cancellationReason: string): Promise<response<Order>> => {
   return cancel(order, cancellationReason);
