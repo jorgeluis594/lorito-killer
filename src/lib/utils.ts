@@ -51,7 +51,7 @@ export const shortLocalizeDate = (date: Date): string =>
   formatInTimeZone(date, "America/Lima", "dd/MM/yyyy hh:mm aa");
 
 export const localizeOnlyDate = (date: Date): string =>
-  formatInTimeZone(date, "America/Lima", "dd//MM/yyy");
+  formatInTimeZone(date, "America/Lima", "dd/MM/yyy");
 
 export const isBarCodeValid = (
   barcode: string,

@@ -7,22 +7,32 @@ import {
 } from "@/shared/components/ui/card";
 import {
   formatPrice,
-  localizeDate,
   paymentMethodToText,
   shortLocalizeDate,
 } from "@/lib/utils";
-import { Printer } from "lucide-react";
+import {FileCode, Printer} from "lucide-react";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { fullName } from "@/customer/utils";
-import {differenceInDays, differenceInHours, differenceInMinutes} from "date-fns";
+import {differenceInHours} from "date-fns";
 import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
+import { getXmlDocument } from "../actions";
 
 export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
+
+  if(!documentResponse.success) {
+    return <h1>No se encontro el documento.</h1>
+  }
+
+  const xmlDocument = await getXmlDocument(documentResponse.data);
+
+  if(!xmlDocument.success) {
+    return <h1>No se logro realizar la consula de documento.</h1>
+  }
 
   const hasADiscount = order.orderItems.some((orderItem) => orderItem.discountAmount > 0);
 
@@ -49,12 +59,21 @@ export default async function OrderData({ order }: { order: Order }) {
           </CardTitle>
           <div className="flex space-x-2">
             <a
-              className={buttonVariants({ variant: "ghost", size: "icon" })}
+              className={buttonVariants({variant: "ghost", size: "icon"})}
               href={`/api/orders/${order.id}/documents`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Printer className="cursor-pointer" />
+              <Printer className="cursor-pointer"/>
+            </a>
+
+            <a
+              className={buttonVariants({variant: "ghost", size: "icon"})}
+              href={`${xmlDocument.data.archivos.xml}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FileCode />
             </a>
 
             {differenceInHours(new Date(), order.createdAt!) < 168 &&
@@ -71,11 +90,11 @@ export default async function OrderData({ order }: { order: Order }) {
         <CardContent>
           <table className="table-auto border w-full">
             <tbody>
-              <tr>
-                <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
-                  Cliente
-                </td>
-                <td className="pl-2 border py-1">
+            <tr>
+              <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
+                Cliente
+              </td>
+              <td className="pl-2 border py-1">
                   {order.customer ? fullName(order.customer) : "-"}
                 </td>
               </tr>
