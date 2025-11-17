@@ -160,8 +160,8 @@ export default function gateway({
     cancellationReason: string
   ) => Promise<response<Document>>;
   getFactproDocumentConsult: (
-    serie: number,
-    number: number
+    serie: string,
+    number: string
   ) => Promise<response<FactproDocumentConsult>>;
 } {
   const createInvoice = async (
@@ -517,7 +517,7 @@ export default function gateway({
     return cancelTicket(document, cancellationReason)
   }
 
-  const getFactproDocumentConsult = async (serie: number, number: number): Promise<response<FactproDocumentConsult>> => {
+  const getFactproDocumentConsult = async (serie: string, number: string): Promise<response<FactproDocumentConsult>> => {
 
     const response = await fetch(
       "https://api.factpro.la/api/v3/consulta",
