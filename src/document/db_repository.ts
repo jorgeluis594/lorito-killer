@@ -253,12 +253,15 @@ const buildDocumentQuery = ({
     orderQuery = { in: orderId };
   }
 
+  const dateFilter: { gte?: Date; lte?: Date } = {};
+  if (startDate) dateFilter.gte = startDate;
+  if (endDate) dateFilter.lte = endDate;
+
   return {
     companyId,
     ...(correlative && { number: parseInt(correlative.number) }),
     ...(correlative && { series: correlative.series }),
-    ...(startDate && { dateOfIssue: { gte: startDate } }),
-    ...(endDate && { dateOfIssue: { lte: endDate } }),
+    ...((startDate || endDate) && { dateOfIssue: dateFilter }),
     ...(customerId && { customerId }),
     ...((ticket || invoice || receipt) && { OR: documentTypes }),
     ...(orderQuery && { orderId: orderQuery }),
