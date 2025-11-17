@@ -25,8 +25,9 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
-import { formatInTimeZone } from "date-fns-tz";
 import { inngest } from "@/lib/inngest";
+import billingDocumentGateway from "@/document/factpro/gateway";
+import {FactproDocumentConsult} from "@/document/factpro/types";
 
 export const create = async (
   userId: string,
@@ -153,6 +154,25 @@ export const create = async (
     },
   );
 };
+
+export const getXmlDocument = async (document: Document): Promise<response<FactproDocumentConsult>> => {
+  const billingCredentialsResponse = await getBillingCredentialsFor(
+    document.companyId,
+  );
+  if (!billingCredentialsResponse.success) {
+    return {
+      success: false,
+      message: "No se encontraron credenciales de facturación",
+    };
+  }
+
+  const { billingToken } = billingCredentialsResponse.data;
+  const { getFactproDocumentConsult } = billingDocumentGateway({ billingToken });
+
+  const result = await getFactproDocumentConsult(document.series, document.number);
+
+  return result;
+}
 
 export const getCompany = async (): Promise<response<Company>> => {
   const session = await getSession();
