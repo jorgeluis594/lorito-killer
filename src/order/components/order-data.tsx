@@ -32,7 +32,7 @@ export default async function OrderData({ order }: { order: Order }) {
   const xmlDocument = await getXmlDocument(documentResponse.data);
 
   if(!xmlDocument.success) {
-    return <h1>No se logro realizar la consula de documento.</h1>
+    return <p>No se logro realizar la consulta de documento.</p>
   }
 
   const hasADiscount = order.orderItems.some((orderItem) => orderItem.discountAmount > 0);

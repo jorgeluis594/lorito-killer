@@ -520,14 +520,13 @@ export default function gateway({
   const getFactproDocumentConsult = async (serie: string, number: string): Promise<response<FactproDocumentConsult>> => {
 
     const response = await fetch(
-      "https://api.factpro.la/api/v3/consulta",
+      "https://api.factpro.la/api/v3/consulta?serie=${encodeURIComponent(serie)}&numero=${encodeURIComponent(number)}",
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${customerSearchToken}`,
         },
-        body: JSON.stringify({serie, numero: number}),
       },
     );
 
