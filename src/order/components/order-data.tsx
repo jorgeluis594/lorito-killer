@@ -26,7 +26,7 @@ export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
 
   if(!documentResponse.success) {
-    return <h1>No se encontro el documento.</h1>
+    return
   }
 
   const xmlDocument = await getXmlDocument(documentResponse.data);
