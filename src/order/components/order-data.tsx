@@ -26,7 +26,7 @@ export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
 
   if(!documentResponse.success) {
-    return
+    return <p>No se encontro el documento</p>
   }
 
   const xmlDocument = await getXmlDocument(documentResponse.data);
@@ -91,10 +91,10 @@ export default async function OrderData({ order }: { order: Order }) {
         <CardContent>
           <table className="table-auto border w-full">
             <tbody>
-              <tr>
-                <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
-                  Cliente
-                </td>
+            <tr>
+              <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
+                Cliente
+              </td>
                 <td className="pl-2 border py-1">
                   {order.customer ? fullName(order.customer) : "-"}
                 </td>
