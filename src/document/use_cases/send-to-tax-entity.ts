@@ -68,7 +68,7 @@ export const sendToTaxEntity = async (
   // Get the document and order
   const documentResponse = await repository.findDocument(documentId);
   if (!documentResponse.success) {
-    log.error("document_not_found", { documentId });
+    log.error("document_not_found_test----------------", { documentId });
     return serverError;
   }
 
