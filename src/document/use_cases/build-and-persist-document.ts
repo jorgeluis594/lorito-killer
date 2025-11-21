@@ -82,6 +82,7 @@ export const buildAndPersistDocument = async (
       document = {
         ...baseDocument,
         documentType: "receipt",
+        xml: "",
         taxTotal: 0,
         qr: "", // Will be filled by tax entity service
         hash: "", // Will be filled by tax entity service
@@ -94,6 +95,7 @@ export const buildAndPersistDocument = async (
       document = {
         ...baseDocument,
         customerId: baseDocument.customerId,
+        xml: "",
         documentType: "invoice",
         taxTotal: 0,
         qr: "", // Will be filled by tax entity service

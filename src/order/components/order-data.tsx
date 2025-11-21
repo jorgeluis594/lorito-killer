@@ -20,19 +20,12 @@ import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
-import { getXmlDocument } from "../actions";
 
 export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
 
   if(!documentResponse.success) {
     return <p>No se encontro el documento</p>
-  }
-
-  const xmlDocument = await getXmlDocument(documentResponse.data);
-
-  if(!xmlDocument.success) {
-    return <p>No se logro realizar la consulta de documento.</p>
   }
 
   const hasADiscount = order.orderItems.some((orderItem) => orderItem.discountAmount > 0);
@@ -67,16 +60,16 @@ export default async function OrderData({ order }: { order: Order }) {
             >
               <Printer className="cursor-pointer"/>
             </a>
-
-            <a
-              className={buttonVariants({variant: "ghost", size: "icon"})}
-              href={`${xmlDocument.data.archivos.xml}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FileCode/>
-            </a>
-
+            {documentResponse.data.documentType === "invoice" || documentResponse.data.documentType === "receipt" && (
+                <a
+                  className={buttonVariants({variant: "ghost", size: "icon"})}
+                  href={`${documentResponse.data.xml}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FileCode/>
+                </a>
+            )}
             {differenceInHours(new Date(), order.createdAt!) < 168 &&
               order.status === "completed" && (
                 <CancelOrderButton

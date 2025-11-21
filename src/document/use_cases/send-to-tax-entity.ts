@@ -39,6 +39,7 @@ interface Repository {
   updateDocument: (
     documentId: string,
     data: {
+      xml?: string;
       qr?: string;
       hash?: string;
       issuedToTaxEntity?: boolean;
@@ -142,6 +143,7 @@ export const sendToTaxEntity = async (
 
     // Update document with tax entity response data
     const updateData: {
+      xml?: string;
       qr?: string;
       hash?: string;
       issuedToTaxEntity: boolean;
