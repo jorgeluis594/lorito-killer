@@ -155,25 +155,6 @@ export const create = async (
   );
 };
 
-export const getXmlDocument = async (document: Document): Promise<response<FactproDocumentConsult>> => {
-  const billingCredentialsResponse = await getBillingCredentialsFor(
-    document.companyId,
-  );
-  if (!billingCredentialsResponse.success) {
-    return {
-      success: false,
-      message: "No se encontraron credenciales de facturación",
-    };
-  }
-
-  const { billingToken } = billingCredentialsResponse.data;
-  const { getFactproDocumentConsult } = billingDocumentGateway({ billingToken });
-
-  const result = await getFactproDocumentConsult(document.series, document.number);
-
-  return result;
-}
-
 export const getCompany = async (): Promise<response<Company>> => {
   const session = await getSession();
   if (!session.user) {
