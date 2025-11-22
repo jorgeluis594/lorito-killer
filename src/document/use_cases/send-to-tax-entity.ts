@@ -68,7 +68,7 @@ export const sendToTaxEntity = async (
   // Get the document and order
   const documentResponse = await repository.findDocument(documentId);
   if (!documentResponse.success) {
-    log.error("document_not_found_test", { documentId });
+    log.error("document_not_found", { documentId });
     return serverError;
   }
 
@@ -106,7 +106,6 @@ export const sendToTaxEntity = async (
           ...restMetadata,
           establishmentCode,
         });
-
         log.info("receipt_sent_to_tax_entity", { order, documentMetadata, taxEntityResponse });
         break;
       case "invoice":
