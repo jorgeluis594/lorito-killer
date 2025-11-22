@@ -152,10 +152,11 @@ export const sendToTaxEntity = async (
       issuedAt: new Date(),
     };
 
-    // Only add QR and hash for billable documents
+    // Only add QR and hash and xml for billable documents
     if (document.documentType !== "ticket" && 'qr' in taxEntityResponse.data) {
       updateData.qr = taxEntityResponse.data.qr;
       updateData.hash = taxEntityResponse.data.hash;
+      updateData.xml = taxEntityResponse.data.xml;
     }
 
     const updatedDocumentResponse = await repository.updateDocument(documentId, updateData);
