@@ -87,6 +87,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "receipt",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
+      xml: prismaDocument.xml || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -106,6 +107,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       documentType: "invoice",
       series: prismaDocument.series,
       number: prismaDocument.number.toString(),
+      xml: prismaDocument.xml || "",
       dateOfIssue: prismaDocument.dateOfIssue,
       taxTotal: 0,
       netTotal: +prismaDocument.total,
@@ -253,12 +255,15 @@ const buildDocumentQuery = ({
     orderQuery = { in: orderId };
   }
 
+  const dateFilter: { gte?: Date; lte?: Date } = {};
+  if (startDate) dateFilter.gte = startDate;
+  if (endDate) dateFilter.lte = endDate;
+
   return {
     companyId,
     ...(correlative && { number: parseInt(correlative.number) }),
     ...(correlative && { series: correlative.series }),
-    ...(startDate && { dateOfIssue: { gte: startDate } }),
-    ...(endDate && { dateOfIssue: { lte: endDate } }),
+    ...((startDate || endDate) && { dateOfIssue: dateFilter }),
     ...(customerId && { customerId }),
     ...((ticket || invoice || receipt) && { OR: documentTypes }),
     ...(orderQuery && { orderId: orderQuery }),
@@ -403,6 +408,7 @@ export const update = async (document: Document): Promise<response<Document>> =>
 export const updateDocument = async (
   documentId: string,
   data: {
+    xml?: string;
     issuedToTaxEntity?: boolean;
     issuedAt?: Date;
     qr?: string;
@@ -413,6 +419,7 @@ export const updateDocument = async (
     const updatedDocument = await prisma().document.update({
       where: { id: documentId },
       data: {
+        xml: data.xml,
         issuedToTaxEntity: data.issuedToTaxEntity,
         issuedAt: data.issuedAt,
         qr: data.qr,

@@ -41,6 +41,7 @@ export type Invoice = DocumentBase & {
   documentType: InvoiceType;
   qr: string;
   hash: string;
+  xml: string;
 };
 
 export type Receipt = DocumentBase & {
@@ -48,6 +49,7 @@ export type Receipt = DocumentBase & {
   customerId?: string;
   qr: string;
   hash: string;
+  xml: string;
 };
 
 export type Ticket = DocumentBase & {

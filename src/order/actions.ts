@@ -25,8 +25,9 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
-import { formatInTimeZone } from "date-fns-tz";
 import { inngest } from "@/lib/inngest";
+import billingDocumentGateway from "@/document/factpro/gateway";
+import {FactproDocumentConsult} from "@/document/factpro/types";
 
 export const create = async (
   userId: string,

@@ -11,7 +11,7 @@ import {
   RegisteredReceipt
 } from "@/document/types";
 import {
-  FactproDocument,
+  FactproDocument, FactproDocumentConsult,
   FactproDocumentItem,
   FactproResponse,
 } from "@/document/factpro/types";
@@ -242,6 +242,7 @@ export default function gateway({
         documentType: "invoice",
         series: body.serie,
         number: body.numero,
+        xml: response.data.links.xml,
         status: "registered",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
@@ -332,6 +333,7 @@ export default function gateway({
         documentType: "receipt",
         series: body.serie,
         number: body.numero,
+        xml: response.data.links.xml,
         status: "registered",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
@@ -519,6 +521,6 @@ export default function gateway({
     createTicket,
     fetchCustomerByRuc,
     fetchCustomerByDNI,
-    cancelDocument
+    cancelDocument,
   };
 }

@@ -9,7 +9,8 @@ import { correlative } from "@/document/utils";
 import { fullName } from "@/customer/utils";
 import { formatPrice } from "@/lib/utils";
 import {buttonVariants} from "@/shared/components/ui/button";
-import {Printer} from "lucide-react";
+import {FileCode, Printer} from "lucide-react";
+import {findBillingDocumentFor} from "@/document/db_repository";
 
 export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
   {
@@ -38,7 +39,7 @@ export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
   },
   {
     accessorKey: "descarga",
-    header: "",
+    header: "IMPRIMIR",
     cell: ({row}) => <a
         className={buttonVariants({variant: "ghost", size: "icon"})}
         href={`/api/orders/${row.original.orderId}/documents`}
@@ -47,5 +48,24 @@ export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
     >
       <Printer className="cursor-pointer"/>
     </a>,
+  },
+  {
+    accessorKey: "xml",
+    header: "XML",
+    cell:
+      ({row}) => {
+        if((row.original.documentType === "invoice" || row.original.documentType === "receipt") && row.original.xml) {
+          return (
+            <a
+              className={buttonVariants({variant: "ghost", size: "icon"})}
+              href={`${row.original.xml}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FileCode/>
+            </a>
+          )
+        }
+      }
   },
 ];

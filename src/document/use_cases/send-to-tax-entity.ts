@@ -39,6 +39,7 @@ interface Repository {
   updateDocument: (
     documentId: string,
     data: {
+      xml?: string;
       qr?: string;
       hash?: string;
       issuedToTaxEntity?: boolean;
@@ -105,7 +106,6 @@ export const sendToTaxEntity = async (
           ...restMetadata,
           establishmentCode,
         });
-
         log.info("receipt_sent_to_tax_entity", { order, documentMetadata, taxEntityResponse });
         break;
       case "invoice":
@@ -142,6 +142,7 @@ export const sendToTaxEntity = async (
 
     // Update document with tax entity response data
     const updateData: {
+      xml?: string;
       qr?: string;
       hash?: string;
       issuedToTaxEntity: boolean;
@@ -151,10 +152,11 @@ export const sendToTaxEntity = async (
       issuedAt: new Date(),
     };
 
-    // Only add QR and hash for billable documents
+    // Only add QR and hash and xml for billable documents
     if (document.documentType !== "ticket" && 'qr' in taxEntityResponse.data) {
       updateData.qr = taxEntityResponse.data.qr;
       updateData.hash = taxEntityResponse.data.hash;
+      updateData.xml = taxEntityResponse.data.xml;
     }
 
     const updatedDocumentResponse = await repository.updateDocument(documentId, updateData);
