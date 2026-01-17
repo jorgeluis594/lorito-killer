@@ -10,28 +10,26 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
+import { Badge } from "@/shared/components/ui/badge";
 
-const HiddenProductCell = ({
-  product,
-  children,
-}: {
-  product: Product;
-  children: React.ReactNode;
-}) => {
-  const content = (
-    <span className={product.hidden ? "text-muted-foreground" : ""}>
-      {children}
-    </span>
-  );
-
-  if (!product.hidden) return content;
+const HiddenProductNameCell = ({ product }: { product: Product }) => {
+  if (!product.hidden) {
+    return <span>{product.name}</span>;
+  }
 
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{product.name}</span>
+            <Badge variant="secondary" className="text-xs">
+              Oculto
+            </Badge>
+          </div>
+        </TooltipTrigger>
         <TooltipContent>
-          <p>Este producto está oculto</p>
+          <p>Este producto no es visible en el punto de venta</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -42,11 +40,7 @@ export const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "name",
     header: "NOMBRE",
-    cell: ({ row }) => (
-      <HiddenProductCell product={row.original}>
-        {row.original.name}
-      </HiddenProductCell>
-    ),
+    cell: ({ row }) => <HiddenProductNameCell product={row.original} />,
   },
   {
     accessorKey: "categories",

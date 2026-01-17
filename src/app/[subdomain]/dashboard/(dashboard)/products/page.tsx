@@ -11,7 +11,9 @@ import ProductModalForm from "@/product/components/form/product-modal-form";
 import AddProductButtons from "@/product/components/add-single-product-button";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
 import { ProductsTableFilters } from "@/product/components/data-table/products-table-filters";
-import { Product } from "@/product/types";
+import { ProductsDataTable } from "@/product/components/data-table/products-data-table";
+import ExportProductsButton from "@/product/components/export-products-button";
+
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 
 type ParamsProps = {
@@ -47,17 +49,11 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
   return (
     <>
       <ProductsTableFilters />
-      <DataTable
+      <ProductsDataTable
         data={productsResponse.data}
-        columns={columns}
-        searchTextPlaceholder={"Buscar producto por nombre o sku"}
         pageCount={Math.ceil(
           productsCountResponse.data / (Number(searchParams.size) || 10),
         )}
-        allowSearch
-        getRowClassName={(product: Product) =>
-          product.hidden ? "opacity-60 bg-muted/10" : ""
-        }
       />
     </>
   );
@@ -78,7 +74,10 @@ export default async function Page({ searchParams }: ParamsProps) {
             title={`Productos (${totalResponse.success ? totalResponse.data : "-"})`}
             description="Gestiona tus productos!"
           />
-          <AddProductButtons/>
+          <div className="flex gap-2 mt-4 md:mt-0">
+            <ExportProductsButton />
+            <AddProductButtons />
+          </div>
         </div>
         <Separator/>
         <ProductModalForm/>
