@@ -35,6 +35,7 @@ model Product {
   createdAt                  DateTime        @default(now())
   updatedAt                  DateTime        @updatedAt
   isPackage                  Boolean         @default(false)
+  hidden                     Boolean         @default(false)
   photos                     Photo[]
   childPackageItems          PackageItem[]   @relation("ChildProducts")
   parentPackageItems         PackageItem[]   @relation("ParentProducts")
