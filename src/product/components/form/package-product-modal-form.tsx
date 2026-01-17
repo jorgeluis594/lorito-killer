@@ -61,6 +61,7 @@ const transformToProduct = (data: ProductFormValues): PackageProduct => {
     photos: data.photos,
     productItems: data.productItems,
     categories: data.categories || [],
+    hidden: false,
   };
 };
 

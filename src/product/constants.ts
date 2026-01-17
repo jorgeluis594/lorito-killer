@@ -26,6 +26,7 @@ export const EMPTY_SINGLE_PRODUCT: SingleProduct = {
   description: "",
   photos: [],
   categories: [],
+  hidden: false,
 };
 
 export const EMPTY_PACKAGE_PRODUCT: PackageProduct = {
@@ -37,6 +38,7 @@ export const EMPTY_PACKAGE_PRODUCT: PackageProduct = {
   photos: [],
   categories: [],
   productItems: [],
+  hidden: false,
 };
 
 export const sortOptions: SortOptions = {

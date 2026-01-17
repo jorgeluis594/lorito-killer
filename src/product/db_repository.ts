@@ -330,6 +330,7 @@ export type GetManyParams = {
   pageNumber?: number;
   q?: string | null;
   productType?: TypeSingleProductType | TypePackageProductType;
+  includeHidden?: boolean;
 };
 
 export const getMany = async ({
@@ -340,12 +341,20 @@ export const getMany = async ({
   pageNumber,
   q,
   productType,
+  includeHidden,
 }: GetManyParams): Promise<response<Product[]>> => {
   try {
     const query: Prisma.ProductFindManyArgs = {
       where: { companyId },
       orderBy: sortBy ? [{ ...sortBy }, { stock: "desc" }] : { stock: "desc" },
     };
+
+    if (!includeHidden) {
+      query.where = {
+        ...query.where,
+        hidden: false,
+      };
+    }
 
     if (productType)
       query.where = {

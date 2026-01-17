@@ -10,6 +10,8 @@ import { getSession } from "@/lib/auth";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import AddProductButtons from "@/product/components/add-single-product-button";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import { ProductsTableFilters } from "@/product/components/data-table/products-table-filters";
+import { Product } from "@/product/types";
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 
 type ParamsProps = {
@@ -26,6 +28,7 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
     companyId: session.user.companyId,
     pageNumber: Number(searchParams.page) || 1,
     limit: Number(searchParams.size) || 10,
+    includeHidden: searchParams.showHidden === "true",
   };
 
   if (searchParams.q) {
@@ -42,15 +45,21 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
   }
 
   return (
-    <DataTable
-      data={productsResponse.data}
-      columns={columns}
-      searchTextPlaceholder={"Buscar producto por nombre o sku"}
-      pageCount={Math.ceil(
-        productsCountResponse.data / (Number(searchParams.size) || 10),
-      )}
-      allowSearch
-    />
+    <>
+      <ProductsTableFilters />
+      <DataTable
+        data={productsResponse.data}
+        columns={columns}
+        searchTextPlaceholder={"Buscar producto por nombre o sku"}
+        pageCount={Math.ceil(
+          productsCountResponse.data / (Number(searchParams.size) || 10),
+        )}
+        allowSearch
+        getRowClassName={(product: Product) =>
+          product.hidden ? "opacity-60 bg-muted/10" : ""
+        }
+      />
+    </>
   );
 }
 
