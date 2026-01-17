@@ -10,6 +10,10 @@ import { getSession } from "@/lib/auth";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import AddProductButtons from "@/product/components/add-single-product-button";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import { ProductsTableFilters } from "@/product/components/data-table/products-table-filters";
+import { ProductsDataTable } from "@/product/components/data-table/products-data-table";
+import ExportProductsButton from "@/product/components/export-products-button";
+
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 
 type ParamsProps = {
@@ -26,6 +30,7 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
     companyId: session.user.companyId,
     pageNumber: Number(searchParams.page) || 1,
     limit: Number(searchParams.size) || 10,
+    includeHidden: searchParams.showHidden === "true",
   };
 
   if (searchParams.q) {
@@ -42,15 +47,15 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
   }
 
   return (
-    <DataTable
-      data={productsResponse.data}
-      columns={columns}
-      searchTextPlaceholder={"Buscar producto por nombre o sku"}
-      pageCount={Math.ceil(
-        productsCountResponse.data / (Number(searchParams.size) || 10),
-      )}
-      allowSearch
-    />
+    <>
+      <ProductsTableFilters />
+      <ProductsDataTable
+        data={productsResponse.data}
+        pageCount={Math.ceil(
+          productsCountResponse.data / (Number(searchParams.size) || 10),
+        )}
+      />
+    </>
   );
 }
 
@@ -69,7 +74,10 @@ export default async function Page({ searchParams }: ParamsProps) {
             title={`Productos (${totalResponse.success ? totalResponse.data : "-"})`}
             description="Gestiona tus productos!"
           />
-          <AddProductButtons/>
+          <div className="flex gap-2 mt-4 md:mt-0">
+            <ExportProductsButton />
+            <AddProductButtons />
+          </div>
         </div>
         <Separator/>
         <ProductModalForm/>

@@ -21,6 +21,7 @@ type ProductBase = {
   categories: Category[];
   updatedAt?: Date;
   createdAt?: Date;
+  hidden: boolean;
 };
 
 export const SingleProductType = "SingleProduct";

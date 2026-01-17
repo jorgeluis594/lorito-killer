@@ -74,6 +74,7 @@ const transformToProduct = (data: ProductFormValues): SingleProduct => {
     ...productData,
     categories: data.categories || [],
     type: SingleProductType,
+    hidden: false,
   };
 
   if (

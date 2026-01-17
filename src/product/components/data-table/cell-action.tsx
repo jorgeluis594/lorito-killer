@@ -8,7 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Edit, MoreHorizontal, PackageOpen, Trash } from "lucide-react";
+import { Edit, EyeOff, MoreHorizontal, PackageOpen, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product, SingleProduct, SingleProductType } from "@/product/types";
@@ -18,6 +18,7 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { performProductMovementStockTransfer } from "@/stock-transfer/components/actions";
 import { useUserSession } from "@/lib/use-user-session";
+import { hideProduct } from "@/product/actions";
 
 interface CellActionProps {
   product: Product;
@@ -64,6 +65,22 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
     setOpen(false);
     toast({
       title: "Producto eliminado",
+    });
+    router.refresh();
+  };
+
+  const onHideProduct = async () => {
+    const response = await hideProduct(product.id!);
+    if (!response.success) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: response.message,
+      });
+      return;
+    }
+    toast({
+      title: "Producto ocultado",
     });
     router.refresh();
   };
@@ -122,6 +139,9 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
 
           <DropdownMenuItem onClick={() => setProduct(product)}>
             <Edit className="mr-2 h-4 w-4" /> Editar
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onHideProduct}>
+            <EyeOff className="mr-2 h-4 w-4" /> Ocultar
           </DropdownMenuItem>
           {product.type === SingleProductType &&
             product.stock > 0 &&

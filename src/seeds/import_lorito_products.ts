@@ -59,6 +59,7 @@ function chunkArray<T>(array: T[], size: number) {
     categories: product.category_id
       ? [categoriesMapper[product.category_id.toString()]]
       : [],
+    hidden: false,
   });
 
   const productCreator = async (product: LoritoProduct) =>

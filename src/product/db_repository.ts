@@ -330,6 +330,7 @@ export type GetManyParams = {
   pageNumber?: number;
   q?: string | null;
   productType?: TypeSingleProductType | TypePackageProductType;
+  includeHidden?: boolean;
 };
 
 export const getMany = async ({
@@ -340,12 +341,20 @@ export const getMany = async ({
   pageNumber,
   q,
   productType,
+  includeHidden,
 }: GetManyParams): Promise<response<Product[]>> => {
   try {
     const query: Prisma.ProductFindManyArgs = {
       where: { companyId },
       orderBy: sortBy ? [{ ...sortBy }, { stock: "desc" }] : { stock: "desc" },
     };
+
+    if (!includeHidden) {
+      query.where = {
+        ...query.where,
+        hidden: false,
+      };
+    }
 
     if (productType)
       query.where = {
@@ -542,6 +551,24 @@ export const orderByProductIdCount = async (
   try {
     const count = await prisma().orderItem.count({ where: { productId } });
     return { success: true, data: count };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
+export const getParentPackages = async (
+  productId: string,
+): Promise<response<{ id: string; name: string }[]>> => {
+  try {
+    const packageItems = await prisma().packageItem.findMany({
+      where: { childProductId: productId },
+      include: { parentProduct: true },
+    });
+    const packages = packageItems.map((item) => ({
+      id: item.parentProduct.id,
+      name: item.parentProduct.name,
+    }));
+    return { success: true, data: packages };
   } catch (error: any) {
     return { success: false, message: error.message };
   }

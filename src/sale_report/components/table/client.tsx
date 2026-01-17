@@ -51,6 +51,7 @@ interface DataTableProps<TData, TValue> {
   searchParams?: {
     [key: string]: string | string[] | undefined;
   };
+  getRowClassName?: (row: TData) => string;
 }
 
 export default function DataTable<TData, TValue>({
@@ -61,6 +62,7 @@ export default function DataTable<TData, TValue>({
   allowSearch = false,
   pageSizeOptions = [10, 20, 30, 40, 50],
   pageCount,
+  getRowClassName,
 }: DataTableProps<TData, TValue>) {
   const searchParams = useSearchParams();
   const updateRoute = useUpdateQueryString();
@@ -166,6 +168,7 @@ export default function DataTable<TData, TValue>({
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
+                      className={getRowClassName?.(row.original) || ""}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
