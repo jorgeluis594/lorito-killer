@@ -546,3 +546,21 @@ export const orderByProductIdCount = async (
     return { success: false, message: error.message };
   }
 };
+
+export const getParentPackages = async (
+  productId: string,
+): Promise<response<{ id: string; name: string }[]>> => {
+  try {
+    const packageItems = await prisma().packageItem.findMany({
+      where: { childProductId: productId },
+      include: { parentProduct: true },
+    });
+    const packages = packageItems.map((item) => ({
+      id: item.parentProduct.id,
+      name: item.parentProduct.name,
+    }));
+    return { success: true, data: packages };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
