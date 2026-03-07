@@ -9,6 +9,7 @@ import { getCompany } from "@/company/db_repository";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
 import InactiveCompanyRedirection from "@/shared/components/inactive-company-redirection";
 import { ProductFormProvider } from "@/new-order/components/products-view/product-searcher-form-provider";
+import { RealtimeProvider } from "@/shared/components/layout/realtime-provider";
 import { getLastOpenCashShift, userExists } from "@/cash-shift/db_repository";
 
 export default async function DashboardLayout({
@@ -34,25 +35,27 @@ export default async function DashboardLayout({
 
   return (
     <CompanyProvider company={companyResponse.data}>
-      <OrderFormProvider>
-        <ProductFormProvider>
-          <CategoryStoreProvider>
-            <CashShiftProvider
-              cashShiftResponse={
-                userPresent
-                  ? cashShiftResponse
-                  : {
-                      success: false,
-                      message: "Usuario no autenticado",
-                      type: "AuthError",
-                    }
-              }
-            >
-              <CategoriesLoader>{children}</CategoriesLoader>
-            </CashShiftProvider>
-          </CategoryStoreProvider>
-        </ProductFormProvider>
-      </OrderFormProvider>
+      <RealtimeProvider>
+        <OrderFormProvider>
+          <ProductFormProvider>
+            <CategoryStoreProvider>
+              <CashShiftProvider
+                cashShiftResponse={
+                  userPresent
+                    ? cashShiftResponse
+                    : {
+                        success: false,
+                        message: "Usuario no autenticado",
+                        type: "AuthError",
+                      }
+                }
+              >
+                <CategoriesLoader>{children}</CategoriesLoader>
+              </CashShiftProvider>
+            </CategoryStoreProvider>
+          </ProductFormProvider>
+        </OrderFormProvider>
+      </RealtimeProvider>
     </CompanyProvider>
   );
 }
