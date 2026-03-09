@@ -3,8 +3,10 @@ import {
   type PackageProduct,
   PackageProductType,
   type Product,
+  type ProductService,
   type SingleProduct,
   SingleProductType,
+  ServiceProductType,
 } from "@/product/types";
 
 type ProductFormStateBase = {
@@ -36,16 +38,30 @@ type NewPackageProductFormState = ProductFormStateBase & {
   isNew: true;
 };
 
+type ServiceProductFormState = ProductFormStateBase & {
+  product: ProductService;
+  productType: typeof ServiceProductType;
+  isNew: false;
+};
+
+type NewServiceProductFormState = ProductFormStateBase & {
+  product: null;
+  productType: typeof ServiceProductType;
+  isNew: true;
+};
+
 export type ProductFormState =
   | SingleProductFormState
   | NewSingleProductFormState
   | PackageProductFormState
-  | NewPackageProductFormState;
+  | NewPackageProductFormState
+  | ServiceProductFormState
+  | NewServiceProductFormState;
 
 export type ProductFormActions = {
   setProduct: (product: Product) => void;
   resetProduct: (
-    productType: typeof SingleProductType | typeof PackageProductType,
+    productType: typeof SingleProductType | typeof PackageProductType | typeof ServiceProductType,
   ) => void;
   setOpen: (open: boolean) => void;
   setPerformingAction: (performingAction: boolean) => void;
@@ -68,8 +84,15 @@ export const createProductFormStore = (
     ...initState,
     setProduct: (product) =>
       set(
-        // The following line is a type assertion. We know that the product
         product.type === SingleProductType
+          ? {
+              product,
+              isNew: false,
+              open: true,
+              performingAction: false,
+              productType: product.type,
+            }
+          : product.type === PackageProductType
           ? {
               product,
               isNew: false,

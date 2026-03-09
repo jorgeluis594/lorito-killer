@@ -5,6 +5,8 @@ import {
   PackageProductType,
   Photo,
   Product,
+  ProductService,
+  ServiceProductType,
   ProductSearchParams,
   ProductSortParams,
   SingleProduct,
@@ -50,7 +52,7 @@ const singleProductToPrisma = (
   return {
     ...data,
     sku: product.sku || null,
-    isPackage: false,
+    productType: "SINGLE_PRODUCT",
     price: new Prisma.Decimal(product.price),
     unitType: PRISMA_UNIT_TYPE_MAPPER[product.unitType],
     purchasePrice: product.purchasePrice
@@ -119,8 +121,56 @@ const packageProductToPrisma = (
   return {
     ...data,
     sku,
-    isPackage: true,
+    productType: "PACKAGE_PRODUCT",
   };
+};
+
+const serviceProductToPrisma = (
+  product: ProductService,
+): Prisma.ProductCreateInput => {
+  const { type, photos, categories, ...data } = product;
+
+  return {
+    ...data,
+    sku: product.sku || null,
+    productType: "SERVICE_PRODUCT",
+    price: new Prisma.Decimal(product.price),
+    stock: null,
+    unitType: null,
+    purchasePrice: null,
+  };
+};
+
+const createServiceProduct = async (
+  product: ProductService,
+): Promise<response<ProductService>> => {
+  try {
+    const { photos, categories, ...productData } = product;
+
+    const createdResponse = await prisma().product.create({
+      data: serviceProductToPrisma(product),
+    });
+
+    const productCategories = await prisma().category.findMany({
+      where: { id: { in: categories.map((c) => c.id!) } },
+    });
+
+    const createdProduct: ProductService = {
+      ...createdResponse,
+      companyId: createdResponse.companyId || "some_company_id",
+      type: ServiceProductType,
+      sku: createdResponse.sku || undefined,
+      price: createdResponse.price.toNumber(),
+      categories: productCategories.map((c) => ({
+        ...c,
+        companyId: c.companyId || "some_company_id",
+      })),
+    };
+
+    return { success: true, data: createdProduct };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
 };
 
 const createPackageProduct = async (
@@ -170,9 +220,17 @@ const createPackageProduct = async (
 };
 
 export const create = async (product: Product): Promise<response<Product>> => {
-  const response = await (product.type === SingleProductType
-    ? createSingleProduct(product)
-    : createPackageProduct(product));
+  let response: response<Product>;
+
+  if (product.type === SingleProductType) {
+    response = await createSingleProduct(product);
+  } else if (product.type === PackageProductType) {
+    response = await createPackageProduct(product);
+  } else if (product.type === ServiceProductType) {
+    response = await createServiceProduct(product);
+  } else {
+    return { success: false, message: "Invalid product type" };
+  }
 
   if (!response.success) return response;
 
@@ -207,6 +265,22 @@ const updateSingleProduct = async (
     await prisma().product.update({
       where: { id: product.id },
       data: singleProductToPrisma(product),
+    });
+    return { success: true, data: { ...product } };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+};
+
+const updateServiceProduct = async (
+  product: ProductService,
+): Promise<response<ProductService>> => {
+  const { photos, categories, type, ...productData } = product;
+
+  try {
+    await prisma().product.update({
+      where: { id: product.id },
+      data: serviceProductToPrisma(product),
     });
     return { success: true, data: { ...product } };
   } catch (error: any) {
@@ -259,15 +333,33 @@ const updatePackageProduct = async (
 };
 
 export const update = async (product: Product): Promise<response<Product>> => {
-  return product.type === SingleProductType
-    ? updateSingleProduct(product)
-    : updatePackageProduct(product);
+  if (product.type === SingleProductType) {
+    return updateSingleProduct(product);
+  } else if (product.type === PackageProductType) {
+    return updatePackageProduct(product);
+  } else if (product.type === ServiceProductType) {
+    return updateServiceProduct(product);
+  } else {
+    return { success: false, message: "Invalid product type" };
+  }
 };
 
 const prismaToProduct = async (
   prismaProduct: PrismaProduct & { categories: PrismaCategory[] },
 ): Promise<Product> => {
-  if (prismaProduct.isPackage) {
+  if (prismaProduct.productType === "SERVICE_PRODUCT") {
+    return {
+      ...prismaProduct,
+      companyId: prismaProduct.companyId || "some_company_id",
+      type: ServiceProductType,
+      sku: prismaProduct.sku || undefined,
+      price: prismaProduct.price.toNumber(),
+      categories: prismaProduct.categories.map((c) => ({
+        ...c,
+        companyId: c.companyId || "some_company_id",
+      })),
+    };
+  } else if (prismaProduct.productType === "PACKAGE_PRODUCT") {
     const productItems = await prisma().packageItem.findMany({
       where: { parentProductId: prismaProduct.id },
       include: { parentProduct: true },
@@ -359,7 +451,7 @@ export const getMany = async ({
     if (productType)
       query.where = {
         ...query.where,
-        isPackage: productType === PackageProductType,
+        productType: productType === PackageProductType ? "PACKAGE_PRODUCT" : "SINGLE_PRODUCT",
       };
 
     if (categoryId)
@@ -527,7 +619,7 @@ export const search = async ({
   try {
     const query: Prisma.ProductWhereInput = {
       name: { contains: q, mode: "insensitive" },
-      isPackage: false,
+      productType: "SINGLE_PRODUCT",
     };
     if (categoryId) query.categories = { some: { id: categoryId } };
 

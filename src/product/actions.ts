@@ -1,10 +1,13 @@
 "use server";
 
-import { find, update, getParentPackages } from "@/product/db_repository";
+import { find, update, getParentPackages, create, findBy } from "@/product/db_repository";
 import { response } from "@/lib/types";
-import { Product } from "@/product/types";
+import { Product, ProductService } from "@/product/types";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
+import productCreatorV2 from "@/product/use-cases/product-creator-v2";
+
+const createProduct = productCreatorV2({ create, findBy });
 
 export const hideProduct = async (
   productId: string,
@@ -39,3 +42,38 @@ export const hideProduct = async (
 
   return updateResponse;
 };
+
+export async function createServiceProduct(
+  data: ProductService
+): Promise<response<ProductService>> {
+  try {
+    const session = await getSession();
+
+    if (!session.user) {
+      return {
+        success: false,
+        message: "Usuario no autenticado"
+      };
+    }
+
+    const serviceProduct: ProductService = {
+      ...data,
+      companyId: session.user.companyId
+    };
+
+    const response = await createProduct(serviceProduct);
+
+    if (response.success) {
+      revalidatePath("/dashboard/products");
+      revalidatePath("/api/products");
+    }
+
+    return response as response<ProductService>;
+  } catch (error) {
+    console.error("Error creating service product:", error);
+    return {
+      success: false,
+      message: "Error interno del servidor al crear el servicio"
+    };
+  }
+}
