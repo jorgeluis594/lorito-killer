@@ -64,6 +64,8 @@ export const authConfig: NextAuthOptions = {
         const { email, password } = parsedCredentials.data;
         const userResponse = await getUserByEmail(email);
         if (!userResponse.success) return null;
+        if (!userResponse.data.active) return null;
+
         const isValidPassword = await bcrypt.compare(
           password,
           userResponse.data.password,
