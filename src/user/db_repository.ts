@@ -11,7 +11,12 @@ export const getUserByEmail = async (
 
     return {
       success: true,
-      data: { ...user, companyId: user.companyId || "some_company_id" },
+      data: {
+        ...user,
+        companyId: user.companyId || "some_company_id",
+        role: user.role,
+        active: user.active,
+      },
     };
   } catch (error: any) {
     return { success: false, message: error.message };

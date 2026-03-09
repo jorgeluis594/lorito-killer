@@ -13,66 +13,79 @@ import { find as findProduct } from "@/product/db_repository";
 import { response } from "@/lib/types";
 import { Product } from "@/product/types";
 import { revalidatePath } from "next/cache";
+import { protectedAction } from "@/authorization/server";
 
-export const createCategory = async (
-  category: Category,
-): Promise<response<Category>> => {
-  return await create(category);
-};
+export const createCategory = protectedAction(
+  { resource: "categories", action: "create" },
+  async (_user, category: Category): Promise<response<Category>> => {
+    return await create(category);
+  },
+);
 
-export const updateCategory = async (
-  category: Category,
-): Promise<response<Category>> => {
-  return await update(category);
-};
+export const updateCategory = protectedAction(
+  { resource: "categories", action: "update" },
+  async (_user, category: Category): Promise<response<Category>> => {
+    return await update(category);
+  },
+);
 
-export const deleteCategory = async (
-  category: Category,
-): Promise<response<Category>> => {
-  return await deleted(category);
-};
+export const deleteCategory = protectedAction(
+  { resource: "categories", action: "delete" },
+  async (_user, category: Category): Promise<response<Category>> => {
+    return await deleted(category);
+  },
+);
 
-export const addCategoryToProduct = async (
-  productId: string,
-  categoryId: string,
-): Promise<response<Category>> => {
-  const [productResponse, categoryResponse] = await Promise.all([
-    findProduct(productId),
-    findCategory(categoryId),
-  ]);
+export const addCategoryToProduct = protectedAction(
+  { resource: "categories", action: "update" },
+  async (
+    _user,
+    productId: string,
+    categoryId: string,
+  ): Promise<response<Category>> => {
+    const [productResponse, categoryResponse] = await Promise.all([
+      findProduct(productId),
+      findCategory(categoryId),
+    ]);
 
-  if (!productResponse.success) return productResponse;
-  if (!categoryResponse.success) return categoryResponse;
-  if (categoryResponse.data.companyId !== productResponse.data.companyId) {
-    return {
-      success: false,
-      message: "La categoría no pertenece a la misma empresa que el producto",
-    };
-  }
+    if (!productResponse.success) return productResponse;
+    if (!categoryResponse.success) return categoryResponse;
+    if (categoryResponse.data.companyId !== productResponse.data.companyId) {
+      return {
+        success: false,
+        message:
+          "La categoría no pertenece a la misma empresa que el producto",
+      };
+    }
 
-  revalidatePath(`/dashboard/products/${productId}`);
+    revalidatePath(`/dashboard/products/${productId}`);
 
-  return await attachCategoryToProduct(
-    productResponse.data as Product,
-    categoryResponse.data as Category,
-  );
-};
+    return await attachCategoryToProduct(
+      productResponse.data as Product,
+      categoryResponse.data as Category,
+    );
+  },
+);
 
-export const removeCategoryFromProduct = async (
-  productId: string,
-  categoryId: string,
-): Promise<response<Category>> => {
-  const [productResponse, categoryResponse] = await Promise.all([
-    findProduct(productId),
-    findCategory(categoryId),
-  ]);
+export const removeCategoryFromProduct = protectedAction(
+  { resource: "categories", action: "update" },
+  async (
+    _user,
+    productId: string,
+    categoryId: string,
+  ): Promise<response<Category>> => {
+    const [productResponse, categoryResponse] = await Promise.all([
+      findProduct(productId),
+      findCategory(categoryId),
+    ]);
 
-  if (!productResponse.success) return productResponse;
-  if (!categoryResponse.success) return categoryResponse;
+    if (!productResponse.success) return productResponse;
+    if (!categoryResponse.success) return categoryResponse;
 
-  revalidatePath(`/products/${productId}`);
-  return await detachCategoryFromProduct(
-    productResponse.data as Product,
-    categoryResponse.data as Category,
-  );
-};
+    revalidatePath(`/products/${productId}`);
+    return await detachCategoryFromProduct(
+      productResponse.data as Product,
+      categoryResponse.data as Category,
+    );
+  },
+);

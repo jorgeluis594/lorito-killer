@@ -25,21 +25,33 @@ import {
   FormMessage,
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 
 import { createUser } from "@/user/actions";
 import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
+import { USER_ROLES, ROLE_LABELS } from "@/authorization/types";
+import type { UserRole } from "@/authorization/types";
 
 const userFormSchema = z
   .object({
-    email: z.string().email({ message: "Ingrese un email válido" }),
+    email: z.string().email({ message: "Ingrese un email valido" }),
     password: z
       .string()
-      .min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
+      .min(6, { message: "La contrasena debe tener al menos 6 caracteres" }),
     repeatPassword: z.string(),
+    role: z.enum(USER_ROLES, {
+      required_error: "Selecciona un rol",
+    }),
   })
   .refine((data) => data.repeatPassword === data.password, {
-    message: "Las contraseñas deben coincidir",
+    message: "Las contrasenas deben coincidir",
     path: ["repeatPassword"],
   });
 
@@ -55,6 +67,8 @@ export default function NewUserModal() {
     defaultValues: {
       email: "",
       password: "",
+      repeatPassword: "",
+      role: "CASHIER",
     },
   });
 
@@ -63,16 +77,20 @@ export default function NewUserModal() {
     if (!user) {
       toast({
         title: "Error",
-        description: "Debes iniciar sesión",
+        description: "Debes iniciar sesion",
         variant: "destructive",
       });
+      setLoading(false);
       return;
     }
     const response = await createUser(
       user.companyId,
       data.email,
       data.password,
+      data.role as UserRole,
     );
+
+    setLoading(false);
 
     if (!response.success && response.message === "El usuario ya existe") {
       form.setError("email", {
@@ -85,7 +103,7 @@ export default function NewUserModal() {
     if (!response.success) {
       toast({
         title: "Error",
-        description: "No se pudo crear el usuario, intente en unos minutos", // TODO: agregar manejo de errores
+        description: response.message || "No se pudo crear el usuario, intente en unos minutos",
         variant: "destructive",
       });
       return;
@@ -94,7 +112,7 @@ export default function NewUserModal() {
     form.reset();
     toast({
       title: "Usuario creado",
-      description: "El usuario ha sido creado exitosamente",
+      description: `Usuario creado como ${ROLE_LABELS[data.role as UserRole]}`,
     });
     setOpen(false);
   };
@@ -110,8 +128,7 @@ export default function NewUserModal() {
         <DialogHeader>
           <DialogTitle>Agregar Usuario</DialogTitle>
           <DialogDescription>
-            Da vida a un nuevo miembro en tu equipo empresarial, capaz de
-            impulsar tus ventas.
+            Crea un nuevo usuario para tu empresa y asignale un rol.
           </DialogDescription>
         </DialogHeader>
 
@@ -129,7 +146,7 @@ export default function NewUserModal() {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="Ingresa tu email"
+                      placeholder="Ingresa el email"
                       disabled={loading}
                       {...field}
                     />
@@ -140,10 +157,38 @@ export default function NewUserModal() {
             />
             <FormField
               control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rol</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={loading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un rol" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {USER_ROLES.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {ROLE_LABELS[role]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contraseña</FormLabel>
+                  <FormLabel>Contrasena</FormLabel>
                   <FormControl>
                     <Input type="password" disabled={loading} {...field} />
                   </FormControl>
@@ -156,7 +201,7 @@ export default function NewUserModal() {
               name="repeatPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Repite contraseña</FormLabel>
+                  <FormLabel>Repite contrasena</FormLabel>
                   <FormControl>
                     <Input type="password" disabled={loading} {...field} />
                   </FormControl>

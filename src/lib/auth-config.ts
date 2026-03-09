@@ -10,7 +10,11 @@ export const authConfig: NextAuthOptions = {
   },
   callbacks: {
     jwt: async ({ token, user }) => {
-      if (user?.id) token.userId = user.id;
+      if (user?.id) {
+        token.userId = user.id;
+        token.role = (user as any).role;
+        token.active = (user as any).active;
+      }
       return {
         ...token,
         user: user,
@@ -22,6 +26,10 @@ export const authConfig: NextAuthOptions = {
       const persistedUser = await getUserByEmail(session.user.email!);
       if (!persistedUser.success) return { ...session, user: undefined };
 
+      if (!persistedUser.data.active) {
+        return { ...session, user: undefined };
+      }
+
       return {
         ...session,
         user: {
@@ -30,6 +38,8 @@ export const authConfig: NextAuthOptions = {
           name: persistedUser.data.name,
           email: persistedUser.data.email,
           companyId: persistedUser.data.companyId,
+          role: persistedUser.data.role,
+          active: persistedUser.data.active,
         },
       };
     },
