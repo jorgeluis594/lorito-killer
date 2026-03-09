@@ -1,10 +1,15 @@
 import {
   Product,
   ProductSearchParams,
-  SingleProduct,
   SingleProductType,
+  PackageProductType,
+  ServiceProductType,
 } from "@/product/types";
-import { PackageProductSchema, SingleProductSchema } from "@/product/schema";
+import {
+  PackageProductSchema,
+  SingleProductSchema,
+  ServiceProductSchema,
+} from "@/product/schema";
 import { response } from "@/lib/types";
 
 interface Repository {
@@ -16,10 +21,21 @@ export default async function productCreator(
   repository: Repository,
   product: Product,
 ): Promise<response<Product>> {
-  const parsedProduct =
-    product.type === SingleProductType
-      ? SingleProductSchema.safeParse(product)
-      : PackageProductSchema.safeParse(product);
+  let parsedProduct;
+
+  switch (product.type) {
+    case SingleProductType:
+      parsedProduct = SingleProductSchema.safeParse(product);
+      break;
+    case PackageProductType:
+      parsedProduct = PackageProductSchema.safeParse(product);
+      break;
+    case ServiceProductType:
+      parsedProduct = ServiceProductSchema.safeParse(product);
+      break;
+    default:
+      return { success: false, message: "Tipo de producto no válido" };
+  }
 
   if (!parsedProduct.success) {
     return { success: false, message: parsedProduct.error.message };

@@ -46,11 +46,23 @@ export type PackageProduct = ProductBase & {
   productItems: ProductItem[];
 };
 
-export type Product = SingleProduct | PackageProduct;
+export const ServiceProductType = "ServiceProduct";
+export type TypeServiceProductType = typeof ServiceProductType;
+
+export type ProductService = ProductBase & {
+  type: typeof ServiceProductType;
+};
+
+// Union type for products that have stock
+export type StockableProduct = SingleProduct | PackageProduct;
+
+// Union type for all products
+export type Product = StockableProduct | ProductService;
 
 type ProductTypeMap = {
   [SingleProductType]: SingleProduct;
   [PackageProductType]: PackageProduct;
+  [ServiceProductType]: ProductService;
 };
 
 export type ProductType = keyof ProductTypeMap;
@@ -62,6 +74,32 @@ export type ProductItem = {
   productId: string;
   productName: string;
   quantity: number;
+};
+
+// Type guard functions
+export const isStockableProduct = (
+  product: Product
+): product is StockableProduct => {
+  return product.type === SingleProductType ||
+         product.type === PackageProductType;
+};
+
+export const isServiceProduct = (
+  product: Product
+): product is ProductService => {
+  return product.type === ServiceProductType;
+};
+
+export const isSingleProduct = (
+  product: Product
+): product is SingleProduct => {
+  return product.type === SingleProductType;
+};
+
+export const isPackageProduct = (
+  product: Product
+): product is PackageProduct => {
+  return product.type === PackageProductType;
 };
 
 export type ProductSearchParams = {
