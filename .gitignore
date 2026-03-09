@@ -43,3 +43,4 @@ next-env.d.ts
 env.example
 package-lock.json
 package.json
+.playwright-cli
