@@ -14,6 +14,7 @@ import {
   Product,
   SingleProductType,
   UNIT_UNIT_TYPE,
+  isSingleProduct,
 } from "@/product/types";
 import { Discount, OrderItem, Payment, PaymentMethod } from "@/order/types";
 import { useToast } from "@/shared/components/ui/use-toast";
@@ -86,7 +87,7 @@ export const useOrderFormActions = (): Actions => {
       }
 
       // TODO: Handle the logic of stock discount on package products
-      if (response.data.type === PackageProductType) return;
+      if (!isSingleProduct(response.data)) return;
 
       if (response.data.stock === 0) {
         toast({

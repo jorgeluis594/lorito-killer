@@ -77,3 +77,26 @@ export const PackageProductSchema = z.object({
   updatedAt: z.date().optional(),
   createdAt: z.date().optional(),
 });
+
+export const ServiceProductSchema = z.object({
+  id: z.string().optional(),
+  companyId: z.string(),
+  name: z.string().min(3, {
+    message: "El nombre del servicio debe tener al menos 3 caracteres",
+  }),
+  price: z.coerce.number().gt(0, "El servicio debe tener un precio"),
+  description: z.string(),
+  sku: z
+    .string()
+    .regex(/^[a-zA-Z0-9_]*$/, {
+      message: "SKU solo puede contener carácteres alfanuméricos y guión abajo",
+    })
+    .optional(),
+  photos: z
+    .array(PhotoSchema)
+    .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
+    .optional(),
+  categories: z.array(CategorySchema),
+  updatedAt: z.date().optional(),
+  createdAt: z.date().optional(),
+});

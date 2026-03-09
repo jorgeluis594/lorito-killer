@@ -19,6 +19,12 @@ enum UnitType {
   KG
 }
 
+enum ProductType {
+  SINGLE_PRODUCT
+  PACKAGE_PRODUCT
+  SERVICE_PRODUCT
+}
+
 model Product {
   id                         String          @id @default(uuid())
   companyId                  String?
@@ -34,7 +40,7 @@ model Product {
   description                String
   createdAt                  DateTime        @default(now())
   updatedAt                  DateTime        @updatedAt
-  isPackage                  Boolean         @default(false)
+  productType                ProductType     @default(SINGLE_PRODUCT)
   hidden                     Boolean         @default(false)
   photos                     Photo[]
   childPackageItems          PackageItem[]   @relation("ChildProducts")
@@ -42,6 +48,8 @@ model Product {
   stockTransfers             StockTransfer[]
   categories                 Category[]
   orderItems                 OrderItem[]
+
+  @@index([productType])
 }
 
 model PackageItem {

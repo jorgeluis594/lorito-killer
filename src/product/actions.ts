@@ -1,10 +1,13 @@
 "use server";
 
-import { find, update, getParentPackages } from "@/product/db_repository";
+import { find, update, getParentPackages, create, findBy } from "@/product/db_repository";
 import { response } from "@/lib/types";
-import { Product } from "@/product/types";
+import { Product, ProductService } from "@/product/types";
 import { revalidatePath } from "next/cache";
 import { protectedAction } from "@/authorization/server";
+import productCreatorV2 from "@/product/use-cases/product-creator-v2";
+
+const createProduct = productCreatorV2({ create, findBy });
 
 export const hideProduct = protectedAction(
   { resource: "products", action: "delete" },
@@ -33,5 +36,32 @@ export const hideProduct = protectedAction(
     }
 
     return updateResponse;
+  },
+);
+
+export const createServiceProduct = protectedAction(
+  { resource: "products", action: "create" },
+  async (user, data: ProductService): Promise<response<ProductService>> => {
+    try {
+      const serviceProduct: ProductService = {
+        ...data,
+        companyId: user.companyId,
+      };
+
+      const response = await createProduct(serviceProduct);
+
+      if (response.success) {
+        revalidatePath("/dashboard/products");
+        revalidatePath("/api/products");
+      }
+
+      return response as response<ProductService>;
+    } catch (error) {
+      console.error("Error creating service product:", error);
+      return {
+        success: false,
+        message: "Error interno del servidor al crear el servicio",
+      };
+    }
   },
 );
