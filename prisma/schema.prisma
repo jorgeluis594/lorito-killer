@@ -85,6 +85,14 @@ model Category {
   updatedAt DateTime  @updatedAt
 }
 
+enum UserRole {
+  ADMIN
+  CASHIER
+  WAITER
+  KITCHEN
+  BARTENDER
+}
+
 enum StockTransferType {
   ORDER
   ADJUSTMENT
@@ -302,10 +310,16 @@ model User {
   email          String          @unique
   password       String
   name           String?
+  role           UserRole        @default(ADMIN)
+  active         Boolean         @default(true)
+  pin            String?
   cashShifts     CashShift[]
   stockTransfers StockTransfer[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  @@index([companyId, role])
+  @@index([companyId, active])
 }
 
 enum PaymentMethod {

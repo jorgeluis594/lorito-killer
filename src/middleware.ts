@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { hasPermission } from "@/authorization/helpers";
+import type { UserRole, Resource, Action } from "@/authorization/types";
 
 export const config = {
   // The root path "/" is not matched by the matcher, so it's not included here
@@ -8,6 +10,67 @@ export const config = {
     "/dashboard/:path*",
   ],
 };
+
+type RoutePermission = { resource: Resource; action: Action };
+
+const routePermissions: Array<{ path: string; permission: RoutePermission }> = [
+  {
+    path: "/dashboard/orders/new",
+    permission: { resource: "orders", action: "create" },
+  },
+  {
+    path: "/dashboard/orders",
+    permission: { resource: "orders", action: "read" },
+  },
+  {
+    path: "/dashboard/products",
+    permission: { resource: "products", action: "create" },
+  },
+  {
+    path: "/dashboard/sales_reports",
+    permission: { resource: "reports", action: "read" },
+  },
+  {
+    path: "/dashboard/cash_shifts",
+    permission: { resource: "cash_shifts", action: "read" },
+  },
+  {
+    path: "/dashboard/stock_adjustments",
+    permission: { resource: "stock", action: "read" },
+  },
+  {
+    path: "/dashboard/settings",
+    permission: { resource: "company", action: "read" },
+  },
+];
+
+function getDefaultRoute(role: UserRole): string {
+  switch (role) {
+    case "ADMIN":
+      return "/dashboard";
+    case "CASHIER":
+    case "WAITER":
+      return "/dashboard/orders/new";
+    default:
+      return "/login";
+  }
+}
+
+function getRoutePermission(pathname: string): RoutePermission | null {
+  // Check most specific routes first (longer paths first)
+  for (const route of routePermissions) {
+    if (pathname === route.path || pathname.startsWith(route.path + "/")) {
+      return route.permission;
+    }
+  }
+
+  // /dashboard exact path - only ADMIN (reports overview)
+  if (pathname === "/dashboard") {
+    return { resource: "reports", action: "read" };
+  }
+
+  return null;
+}
 
 export default async function middleware(req: NextRequest) {
   const url = req.nextUrl;
@@ -24,6 +87,27 @@ export default async function middleware(req: NextRequest) {
     !url.pathname.startsWith("/login")
   ) {
     return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  // Route protection for dashboard pages
+  if (token && url.pathname.startsWith("/dashboard")) {
+    const role = token.role as UserRole | undefined;
+
+    // Block inactive users
+    if (token.active === false) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
+    if (role) {
+      const permission = getRoutePermission(url.pathname);
+      if (permission && !hasPermission(role, permission.resource, permission.action)) {
+        const defaultRoute = getDefaultRoute(role);
+        if (defaultRoute === "/login") {
+          return NextResponse.redirect(new URL("/login", req.url));
+        }
+        return NextResponse.redirect(new URL(defaultRoute, req.url));
+      }
+    }
   }
 
   return NextResponse.rewrite(

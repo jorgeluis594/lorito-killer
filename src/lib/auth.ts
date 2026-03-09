@@ -1,9 +1,17 @@
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth-config";
+import type { UserRole } from "@/authorization/types";
 
 type Session = {
   user:
-    | { name: string; email: string; id: string; companyId: string }
+    | {
+        name: string;
+        email: string;
+        id: string;
+        companyId: string;
+        role: UserRole;
+        active: boolean;
+      }
     | undefined;
   name: string;
   email: string;

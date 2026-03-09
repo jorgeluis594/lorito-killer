@@ -6,30 +6,39 @@ import { response } from "@/lib/types";
 import { User } from "@/user/types";
 import { getSession } from "@/lib/auth";
 import bcrypt from "bcrypt";
+import { protectedAction } from "@/authorization/server";
+import type { UserRole } from "@/authorization/types";
 
-export const createUser = async (
-  companyId: string,
-  email: string,
-  password: string,
-): Promise<response<User>> => {
-  const createdUserResponse = await registerUser(repository, {
-    companyId,
-    email,
-    password,
-  });
+export const createUser = protectedAction(
+  { roles: ["ADMIN"] },
+  async (
+    user,
+    companyId: string,
+    email: string,
+    password: string,
+    role: UserRole = "CASHIER",
+  ): Promise<response<User>> => {
+    const createdUserResponse = await registerUser(repository, {
+      companyId: user.companyId,
+      email,
+      password,
+      role,
+    });
 
-  if (!createdUserResponse.success) {
-    return { success: false, message: createdUserResponse.message };
-  }
+    if (!createdUserResponse.success) {
+      return { success: false, message: createdUserResponse.message };
+    }
 
-  const user = createdUserResponse.data;
-  // signInWithEmail(user.email, password);
-  return createdUserResponse;
-};
+    return createdUserResponse;
+  },
+);
 
-export const updateUser = async (user: User): Promise<response<User>> => {
-  return await repository.updateUser(user);
-};
+export const updateUser = protectedAction(
+  { roles: ["ADMIN"] },
+  async (_user, userToUpdate: User): Promise<response<User>> => {
+    return await repository.updateUser(userToUpdate);
+  },
+);
 
 export const changePassword = async (
   password: string,

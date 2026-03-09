@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "a20215fd1e7bf976a5a9bb1beab0728a9e7bfbab1d62468b4b3321cd798d5a55"
     },
+    "playwright-cli": {
+      "source": "microsoft/playwright-cli",
+      "sourceType": "github",
+      "computedHash": "7075ab30f588019197a2f1518bb4c9d33d69d33352af079b5f9c60303ad3886e"
+    },
     "playwright-skill": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",

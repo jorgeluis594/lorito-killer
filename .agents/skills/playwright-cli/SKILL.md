@@ -83,13 +83,11 @@ playwright-cli mousewheel 0 100
 
 ### Save as
 
-Screenshots se guardan por defecto en `tmp/playwright/<nombre-de-funcionalidad>/`, donde `nombre-de-funcionalidad` describe lo que se está probando o el motivo de la prueba (ej: `vista-productos`, `flujo-login`, `checkout`). Crea el directorio antes de guardar si no existe.
-
 ```bash
-mkdir -p tmp/playwright/nombre-de-funcionalidad
-playwright-cli screenshot --filename=tmp/playwright/nombre-de-funcionalidad/descripcion.png
-playwright-cli screenshot e5 --filename=tmp/playwright/nombre-de-funcionalidad/elemento.png
-playwright-cli pdf --filename=tmp/playwright/nombre-de-funcionalidad/page.pdf
+playwright-cli screenshot
+playwright-cli screenshot e5
+playwright-cli screenshot --filename=page.png
+playwright-cli pdf --filename=page.pdf
 ```
 
 ### Tabs

@@ -1,4 +1,5 @@
 import { Icons } from "@/shared/icons";
+import type { Resource, Action } from "@/authorization/types";
 
 export interface NavItem {
   title: string;
@@ -8,6 +9,7 @@ export interface NavItem {
   icon?: keyof typeof Icons;
   label?: string;
   description?: string;
+  permission?: { resource: Resource; action: Action };
 }
 
 export interface NavItemWithChildren extends NavItem {
