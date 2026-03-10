@@ -166,6 +166,8 @@ model OrderItem {
   productId      String
   orderId        String
   productPrice   Decimal
+  notes          String?
+  round          Int           @default(1)
   product        Product       @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt      DateTime      @default(now())
@@ -183,9 +185,23 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum TableSessionStatus {
+  OPEN
+  BILL_REQUESTED
+  CLOSED
+  CANCELLED
+}
+
+enum OrderType {
+  RETAIL
+  DINE_IN
+  TAKE_AWAY
+  DELIVERY
+}
+
 model Order {
   id                 String        @id @default(uuid())
-  cashShiftId        String
+  cashShiftId        String?
   companyId          String?
   customerId         String?
   customer           Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
@@ -197,7 +213,10 @@ model Order {
   total              Decimal
   status             OrderStatus
   cancellationReason String?
-  cashShift          CashShift     @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  orderType          OrderType     @default(RETAIL)
+  tableSessionId     String?       @unique
+  tableSession       TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  cashShift          CashShift?    @relation(fields: [cashShiftId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   payments           Payment[]
   documents          Document[]
   documentType       String?
@@ -284,6 +303,9 @@ model Company {
   logos              Logo[]
   stockTransfers     StockTransfer[]
   documents          Document[]
+  zones              Zone[]
+  tables             Table[]
+  tableSessions      TableSession[]
   subdomain          String?         @unique
   billingCredentials Json?
   active             Boolean         @default(true)
@@ -304,19 +326,20 @@ model Logo {
 }
 
 model User {
-  id             String          @id @default(uuid())
-  companyId      String?
-  company        Company?        @relation(fields: [companyId], references: [id])
-  email          String          @unique
-  password       String
-  name           String?
-  role           UserRole        @default(ADMIN)
-  active         Boolean         @default(true)
-  pin            String?
-  cashShifts     CashShift[]
-  stockTransfers StockTransfer[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id               String          @id @default(uuid())
+  companyId        String?
+  company          Company?        @relation(fields: [companyId], references: [id])
+  email            String          @unique
+  password         String
+  name             String?
+  role             UserRole        @default(ADMIN)
+  active           Boolean         @default(true)
+  pin              String?
+  cashShifts       CashShift[]
+  stockTransfers   StockTransfer[]
+  waiterSessions   TableSession[]  @relation("WaiterSessions")
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([companyId, role])
   @@index([companyId, active])
@@ -362,4 +385,60 @@ model Locality {
   parent      Locality?     @relation("LocalityParent", fields: [parentId], references: [idUbigeo])
 
   @@index([name, code, tag, parentId])
+}
+
+model Zone {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  name      String
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  tables    Table[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+model Table {
+  id        String         @id @default(uuid())
+  companyId String
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  number    Int
+  label     String?
+  capacity  Int            @default(4)
+  zoneId    String
+  zone      Zone           @relation(fields: [zoneId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  active    Boolean        @default(true)
+  sessions  TableSession[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@unique([companyId, number])
+  @@index([companyId])
+}
+
+model TableSession {
+  id         String             @id @default(uuid())
+  companyId  String
+  company    Company            @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tableId    String
+  table      Table              @relation(fields: [tableId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  waiterId   String
+  waiter     User               @relation("WaiterSessions", fields: [waiterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  status     TableSessionStatus @default(OPEN)
+  current    Boolean?           @default(true)
+  guestCount Int?
+  notes      String?
+  order      Order?
+  openedAt   DateTime           @default(now())
+  closedAt   DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([tableId, current])
+  @@index([companyId, status])
+  @@index([tableId, status])
 }
