@@ -37,6 +37,13 @@ export const navItems: NavItem[] = [
     permission: { resource: "products", action: "create" },
   },
   {
+    title: "Mesas",
+    href: "/dashboard/tables",
+    icon: "tables",
+    label: "mesas",
+    permission: { resource: "tables", action: "read" },
+  },
+  {
     title: "Movimientos de stock",
     href: "/dashboard/stock_adjustments",
     icon: "stock_adjustments",
