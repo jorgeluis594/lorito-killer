@@ -398,7 +398,6 @@ model Zone {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([companyId, name])
   @@index([companyId])
 }
 
@@ -416,8 +415,8 @@ model Table {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
-  @@unique([companyId, number])
   @@index([companyId])
+  @@index([companyId, zoneId])
 }
 
 model TableSession {

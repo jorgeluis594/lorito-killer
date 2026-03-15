@@ -40,7 +40,7 @@ export function TableSessionPanel({ table }: TableSessionPanelProps) {
     setLoading(false);
     if (result.success) {
       toast({ title: "Sesion cancelada" });
-      router.push(`/dashboard/tables`);
+      router.back();
     } else {
       toast({ title: "Error", description: result.message, variant: "destructive" });
     }
@@ -52,7 +52,7 @@ export function TableSessionPanel({ table }: TableSessionPanelProps) {
     setLoading(false);
     if (result.success) {
       toast({ title: "Mesa cerrada" });
-      router.push(`/dashboard/tables`);
+      router.back();
     } else {
       toast({ title: "Error", description: result.message, variant: "destructive" });
     }
@@ -65,7 +65,7 @@ export function TableSessionPanel({ table }: TableSessionPanelProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push(`/dashboard/tables`)}
+            onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>

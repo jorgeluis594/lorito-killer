@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Users, Clock, User, Loader2 } from "lucide-react";
 import type { TableWithSession } from "../types";
@@ -21,13 +22,17 @@ interface TableCardProps {
   isOpening?: boolean;
 }
 
-export function TableCard({ table, onClick, isOpening }: TableCardProps) {
+export const TableCard = memo(function TableCard({ table, onClick, isOpening }: TableCardProps) {
   const status = getTableDerivedStatus(table);
   const session = table.activeSession;
 
-  const elapsedMinutes = session
-    ? differenceInMinutes(new Date(), new Date(session.openedAt))
-    : 0;
+  const { elapsed, timeAgo } = useMemo(() => {
+    if (!session) return { elapsed: 0, timeAgo: "" };
+    return {
+      elapsed: differenceInMinutes(new Date(), new Date(session.openedAt)),
+      timeAgo: formatDistanceToNow(new Date(session.openedAt), { addSuffix: false, locale: es }),
+    };
+  }, [session]);
 
   return (
     <button
@@ -74,11 +79,8 @@ export function TableCard({ table, onClick, isOpening }: TableCardProps) {
       {session && (
         <div className="mt-2 flex items-center gap-1 text-xs">
           <Clock className="h-3 w-3 shrink-0" />
-          <span className={cn(getTimeUrgencyClass(elapsedMinutes))}>
-            {formatDistanceToNow(new Date(session.openedAt), {
-              locale: es,
-              addSuffix: false,
-            })}
+          <span className={cn(getTimeUrgencyClass(elapsed))}>
+            {timeAgo}
           </span>
         </div>
       )}
@@ -103,4 +105,4 @@ export function TableCard({ table, onClick, isOpening }: TableCardProps) {
       </div>
     </button>
   );
-}
+});

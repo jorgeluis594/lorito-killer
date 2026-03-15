@@ -24,6 +24,19 @@ import { requestBill } from "./use-cases/request-bill";
 import { addRound, type RoundItem } from "./use-cases/add-round";
 import { transferTable } from "./use-cases/transfer-table";
 import { withinTransaction } from "@/lib/prisma";
+import {
+  AddRoundSchema,
+  OpenTableSchema,
+  CloseTableSchema,
+  RequestBillSchema,
+  TransferTableSchema,
+  CreateZoneSchema,
+  UpdateZoneSchema,
+  DeleteZoneSchema,
+  CreateTableSchema,
+  UpdateTableSchema,
+  DeleteTableSchema,
+} from "./schemas";
 
 // -- Zone Actions --
 
@@ -37,7 +50,12 @@ export const getZones = protectedAction(
 export const createZoneAction = protectedAction(
   { resource: "tables", action: "create" },
   async (user, data: { name: string; order?: number }): Promise<response<Zone>> => {
-    const result = await dbCreateZone(user.companyId, data);
+    const parsed = CreateZoneSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await dbCreateZone(user.companyId, parsed.data);
     if (result.success) {
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
@@ -49,7 +67,12 @@ export const createZoneAction = protectedAction(
 export const updateZoneAction = protectedAction(
   { resource: "tables", action: "update" },
   async (user, id: string, data: { name?: string; order?: number }): Promise<response<Zone>> => {
-    const result = await dbUpdateZone(id, user.companyId, data);
+    const parsed = UpdateZoneSchema.safeParse({ id, data });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await dbUpdateZone(parsed.data.id, user.companyId, parsed.data.data);
     if (result.success) {
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
@@ -61,7 +84,12 @@ export const updateZoneAction = protectedAction(
 export const deleteZoneAction = protectedAction(
   { resource: "tables", action: "delete" },
   async (user, id: string): Promise<response<void>> => {
-    const result = await dbDeleteZone(id, user.companyId);
+    const parsed = DeleteZoneSchema.safeParse({ id });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await dbDeleteZone(parsed.data.id, user.companyId);
     if (result.success) {
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
@@ -92,7 +120,12 @@ export const createTableAction = protectedAction(
     user,
     data: { number: number; label?: string; capacity: number; zoneId: string },
   ): Promise<response<Table>> => {
-    const result = await dbCreateTable(user.companyId, data);
+    const parsed = CreateTableSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await dbCreateTable(user.companyId, parsed.data);
     if (result.success) {
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
@@ -108,7 +141,12 @@ export const updateTableAction = protectedAction(
     id: string,
     data: { number?: number; label?: string; capacity?: number; zoneId?: string },
   ): Promise<response<Table>> => {
-    const result = await dbUpdateTable(id, user.companyId, data);
+    const parsed = UpdateTableSchema.safeParse({ id, data });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await dbUpdateTable(parsed.data.id, user.companyId, parsed.data.data);
     if (result.success) {
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
@@ -120,7 +158,12 @@ export const updateTableAction = protectedAction(
 export const deleteTableAction = protectedAction(
   { resource: "tables", action: "delete" },
   async (user, id: string): Promise<response<void>> => {
-    const result = await dbDeleteTable(id, user.companyId);
+    const parsed = DeleteTableSchema.safeParse({ id });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await dbDeleteTable(parsed.data.id, user.companyId);
     if (result.success) {
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
@@ -139,14 +182,19 @@ export const openTable = protectedAction(
     guestCount?: number,
     notes?: string,
   ): Promise<response<TableSession>> => {
+    const parsed = OpenTableSchema.safeParse({ tableId, guestCount, notes });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
     const result = await withinTransaction(async () => {
-      return openTableSession(user.companyId, tableId, user.id, guestCount, notes);
+      return openTableSession(user.companyId, parsed.data.tableId, user.id, parsed.data.guestCount, parsed.data.notes);
     });
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "table-session-changed", {
-        tableId,
+        tableId: parsed.data.tableId,
         sessionStatus: "OPEN",
       });
     }
@@ -157,13 +205,18 @@ export const openTable = protectedAction(
 export const closeTable = protectedAction(
   { resource: "tables", action: "update" },
   async (user, tableId: string, cancelled?: boolean): Promise<response<TableSession>> => {
-    const result = await closeTableSession(user.companyId, tableId, cancelled);
+    const parsed = CloseTableSchema.safeParse({ tableId, cancelled: cancelled ?? false });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await closeTableSession(user.companyId, parsed.data.tableId, parsed.data.cancelled);
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "table-session-changed", {
-        tableId,
-        sessionStatus: cancelled ? "CANCELLED" : "CLOSED",
+        tableId: parsed.data.tableId,
+        sessionStatus: parsed.data.cancelled ? "CANCELLED" : "CLOSED",
       });
     }
     return result;
@@ -173,12 +226,17 @@ export const closeTable = protectedAction(
 export const requestBillAction = protectedAction(
   { resource: "tables", action: "update" },
   async (user, tableId: string): Promise<response<TableSession>> => {
-    const result = await requestBill(user.companyId, tableId);
+    const parsed = RequestBillSchema.safeParse({ tableId });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await requestBill(user.companyId, parsed.data.tableId);
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "table-session-changed", {
-        tableId,
+        tableId: parsed.data.tableId,
         sessionStatus: "BILL_REQUESTED",
       });
     }
@@ -193,14 +251,19 @@ export const addRoundAction = protectedAction(
     tableId: string,
     items: RoundItem[],
   ): Promise<response<{ orderId: string; round: number }>> => {
+    const parsed = AddRoundSchema.safeParse({ tableId, items });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
     const result = await withinTransaction(async () => {
-      return addRound(tableId, items);
+      return addRound(parsed.data.tableId, user.companyId, parsed.data.items);
     });
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "table-round-added", {
-        tableId,
+        tableId: parsed.data.tableId,
         orderId: result.data.orderId,
         round: result.data.round,
       });
@@ -212,22 +275,20 @@ export const addRoundAction = protectedAction(
 export const transferTableAction = protectedAction(
   { resource: "tables", action: "update" },
   async (user, tableId: string, newWaiterId: string): Promise<response<TableSession>> => {
-    const result = await transferTable(user.companyId, tableId, newWaiterId);
+    const parsed = TransferTableSchema.safeParse({ tableId, newWaiterId });
+    if (!parsed.success) {
+      return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
+    }
+
+    const result = await transferTable(user.companyId, parsed.data.tableId, parsed.data.newWaiterId);
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "table-waiter-changed", {
-        tableId,
-        newWaiterId,
+        tableId: parsed.data.tableId,
+        newWaiterId: parsed.data.newWaiterId,
       });
     }
     return result;
-  },
-);
-
-export const getWaitersAction = protectedAction(
-  { resource: "tables", action: "read" },
-  async (user): Promise<response<Array<{ id: string; name: string | null }>>> => {
-    return getWaiters(user.companyId);
   },
 );

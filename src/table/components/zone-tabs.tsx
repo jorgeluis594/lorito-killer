@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { Zone, TableWithSession } from "../types";
 import { getTableDerivedStatus } from "../types";
@@ -11,17 +12,23 @@ interface ZoneTabsProps {
   onSelect: (zoneId: string | null) => void;
 }
 
-function getZoneCounts(tables: TableWithSession[], zoneId: string | null) {
-  const zoneTables = zoneId ? tables.filter((t) => t.zoneId === zoneId) : tables;
-  const occupied = zoneTables.filter((t) => {
-    const s = getTableDerivedStatus(t);
-    return s === "OCCUPIED" || s === "BILL_REQUESTED";
-  }).length;
-  return { occupied, total: zoneTables.length };
-}
-
 export function ZoneTabs({ zones, tables, selectedZoneId, onSelect }: ZoneTabsProps) {
-  const allCounts = getZoneCounts(tables, null);
+  const zoneCounts = useMemo(() => {
+    const counts = new Map<string | null, { occupied: number; total: number }>();
+    let allOccupied = 0;
+    for (const t of tables) {
+      const s = getTableDerivedStatus(t);
+      const isOccupied = s === "OCCUPIED" || s === "BILL_REQUESTED";
+      if (isOccupied) allOccupied++;
+      const existing = counts.get(t.zoneId) ?? { occupied: 0, total: 0 };
+      counts.set(t.zoneId, {
+        occupied: existing.occupied + (isOccupied ? 1 : 0),
+        total: existing.total + 1,
+      });
+    }
+    counts.set(null, { occupied: allOccupied, total: tables.length });
+    return counts;
+  }, [tables]);
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-2">
@@ -34,10 +41,10 @@ export function ZoneTabs({ zones, tables, selectedZoneId, onSelect }: ZoneTabsPr
             : "bg-muted text-muted-foreground hover:bg-muted/80",
         )}
       >
-        Todas ({allCounts.occupied}/{allCounts.total})
+        Todas ({zoneCounts.get(null)?.occupied ?? 0}/{zoneCounts.get(null)?.total ?? 0})
       </button>
       {zones.map((zone) => {
-        const counts = getZoneCounts(tables, zone.id);
+        const counts = zoneCounts.get(zone.id);
         return (
           <button
             key={zone.id}
@@ -49,7 +56,7 @@ export function ZoneTabs({ zones, tables, selectedZoneId, onSelect }: ZoneTabsPr
                 : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
-            {zone.name} ({counts.occupied}/{counts.total})
+            {zone.name} ({counts?.occupied ?? 0}/{counts?.total ?? 0})
           </button>
         );
       })}

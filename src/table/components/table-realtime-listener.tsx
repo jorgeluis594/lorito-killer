@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useRealtime } from "@/lib/realtime/hooks/use-realtime";
 
 type TableEvents = {
@@ -15,18 +15,32 @@ interface TableRealtimeListenerProps {
 
 export function TableRealtimeListener({ onEvent }: TableRealtimeListenerProps) {
   const realtime = useRealtime<TableEvents>("tables");
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedOnEvent = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onEvent();
+    }, 1500);
+  }, [onEvent]);
 
   useEffect(() => {
-    const unsub1 = realtime.on("table-session-changed", () => onEvent());
-    const unsub2 = realtime.on("table-waiter-changed", () => onEvent());
-    const unsub3 = realtime.on("table-round-added", () => onEvent());
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const unsub1 = realtime.on("table-session-changed", () => debouncedOnEvent());
+    const unsub2 = realtime.on("table-waiter-changed", () => debouncedOnEvent());
+    const unsub3 = realtime.on("table-round-added", () => debouncedOnEvent());
 
     return () => {
       unsub1();
       unsub2();
       unsub3();
     };
-  }, [realtime, onEvent]);
+  }, [realtime, debouncedOnEvent]);
 
   return null;
 }

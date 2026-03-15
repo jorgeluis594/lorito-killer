@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "a20215fd1e7bf976a5a9bb1beab0728a9e7bfbab1d62468b4b3321cd798d5a55"
     },
+    "nextjs-best-practices": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "8f5b6b588c638139854181f80a241c16575810a3bd45b0983e55078b6aed347a"
+    },
     "playwright-cli": {
       "source": "microsoft/playwright-cli",
       "sourceType": "github",

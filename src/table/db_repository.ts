@@ -119,7 +119,8 @@ export async function findZones(companyId: string): Promise<response<Zone[]>> {
     });
     return { success: true, data: zones };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("findZones error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -129,7 +130,8 @@ export async function findZone(id: string, companyId: string): Promise<response<
     if (!zone) return { success: false, message: "Zona no encontrada" };
     return { success: true, data: zone };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("findZone error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -143,7 +145,8 @@ export async function createZone(companyId: string, data: { name: string; order?
     if (e.code === "P2002") {
       return { success: false, message: "Ya existe una zona con ese nombre" };
     }
-    return { success: false, message: e.message };
+    console.error("createZone error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -160,7 +163,8 @@ export async function updateZone(id: string, companyId: string, data: { name?: s
     if (e.code === "P2002") {
       return { success: false, message: "Ya existe una zona con ese nombre" };
     }
-    return { success: false, message: e.message };
+    console.error("updateZone error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -177,7 +181,8 @@ export async function deleteZone(id: string, companyId: string): Promise<respons
     await prisma().zone.update({ where: { id }, data: { active: false } });
     return { success: true, data: undefined };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("deleteZone error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -197,7 +202,7 @@ export async function findTables(companyId: string, zoneId?: string): Promise<re
           where: { current: true },
           include: {
             waiter: { select: { id: true, name: true } },
-            order: { include: { orderItems: true } },
+            order: { include: { orderItems: { select: { round: true } } } },
           },
         },
       },
@@ -205,7 +210,8 @@ export async function findTables(companyId: string, zoneId?: string): Promise<re
     });
     return { success: true, data: tables.map(mapPrismaTable) };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("findTables error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -235,12 +241,17 @@ export async function findTable(id: string, companyId: string): Promise<response
     if (!table) return { success: false, message: "Mesa no encontrada" };
     return { success: true, data: mapPrismaTable(table) };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("findTable error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
 export async function createTable(companyId: string, data: { number: number; label?: string; capacity: number; zoneId: string }): Promise<response<Table>> {
   try {
+    // Validate zone belongs to same company
+    const zone = await prisma().zone.findFirst({ where: { id: data.zoneId, companyId } });
+    if (!zone) return { success: false, message: "Zona no encontrada" };
+
     const table = await prisma().table.create({
       data: { companyId, ...data, label: data.label || null },
     });
@@ -249,7 +260,8 @@ export async function createTable(companyId: string, data: { number: number; lab
     if (e.code === "P2002") {
       return { success: false, message: "Ya existe una mesa con ese numero" };
     }
-    return { success: false, message: e.message };
+    console.error("createTable error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -257,16 +269,30 @@ export async function updateTable(id: string, companyId: string, data: { number?
   try {
     const existing = await prisma().table.findFirst({ where: { id, companyId } });
     if (!existing) return { success: false, message: "Mesa no encontrada" };
+
+    // Validate zone belongs to same company if zoneId is being updated
+    if (data.zoneId) {
+      const zone = await prisma().zone.findFirst({ where: { id: data.zoneId, companyId } });
+      if (!zone) return { success: false, message: "Zona no encontrada" };
+    }
+
+    const updateData: Record<string, any> = {};
+    if (data.number !== undefined) updateData.number = data.number;
+    if (data.label !== undefined) updateData.label = data.label || null;
+    if (data.capacity !== undefined) updateData.capacity = data.capacity;
+    if (data.zoneId !== undefined) updateData.zoneId = data.zoneId;
+
     const table = await prisma().table.update({
       where: { id },
-      data: { ...data, label: data.label || null },
+      data: updateData,
     });
     return { success: true, data: { ...table, activeSession: null } };
   } catch (e: any) {
     if (e.code === "P2002") {
       return { success: false, message: "Ya existe una mesa con ese numero" };
     }
-    return { success: false, message: e.message };
+    console.error("updateTable error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -283,16 +309,17 @@ export async function deleteTable(id: string, companyId: string): Promise<respon
     await prisma().table.update({ where: { id }, data: { active: false } });
     return { success: true, data: undefined };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("deleteTable error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
 // -- Table Session --
 
-export async function findActiveSession(tableId: string): Promise<response<TableSession>> {
+export async function findActiveSession(tableId: string, companyId: string): Promise<response<TableSession>> {
   try {
     const session = await prisma().tableSession.findFirst({
-      where: { tableId, current: true },
+      where: { tableId, companyId, current: true },
       include: {
         waiter: { select: { id: true, name: true } },
         order: {
@@ -309,7 +336,8 @@ export async function findActiveSession(tableId: string): Promise<response<Table
     if (!session) return { success: false, message: "No hay sesion activa" };
     return { success: true, data: mapPrismaSession(session) };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("findActiveSession error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -340,7 +368,8 @@ export async function createSession(data: {
     if (e.code === "P2002") {
       return { success: false, message: "Esta mesa ya tiene una sesion activa" };
     }
-    return { success: false, message: e.message };
+    console.error("createSession error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -367,7 +396,8 @@ export async function updateSessionStatus(
     });
     return { success: true, data: mapPrismaSession(session) };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("updateSessionStatus error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -389,7 +419,8 @@ export async function updateSessionWaiter(
     });
     return { success: true, data: mapPrismaSession(session) };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("updateSessionWaiter error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -411,17 +442,21 @@ export async function createDineInOrder(
     });
     return { success: true, data: order.id };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("createDineInOrder error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
-export async function getOrderBySessionId(sessionId: string): Promise<response<{ id: string; orderItems: Array<{ round: number }> }>> {
+export async function getOrderBySessionId(sessionId: string, companyId: string): Promise<response<{ id: string; orderItems: Array<{ round: number }> }>> {
   try {
     const order = await prisma().order.findFirst({
-      where: { tableSessionId: sessionId },
+      where: {
+        tableSessionId: sessionId,
+        tableSession: { companyId },
+      },
       include: {
         orderItems: {
-          include: { product: true },
+          select: { round: true },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -429,7 +464,8 @@ export async function getOrderBySessionId(sessionId: string): Promise<response<{
     if (!order) return { success: false, message: "Orden no encontrada" };
     return { success: true, data: { id: order.id, orderItems: order.orderItems } };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("getOrderBySessionId error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -458,9 +494,12 @@ export async function addOrderItems(
       })),
     });
 
-    // Update order totals
-    const allItems = await prisma().orderItem.findMany({ where: { orderId } });
-    const total = allItems.reduce((sum, i) => sum + i.total.toNumber(), 0);
+    // Update order totals using aggregate
+    const { _sum } = await prisma().orderItem.aggregate({
+      where: { orderId },
+      _sum: { total: true },
+    });
+    const total = _sum.total?.toNumber() ?? 0;
     await prisma().order.update({
       where: { id: orderId },
       data: { total, netTotal: total },
@@ -468,7 +507,8 @@ export async function addOrderItems(
 
     return { success: true, data: undefined };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("addOrderItems error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }
 
@@ -480,6 +520,43 @@ export async function getWaiters(companyId: string): Promise<response<Array<{ id
     });
     return { success: true, data: waiters };
   } catch (e: any) {
-    return { success: false, message: e.message };
+    console.error("getWaiters error:", e);
+    return { success: false, message: "Error interno del servidor" };
+  }
+}
+
+export async function findProductsByIds(
+  productIds: string[],
+  companyId: string,
+): Promise<response<Array<{ id: string; price: number; name: string }>>> {
+  try {
+    const products = await prisma().product.findMany({
+      where: { id: { in: productIds }, companyId, hidden: false },
+      select: { id: true, price: true, name: true },
+    });
+    return {
+      success: true,
+      data: products.map((p) => ({ id: p.id, price: p.price.toNumber(), name: p.name })),
+    };
+  } catch (e: any) {
+    console.error("findProductsByIds error:", e);
+    return { success: false, message: "Error interno del servidor" };
+  }
+}
+
+export async function findUserByIdAndCompany(
+  userId: string,
+  companyId: string,
+): Promise<response<{ id: string; name: string | null }>> {
+  try {
+    const user = await prisma().user.findFirst({
+      where: { id: userId, companyId, active: true },
+      select: { id: true, name: true },
+    });
+    if (!user) return { success: false, message: "Usuario no encontrado" };
+    return { success: true, data: user };
+  } catch (e: any) {
+    console.error("findUserByIdAndCompany error:", e);
+    return { success: false, message: "Error interno del servidor" };
   }
 }

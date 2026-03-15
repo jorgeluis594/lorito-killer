@@ -77,9 +77,10 @@ export function TableGrid({ tables: initialTables, zones, waiters, subdomain }: 
     setTables(initialTables);
   }, [initialTables]);
 
-  const filteredTables = selectedZoneId
-    ? tables.filter((t) => t.zoneId === selectedZoneId)
-    : tables;
+  const filteredTables = useMemo(
+    () => selectedZoneId ? tables.filter((t) => t.zoneId === selectedZoneId) : tables,
+    [tables, selectedZoneId]
+  );
 
   const handleTableClick = useCallback(async (table: TableWithSession) => {
     const status = getTableDerivedStatus(table);

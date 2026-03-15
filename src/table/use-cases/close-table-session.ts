@@ -8,7 +8,7 @@ export async function closeTableSession(
   tableId: string,
   cancelled: boolean = false,
 ): Promise<response<TableSession>> {
-  const sessionResponse = await findActiveSession(tableId);
+  const sessionResponse = await findActiveSession(tableId, companyId);
   if (!sessionResponse.success) return sessionResponse;
 
   const session = sessionResponse.data;
