@@ -3,6 +3,49 @@ import type { response } from "@/lib/types";
 import type { Zone, Table, TableSession, TableWithSession } from "./types";
 import { $Enums } from "@prisma/client";
 
+// -- Mapper types --
+
+type PrismaSessionResult = {
+  id: string;
+  companyId: string;
+  tableId: string;
+  waiterId: string;
+  status: $Enums.TableSessionStatus;
+  current: boolean | null;
+  guestCount: number | null;
+  notes: string | null;
+  openedAt: Date;
+  closedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  waiter?: { id: string; name: string | null } | null;
+  order?: { id: string; orderItems: Array<{ round: number }> } | null;
+};
+
+type PrismaZoneResult = {
+  id: string;
+  companyId: string;
+  name: string;
+  order: number;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type PrismaTableResult = {
+  id: string;
+  companyId: string;
+  number: number;
+  label: string | null;
+  capacity: number;
+  zoneId: string;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  zone?: PrismaZoneResult | null;
+  sessions?: PrismaSessionResult[];
+};
+
 // -- Mappers --
 
 const SESSION_STATUS_MAPPER: Record<$Enums.TableSessionStatus, TableSession["status"]> = {
@@ -12,10 +55,10 @@ const SESSION_STATUS_MAPPER: Record<$Enums.TableSessionStatus, TableSession["sta
   CANCELLED: "CANCELLED",
 };
 
-function mapPrismaSession(s: any): TableSession {
+function mapPrismaSession(s: PrismaSessionResult): TableSession {
   const orderItems = s.order?.orderItems || [];
   const maxRound = orderItems.length > 0
-    ? Math.max(...orderItems.map((oi: any) => oi.round ?? 1))
+    ? Math.max(...orderItems.map((oi) => oi.round ?? 1))
     : 0;
 
   return {
@@ -24,7 +67,7 @@ function mapPrismaSession(s: any): TableSession {
     tableId: s.tableId,
     waiterId: s.waiterId,
     waiter: s.waiter ? { id: s.waiter.id, name: s.waiter.name } : undefined,
-    status: SESSION_STATUS_MAPPER[s.status as $Enums.TableSessionStatus],
+    status: SESSION_STATUS_MAPPER[s.status],
     current: s.current,
     guestCount: s.guestCount,
     notes: s.notes,
@@ -37,8 +80,20 @@ function mapPrismaSession(s: any): TableSession {
   };
 }
 
-function mapPrismaTable(t: any): TableWithSession {
-  const currentSession = t.sessions?.find((s: any) => s.current === true);
+function mapPrismaZone(z: PrismaZoneResult): Zone {
+  return {
+    id: z.id,
+    companyId: z.companyId,
+    name: z.name,
+    order: z.order,
+    active: z.active,
+    createdAt: z.createdAt,
+    updatedAt: z.updatedAt,
+  };
+}
+
+function mapPrismaTable(t: PrismaTableResult): TableWithSession {
+  const currentSession = t.sessions?.find((s) => s.current === true);
   return {
     id: t.id,
     companyId: t.companyId,
@@ -46,7 +101,7 @@ function mapPrismaTable(t: any): TableWithSession {
     label: t.label,
     capacity: t.capacity,
     zoneId: t.zoneId,
-    zone: t.zone ? { id: t.zone.id, companyId: t.zone.companyId, name: t.zone.name, order: t.zone.order, active: t.zone.active, createdAt: t.zone.createdAt, updatedAt: t.zone.updatedAt } : undefined,
+    zone: t.zone ? mapPrismaZone(t.zone) : undefined,
     active: t.active,
     activeSession: currentSession ? mapPrismaSession(currentSession) : null,
     createdAt: t.createdAt,
@@ -94,6 +149,8 @@ export async function createZone(companyId: string, data: { name: string; order?
 
 export async function updateZone(id: string, companyId: string, data: { name?: string; order?: number }): Promise<response<Zone>> {
   try {
+    const existing = await prisma().zone.findFirst({ where: { id, companyId } });
+    if (!existing) return { success: false, message: "Zona no encontrada" };
     const zone = await prisma().zone.update({
       where: { id },
       data: { ...data },
@@ -109,6 +166,8 @@ export async function updateZone(id: string, companyId: string, data: { name?: s
 
 export async function deleteZone(id: string, companyId: string): Promise<response<void>> {
   try {
+    const existing = await prisma().zone.findFirst({ where: { id, companyId } });
+    if (!existing) return { success: false, message: "Zona no encontrada" };
     const activeTables = await prisma().table.count({
       where: { zoneId: id, companyId, active: true },
     });
@@ -196,6 +255,8 @@ export async function createTable(companyId: string, data: { number: number; lab
 
 export async function updateTable(id: string, companyId: string, data: { number?: number; label?: string; capacity?: number; zoneId?: string }): Promise<response<Table>> {
   try {
+    const existing = await prisma().table.findFirst({ where: { id, companyId } });
+    if (!existing) return { success: false, message: "Mesa no encontrada" };
     const table = await prisma().table.update({
       where: { id },
       data: { ...data, label: data.label || null },
@@ -211,6 +272,8 @@ export async function updateTable(id: string, companyId: string, data: { number?
 
 export async function deleteTable(id: string, companyId: string): Promise<response<void>> {
   try {
+    const existing = await prisma().table.findFirst({ where: { id, companyId } });
+    if (!existing) return { success: false, message: "Mesa no encontrada" };
     const activeSessions = await prisma().tableSession.count({
       where: { tableId: id, current: true },
     });
@@ -283,9 +346,12 @@ export async function createSession(data: {
 
 export async function updateSessionStatus(
   sessionId: string,
+  companyId: string,
   status: "OPEN" | "BILL_REQUESTED" | "CLOSED" | "CANCELLED",
 ): Promise<response<TableSession>> {
   try {
+    const existing = await prisma().tableSession.findFirst({ where: { id: sessionId, companyId } });
+    if (!existing) return { success: false, message: "Sesion no encontrada" };
     const isClosed = status === "CLOSED" || status === "CANCELLED";
     const session = await prisma().tableSession.update({
       where: { id: sessionId },
@@ -307,9 +373,12 @@ export async function updateSessionStatus(
 
 export async function updateSessionWaiter(
   sessionId: string,
+  companyId: string,
   newWaiterId: string,
 ): Promise<response<TableSession>> {
   try {
+    const existing = await prisma().tableSession.findFirst({ where: { id: sessionId, companyId } });
+    if (!existing) return { success: false, message: "Sesion no encontrada" };
     const session = await prisma().tableSession.update({
       where: { id: sessionId },
       data: { waiterId: newWaiterId },
@@ -346,7 +415,7 @@ export async function createDineInOrder(
   }
 }
 
-export async function getOrderBySessionId(sessionId: string): Promise<response<{ id: string; orderItems: any[] }>> {
+export async function getOrderBySessionId(sessionId: string): Promise<response<{ id: string; orderItems: Array<{ round: number }> }>> {
   try {
     const order = await prisma().order.findFirst({
       where: { tableSessionId: sessionId },

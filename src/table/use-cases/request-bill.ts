@@ -4,6 +4,7 @@ import { findActiveSession, updateSessionStatus, getOrderBySessionId } from "../
 import { isValidTransition } from "./validate-table-action";
 
 export async function requestBill(
+  companyId: string,
   tableId: string,
 ): Promise<response<TableSession>> {
   const sessionResponse = await findActiveSession(tableId);
@@ -26,5 +27,5 @@ export async function requestBill(
     }
   }
 
-  return updateSessionStatus(session.id, "BILL_REQUESTED");
+  return updateSessionStatus(session.id, companyId, "BILL_REQUESTED");
 }

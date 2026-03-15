@@ -157,7 +157,7 @@ export const openTable = protectedAction(
 export const closeTable = protectedAction(
   { resource: "tables", action: "update" },
   async (user, tableId: string, cancelled?: boolean): Promise<response<TableSession>> => {
-    const result = await closeTableSession(tableId, cancelled);
+    const result = await closeTableSession(user.companyId, tableId, cancelled);
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
@@ -173,7 +173,7 @@ export const closeTable = protectedAction(
 export const requestBillAction = protectedAction(
   { resource: "tables", action: "update" },
   async (user, tableId: string): Promise<response<TableSession>> => {
-    const result = await requestBill(tableId);
+    const result = await requestBill(user.companyId, tableId);
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
@@ -212,7 +212,7 @@ export const addRoundAction = protectedAction(
 export const transferTableAction = protectedAction(
   { resource: "tables", action: "update" },
   async (user, tableId: string, newWaiterId: string): Promise<response<TableSession>> => {
-    const result = await transferTable(tableId, newWaiterId);
+    const result = await transferTable(user.companyId, tableId, newWaiterId);
 
     if (result.success) {
       revalidatePath("/dashboard/tables");

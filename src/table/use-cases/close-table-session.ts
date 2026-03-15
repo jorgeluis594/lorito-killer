@@ -4,6 +4,7 @@ import { findActiveSession, updateSessionStatus } from "../db_repository";
 import { isValidTransition } from "./validate-table-action";
 
 export async function closeTableSession(
+  companyId: string,
   tableId: string,
   cancelled: boolean = false,
 ): Promise<response<TableSession>> {
@@ -20,5 +21,5 @@ export async function closeTableSession(
     };
   }
 
-  return updateSessionStatus(session.id, targetStatus);
+  return updateSessionStatus(session.id, companyId, targetStatus);
 }

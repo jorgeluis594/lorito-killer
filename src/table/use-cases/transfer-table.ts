@@ -3,6 +3,7 @@ import type { TableSession } from "../types";
 import { findActiveSession, updateSessionWaiter } from "../db_repository";
 
 export async function transferTable(
+  companyId: string,
   tableId: string,
   newWaiterId: string,
 ): Promise<response<TableSession>> {
@@ -16,5 +17,5 @@ export async function transferTable(
     return { success: false, message: "El mozo seleccionado ya esta asignado a esta mesa" };
   }
 
-  return updateSessionWaiter(session.id, newWaiterId);
+  return updateSessionWaiter(session.id, companyId, newWaiterId);
 }

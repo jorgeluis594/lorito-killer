@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@/lib/utils";
 import type { TableDerivedStatus } from "../types";
 import {
@@ -18,7 +16,7 @@ export function TableStatusBadge({ status }: { status: TableDerivedStatus }) {
       <span
         className={cn(
           "h-1.5 w-1.5 rounded-full bg-white",
-          status === "AVAILABLE" && "animate-pulse",
+          status === "AVAILABLE" && "motion-safe:animate-pulse",
         )}
       />
       {TABLE_STATUS_LABELS[status]}

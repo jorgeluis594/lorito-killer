@@ -33,7 +33,7 @@ export async function addRound(
   if (!orderResponse.success) return orderResponse;
 
   const maxRound = orderResponse.data.orderItems.length > 0
-    ? Math.max(...orderResponse.data.orderItems.map((oi: any) => oi.round ?? 1))
+    ? Math.max(...orderResponse.data.orderItems.map((oi) => oi.round ?? 1))
     : 0;
   const nextRound = maxRound + 1;
 
