@@ -2,6 +2,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { documentQueue } from "@/document/queue";
+import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const serverAdapter = new ExpressAdapter();
@@ -13,6 +14,14 @@ createBullBoard({
 });
 
 const handler = serverAdapter.getRouter();
+
+async function requireAuth() {
+  const session = await getSession();
+  if (!session?.user) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+  return null;
+}
 
 function expressToNext(req: NextRequest) {
   const url = new URL(req.url);
@@ -27,7 +36,7 @@ function expressToNext(req: NextRequest) {
       baseUrl: "/api/admin/queues",
     };
 
-    const chunks: Buffer[] = [];
+    const chunks: Uint8Array[] = [];
     const expressRes = {
       statusCode: 200,
       _headers: {} as Record<string, string>,
@@ -51,18 +60,33 @@ function expressToNext(req: NextRequest) {
         );
       },
       end(body?: string | Buffer) {
+        const allChunks = [...chunks];
+        if (body) {
+          const buf =
+            typeof body === "string"
+              ? new TextEncoder().encode(body)
+              : new Uint8Array(body);
+          allChunks.push(buf);
+        }
+        const combined =
+          allChunks.length > 0
+            ? allChunks.reduce((acc, chunk) => {
+                const merged = new Uint8Array(acc.length + chunk.length);
+                merged.set(acc);
+                merged.set(chunk, acc.length);
+                return merged;
+              }, new Uint8Array(0))
+            : null;
         const headers = new Headers(this._headers);
-        const responseBody = body
-          ? typeof body === "string"
-            ? body
-            : new Uint8Array(body)
-          : null;
         resolve(
-          new NextResponse(responseBody, { status: this.statusCode, headers }),
+          new NextResponse(
+            combined ? new Uint8Array(combined) : null,
+            { status: this.statusCode, headers },
+          ),
         );
       },
-      write(chunk: Buffer) {
-        chunks.push(chunk);
+      write(chunk: Buffer | Uint8Array) {
+        chunks.push(new Uint8Array(chunk));
       },
       json(data: unknown) {
         this._headers["content-type"] = "application/json";
@@ -79,14 +103,28 @@ function expressToNext(req: NextRequest) {
   });
 }
 
-export async function GET(req: NextRequest) {
+async function handleRequest(req: NextRequest) {
+  const authError = await requireAuth();
+  if (authError) return authError;
   return expressToNext(req);
+}
+
+export async function GET(req: NextRequest) {
+  return handleRequest(req);
 }
 
 export async function POST(req: NextRequest) {
-  return expressToNext(req);
+  return handleRequest(req);
 }
 
 export async function PUT(req: NextRequest) {
-  return expressToNext(req);
+  return handleRequest(req);
+}
+
+export async function DELETE(req: NextRequest) {
+  return handleRequest(req);
+}
+
+export async function PATCH(req: NextRequest) {
+  return handleRequest(req);
 }
