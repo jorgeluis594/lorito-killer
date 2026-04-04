@@ -29,6 +29,7 @@ const PdfVoucherRedirection: React.FC<PdfVoucherRedirectionProps> = ({
       window.open(pdfUrl, "_blank");
       onPdfCreated();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pdfUrl]);
 
   const generateQRBase64 = (qrValue: string): Promise<string> =>
@@ -50,6 +51,7 @@ const PdfVoucherRedirection: React.FC<PdfVoucherRedirectionProps> = ({
   useEffect(() => {
     if (document.documentType != "ticket") setQR(document.qr);
     else setQRProcessed(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

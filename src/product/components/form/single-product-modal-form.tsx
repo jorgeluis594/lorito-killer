@@ -149,6 +149,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
 
   useEffect(() => {
     skuDebounce(productSku!).catch((error) => console.error("Error", error));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productSku]);
 
   useEffect(() => {
@@ -176,6 +177,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formStore, form, user]);
 
   const onSubmit = async (data: ProductFormValues) => {

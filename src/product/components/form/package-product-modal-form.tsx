@@ -108,6 +108,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
     } else {
       form.reset(productData);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formStore, form, user]);
 
   const onSubmit = async (data: ProductFormValues) => {

@@ -69,6 +69,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
 
   useEffect(() => {
     onSearchSubmit(search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const onCustomerSelect = (customerId: string) => {

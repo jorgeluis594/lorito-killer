@@ -62,6 +62,7 @@ export default function DistrictSelector({
 
   useEffect(() => {
     onSearchSubmit(search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const onLocalitySelect = (localityId: string) => {

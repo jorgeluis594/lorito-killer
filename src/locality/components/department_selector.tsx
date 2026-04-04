@@ -54,6 +54,7 @@ export default function DepartmentSelector<T extends LocalityType | undefined>({
 
   useEffect(() => {
     onSearchSubmit(search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const onCustomerSelect = (localityId: string) => {

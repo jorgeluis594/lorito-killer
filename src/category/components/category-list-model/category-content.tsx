@@ -47,7 +47,7 @@ export default function CategoryContent({
 
   useEffect(() => {
     form.setValue("companyId", user?.companyId || "");
-  }, [user]);
+  }, [user, form]);
 
   const onSubmit = async (data: CategoryFormValues) => {
     const res = await updateCategory(data);

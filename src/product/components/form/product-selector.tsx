@@ -71,6 +71,7 @@ export default function ProductSelector<T extends ProductType | undefined>({
 
   useEffect(() => {
     onSearchSubmit(search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const onProductSelect = (productId: string) => {

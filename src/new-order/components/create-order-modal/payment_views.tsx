@@ -102,17 +102,17 @@ export const CashPayment: React.FC = () => {
     if (payment.received_amount === null) return;
 
     if (payment.received_amount >= orderTotal) {
-      setPayment({
-        ...payment,
+      setPayment((p) => ({
+        ...p,
         amount: orderTotal,
-        change: payment.received_amount - orderTotal,
-      });
+        change: p.received_amount! - orderTotal,
+      }));
     } else {
-      setPayment({
-        ...payment,
-        amount: payment.received_amount,
+      setPayment((p) => ({
+        ...p,
+        amount: p.received_amount!,
         change: 0,
-      });
+      }));
     }
   }, [payment.received_amount, orderTotal]);
 
@@ -122,10 +122,12 @@ export const CashPayment: React.FC = () => {
 
     removePayment("cash");
     addPayment({ ...rest, received_amount });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payment]);
 
   useEffect(() => {
     removePayment("cash");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -175,6 +177,7 @@ export const WalletPayment: React.FC = () => {
     };
 
     addPayment(params);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderTotal, name, operationCode]);
 
   return (
@@ -311,6 +314,7 @@ export const CombinedPayment: React.FC = () => {
         method: "debit_card",
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cashAmount, creditCardAmount, debitCardAmount, walletAmount]);
 
   useEffect(() => {

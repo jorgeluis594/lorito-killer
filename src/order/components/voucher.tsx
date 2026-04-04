@@ -248,7 +248,7 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
         ]}
       >
         {company.logo && (
-          <Image src={company.logo.url} style={{ width: "55px" }} />
+          <Image src={company.logo.url} style={{ width: "55px" }} alt="Company logo" />
         )}
         {company.subName && (
           <Text style={{fontSize: 12, textAlign: "center", color: "black", fontWeight: "bold"}}>{company.subName}</Text>
@@ -457,7 +457,7 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
 
       <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
         <View style={{ width: "35%" }}>
-          {qrBase64 && qrBase64 !== "" && <Image style={{ width: "90%" }} src={qrBase64} />}
+          {qrBase64 && qrBase64 !== "" && <Image style={{ width: "90%" }} src={qrBase64} alt="QR code" />}
         </View>
         <View style={{ width: "65%" }}>
           {isBillableDocument(document) && document.hash && (
