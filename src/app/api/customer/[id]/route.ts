@@ -2,10 +2,8 @@ import { getSession } from "@/lib/auth";
 import { find as findProduct, findBy } from "@/product/db_repository";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session.user) {
     return NextResponse.json(

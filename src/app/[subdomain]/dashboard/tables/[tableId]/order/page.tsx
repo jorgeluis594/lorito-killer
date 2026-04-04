@@ -5,7 +5,7 @@ import { TableSessionPanel } from "@/table/components/table-session-panel";
 import { TableOrderView } from "@/table/components/table-order-view";
 
 interface PageProps {
-  params: { subdomain: string; tableId: string };
+  params: Promise<{ subdomain: string; tableId: string }>;
 }
 
 async function TableOrderContent({
@@ -43,7 +43,8 @@ async function TableOrderContent({
   );
 }
 
-export default function TableOrderPage({ params }: PageProps) {
+export default async function TableOrderPage(props: PageProps) {
+  const params = await props.params;
   return (
     <div className="flex-1 p-4 pt-6 md:p-8">
       <Suspense

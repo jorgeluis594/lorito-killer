@@ -5,7 +5,7 @@ import { TableGrid } from "@/table/components/table-grid";
 import { TableGridSkeleton } from "@/table/components/table-grid-skeleton";
 
 interface PageProps {
-  params: { subdomain: string };
+  params: Promise<{ subdomain: string }>;
 }
 
 async function TablesContent({ subdomain }: { subdomain: string }) {
@@ -34,7 +34,8 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
   );
 }
 
-export default function TablesPage({ params }: PageProps) {
+export default async function TablesPage(props: PageProps) {
+  const params = await props.params;
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between">

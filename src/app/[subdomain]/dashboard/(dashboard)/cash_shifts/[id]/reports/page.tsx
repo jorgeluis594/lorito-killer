@@ -11,11 +11,17 @@ const breadcrumbItems = [
   { title: "Reportes", link: "/" },
 ];
 
-export default async function Page({
-  params: { id },
-}: {
-  params: { id: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    id
+  } = params;
+
   const cashShiftFoundResponse = await findCashShift<CashShift>(id);
   if (!cashShiftFoundResponse.success) {
     return notFound();

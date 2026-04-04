@@ -9,19 +9,15 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
-    config.externals = [...config.externals, "bcrypt"];
-    return config;
-  },
-  experimental: {
-    serverComponentsExternalPackages: [
-      "pino",
-      "pino-pretty",
-      "@react-pdf/renderer",
-      "bullmq",
-      "ioredis",
-    ],
-  },
+  turbopack: {},
+  serverExternalPackages: [
+    "pino",
+    "pino-pretty",
+    "@react-pdf/renderer",
+    "bullmq",
+    "ioredis",
+    "bcrypt",
+  ],
 };
 
 export default nextConfig;

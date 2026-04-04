@@ -72,7 +72,7 @@ function getRoutePermission(pathname: string): RoutePermission | null {
   return null;
 }
 
-export default async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get("host")!;
 

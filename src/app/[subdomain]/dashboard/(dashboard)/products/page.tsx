@@ -17,13 +17,17 @@ import ExportProductsButton from "@/product/components/export-products-button";
 
 const breadcrumbItems = [{ title: "Productos", link: "/products" }];
 
-type ParamsProps = {
-  searchParams: {
+type PageProps = {
+  searchParams: Promise<{
     [key: string]: string | string[] | undefined;
-  };
+  }>;
 };
 
-async function ProductsWithSuspense({ searchParams }: ParamsProps) {
+type ResolvedSearchParams = {
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+async function ProductsWithSuspense({ searchParams }: ResolvedSearchParams) {
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 
@@ -60,7 +64,8 @@ async function ProductsWithSuspense({ searchParams }: ParamsProps) {
   );
 }
 
-export default async function Page({ searchParams }: ParamsProps) {
+export default async function Page(props: PageProps) {
+  const searchParams = await props.searchParams;
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 
