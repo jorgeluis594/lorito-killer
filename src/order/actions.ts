@@ -126,7 +126,6 @@ export const create = protectedAction(
         // Trigger async tax entity submission (slow operation)
         try {
           await documentQueue.add("send-to-tax-entity", {
-            orderId: createOrderResponse.data.id!,
             companyId: user.companyId,
             documentId: documentResponse.data.id,
           });

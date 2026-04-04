@@ -64,11 +64,11 @@ The codebase follows a feature-based architecture with clear separation of conce
   ├── actions.ts           # Next.js Server Actions for mutations
   ├── use_cases/           # Business logic layer
   ├── types.ts             # TypeScript types and schemas
-  └── schemas/             # Zod validation schemas (some features)
-/src/lib/queue/            # BullMQ queue infrastructure
-  ├── connection.ts        # Redis connection singleton
-  ├── queues/              # Queue definitions
-  └── workers/             # Job processors
+  ├── schemas/             # Zod validation schemas (some features)
+  ├── queue.ts             # BullMQ queue definition (if needed)
+  └── worker.ts            # BullMQ worker/job processor (if needed)
+/src/lib/queue/            # BullMQ shared infrastructure
+  └── connection.ts        # Redis connection singleton
 /src/ui/                   # Shared UI components (shadcn/ui)
 /src/shared/               # Shared utilities and components
 /src/lib/                  # Shared libraries and utilities
@@ -113,7 +113,8 @@ The codebase follows a feature-based architecture with clear separation of conce
 
 8. **Background Jobs**:
    - BullMQ with Redis for async tasks (document submission to tax authorities)
-   - Queue definitions in `src/lib/queue/queues/`, workers in `src/lib/queue/workers/`
+   - Queue and worker co-located with feature modules (e.g., `src/document/queue.ts`, `src/document/worker.ts`)
+   - Shared Redis connection in `src/lib/queue/connection.ts`
    - Worker runs as a separate process (`npm run worker` / `Dockerfile.worker`)
    - Retry logic with exponential backoff
 

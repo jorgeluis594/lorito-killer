@@ -70,7 +70,6 @@
     "sharp": "^0.33.5",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
-    "tsx": "^4.21.0",
     "uploadthing": "^6.6.0",
     "zod": "^3.22.4",
     "zustand": "^4.5.2"
@@ -89,6 +88,7 @@
     "puppeteer": "^23.6.1",
     "tailwindcss": "^3.3.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

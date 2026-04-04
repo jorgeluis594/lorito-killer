@@ -23,10 +23,11 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 
+COPY package.json ./
 COPY src ./src
 COPY tsconfig.json ./
 COPY prisma ./prisma
 
 USER worker
 
-CMD ["npx", "tsx", "src/worker.ts"]
+CMD ["node_modules/.bin/tsx", "src/worker.ts"]

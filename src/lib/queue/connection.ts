@@ -3,7 +3,10 @@ import IORedis from "ioredis";
 let connection: IORedis;
 
 if (process.env.NODE_ENV === "production") {
-  connection = new IORedis(process.env.REDIS_URL!, {
+  if (!process.env.REDIS_URL) {
+    throw new Error("REDIS_URL environment variable is required in production");
+  }
+  connection = new IORedis(process.env.REDIS_URL, {
     maxRetriesPerRequest: null,
   });
 } else {

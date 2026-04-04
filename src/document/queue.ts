@@ -2,7 +2,6 @@ import { Queue } from "bullmq";
 import { connection } from "@/lib/queue/connection";
 
 export interface SendToTaxEntityJobData {
-  orderId: string;
   companyId: string;
   documentId: string;
 }
