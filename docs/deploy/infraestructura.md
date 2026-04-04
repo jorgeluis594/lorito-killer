@@ -11,7 +11,9 @@ Documentacion de la arquitectura de infraestructura del sistema POS multi-tenant
 | Reverse Proxy     | Traefik (gestionado por Coolify)             |
 | Contenedores      | Docker                                       |
 | Aplicacion        | Next.js (standalone output)                  |
+| Worker            | BullMQ (contenedor separado)                 |
 | Base de datos     | PostgreSQL                                   |
+| Cache/Queue       | Redis                                        |
 | SSL/TLS           | Let's Encrypt (wildcard via DNS-01)          |
 | DNS               | Cloudflare                                   |
 | Registrar dominio | Namecheap                                    |
@@ -31,6 +33,19 @@ Las migraciones de Prisma se ejecutan una sola vez por despliegue a traves de un
 ## Base de Datos
 
 PostgreSQL corre como contenedor Docker gestionado por Coolify. La base de datos **no esta expuesta publicamente** — solo es accesible desde la red interna de Docker donde se ejecuta la aplicacion.
+
+## Redis
+
+Redis corre como servicio gestionado por Coolify en la misma red interna de Docker. Se utiliza como broker para BullMQ (cola de jobs en background). No esta expuesto publicamente.
+
+## Worker (BullMQ)
+
+El worker es un contenedor Docker independiente que procesa jobs de la cola BullMQ. Usa `Dockerfile.worker` y se despliega como una aplicacion separada en Coolify apuntando al mismo repositorio.
+
+- Consume jobs de Redis y ejecuta tareas como envio de documentos a SUNAT
+- Requiere `REDIS_URL` y `DATABASE_URL` como variables de entorno
+- No expone puertos HTTP — solo consume de la cola
+- Se escala independientemente de la aplicacion Next.js
 
 El ORM utilizado es Prisma. Los modelos principales del schema son:
 
@@ -86,8 +101,7 @@ Las variables `NEXT_PUBLIC_*` deben inyectarse como **build args** porque Next.j
 | `TELEGRAM_BOT_TOKEN`      | Token del bot de Telegram para notificaciones                      |
 | `TELEGRAM_CHAT_ID`        | ID del chat de Telegram donde se envian notificaciones             |
 | `PREVIEW`                 | Si es `"true"`, usa un subdominio fijo en lugar de extraerlo del hostname |
-| `INNGEST_EVENT_KEY`       | Clave de evento de Inngest para jobs en background                 |
-| `INNGEST_SIGNING_KEY`     | Clave de firma de Inngest para verificar eventos                   |
+| `REDIS_URL`               | URL de conexion a Redis para BullMQ                                |
 
 ### Variables de Build (NEXT_PUBLIC_*)
 
@@ -155,10 +169,15 @@ Todas las consultas a la base de datos filtran por `companyId` para garantizar e
               |  +----------+-----------+  |
               |             |              |
               |     Docker internal net    |
-              |             |              |
-              |  +----------+-----------+  |
-              |  |  PostgreSQL          |  |
-              |  |  (internal only)     |  |
+              |         |       |          |
+              |  +------+--+ +--+-------+  |
+              |  | PostgreSQL| |  Redis  |  |
+              |  | (internal)| |(internal)|  |
+              |  +------+--+ +--+-------+  |
+              |         |       |          |
+              |  +------+-------+-------+  |
+              |  |  BullMQ Worker       |  |
+              |  |  (background jobs)   |  |
               |  +----------------------+  |
               |                            |
               +----------------------------+

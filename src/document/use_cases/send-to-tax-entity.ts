@@ -1,5 +1,3 @@
-"use server";
-
 import { response } from "@/lib/types";
 import { Order, OrderWithBusinessCustomer } from "@/order/types";
 import type {

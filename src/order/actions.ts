@@ -24,9 +24,7 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
-import { inngest } from "@/lib/inngest";
-import billingDocumentGateway from "@/document/factpro/gateway";
-import { FactproDocumentConsult } from "@/document/factpro/types";
+import { documentQueue } from "@/document/queue";
 import {
   protectedAction,
   requirePermission,
@@ -127,13 +125,9 @@ export const create = protectedAction(
 
         // Trigger async tax entity submission (slow operation)
         try {
-          await inngest.send({
-            name: "document/send-to-tax-entity",
-            data: {
-              orderId: createOrderResponse.data.id,
-              companyId: user.companyId,
-              documentId: documentResponse.data.id,
-            },
+          await documentQueue.add("send-to-tax-entity", {
+            companyId: user.companyId,
+            documentId: documentResponse.data.id,
           });
         } catch (error) {
           log.error("document_send_to_tax_entity_failed", {
