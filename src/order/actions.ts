@@ -24,7 +24,7 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
-import { documentQueue } from "@/lib/queue/queues/document.queue";
+import { documentQueue } from "@/document/queue";
 import {
   protectedAction,
   requirePermission,

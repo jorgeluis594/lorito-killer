@@ -1,5 +1,5 @@
 import { log } from "@/lib/log";
-import { createDocumentWorker } from "@/lib/queue/workers/document.worker";
+import { createDocumentWorker } from "@/document/worker";
 
 log.info("worker_starting", { pid: process.pid });
 

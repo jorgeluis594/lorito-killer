@@ -1,9 +1,9 @@
 import { Worker, Job } from "bullmq";
-import { connection } from "../connection";
+import { connection } from "@/lib/queue/connection";
 import {
   DOCUMENT_QUEUE_NAME,
   SendToTaxEntityJobData,
-} from "../queues/document.queue";
+} from "@/document/queue";
 import { sendToTaxEntity } from "@/document/use_cases/send-to-tax-entity";
 import {
   updateDocument,
