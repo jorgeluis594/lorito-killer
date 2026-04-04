@@ -4,7 +4,6 @@ import { buildChannelName } from "./utils/channel-naming";
 
 type Manager<T> = ReturnType<typeof createRealtimeManager<T>>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const registry = new Map<string, Manager<any>>();
 
 export async function getOrCreateManager<T>(

@@ -64,6 +64,7 @@ export default function DiscountFields({
     }
 
     setDiscount({ type: discountType, value: discountValue });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discountValue, discountType]);
 
   const toggleIsDiscountAvailable = () => {

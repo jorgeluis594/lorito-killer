@@ -54,6 +54,7 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
         }
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;

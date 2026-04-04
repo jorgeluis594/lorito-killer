@@ -26,6 +26,8 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_ALLOWED_DISCOUNT_COMPANY_IDS=$NEXT_PUBLIC_ALLOWED_DISCOUNT_COMPANY_IDS
 
+# build:dev runs "next build" without Prisma migrations, since migrations
+# are handled separately via the pre-deploy hook (scripts/migrate.sh).
 RUN npm run build:dev
 
 # --- Production image ---
@@ -45,11 +47,15 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prisma (schema + migrations for runtime migrate deploy)
-COPY --from=builder /app/prisma ./prisma
+# Prisma runtime client (query engine)
 COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
+
+# Prisma CLI + schema + migration files — needed by the pre-deploy hook
+# (scripts/migrate.sh) but NOT used at container startup.
 COPY --from=deps /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts ./scripts
 
 USER nextjs
 EXPOSE 3000
@@ -57,4 +63,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-CMD ["sh", "-c", "node ./node_modules/prisma/build/index.js migrate deploy && node server.js"]
+CMD ["node", "server.js"]

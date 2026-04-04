@@ -46,6 +46,7 @@ export default function StockAdjustmentField({
 
   useEffect(() => {
     onChange({ ...adjustment, productId: currentProduct?.id, type, quantity });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentProduct, type, quantity]);
 
   return (

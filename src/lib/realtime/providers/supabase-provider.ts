@@ -7,11 +7,9 @@ interface SupabaseConfig {
 }
 
 export class SupabaseRealtimeProvider implements RealtimeAdapter {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private client: any = null;
   private state: ConnectionState = "disconnected";
   private stateHandlers = new Set<(state: ConnectionState) => void>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private channels = new Map<string, any>();
 
   constructor(private config: SupabaseConfig) {}

@@ -24,9 +24,9 @@ La aplicacion Next.js se despliega como un contenedor Docker independiente (no D
 
 1. **deps** - Instala dependencias y genera el cliente Prisma.
 2. **builder** - Inyecta build args `NEXT_PUBLIC_*` y ejecuta el build de Next.js.
-3. **runner** - Imagen de produccion minima. Ejecuta migraciones de base de datos al inicio y luego arranca el servidor.
+3. **runner** - Imagen de produccion minima. Arranca el servidor Next.js directamente.
 
-El contenedor ejecuta las migraciones de Prisma automaticamente antes de iniciar el servidor, asegurando que el schema de la base de datos este siempre actualizado.
+Las migraciones de Prisma se ejecutan una sola vez por despliegue a traves de un **pre-deploy hook** de Coolify (`scripts/migrate.sh`), en lugar de ejecutarse al inicio del contenedor. Esto evita race conditions cuando se escala horizontalmente con multiples replicas.
 
 ## Base de Datos
 
@@ -64,7 +64,7 @@ Cuando se ejecuta un despliegue desde Coolify:
 1. Coolify clona el repositorio desde el branch configurado.
 2. Construye la imagen Docker usando el Dockerfile (instala dependencias, genera cliente Prisma, inyecta `NEXT_PUBLIC_*` como build args, ejecuta el build de Next.js).
 3. Crea el contenedor con las variables de entorno de runtime.
-4. Al iniciar el contenedor, ejecuta las migraciones de Prisma y luego inicia el servidor Next.js.
+4. Antes de iniciar el contenedor, Coolify ejecuta el **pre-deploy hook** (`scripts/migrate.sh`) que aplica las migraciones de Prisma. Luego inicia el servidor Next.js.
 5. Traefik detecta el nuevo contenedor, termina SSL y enruta el trafico.
 
 ### Build Args vs Runtime Env Vars

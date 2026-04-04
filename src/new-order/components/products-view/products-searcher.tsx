@@ -70,10 +70,12 @@ export default function ProductsSearcher() {
 
   useEffect(() => {
     onSearchSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, categoryId, sortValue]);
 
   useEffect(() => {
     searchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCategoryChange = (categoryId: string) => {
@@ -96,37 +98,35 @@ export default function ProductsSearcher() {
     skuValueRef.current = skuValue;
   }, [skuValue]);
 
-  const onKeyDown = (ev: React.KeyboardEvent) => {
-    if (ev.keyCode === 13) {
-      findProduct(skuValueRef.current).then((response) => {
-        if (!response.success) {
-          toast({
-            title: "Error",
-            variant: "destructive",
-            description: `Producto con sku: ${skuValueRef.current} no encontrado`,
-          });
-          return;
-        }
-
-        addProduct(response.data);
-        setSkuValue("");
-      });
-
-      barcodeInputRef.current?.focus();
-    }
-  };
-
   useEffect(() => {
     const currentElement = barcodeInputRef.current;
     if (currentElement) {
-      const handleKeyDown = (ev: KeyboardEvent) =>
-        onKeyDown(ev as unknown as React.KeyboardEvent);
+      const handleKeyDown = (ev: KeyboardEvent) => {
+        if (ev.keyCode === 13) {
+          findProduct(skuValueRef.current).then((response) => {
+            if (!response.success) {
+              toast({
+                title: "Error",
+                variant: "destructive",
+                description: `Producto con sku: ${skuValueRef.current} no encontrado`,
+              });
+              return;
+            }
+
+            addProduct(response.data);
+            setSkuValue("");
+          });
+
+          barcodeInputRef.current?.focus();
+        }
+      };
       currentElement.addEventListener("keydown", handleKeyDown);
       return () => {
         currentElement.removeEventListener("keydown", handleKeyDown);
       };
     }
-  }, [barcodeInputRef.current, onKeyDown]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="h-screen w-100 p-5 pb-0 grid grid-rows-[7rem_1fr] relative">
       <div className="w-full border-b">

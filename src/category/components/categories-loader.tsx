@@ -30,6 +30,7 @@ export default function CategoriesLoader({
     }
 
     fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;

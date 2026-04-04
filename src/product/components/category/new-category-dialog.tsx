@@ -52,7 +52,7 @@ export default function NewCategoryDialog({
 
   useEffect(() => {
     form.setValue("companyId", user?.companyId || "");
-  }, [user]);
+  }, [user, form]);
 
   const onSubmit = async (data: CategoryFormValues) => {
     const createdCategory = await createCategory({
