@@ -1,0 +1,32 @@
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+
+# --- Install dependencies ---
+FROM base AS deps
+RUN apk add --no-cache python3 make g++ linux-headers
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# --- Production image ---
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
+
+COPY src ./src
+COPY tsconfig.json ./
+COPY prisma ./prisma
+
+USER worker
+
+CMD ["npx", "tsx", "src/worker.ts"]

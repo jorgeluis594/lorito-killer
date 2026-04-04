@@ -18,6 +18,8 @@ const nextConfig = {
       "pino",
       "pino-pretty",
       "@react-pdf/renderer",
+      "bullmq",
+      "ioredis",
     ],
   },
 };

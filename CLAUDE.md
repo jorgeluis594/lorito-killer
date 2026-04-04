@@ -15,7 +15,7 @@ Lorito Killer is a multi-tenant Point of Sale (POS) system built with Next.js, T
 - **UI**: Tailwind CSS + shadcn/ui components (Radix UI primitives)
 - **State**: Zustand (vanilla stores with providers)
 - **Forms**: React Hook Form + Zod
-- **Background Jobs**: Inngest for async processing
+- **Background Jobs**: BullMQ + Redis (self-hosted worker)
 - **PDF Generation**: @react-pdf/renderer
 - **File Uploads**: UploadThing
 
@@ -24,7 +24,7 @@ Lorito Killer is a multi-tenant Point of Sale (POS) system built with Next.js, T
 ```bash
 # Development
 npm run dev                  # Start dev server on port 3000
-npm run dev:inngest         # Start Inngest dev server for background jobs
+npm run worker              # Start BullMQ worker for background jobs
 
 # Build & Deploy
 npm run build               # Build for production (includes Prisma migrations)
@@ -42,7 +42,7 @@ npm run lint               # Run ESLint (no test commands configured)
 
 # Environment Setup
 cp .env.example .env        # Create environment file
-# Configure DATABASE_URL, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY, ADMIN_EMAIL
+# Configure DATABASE_URL, REDIS_URL, ADMIN_EMAIL
 ```
 
 ## Architecture Overview
@@ -65,8 +65,10 @@ The codebase follows a feature-based architecture with clear separation of conce
   ├── use_cases/           # Business logic layer
   ├── types.ts             # TypeScript types and schemas
   └── schemas/             # Zod validation schemas (some features)
-/src/inngest/              # Background job definitions
-  └── functions/           # Inngest function handlers
+/src/lib/queue/            # BullMQ queue infrastructure
+  ├── connection.ts        # Redis connection singleton
+  ├── queues/              # Queue definitions
+  └── workers/             # Job processors
 /src/ui/                   # Shared UI components (shadcn/ui)
 /src/shared/               # Shared utilities and components
 /src/lib/                  # Shared libraries and utilities
@@ -110,9 +112,10 @@ The codebase follows a feature-based architecture with clear separation of conce
    - Function composition for complex operations
 
 8. **Background Jobs**:
-   - Inngest for async tasks (document submission to tax authorities)
-   - Functions defined in `src/inngest/functions/`
-   - Event-driven with retry logic
+   - BullMQ with Redis for async tasks (document submission to tax authorities)
+   - Queue definitions in `src/lib/queue/queues/`, workers in `src/lib/queue/workers/`
+   - Worker runs as a separate process (`npm run worker` / `Dockerfile.worker`)
+   - Retry logic with exponential backoff
 
 ### Core Features
 
@@ -154,5 +157,5 @@ The codebase follows a feature-based architecture with clear separation of conce
 - **Prisma Client**: Run `npx prisma generate` after any schema changes
 - **Type Mappers**: Use explicit mapper objects (e.g., `UNIT_TYPE_MAPPER`) to convert between Prisma enums and domain types
 - **Response Pattern**: Return `response<T>` from all repository/action functions for consistent error handling
-- **Inngest Events**: Trigger background jobs with `inngest.send()` for long-running tasks
+- **BullMQ Jobs**: Trigger background jobs with `queue.add()` for long-running tasks
 - **Subdomain Routing**: Access subdomain via `params.subdomain` in page components
