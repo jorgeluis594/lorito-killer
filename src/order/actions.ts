@@ -70,7 +70,6 @@ export const create = async (
       orderCashShiftId: order.cashShiftId,
       lastOpenCashShiftId: openCashShift.id,
     });
-    order.cashShiftId = openCashShift.id;
     /*return {
       success: false,
       message: "La caja abierta no coincide con la caja de la venta",
@@ -89,13 +88,19 @@ export const create = async (
     return { success: false, message: "Error generando descuento" };
   }
 
+  const orderToCreate: Order = {
+    ...discountResponse.data,
+    cashShiftId: openCashShift.id,
+    companyId: user.companyId,
+    payments: discountResponse.data.payments.map((payment) => ({
+      ...payment,
+      cashShiftId: openCashShift.id,
+    })),
+  };
+
   return withinTransaction<{ order: Order; document: Document }>(
     async function () {
-      const createOrderResponse = await createOrder({
-        ...discountResponse.data,
-        cashShiftId: openCashShift.id,
-        companyId: user.companyId,
-      });
+      const createOrderResponse = await createOrder(orderToCreate);
       if (!createOrderResponse.success) {
         log.error("create_order_failed",{})
         return createOrderResponse;
