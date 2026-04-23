@@ -53,6 +53,10 @@ export type CashShiftWithOutOrders = Omit<
   | "totalDebitCardSales"
 >;
 
+export type GrossProfit = {
+  utility: number;
+}
+
 export type CashShiftResponse = response<CashShift>;
 
 export type OrderItemType = {

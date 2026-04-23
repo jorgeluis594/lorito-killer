@@ -19,7 +19,7 @@ async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { productName, productSku, unitType, discount, ...orderItemData } =
+  const { productSku, unitType, discount, ...orderItemData } =
     orderItem;
 
   try {
@@ -148,7 +148,6 @@ export const create = async (order: Order): Promise<response<Order>> => {
       },
       include: { payments: true },
     });
-
     const createdOrderItemsResponses = await Promise.all(
       orderItems.map((oi) => addOrderItem(createdOrderResponse.id, oi)),
     );
