@@ -90,6 +90,12 @@ Las variables `NEXT_PUBLIC_*` deben inyectarse como **build args** porque Next.j
 | `PREVIEW`                 | Si es `"true"`, usa un subdominio fijo en lugar de extraerlo del hostname |
 | `REDIS_URL`               | URL de conexion a Redis para BullMQ                                |
 | `BULLMQ_JOB_PREFIX`       | Prefijo opcional para nombres de jobs BullMQ                       |
+| `NEW_RELIC_ENABLED`       | Habilita o deshabilita el agente New Relic (`true` por defecto)    |
+| `NEW_RELIC_LICENSE_KEY`   | License key de New Relic para enviar APM                           |
+| `NEW_RELIC_APP_NAME`      | Nombre del servicio en New Relic                                   |
+| `BETTER_STACK_SOURCE_TOKEN` | Token del source de Better Stack Logs                            |
+| `BETTER_STACK_INGESTING_HOST` | Host de ingestion de Better Stack Logs                         |
+| `BETTER_STACK_LOG_LEVEL`  | Nivel minimo enviado a Better Stack (`warn` recomendado)           |
 
 ### Variables de Build (NEXT_PUBLIC_*)
 

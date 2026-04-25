@@ -15,6 +15,7 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--require=newrelic
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 worker
@@ -24,6 +25,7 @@ COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 
 COPY package.json ./
+COPY newrelic.js ./
 COPY src ./src
 COPY tsconfig.json ./
 COPY prisma ./prisma

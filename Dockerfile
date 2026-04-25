@@ -38,6 +38,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NEXT_SHARP_PATH=/app/node_modules/sharp
+ENV NODE_OPTIONS=--require=newrelic
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -46,6 +47,8 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/newrelic.js ./newrelic.js
+COPY --from=deps /app/node_modules ./node_modules
 
 # Prisma runtime client (query engine)
 COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
