@@ -1,21 +1,25 @@
 import { log } from "@/lib/log";
-import { createDocumentWorker } from "@/document/worker";
+import { documentJobs } from "@/document/jobs";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import express from "express";
-import { documentQueue } from "@/document/queue";
 
 log.info("worker_starting", { pid: process.pid });
 
-const documentWorker = createDocumentWorker();
+const queueModules = [documentJobs];
+const workers = queueModules.flatMap((queueModule) =>
+  queueModule.createWorkers.map((createWorker) => createWorker()),
+);
 
 // Bull Board dashboard
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/");
 
 createBullBoard({
-  queues: [new BullMQAdapter(documentQueue)],
+  queues: queueModules.flatMap((queueModule) =>
+    queueModule.queues.map((queue) => new BullMQAdapter(queue)),
+  ),
   serverAdapter,
 });
 
@@ -29,11 +33,14 @@ app.listen(BOARD_PORT, () => {
 
 async function shutdown(signal: string) {
   log.info("worker_shutdown", { signal });
-  await documentWorker.close();
+  await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
 }
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
-log.info("worker_started", { pid: process.pid, queues: ["document"] });
+log.info("worker_started", {
+  pid: process.pid,
+  queues: queueModules.map((queueModule) => queueModule.name),
+});

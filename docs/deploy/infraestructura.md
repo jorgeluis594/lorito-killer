@@ -102,6 +102,7 @@ Las variables `NEXT_PUBLIC_*` deben inyectarse como **build args** porque Next.j
 | `TELEGRAM_CHAT_ID`        | ID del chat de Telegram donde se envian notificaciones             |
 | `PREVIEW`                 | Si es `"true"`, usa un subdominio fijo en lugar de extraerlo del hostname |
 | `REDIS_URL`               | URL de conexion a Redis para BullMQ                                |
+| `BULLMQ_JOB_PREFIX`       | Prefijo opcional para nombres de jobs BullMQ                       |
 
 ### Variables de Build (NEXT_PUBLIC_*)
 

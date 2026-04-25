@@ -24,7 +24,7 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
-import { documentQueue } from "@/document/queue";
+import { sendToTaxEntityJob } from "@/document/jobs";
 import {
   protectedAction,
   requirePermission,
@@ -125,7 +125,7 @@ export const create = protectedAction(
 
         // Trigger async tax entity submission (slow operation)
         try {
-          await documentQueue.add("send-to-tax-entity", {
+          await sendToTaxEntityJob.enqueue({
             companyId: user.companyId,
             documentId: documentResponse.data.id,
           });

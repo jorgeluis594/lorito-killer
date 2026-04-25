@@ -1,9 +1,5 @@
-import { Worker, Job } from "bullmq";
-import { connection } from "@/lib/queue/connection";
-import {
-  DOCUMENT_QUEUE_NAME,
-  SendToTaxEntityJobData,
-} from "@/document/queue";
+import { type Job } from "bullmq";
+import { createDomainQueue } from "@/lib/queue/domain-queue";
 import { sendToTaxEntity } from "@/document/use_cases/send-to-tax-entity";
 import {
   updateDocument,
@@ -14,8 +10,18 @@ import { find as getOrder } from "@/order/db_repository";
 import billingDocumentGateway from "@/document/factpro/gateway";
 import { log } from "@/lib/log";
 
-async function processSendToTaxEntity(job: Job<SendToTaxEntityJobData>) {
-  const { documentId, companyId } = job.data;
+interface SendToTaxEntityJobData {
+  companyId: string;
+  documentId: string;
+}
+
+const documentQueue = createDomainQueue("document");
+
+async function processSendToTaxEntity(
+  data: SendToTaxEntityJobData,
+  job: Job<SendToTaxEntityJobData>,
+) {
+  const { documentId, companyId } = data;
 
   log.info("send_to_tax_entity_started", {
     documentId,
@@ -52,37 +58,16 @@ async function processSendToTaxEntity(job: Job<SendToTaxEntityJobData>) {
   return result;
 }
 
-export function createDocumentWorker() {
-  const worker = new Worker<SendToTaxEntityJobData>(
-    DOCUMENT_QUEUE_NAME,
-    processSendToTaxEntity,
+export const sendToTaxEntityJob =
+  documentQueue.job<SendToTaxEntityJobData>(
+    "send-to-tax-entity",
     {
-      connection,
-      concurrency: 5,
+      idempotency: (data) => data.documentId,
+      logContext: (data) => ({
+        documentId: data.documentId,
+      }),
     },
+    processSendToTaxEntity,
   );
 
-  worker.on("completed", (job) => {
-    log.info("job_completed", {
-      jobId: job.id,
-      jobName: job.name,
-      documentId: job.data.documentId,
-    });
-  });
-
-  worker.on("failed", (job, err) => {
-    log.error("job_failed", {
-      jobId: job?.id,
-      jobName: job?.name,
-      documentId: job?.data.documentId,
-      error: err.message,
-      attempt: job?.attemptsMade,
-    });
-  });
-
-  worker.on("error", (err) => {
-    log.error("worker_error", { error: err.message });
-  });
-
-  return worker;
-}
+export const documentJobs = documentQueue.module();
