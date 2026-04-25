@@ -13,6 +13,8 @@ const nextConfig = {
   serverExternalPackages: [
     "pino",
     "pino-pretty",
+    "@logtail/pino",
+    "newrelic",
     "@react-pdf/renderer",
     "bullmq",
     "ioredis",
