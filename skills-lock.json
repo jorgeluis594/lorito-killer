@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "a20215fd1e7bf976a5a9bb1beab0728a9e7bfbab1d62468b4b3321cd798d5a55"
     },
+    "documentation-writer": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "ee53d65b163cd7eb953a930c95841cfe398cc2c0bd24c06508bbaa07c432be35"
+    },
     "nextjs-best-practices": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",

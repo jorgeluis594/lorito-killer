@@ -47,19 +47,6 @@ El worker es un contenedor Docker independiente que procesa jobs de la cola Bull
 - No expone puertos HTTP — solo consume de la cola
 - Se escala independientemente de la aplicacion Next.js
 
-El ORM utilizado es Prisma. Los modelos principales del schema son:
-
-- `Company` - Tenant (multi-tenancy via `companyId` y `subdomain`)
-- `User` - Usuarios con roles (`ADMIN`, `CASHIER`, `WAITER`, `KITCHEN`, `BARTENDER`)
-- `Product` - Productos con tipos (`SINGLE_PRODUCT`, `PACKAGE_PRODUCT`, `SERVICE_PRODUCT`)
-- `Order` / `OrderItem` - Ordenes de venta con items
-- `Payment` - Pagos con multiples metodos (`CASH`, `CREDIT_CARD`, `DEBIT_CARD`, `WALLET`)
-- `Document` - Comprobantes fiscales (`INVOICE`, `RECEIPT`, `TICKET`)
-- `CashShift` - Turnos de caja
-- `StockTransfer` - Historial de movimientos de stock
-- `Customer` - Clientes con soporte para RUC/DNI
-- `Zone` / `Table` / `TableSession` - Gestion de mesas para restaurantes
-
 ## SSL/TLS
 
 Los certificados SSL se gestionan automaticamente mediante Let's Encrypt con certificados wildcard. Se utiliza el challenge DNS-01 con un API token de Cloudflare, configurado en Traefik. Traefik solicita y renueva los certificados automaticamente.
