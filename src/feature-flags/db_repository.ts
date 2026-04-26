@@ -23,3 +23,26 @@ export async function findCompanyFeatures(
     where: { companyId },
   });
 }
+
+export async function upsertCompanyFeatureEnabled(
+  companyId: string,
+  key: FeatureKey,
+  enabled: boolean,
+): Promise<PersistedCompanyFeature> {
+  return prisma().companyFeature.upsert({
+    where: {
+      companyId_key: {
+        companyId,
+        key,
+      },
+    },
+    create: {
+      companyId,
+      key,
+      enabled,
+    },
+    update: {
+      enabled,
+    },
+  });
+}

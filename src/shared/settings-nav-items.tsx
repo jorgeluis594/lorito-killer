@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const items = [
   { title: "Perfil", href: "/dashboard/settings" },
   { title: "Empresa", href: "/dashboard/settings/company" },
+  { title: "Features", href: "/dashboard/settings/features" },
 ];
 
 export default function NavItems() {
