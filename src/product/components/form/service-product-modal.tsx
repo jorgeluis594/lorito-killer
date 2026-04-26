@@ -7,6 +7,7 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
+  DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
@@ -82,7 +83,8 @@ export default function ServiceProductModal({
         form.setValue("companyId", response.data.id);
       }
     });
-  }, [form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit = async (data: ServiceProductFormValues) => {
     setPerformingAction(true);
@@ -156,6 +158,7 @@ export default function ServiceProductModal({
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="w-full h-full sm:max-w-[750px] sm:h-[750px] flex flex-col justify-center items-center p-0">
+        <DialogTitle className="sr-only">Agregar servicio</DialogTitle>
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
             <Heading title="Agregar servicio" />

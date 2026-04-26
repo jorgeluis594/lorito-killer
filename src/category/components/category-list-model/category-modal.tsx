@@ -1,6 +1,11 @@
 "use client"
 
-import { Dialog, DialogContent, DialogTrigger } from "@/shared/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import CategoryContent from "./category-content";
@@ -17,10 +22,8 @@ interface NewSectionDialogProps {
 export default function CategoriesModal({
   addCategory,
 }: NewSectionDialogProps) {
-  const { categories, updateCategory } = useCategoryStore(store => ({
-    categories: store.categories,
-    updateCategory: store.updateCategory,
-  }))
+  const categories = useCategoryStore((store) => store.categories);
+  const updateCategory = useCategoryStore((store) => store.updateCategory);
 
   return (
     <Dialog>
@@ -34,6 +37,7 @@ export default function CategoriesModal({
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-96 sm:h-[429.5] w-full flex flex-col items-center p-0">
+        <DialogTitle className="sr-only">Categorías</DialogTitle>
         <table className="min-w-96 rounded-2xl">
           <thead>
           <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
@@ -62,4 +66,3 @@ export default function CategoriesModal({
     </Dialog>
   )
 }
-
