@@ -42,6 +42,7 @@ export const navItems: NavItem[] = [
     icon: "tables",
     label: "mesas",
     permission: { resource: "tables", action: "read" },
+    feature: "restaurants",
   },
   {
     title: "Movimientos de stock",

@@ -38,6 +38,9 @@ import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { USER_ROLES, ROLE_LABELS } from "@/authorization/types";
 import type { UserRole } from "@/authorization/types";
+import { useFeatureEnabled } from "@/feature-flags/client";
+
+const RESTAURANT_ROLES: UserRole[] = ["WAITER", "KITCHEN", "BARTENDER"];
 
 const userFormSchema = z
   .object({
@@ -62,6 +65,10 @@ export default function NewUserModal() {
   const [loading, setLoading] = useState<boolean>(false);
   const { toast } = useToast();
   const user = useUserSession();
+  const restaurantsEnabled = useFeatureEnabled("restaurants");
+  const availableRoles = USER_ROLES.filter(
+    (role) => restaurantsEnabled || !RESTAURANT_ROLES.includes(role),
+  );
   const form = useForm<UserFormValue>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -172,7 +179,7 @@ export default function NewUserModal() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {USER_ROLES.map((role) => (
+                      {availableRoles.map((role) => (
                         <SelectItem key={role} value={role}>
                           {ROLE_LABELS[role]}
                         </SelectItem>

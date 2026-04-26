@@ -11,6 +11,8 @@ import InactiveCompanyRedirection from "@/shared/components/inactive-company-red
 import { ProductFormProvider } from "@/new-order/components/products-view/product-searcher-form-provider";
 import { RealtimeProvider } from "@/shared/components/layout/realtime-provider";
 import { getLastOpenCashShift, userExists } from "@/cash-shift/db_repository";
+import { getCompanyFeatures } from "@/feature-flags";
+import { FeatureFlagsProvider } from "@/feature-flags/client";
 
 export default async function DashboardLayout({
   children,
@@ -20,11 +22,17 @@ export default async function DashboardLayout({
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 
-  const [cashShiftResponse, userPresent, companyResponse] = await Promise.all([
+  const [
+    cashShiftResponse,
+    userPresent,
+    companyResponse,
+    featureFlags,
+  ] = await Promise.all([
     getLastOpenCashShift(session.user.id),
     // this is used to log out the user if it doesn't exist, the logout is done in the CashShiftProvider
     userExists(session.user.id),
     getCompany(session.user.companyId),
+    getCompanyFeatures(session.user.companyId),
   ]);
   if (!companyResponse.success) {
     return <SignOutRedirection />;
@@ -35,27 +43,29 @@ export default async function DashboardLayout({
 
   return (
     <CompanyProvider company={companyResponse.data}>
-      <RealtimeProvider>
-        <OrderFormProvider>
-          <ProductFormProvider>
-            <CategoryStoreProvider>
-              <CashShiftProvider
-                cashShiftResponse={
-                  userPresent
-                    ? cashShiftResponse
-                    : {
-                        success: false,
-                        message: "Usuario no autenticado",
-                        type: "AuthError",
-                      }
-                }
-              >
-                <CategoriesLoader>{children}</CategoriesLoader>
-              </CashShiftProvider>
-            </CategoryStoreProvider>
-          </ProductFormProvider>
-        </OrderFormProvider>
-      </RealtimeProvider>
+      <FeatureFlagsProvider features={featureFlags}>
+        <RealtimeProvider>
+          <OrderFormProvider>
+            <ProductFormProvider>
+              <CategoryStoreProvider>
+                <CashShiftProvider
+                  cashShiftResponse={
+                    userPresent
+                      ? cashShiftResponse
+                      : {
+                          success: false,
+                          message: "Usuario no autenticado",
+                          type: "AuthError",
+                        }
+                  }
+                >
+                  <CategoriesLoader>{children}</CategoriesLoader>
+                </CashShiftProvider>
+              </CategoryStoreProvider>
+            </ProductFormProvider>
+          </OrderFormProvider>
+        </RealtimeProvider>
+      </FeatureFlagsProvider>
     </CompanyProvider>
   );
 }
