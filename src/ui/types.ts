@@ -1,5 +1,6 @@
 import { Icons } from "@/shared/icons";
 import type { Resource, Action } from "@/authorization/types";
+import type { FeatureKey } from "@/feature-flags";
 
 export interface NavItem {
   title: string;
@@ -10,6 +11,7 @@ export interface NavItem {
   label?: string;
   description?: string;
   permission?: { resource: Resource; action: Action };
+  feature?: FeatureKey;
 }
 
 export interface NavItemWithChildren extends NavItem {

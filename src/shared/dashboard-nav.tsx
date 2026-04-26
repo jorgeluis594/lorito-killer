@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { NavItem } from "@/ui/types";
 import { Dispatch, SetStateAction } from "react";
 import { usePermission } from "@/authorization/client";
+import { useOptionalFeatureEnabled } from "@/feature-flags/client";
 
 function NavLink({
   item,
@@ -18,12 +19,13 @@ function NavLink({
   path: string;
   setOpen?: Dispatch<SetStateAction<boolean>>;
 }) {
+  const featureEnabled = useOptionalFeatureEnabled(item.feature);
   const allowed = usePermission(
     item.permission?.resource ?? "orders",
     item.permission?.action ?? "read",
   );
 
-  if (!allowed) return null;
+  if (!featureEnabled || !allowed) return null;
 
   const Icon = Icons[item.icon || "arrowRight"];
 

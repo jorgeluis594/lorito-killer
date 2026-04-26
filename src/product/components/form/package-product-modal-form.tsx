@@ -7,6 +7,7 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
+  DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import * as z from "zod";
@@ -109,7 +110,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
       form.reset(productData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formStore, form, user]);
+  }, [formStore.isNew, formStore.product, user]);
 
   const onSubmit = async (data: ProductFormValues) => {
     formStore.setOpen(false);
@@ -268,6 +269,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
   return (
     <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
       <DialogContent className="w-full h-full sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
             <Heading title={title} />

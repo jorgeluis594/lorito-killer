@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "worker": "npx tsx src/worker.ts",
     "build": "npm run prisma:deploy && next build --webpack",
     "build:dev": "next build --webpack",
-    "start": "next start",
-    "build-and-start": "npm run build && npm run start",
+    "prepare:standalone": "node scripts/prepare-standalone.mjs",
+    "start": "NEXTAUTH_URL=${NEXTAUTH_URL:-http://fantastidog.localhost:3000} PORT=${PORT:-3000} HOSTNAME=${SERVER_HOSTNAME:-0.0.0.0} node .next/standalone/server.js",
+    "start:standalone": "npm run prepare:standalone && npm run start",
+    "build-and-start": "npm run build:dev && npm run start:standalone",
     "prisma:deploy": "npx prisma migrate deploy && prisma generate",
     "lint": "eslint ."
   },
@@ -79,6 +81,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/cli": "^0.1.9",
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^5.0.6",
     "@types/node": "^20",
