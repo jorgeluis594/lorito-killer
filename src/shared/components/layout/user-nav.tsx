@@ -12,9 +12,17 @@ import {
 import SignOut from "@/shared/components/layout/sign-out";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
+import { authConfig } from "@/lib/auth-config";
+import SignOutRedirection from "@/shared/components/sign-out-redirection";
 
 export async function UserNav() {
-  const session = await getServerSession();
+  const session = await getServerSession(authConfig);
+
+  if (!session?.user) {
+    return <SignOutRedirection />;
+  }
+
+  const initials = session.user.name?.[0] ?? session.user.email?.[0] ?? "?";
 
   return (
     <DropdownMenu>
@@ -22,7 +30,7 @@ export async function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src={""} alt={""} />
-            <AvatarFallback>{session!.user!.name![0]}</AvatarFallback>
+            <AvatarFallback>{initials.toUpperCase()}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

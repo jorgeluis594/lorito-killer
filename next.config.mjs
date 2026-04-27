@@ -9,7 +9,6 @@ const nextConfig = {
       },
     ],
   },
-  turbopack: {},
   serverExternalPackages: [
     "pino",
     "pino-pretty",
