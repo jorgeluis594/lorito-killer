@@ -87,6 +87,8 @@ Las variables `NEXT_PUBLIC_*` deben inyectarse como **build args** porque Next.j
 | `FACTPRO_URL`             | URL de la API de FactPro para emision de comprobantes electronicos |
 | `TELEGRAM_BOT_TOKEN`      | Token del bot de Telegram para notificaciones                      |
 | `TELEGRAM_CHAT_ID`        | ID del chat de Telegram donde se envian notificaciones             |
+| `DISCORD_BOT_TOKEN`       | Token del bot de Discord para notificaciones                       |
+| `DISCORD_CHANNEL_ID`      | ID del canal de Discord donde se envian notificaciones             |
 | `PREVIEW`                 | Si es `"true"`, usa un subdominio fijo en lugar de extraerlo del hostname |
 | `REDIS_URL`               | URL de conexion a Redis para BullMQ                                |
 | `BULLMQ_JOB_PREFIX`       | Prefijo opcional para nombres de jobs BullMQ                       |

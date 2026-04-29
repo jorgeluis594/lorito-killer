@@ -118,6 +118,7 @@ export const create = protectedAction(
           },
           createOrderResponse.data,
           billingSettings,
+          companyResponse.data,
         );
         if (!documentResponse.success) {
           return documentResponse;

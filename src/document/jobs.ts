@@ -9,6 +9,7 @@ import {
 import { find as getOrder } from "@/order/db_repository";
 import billingDocumentGateway from "@/document/factpro/gateway";
 import { log } from "@/lib/log";
+import { getCompany } from "@/company/db_repository";
 
 interface SendToTaxEntityJobData {
   companyId: string;
@@ -34,6 +35,15 @@ async function processSendToTaxEntity(
     throw new Error("No billing credentials found");
   }
 
+  const companyResponse = await getCompany(companyId);
+  if (!companyResponse.success) {
+    log.warn("send_to_tax_entity_company_not_found", {
+      companyId,
+      documentId,
+      message: companyResponse.message,
+    });
+  }
+
   const { billingToken, ...billingSettings } =
     billingCredentialsResponse.data;
 
@@ -46,6 +56,7 @@ async function processSendToTaxEntity(
     },
     documentId,
     { ...billingSettings, billingToken },
+    companyResponse.success ? companyResponse.data : undefined,
   );
 
   if (!result.success) {

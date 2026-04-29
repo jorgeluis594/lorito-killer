@@ -11,6 +11,11 @@ import type {
 import { hasBusinessCustomer } from "@/order/utils";
 import { errorResponse } from "@/lib/utils";
 import { log } from "@/lib/log";
+import type { Company } from "@/company/types";
+import {
+  documentDetailsForNotification,
+  notifyDocumentFailure,
+} from "@/document/notifications";
 
 export interface DocumentMetadata {
   serialNumber: string;
@@ -62,6 +67,7 @@ export const sendToTaxEntity = async (
   repository: Repository,
   documentId: string,
   billingConfig: BillingSettings & { billingToken?: string },
+  company?: Company,
 ): Promise<response<Document>> => {
   // Get the document and order
   const documentResponse = await repository.findDocument(documentId);
@@ -135,6 +141,13 @@ export const sendToTaxEntity = async (
         documentType: document.documentType,
         error: taxEntityResponse.message 
       });
+      await notifyDocumentFailure({
+        event: "factpro_submission_failed",
+        company,
+        ...documentDetailsForNotification(document),
+        cause: taxEntityResponse.message,
+      });
+
       return serverError;
     }
 
@@ -160,6 +173,13 @@ export const sendToTaxEntity = async (
     const updatedDocumentResponse = await repository.updateDocument(documentId, updateData);
     if (!updatedDocumentResponse.success) {
       log.error("document_update_failed", { documentId, updateData });
+      await notifyDocumentFailure({
+        event: "document_update_failed",
+        company,
+        ...documentDetailsForNotification(document),
+        cause: updatedDocumentResponse.message,
+      });
+
       return serverError;
     }
 
@@ -172,10 +192,19 @@ export const sendToTaxEntity = async (
     return updatedDocumentResponse;
 
   } catch (error: any) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
     log.error("tax_entity_submission_error", { 
       documentId, 
-      error: error.message 
+      error: errorMessage 
     });
+    await notifyDocumentFailure({
+      event: "tax_entity_submission_error",
+      company,
+      ...documentDetailsForNotification(document),
+      cause: errorMessage,
+    });
+
     return serverError;
   }
 };
