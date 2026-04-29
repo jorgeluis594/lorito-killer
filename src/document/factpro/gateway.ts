@@ -89,7 +89,8 @@ const sendDocument = async (
   const resJson = await res.json();
 
   if (res.status === 200 && resJson.success) {
-    log.info("factpro_document_sent", {
+    log.info("factpro_document_processed", {
+      status: "success",
       document: body,
       orderId,
       time: new Date().getTime() - startDate.getTime(),
@@ -100,7 +101,8 @@ const sendDocument = async (
     };
   }
 
-  log.error("send_factpro_document_failed", {
+  log.error("factpro_document_processed", {
+    status: "error",
     document: body,
     orderId,
     time: new Date().getTime() - startDate.getTime(),
