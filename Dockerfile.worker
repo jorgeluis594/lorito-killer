@@ -10,6 +10,9 @@ RUN npm ci
 COPY prisma ./prisma
 RUN npx prisma generate
 
+FROM deps AS prod-deps
+RUN npm prune --omit=dev
+
 # --- Production image ---
 FROM base AS runner
 WORKDIR /app
@@ -20,9 +23,7 @@ ENV NODE_OPTIONS=--require=newrelic
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 worker
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 COPY package.json ./
 COPY newrelic.js ./
