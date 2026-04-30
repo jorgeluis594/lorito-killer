@@ -24,7 +24,9 @@ type DocumentFailureNotification = {
 const MAX_CAUSE_LENGTH = 280;
 
 const formatValue = (value?: string | number | null) => {
-  if (value === undefined || value === null || value === "") return "N/A";
+  if (value === undefined || value === null || value === "") {
+    return "No disponible";
+  }
   return String(value);
 };
 
@@ -36,8 +38,36 @@ const truncate = (value: string, maxLength: number) => {
 const companyLabel = (
   company?: DocumentFailureNotification["company"],
 ) => {
-  if (!company) return "N/A";
-  return company.name || company.subName || company.subdomain || "N/A";
+  if (!company) return "No disponible";
+  return company.name || company.subName || company.subdomain || "No disponible";
+};
+
+const EVENT_LABELS: Record<DocumentFailureEvent, string> = {
+  factpro_submission_failed: "Fallo al enviar el documento a FactPro",
+  document_persist_failed: "Fallo al guardar el documento",
+  document_update_failed: "Fallo al actualizar el documento",
+  tax_entity_submission_error: "Error al enviar el documento a la entidad tributaria",
+};
+
+const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  invoice: "Factura",
+  receipt: "Boleta",
+  ticket: "Nota de venta",
+};
+
+const documentLabel = (
+  documentType?: DocumentType,
+  series?: string,
+  number?: string,
+) => {
+  const type = documentType
+    ? DOCUMENT_TYPE_LABELS[documentType]
+    : "Tipo no disponible";
+  const correlative = [series, number].filter(Boolean).join("-");
+
+  if (!correlative) return type;
+
+  return `${type} ${correlative}`;
 };
 
 export const documentDetailsForNotification = (document: Document) => ({
@@ -61,17 +91,19 @@ export const notifyDocumentFailure = async ({
   cause,
 }: DocumentFailureNotification) => {
   const message = [
-    `Error documento: ${event}`,
-    `empresa=${companyLabel(company)}`,
-    `companyId=${formatValue(company?.id || companyId)}`,
-    `subdomain=${formatValue(company?.subdomain)}`,
-    `orderId=${formatValue(orderId)}`,
-    `documentId=${formatValue(documentId)}`,
-    `tipo=${formatValue(documentType)}`,
-    `serie=${formatValue(series)}`,
-    `numero=${formatValue(number)}`,
-    `causa=${truncate(cause, MAX_CAUSE_LENGTH)}`,
-  ].join(" | ");
+    "Error enviando documento",
+    "",
+    `Evento: ${EVENT_LABELS[event]}`,
+    `Empresa: ${companyLabel(company)}`,
+    `ID de empresa: ${formatValue(company?.id || companyId)}`,
+    `Subdominio: ${formatValue(company?.subdomain)}`,
+    `Documento: ${documentLabel(documentType, series, number)}`,
+    `Pedido: ${formatValue(orderId)}`,
+    `ID de documento: ${formatValue(documentId)}`,
+    "",
+    "Error:",
+    truncate(cause, MAX_CAUSE_LENGTH),
+  ].join("\n");
 
   const notificationResponse = await sendDiscordTextNotification(message);
 

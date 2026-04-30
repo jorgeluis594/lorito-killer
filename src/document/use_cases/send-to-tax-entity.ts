@@ -58,6 +58,10 @@ type BillingSettings = Omit<
   "billingToken" | "customerSearchToken"
 >;
 
+type SendToTaxEntityOptions = {
+  notifyOnFailure?: boolean;
+};
+
 const serverError = errorResponse(
   "Error al enviar el documento a la entidad tributaria",
 );
@@ -68,7 +72,10 @@ export const sendToTaxEntity = async (
   documentId: string,
   billingConfig: BillingSettings & { billingToken?: string },
   company?: Company,
+  options: SendToTaxEntityOptions = {},
 ): Promise<response<Document>> => {
+  const notifyOnFailure = options.notifyOnFailure ?? true;
+
   // Get the document and order
   const documentResponse = await repository.findDocument(documentId);
   if (!documentResponse.success) {
@@ -141,12 +148,14 @@ export const sendToTaxEntity = async (
         documentType: document.documentType,
         error: taxEntityResponse.message 
       });
-      await notifyDocumentFailure({
-        event: "factpro_submission_failed",
-        company,
-        ...documentDetailsForNotification(document),
-        cause: taxEntityResponse.message,
-      });
+      if (notifyOnFailure) {
+        await notifyDocumentFailure({
+          event: "factpro_submission_failed",
+          company,
+          ...documentDetailsForNotification(document),
+          cause: taxEntityResponse.message,
+        });
+      }
 
       return serverError;
     }
@@ -173,12 +182,14 @@ export const sendToTaxEntity = async (
     const updatedDocumentResponse = await repository.updateDocument(documentId, updateData);
     if (!updatedDocumentResponse.success) {
       log.error("document_update_failed", { documentId, updateData });
-      await notifyDocumentFailure({
-        event: "document_update_failed",
-        company,
-        ...documentDetailsForNotification(document),
-        cause: updatedDocumentResponse.message,
-      });
+      if (notifyOnFailure) {
+        await notifyDocumentFailure({
+          event: "document_update_failed",
+          company,
+          ...documentDetailsForNotification(document),
+          cause: updatedDocumentResponse.message,
+        });
+      }
 
       return serverError;
     }
@@ -198,12 +209,14 @@ export const sendToTaxEntity = async (
       documentId, 
       error: errorMessage 
     });
-    await notifyDocumentFailure({
-      event: "tax_entity_submission_error",
-      company,
-      ...documentDetailsForNotification(document),
-      cause: errorMessage,
-    });
+    if (notifyOnFailure) {
+      await notifyDocumentFailure({
+        event: "tax_entity_submission_error",
+        company,
+        ...documentDetailsForNotification(document),
+        cause: errorMessage,
+      });
+    }
 
     return serverError;
   }

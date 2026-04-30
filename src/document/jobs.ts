@@ -57,6 +57,7 @@ async function processSendToTaxEntity(
     documentId,
     { ...billingSettings, billingToken },
     companyResponse.success ? companyResponse.data : undefined,
+    { notifyOnFailure: job.attemptsMade === 0 },
   );
 
   if (!result.success) {
