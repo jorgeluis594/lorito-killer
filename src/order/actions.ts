@@ -63,14 +63,17 @@ export const create = protectedAction(
       return { success: false, message: "No tienes una caja abierta" };
     }
 
-    const openCashShift = openCashShiftResponse.data;
-    if (openCashShift.id !== order.cashShiftId) {
-      log.warn("order_cash_shift_mismatch", {
-        orderCashShiftId: order.cashShiftId,
-        lastOpenCashShiftId: openCashShift.id,
-      });
-      order.cashShiftId = openCashShift.id;
-    }
+  const openCashShift = openCashShiftResponse.data;
+  if (openCashShift.id !== order.cashShiftId) {
+    log.warn("order_cash_shift_mismatch", {
+      orderCashShiftId: order.cashShiftId,
+      lastOpenCashShiftId: openCashShift.id,
+    });
+    /*return {
+      success: false,
+      message: "La caja abierta no coincide con la caja de la venta",
+    };*/
+  }
 
     if (openCashShift.userId !== user.id) {
       return {
@@ -84,13 +87,17 @@ export const create = protectedAction(
       return { success: false, message: "Error generando descuento" };
     }
 
-    return withinTransaction<{ order: Order; document: Document }>(
+    const orderToCreate: Order = {
+    ...discountResponse.data,
+    cashShiftId: openCashShift.id,
+    companyId: user.companyId,
+    payments: discountResponse.data.payments.map((payment) => ({
+      ...payment,
+      cashShiftId: openCashShift.id,
+    })),
+  };return withinTransaction<{ order: Order; document: Document }>(
       async function () {
-        const createOrderResponse = await createOrder({
-          ...discountResponse.data,
-          cashShiftId: openCashShift.id,
-          companyId: user.companyId,
-        });
+        const createOrderResponse = await createOrder(orderToCreate);
         if (!createOrderResponse.success) {
           log.error("create_order_failed", {});
           return createOrderResponse;
