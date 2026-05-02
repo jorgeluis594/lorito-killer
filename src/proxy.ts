@@ -4,8 +4,8 @@ import { hasPermission } from "@/authorization/helpers";
 import type { UserRole, Resource, Action } from "@/authorization/types";
 
 export const config = {
-  // The root path "/" is not matched by the matcher, so it's not included here
   matcher: [
+    "/",
     "/((?!api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).+)",
     "/dashboard/:path*",
   ],
@@ -74,16 +74,21 @@ function getRoutePermission(pathname: string): RoutePermission | null {
 
 export default async function proxy(req: NextRequest) {
   const url = req.nextUrl;
-  const isMaintenancePage = url.pathname === "/maintenance";
+  const isMaintenancePage =
+    url.pathname === "/maintenance" || url.pathname.startsWith("/maintenance/");
   const isMaintenanceMode =
     process.env.MAINTENANCE_MODE?.toLowerCase() === "true";
 
-  if (isMaintenancePage) {
-    return NextResponse.next();
+  if (isMaintenanceMode) {
+    if (isMaintenancePage) {
+      return NextResponse.next();
+    }
+
+    return NextResponse.rewrite(new URL("/maintenance", req.url));
   }
 
-  if (isMaintenanceMode) {
-    return NextResponse.redirect(new URL("/maintenance", req.url));
+  if (isMaintenancePage) {
+    return NextResponse.next();
   }
 
   const hostname = req.headers.get("host")!;
