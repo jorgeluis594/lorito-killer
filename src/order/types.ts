@@ -47,7 +47,7 @@ export type Status = "pending" | "completed" | "cancelled";
 
 export type Order = {
   id?: string;
-  cashShiftId: string;
+  cashShiftId?: string | null;
   companyId: string;
   customerId?: string;
   orderItems: OrderItem[];

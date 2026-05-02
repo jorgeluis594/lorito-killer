@@ -5,6 +5,11 @@ import { Order } from "@/order/types";
 import type { Document, DocumentType, BillingCredentials } from "@/document/types";
 import { errorResponse, max } from "@/lib/utils";
 import { log } from "@/lib/log";
+import type { Company } from "@/company/types";
+import {
+  documentDetailsForNotification,
+  notifyDocumentFailure,
+} from "@/document/notifications";
 
 export interface DocumentMetadata {
   serialNumber: string;
@@ -33,6 +38,7 @@ export const buildAndPersistDocument = async (
   repository: Repository,
   order: Order,
   billingConfig: BillingSettings,
+  company?: Company,
 ): Promise<response<Document>> => {
   const documentNumberAndSerialResponse =
     await getAvailableDocumentNumberAndSerial(
@@ -110,6 +116,13 @@ export const buildAndPersistDocument = async (
 
   const persistedDocumentResponse = await repository.createDocument(document);
   if (!persistedDocumentResponse.success) {
+    await notifyDocumentFailure({
+      event: "document_persist_failed",
+      company,
+      ...documentDetailsForNotification(document),
+      cause: persistedDocumentResponse.message,
+    });
+
     return serverError;
   }
 

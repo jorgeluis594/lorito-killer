@@ -8,10 +8,8 @@ import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { Category } from "@/category/types";
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const categoryData: Category = await req.json();
 
   const findProductResponse = await findCategory(params.id);
@@ -29,10 +27,8 @@ export async function PUT(
   });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session.user) {
     return NextResponse.json(

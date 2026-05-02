@@ -54,6 +54,7 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
         }
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;
@@ -62,7 +63,7 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
 export const CashShiftStoreProvider = ({
   children,
 }: CashShiftStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<CashShiftStore>>();
+  const storeRef = useRef<StoreApi<CashShiftStore>>(undefined);
 
   if (!storeRef.current) {
     storeRef.current = createCashShiftStore({ ...defaultInitState });

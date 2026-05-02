@@ -1,10 +1,8 @@
 import { removePhoto, find as findProduct } from "@/product/db_repository";
 import { NextResponse } from "next/server";
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string; photoId: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string; photoId: string }> }) {
+  const params = await props.params;
   const findProductResponse = await findProduct(params.id);
   if (!findProductResponse.success) {
     return NextResponse.json(

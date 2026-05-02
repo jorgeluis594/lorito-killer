@@ -18,8 +18,8 @@ export interface ProductFormStoreProvider {
 export const ProductFormStoreProvider = ({
   children,
 }: ProductFormStoreProvider) => {
-  const storeRef = useRef<StoreApi<ProductFormStore>>();
-  if (!storeRef.current) {
+  const storeRef = useRef<StoreApi<ProductFormStore> | null>(null);
+  if (storeRef.current === null) {
     storeRef.current = createProductFormStore();
   }
 

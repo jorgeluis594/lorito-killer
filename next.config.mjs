@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -8,17 +9,16 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
-    config.externals = [...config.externals, "bcrypt"];
-    return config;
-  },
-  experimental: {
-    serverComponentsExternalPackages: [
-      "pino",
-      "pino-pretty",
-      "@react-pdf/renderer",
-    ],
-  },
+  serverExternalPackages: [
+    "pino",
+    "pino-pretty",
+    "@logtail/pino",
+    "newrelic",
+    "@react-pdf/renderer",
+    "bullmq",
+    "ioredis",
+    "bcrypt",
+  ],
 };
 
 export default nextConfig;

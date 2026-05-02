@@ -89,7 +89,8 @@ const sendDocument = async (
   const resJson = await res.json();
 
   if (res.status === 200 && resJson.success) {
-    log.info("factpro_document_sent", {
+    log.info("factpro_document_processed", {
+      status: "success",
       document: body,
       orderId,
       time: new Date().getTime() - startDate.getTime(),
@@ -100,13 +101,17 @@ const sendDocument = async (
     };
   }
 
-  log.error("send_factpro_document_failed", {
+  log.error("factpro_document_processed", {
+    status: "error",
     document: body,
     orderId,
     time: new Date().getTime() - startDate.getTime(),
     factpro_response: resJson,
   });
-  return { success: false, message: "Error creating document" };
+  return {
+    success: false,
+    message: resJson.message || "Error al crear el documento en FactPro",
+  };
 };
 
 const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
@@ -226,7 +231,10 @@ export default function gateway({
     const response = await sendDocument(body, order.id!, billingToken);
     if (!response.success) return response;
     if (!response.data.success)
-      return { success: false, message: "Error creating document" };
+      return {
+        success: false,
+        message: response.data.message || "Error al crear el documento en FactPro",
+      };
 
     return {
       success: true,
@@ -317,7 +325,10 @@ export default function gateway({
     const response = await sendDocument(body, order.id!, billingToken);
     if (!response.success) return response;
     if (!response.data.success)
-      return { success: false, message: "Error creating document" };
+      return {
+        success: false,
+        message: response.data.message || "Error al crear el documento en FactPro",
+      };
 
     return {
       success: true,

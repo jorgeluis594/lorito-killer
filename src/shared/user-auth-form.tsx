@@ -16,7 +16,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import * as z from "zod";
 // import GoogleSignInButton from "../github-auth-button";
 
@@ -64,12 +64,32 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
 
       console.log({ signInResponse });
     } else {
-      await signIn("credentials", {
+      const signInResult = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       });
-      window.location.href = callbackUrl || window.location.origin;
+
+      if (signInResult?.error) {
+        form.setError("email", {
+          type: "manual",
+          message: "Credenciales incorrectas o cuenta desactivada",
+        });
+        return;
+      }
+
+      if (callbackUrl) {
+        window.location.href = callbackUrl;
+        return;
+      }
+
+      const session = await getSession();
+      const role = (session?.user as any)?.role;
+      if (role === "CASHIER") {
+        window.location.href = "/dashboard/orders/new";
+      } else {
+        window.location.href = "/dashboard";
+      }
     }
   };
 

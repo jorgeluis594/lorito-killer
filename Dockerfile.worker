@@ -1,0 +1,38 @@
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+
+# --- Install dependencies ---
+FROM base AS deps
+RUN apk add --no-cache python3 make g++ linux-headers
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY prisma ./prisma
+RUN npx prisma generate
+
+FROM deps AS prod-deps
+RUN npm prune --omit=dev
+
+# --- Production image ---
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--require=newrelic
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+COPY package.json ./
+COPY newrelic.js ./
+COPY src ./src
+COPY tsconfig.json ./
+COPY prisma ./prisma
+
+EXPOSE 3001
+
+USER worker
+
+CMD ["node_modules/.bin/tsx", "src/worker.ts"]

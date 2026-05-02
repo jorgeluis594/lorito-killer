@@ -138,6 +138,7 @@ export type FactproDocumentConsult = {
 
 export interface FactproErrorResponse {
   success: false;
+  message?: string;
 }
 
 export type FactproResponse = FactproErrorResponse | FactproSuccessResponse;

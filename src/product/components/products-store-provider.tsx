@@ -44,6 +44,7 @@ const ProductsLoader = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;
@@ -52,7 +53,7 @@ const ProductsLoader = ({ children }: { children: ReactNode }) => {
 export const ProductsStoreProvider = ({
   children,
 }: ProductsStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<ProductsStore>>();
+  const storeRef = useRef<StoreApi<ProductsStore>>(undefined);
   if (!storeRef.current) {
     storeRef.current = createProductsStore();
   }

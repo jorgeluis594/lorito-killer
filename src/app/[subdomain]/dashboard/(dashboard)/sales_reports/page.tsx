@@ -19,15 +19,19 @@ const breadcrumbItems = [
   { title: "Reporte de ventas", link: "/sales_reports" },
 ];
 
-type ParamsProps = {
-  searchParams: {
+type PageProps = {
+  searchParams: Promise<{
     [key: string]: string | string[] | undefined;
-  };
+  }>;
+};
+
+type ResolvedSearchParams = {
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 const getSearchParams = async ({
   searchParams,
-}: ParamsProps): Promise<response<SearchParams>> => {
+}: ResolvedSearchParams): Promise<response<SearchParams>> => {
   const session = await getSession();
   if (!session.user)
     return errorResponse("Usuario no autenticado", "AuthError");
@@ -72,7 +76,7 @@ const getSearchParams = async ({
   return { success: true, data: params };
 };
 
-async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
+async function DocumentsWithSuspense({ searchParams }: ResolvedSearchParams) {
   const documentQuery = await getSearchParams({ searchParams });
   if (!documentQuery.success) {
     return <SignOutRedirection />;
@@ -98,7 +102,8 @@ async function DocumentsWithSuspense({ searchParams }: ParamsProps) {
   );
 }
 
-export default async function Page({ searchParams }: ParamsProps) {
+export default async function Page(props: PageProps) {
+  const searchParams = await props.searchParams;
   return (
     <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
       <BreadCrumb items={breadcrumbItems} />

@@ -4,8 +4,9 @@ import {
 } from "@/stock-transfer/types";
 import { Order, OrderItem } from "@/order/types";
 import {
+  isPackageProduct,
+  isStockableProduct,
   PackageProduct,
-  PackageProductType,
   Product,
   SingleProduct,
 } from "@/product/types";
@@ -59,9 +60,14 @@ const generateOrderItemStockTransfer = async (
   }
 
   const product = productFoundResponse.data;
+
+  if (!isStockableProduct(product)) {
+    return { success: true, data: [] }
+  }
+
   let stockTransfers: OrderStockTransfer[];
 
-  if (product.type == PackageProductType) {
+  if (isPackageProduct(product)) {
     stockTransfers = generatePackageProductStockTransfers(
       orderItem,
       userId,
