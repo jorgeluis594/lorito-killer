@@ -74,6 +74,18 @@ function getRoutePermission(pathname: string): RoutePermission | null {
 
 export default async function proxy(req: NextRequest) {
   const url = req.nextUrl;
+  const isMaintenancePage = url.pathname === "/maintenance";
+  const isMaintenanceMode =
+    process.env.MAINTENANCE_MODE?.toLowerCase() === "true";
+
+  if (isMaintenancePage) {
+    return NextResponse.next();
+  }
+
+  if (isMaintenanceMode) {
+    return NextResponse.redirect(new URL("/maintenance", req.url));
+  }
+
   const hostname = req.headers.get("host")!;
 
   const subdomain =
