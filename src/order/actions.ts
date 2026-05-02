@@ -24,11 +24,11 @@ import { withinTransaction } from "@/lib/prisma";
 import calculateDiscount from "@/order/use-cases/calculate_discount";
 import { log } from "@/lib/log";
 import cancel from "@/order/use-cases/cancel";
-import { sendToTaxEntityJob } from "@/document/jobs";
 import {
-  protectedAction,
-  requirePermission,
-} from "@/authorization/server";
+  createPendingDocumentTaxDispatch,
+  enqueueDocumentTaxDispatch,
+} from "@/document/tax-dispatch-outbox";
+import { protectedAction } from "@/authorization/server";
 
 export const create = protectedAction(
   { resource: "orders", action: "create" },
@@ -63,17 +63,17 @@ export const create = protectedAction(
       return { success: false, message: "No tienes una caja abierta" };
     }
 
-  const openCashShift = openCashShiftResponse.data;
-  if (openCashShift.id !== order.cashShiftId) {
-    log.warn("order_cash_shift_mismatch", {
-      orderCashShiftId: order.cashShiftId,
-      lastOpenCashShiftId: openCashShift.id,
-    });
-    /*return {
-      success: false,
-      message: "La caja abierta no coincide con la caja de la venta",
-    };*/
-  }
+    const openCashShift = openCashShiftResponse.data;
+    if (openCashShift.id !== order.cashShiftId) {
+      log.warn("order_cash_shift_mismatch", {
+        orderCashShiftId: order.cashShiftId,
+        lastOpenCashShiftId: openCashShift.id,
+      });
+      /*return {
+        success: false,
+        message: "La caja abierta no coincide con la caja de la venta",
+      };*/
+    }
 
     if (openCashShift.userId !== user.id) {
       return {
@@ -88,14 +88,19 @@ export const create = protectedAction(
     }
 
     const orderToCreate: Order = {
-    ...discountResponse.data,
-    cashShiftId: openCashShift.id,
-    companyId: user.companyId,
-    payments: discountResponse.data.payments.map((payment) => ({
-      ...payment,
+      ...discountResponse.data,
       cashShiftId: openCashShift.id,
-    })),
-  };return withinTransaction<{ order: Order; document: Document }>(
+      companyId: user.companyId,
+      payments: discountResponse.data.payments.map((payment) => ({
+        ...payment,
+        cashShiftId: openCashShift.id,
+      })),
+    };
+
+    const createResponse = await withinTransaction<{
+      order: Order;
+      document: Document;
+    }>(
       async function () {
         const createOrderResponse = await createOrder(orderToCreate);
         if (!createOrderResponse.success) {
@@ -131,17 +136,10 @@ export const create = protectedAction(
           return documentResponse;
         }
 
-        // Trigger async tax entity submission (slow operation)
-        try {
-          await sendToTaxEntityJob.enqueue({
-            companyId: user.companyId,
-            documentId: documentResponse.data.id,
-          });
-        } catch (error) {
-          log.error("document_send_to_tax_entity_failed", {
-            error,
-          });
-        }
+        await createPendingDocumentTaxDispatch(
+          documentResponse.data.id,
+          user.companyId,
+        );
 
         return {
           success: true,
@@ -152,6 +150,15 @@ export const create = protectedAction(
         };
       },
     );
+
+    if (createResponse.success) {
+      await enqueueDocumentTaxDispatch(
+        createResponse.data.document.id,
+        user.companyId,
+      );
+    }
+
+    return createResponse;
   },
 );
 

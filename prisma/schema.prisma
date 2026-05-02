@@ -237,12 +237,18 @@ enum DocumentStatus {
   PENDING_CANCELLATION
 }
 
+enum DocumentTaxDispatchStatus {
+  PENDING
+  ENQUEUED
+  FAILED
+}
+
 model Document {
-  id                 String         @id @default(uuid())
+  id                 String               @id @default(uuid())
   orderId            String
   customerId         String?
   companyId          String?
-  discountAmount     Decimal        @default(0)
+  discountAmount     Decimal              @default(0)
   netTotal           Decimal
   total              Decimal
   documentType       DocumentType
@@ -254,13 +260,32 @@ model Document {
   xml                String?
   status             DocumentStatus
   cancellationReason String?
-  issuedToTaxEntity  Boolean        @default(false)
+  issuedToTaxEntity  Boolean              @default(false)
   issuedAt           DateTime?
-  order              Order          @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  company            Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  customer           Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  order              Order                @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  company            Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  customer           Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  taxDispatch        DocumentTaxDispatch?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+model DocumentTaxDispatch {
+  id         String                    @id @default(uuid())
+  documentId String                    @unique
+  companyId  String
+  status     DocumentTaxDispatchStatus @default(PENDING)
+  attempts   Int                       @default(0)
+  jobId      String?
+  lastError  String?
+  enqueuedAt DateTime?
+  document   Document                  @relation(fields: [documentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  company    Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt  DateTime                  @default(now())
+  updatedAt  DateTime                  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([companyId])
 }
 
 enum CustomerDocumentType {
@@ -284,34 +309,35 @@ model Customer {
 }
 
 model Company {
-  id                 String          @id @default(uuid())
-  name               String?
-  subName            String?
-  department         String?
-  district           String?
-  provincial         String?
-  email              String?
-  phone              String?
-  address            String
-  ruc                String?
-  customers          Customer[]
-  users              User[]
-  products           Product[]
-  cashShifts         CashShift[]
-  orders             Order[]
-  categories         Category[]
-  logos              Logo[]
-  stockTransfers     StockTransfer[]
-  documents          Document[]
-  zones              Zone[]
-  tables             Table[]
-  tableSessions      TableSession[]
-  features           CompanyFeature[]
-  subdomain          String?         @unique
-  billingCredentials Json?
-  active             Boolean         @default(true)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  id                    String                @id @default(uuid())
+  name                  String?
+  subName               String?
+  department            String?
+  district              String?
+  provincial            String?
+  email                 String?
+  phone                 String?
+  address               String
+  ruc                   String?
+  customers             Customer[]
+  users                 User[]
+  products              Product[]
+  cashShifts            CashShift[]
+  orders                Order[]
+  categories            Category[]
+  logos                 Logo[]
+  stockTransfers        StockTransfer[]
+  documents             Document[]
+  documentTaxDispatches DocumentTaxDispatch[]
+  zones                 Zone[]
+  tables                Table[]
+  tableSessions         TableSession[]
+  features              CompanyFeature[]
+  subdomain             String?               @unique
+  billingCredentials    Json?
+  active                Boolean               @default(true)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model CompanyFeature {
@@ -341,20 +367,20 @@ model Logo {
 }
 
 model User {
-  id               String          @id @default(uuid())
-  companyId        String?
-  company          Company?        @relation(fields: [companyId], references: [id])
-  email            String          @unique
-  password         String
-  name             String?
-  role             UserRole        @default(ADMIN)
-  active           Boolean         @default(true)
-  pin              String?
-  cashShifts       CashShift[]
-  stockTransfers   StockTransfer[]
-  waiterSessions   TableSession[]  @relation("WaiterSessions")
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  id             String          @id @default(uuid())
+  companyId      String?
+  company        Company?        @relation(fields: [companyId], references: [id])
+  email          String          @unique
+  password       String
+  name           String?
+  role           UserRole        @default(ADMIN)
+  active         Boolean         @default(true)
+  pin            String?
+  cashShifts     CashShift[]
+  stockTransfers StockTransfer[]
+  waiterSessions TableSession[]  @relation("WaiterSessions")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([companyId, role])
   @@index([companyId, active])

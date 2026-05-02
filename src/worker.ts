@@ -1,5 +1,6 @@
 import { log } from "@/lib/log";
 import { documentJobs } from "@/document/jobs";
+import { reconcilePendingDocumentTaxDispatches } from "@/document/tax-dispatch-outbox";
 import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
@@ -10,6 +11,38 @@ log.info("worker_starting", { pid: process.pid });
 const queueModules = [documentJobs];
 const workers = queueModules.flatMap((queueModule) =>
   queueModule.createWorkers.map((createWorker) => createWorker()),
+);
+
+const configuredTaxDispatchReconcileInterval = Number(
+  process.env.DOCUMENT_TAX_DISPATCH_RECONCILE_INTERVAL_MS,
+);
+const TAX_DISPATCH_RECONCILE_INTERVAL_MS =
+  Number.isFinite(configuredTaxDispatchReconcileInterval) &&
+  configuredTaxDispatchReconcileInterval > 0
+    ? configuredTaxDispatchReconcileInterval
+    : 60000;
+
+let taxDispatchReconcileRunning = false;
+
+async function reconcileTaxDispatches() {
+  if (taxDispatchReconcileRunning) {
+    return;
+  }
+
+  taxDispatchReconcileRunning = true;
+  try {
+    await reconcilePendingDocumentTaxDispatches();
+  } catch (error) {
+    log.error("document_tax_dispatch_reconcile_failed", { error });
+  } finally {
+    taxDispatchReconcileRunning = false;
+  }
+}
+
+void reconcileTaxDispatches();
+const taxDispatchReconcileInterval = setInterval(
+  reconcileTaxDispatches,
+  TAX_DISPATCH_RECONCILE_INTERVAL_MS,
 );
 
 // Bull Board dashboard
@@ -33,6 +66,7 @@ app.listen(BOARD_PORT, () => {
 
 async function shutdown(signal: string) {
   log.info("worker_shutdown", { signal });
+  clearInterval(taxDispatchReconcileInterval);
   await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
 }

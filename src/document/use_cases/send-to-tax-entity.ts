@@ -84,6 +84,11 @@ export const sendToTaxEntity = async (
   }
 
   const document = documentResponse.data;
+  if (document.issuedToTaxEntity) {
+    log.info("document_already_sent_to_tax_entity", { documentId });
+    return documentResponse;
+  }
+
   const orderResponse = await repository.getOrder(document.orderId, document.companyId);
   if (!orderResponse.success) {
     log.error("order_not_found", { orderId: document.orderId, documentId });
