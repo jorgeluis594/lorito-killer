@@ -32,6 +32,8 @@ type DocumentBase = {
   number: string;
   customer?: Customer;
   dateOfIssue: Date;
+  issuedToTaxEntity?: boolean;
+  issuedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 } & StatusAttributes;
