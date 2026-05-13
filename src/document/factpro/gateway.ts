@@ -76,8 +76,9 @@ const sendDocument = async (
   token: string,
 ): Promise<response<FactproResponse>> => {
   const startDate = new Date();
+  const endpoint = `${url!}/documentos`;
   log.info("sending_factpro_document", { orderId, document: body });
-  const res = await fetch(`${url!}/documentos`, {
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -86,7 +87,26 @@ const sendDocument = async (
     body: JSON.stringify(body),
   });
 
-  const resJson = await res.json();
+  const responseBody = await res.text();
+
+  let resJson: FactproResponse;
+  try {
+    resJson = JSON.parse(responseBody) as FactproResponse;
+  } catch {
+    log.error("factpro_document_processed", {
+      status: "error",
+      document: body,
+      orderId,
+      time: new Date().getTime() - startDate.getTime(),
+      response_body: responseBody,
+      error: "format_error",
+    });
+
+    return {
+      success: false,
+      message: "FactPro devolvió una respuesta no JSON",
+    };
+  }
 
   if (res.status === 200 && resJson.success) {
     log.info("factpro_document_processed", {
@@ -101,16 +121,22 @@ const sendDocument = async (
     };
   }
 
+  const errorMessage =
+    (!resJson.success && resJson.message) ||
+    "Error al crear el documento en FactPro";
+
   log.error("factpro_document_processed", {
     status: "error",
     document: body,
     orderId,
     time: new Date().getTime() - startDate.getTime(),
+    response_body: responseBody,
+    error: errorMessage,
     factpro_response: resJson,
   });
   return {
     success: false,
-    message: resJson.message || "Error al crear el documento en FactPro",
+    message: errorMessage,
   };
 };
 
