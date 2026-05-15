@@ -42,6 +42,7 @@ model Product {
   updatedAt                  DateTime        @updatedAt
   productType                ProductType     @default(SINGLE_PRODUCT)
   hidden                     Boolean         @default(false)
+  searchVector               Unsupported("tsvector")?
   photos                     Photo[]
   childPackageItems          PackageItem[]   @relation("ChildProducts")
   parentPackageItems         PackageItem[]   @relation("ParentProducts")

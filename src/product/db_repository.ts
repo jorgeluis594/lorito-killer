@@ -425,6 +425,115 @@ export type GetManyParams = {
   includeHidden?: boolean;
 };
 
+type ProductSearchIdRow = {
+  id: string;
+};
+
+const normalizeProductSearchQuery = (q?: string | null) => {
+  const normalized = q?.trim();
+  return normalized && normalized.length > 0 ? normalized : null;
+};
+
+const productTypeToPrisma = (
+  productType?: TypeSingleProductType | TypePackageProductType,
+) => {
+  if (!productType) return undefined;
+
+  return productType === PackageProductType
+    ? "PACKAGE_PRODUCT"
+    : "SINGLE_PRODUCT";
+};
+
+const SQL_ORDERABLE_PRODUCT_COLUMNS = {
+  companyId: Prisma.sql`p."companyId"`,
+  name: Prisma.sql`p."name"`,
+  price: Prisma.sql`p."price"`,
+  sku: Prisma.sql`p."sku"`,
+  description: Prisma.sql`p."description"`,
+  updatedAt: Prisma.sql`p."updatedAt"`,
+  createdAt: Prisma.sql`p."createdAt"`,
+  hidden: Prisma.sql`p."hidden"`,
+  productType: Prisma.sql`p."productType"`,
+  unitType: Prisma.sql`p."unitType"`,
+  purchasePrice: Prisma.sql`p."purchasePrice"`,
+  stock: Prisma.sql`p."stock"`,
+} satisfies Record<string, Prisma.Sql>;
+
+const buildProductSearchOrderBy = (sortBy?: ProductSortParams) => {
+  const orderBy: Prisma.Sql[] = [];
+
+  if (sortBy) {
+    for (const [key, direction] of Object.entries(sortBy)) {
+      const column =
+        SQL_ORDERABLE_PRODUCT_COLUMNS[
+          key as keyof typeof SQL_ORDERABLE_PRODUCT_COLUMNS
+        ];
+
+      if (!column || (direction !== "asc" && direction !== "desc")) continue;
+
+      orderBy.push(
+        direction === "asc"
+          ? Prisma.sql`${column} ASC`
+          : Prisma.sql`${column} DESC`,
+      );
+    }
+  }
+
+  orderBy.push(Prisma.sql`p."stock" DESC`);
+
+  return Prisma.join(orderBy, ", ");
+};
+
+const findProductIdsBySearchVector = async ({
+  companyId,
+  sortBy,
+  categoryId,
+  limit,
+  pageNumber,
+  q,
+  productType,
+  includeHidden,
+}: GetManyParams & { q: string }) => {
+  const where: Prisma.Sql[] = [
+    Prisma.sql`p."companyId" = ${companyId}`,
+    Prisma.sql`p."searchVector" @@ search_query.value`,
+  ];
+  const prismaProductType = productTypeToPrisma(productType);
+
+  if (!includeHidden) {
+    where.push(Prisma.sql`p."hidden" = false`);
+  }
+
+  if (prismaProductType) {
+    where.push(Prisma.sql`p."productType"::text = ${prismaProductType}`);
+  }
+
+  if (categoryId) {
+    where.push(
+      Prisma.sql`EXISTS (
+        SELECT 1
+        FROM "_CategoryToProduct" category_product
+        WHERE category_product."A" = ${categoryId}
+          AND category_product."B" = p."id"
+      )`,
+    );
+  }
+
+  const offset = pageNumber && limit ? (pageNumber - 1) * limit : undefined;
+
+  return prisma().$queryRaw<ProductSearchIdRow[]>(Prisma.sql`
+    WITH search_query AS (
+      SELECT websearch_to_tsquery('simple', unaccent(${q})) AS value
+    )
+    SELECT p."id"
+    FROM "Product" p, search_query
+    WHERE ${Prisma.join(where, " AND ")}
+    ORDER BY ${buildProductSearchOrderBy(sortBy)}
+    ${limit ? Prisma.sql`LIMIT ${limit}` : Prisma.empty}
+    ${offset ? Prisma.sql`OFFSET ${offset}` : Prisma.empty}
+  `);
+};
+
 export const getMany = async ({
   companyId,
   sortBy,
@@ -436,6 +545,41 @@ export const getMany = async ({
   includeHidden,
 }: GetManyParams): Promise<response<Product[]>> => {
   try {
+    const normalizedSearchQuery = normalizeProductSearchQuery(q);
+
+    if (normalizedSearchQuery) {
+      const rows = await findProductIdsBySearchVector({
+        companyId,
+        sortBy,
+        categoryId,
+        limit,
+        pageNumber,
+        q: normalizedSearchQuery,
+        productType,
+        includeHidden,
+      });
+      const ids = rows.map((row) => row.id);
+
+      if (ids.length === 0) {
+        return { success: true, data: [] };
+      }
+
+      const result = await prisma().product.findMany({
+        where: { id: { in: ids } },
+        include: { photos: true, categories: true },
+      });
+      const productById = new Map(
+        result.map((product) => [product.id, product]),
+      );
+      const orderedResult = ids.flatMap((id) => {
+        const product = productById.get(id);
+        return product ? [product] : [];
+      });
+      const products = await Promise.all(orderedResult.map(prismaToProduct));
+
+      return { success: true, data: products };
+    }
+
     const query: Prisma.ProductFindManyArgs = {
       where: { companyId },
       orderBy: sortBy ? [{ ...sortBy }, { stock: "desc" }] : { stock: "desc" },
@@ -451,7 +595,7 @@ export const getMany = async ({
     if (productType)
       query.where = {
         ...query.where,
-        productType: productType === PackageProductType ? "PACKAGE_PRODUCT" : "SINGLE_PRODUCT",
+        productType: productTypeToPrisma(productType),
       };
 
     if (categoryId)
@@ -461,16 +605,6 @@ export const getMany = async ({
       };
     if (limit) query.take = limit;
     if (pageNumber && limit) query.skip = (pageNumber - 1) * limit;
-    if (q) {
-      const searchValues: string[] = q
-        .split(" ")
-        .filter((v) => v && v.length > 0);
-      query.where = {
-        ...query.where,
-        name: { search: searchValues.join(" & ") },
-      };
-    }
-
     const result = await prisma().product.findMany({
       ...query,
       include: { photos: true, categories: true },
