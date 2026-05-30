@@ -4,6 +4,45 @@ import { Company, Logo } from "@/company/types";
 import { response } from "@/lib/types";
 import { log } from "@/lib/log";
 import { BillingCredentials } from "@/document/types";
+import type { CreateCompanyWithAdminInput } from "@/company/schemas/create-company-with-admin-schema";
+
+type CreatedCompanyWithAdmin = {
+  companyId: string;
+  userId: string;
+  companyName?: string;
+  userEmail: string;
+};
+
+const buildBillingCredentials = (
+  input: CreateCompanyWithAdminInput,
+): Pick<BillingCredentials, "ticketSerialNumber"> & Partial<BillingCredentials> => {
+  const billingCredentials: Pick<BillingCredentials, "ticketSerialNumber"> &
+    Partial<BillingCredentials> = {
+    ticketSerialNumber: input.ticketSerialNumber,
+  };
+
+  if (input.billingToken) billingCredentials.billingToken = input.billingToken;
+  if (input.customerSearchToken) {
+    billingCredentials.customerSearchToken = input.customerSearchToken;
+  }
+  if (input.invoiceSerialNumber) {
+    billingCredentials.invoiceSerialNumber = input.invoiceSerialNumber;
+  }
+  if (input.invoiceStartsOnNumber) {
+    billingCredentials.invoiceStartsOnNumber = input.invoiceStartsOnNumber;
+  }
+  if (input.receiptSerialNumber) {
+    billingCredentials.receiptSerialNumber = input.receiptSerialNumber;
+  }
+  if (input.receiptStartsOnNumber) {
+    billingCredentials.receiptStartsOnNumber = input.receiptStartsOnNumber;
+  }
+  if (input.establishmentCode) {
+    billingCredentials.establishmentCode = input.establishmentCode;
+  }
+
+  return billingCredentials;
+};
 
 export const createCompany = async (
   company: Company,
@@ -83,6 +122,72 @@ export const updateCompany = async (
       error_message: e.message,
     });
     return { success: false, message: e.message };
+  }
+};
+
+export const createCompanyWithAdmin = async (
+  input: CreateCompanyWithAdminInput,
+  hashedPassword: string,
+): Promise<response<CreatedCompanyWithAdmin>> => {
+  try {
+    const result = await prisma().$transaction(async (tx) => {
+      const company = await tx.company.create({
+        data: {
+          name: input.name,
+          subName: input.subName,
+          department: input.department,
+          district: input.district,
+          provincial: input.provincial,
+          phone: input.phone,
+          email: input.email,
+          ruc: input.ruc,
+          address: input.address,
+          subdomain: input.subdomain,
+          billingCredentials: buildBillingCredentials(input),
+        },
+      });
+
+      const user = await tx.user.create({
+        data: {
+          companyId: company.id,
+          name: input.adminName,
+          email: input.adminEmail,
+          password: hashedPassword,
+          role: "ADMIN",
+          active: true,
+        },
+      });
+
+      return {
+        companyId: company.id,
+        userId: user.id,
+        companyName: company.name || undefined,
+        userEmail: user.email,
+      };
+    });
+
+    return { success: true, data: result };
+  } catch (e: any) {
+    if (e.code === "P2002") {
+      const target = Array.isArray(e.meta?.target)
+        ? e.meta.target.join(",")
+        : String(e.meta?.target || "");
+
+      if (target.includes("email")) {
+        return { success: false, message: "El email del administrador ya existe" };
+      }
+
+      if (target.includes("subdomain")) {
+        return { success: false, message: "El subdominio ya existe" };
+      }
+    }
+
+    log.error("create_company_with_admin_failed", {
+      error_message: e.message,
+      subdomain: input.subdomain,
+      adminEmail: input.adminEmail,
+    });
+    return { success: false, message: "No se pudo crear la empresa" };
   }
 };
 

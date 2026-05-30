@@ -5,8 +5,8 @@ import { getCompany } from "@/company/db_repository";
 import { notFound } from "next/navigation";
 import NewUserModal from "@/company/components/new-user-modal";
 import { Label } from "@/shared/components/ui/label";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import CreateCompanyWithAdminForm from "@/company/components/create-company-with-admin-form";
 
 export const revalidate = 0;
 
@@ -32,6 +32,8 @@ export default async function CompanySettingsPage() {
       <Separator className="mt-6 mb-6"/>
       <Label className="block mb-4">Agrega un usuario a tu empresa</Label>
       <NewUserModal/>
+      <Separator className="mt-6 mb-6"/>
+      <CreateCompanyWithAdminForm/>
     </div>
   );
 }
