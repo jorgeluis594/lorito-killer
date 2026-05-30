@@ -8,7 +8,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Edit, EyeOff, MoreHorizontal, PackageOpen, Trash } from "lucide-react";
+import {
+  Edit,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  PackageOpen,
+  Trash,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Product, SingleProduct, SingleProductType } from "@/product/types";
@@ -18,7 +25,7 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { performProductMovementStockTransfer } from "@/stock-transfer/components/actions";
 import { useUserSession } from "@/lib/use-user-session";
-import { hideProduct } from "@/product/actions";
+import { hideProduct, unhideProduct } from "@/product/actions";
 
 interface CellActionProps {
   product: Product;
@@ -85,6 +92,22 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
     router.refresh();
   };
 
+  const onUnhideProduct = async () => {
+    const response = await unhideProduct(product.id!);
+    if (!response.success) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: response.message,
+      });
+      return;
+    }
+    toast({
+      title: "Producto desocultado",
+    });
+    router.refresh();
+  };
+
   const onConfirmStockMovement = () => {
     performProductMovementStockTransfer(
       user!.id,
@@ -140,9 +163,15 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
           <DropdownMenuItem onClick={() => setProduct(product)}>
             <Edit className="mr-2 h-4 w-4" /> Editar
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onHideProduct}>
-            <EyeOff className="mr-2 h-4 w-4" /> Ocultar
-          </DropdownMenuItem>
+          {product.hidden ? (
+            <DropdownMenuItem onClick={onUnhideProduct}>
+              <Eye className="mr-2 h-4 w-4" /> Desocultar
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={onHideProduct}>
+              <EyeOff className="mr-2 h-4 w-4" /> Ocultar
+            </DropdownMenuItem>
+          )}
           {product.type === SingleProductType &&
             product.stock > 0 &&
             product.stockConfig && (
