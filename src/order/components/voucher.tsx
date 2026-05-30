@@ -29,6 +29,7 @@ import {
 import { Company } from "@/company/types";
 import { fullName } from "@/customer/utils";
 import { isBillableDocument } from "@/document/utils";
+import { CARNET_EXTRANJERIA, Customer, DNI, RUC } from "@/customer/types";
 
 const styles = StyleSheet.create({
   page: {
@@ -92,13 +93,24 @@ const documentTypeToEs: Record<DocumentType, string> = {
   [TICKET]: "NOTA DE VENTA ELECTRÓNICA",
 };
 
-const documentTypeToCustomerDocumentTypeES: Record<DocumentType, string> = {
-  [TICKET]: "DNI",
-  [RECEIPT]: "DNI",
-  [INVOICE]: "RUC",
+const customerDocumentTypeToES: Record<string, string> = {
+  [CARNET_EXTRANJERIA]: "Carnet de extranjería",
+  [DNI]: "DNI",
+  [RUC]: "RUC",
 };
 
 const zeroPad = (number: string) => number.padStart(8, "0");
+
+const customerDocumentTypeLabel = (
+  customer: Customer | undefined,
+  documentType: DocumentType,
+) => {
+  if (customer?.documentType) {
+    return customerDocumentTypeToES[customer.documentType];
+  }
+
+  return documentType === INVOICE ? "RUC" : "DNI";
+};
 
 const TicketTotals = ({ document }: { document: Ticket }) => (
   <View style={[styles.section, { marginTop: "10px" }]}>
@@ -320,7 +332,7 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
         </Text>
 
         <Text style={styles.text}>
-          {documentTypeToCustomerDocumentTypeES[document.documentType]}:{" "}
+          {customerDocumentTypeLabel(order.customer, document.documentType)}:{" "}
           {order.customer?.documentNumber}
         </Text>
 

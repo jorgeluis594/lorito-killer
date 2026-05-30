@@ -19,8 +19,8 @@ export interface FactproDocumentV3 {
   moneda: "PEN" | "USD";
   enviar_automaticamente_al_cliente?: boolean;
   cliente: {
-    // FactPro v3 catalog: 4 = RUC, 2 = DNI, 1 = Otros
-    cliente_tipo_documento: "4" | "2" | "1";
+    // FactPro v3 catalog: 4 = RUC, 3 = CE, 2 = DNI, 1 = Otros
+    cliente_tipo_documento: "4" | "3" | "2" | "1";
     cliente_numero_documento: string;
     cliente_denominacion: string;
     cliente_direccion: string;

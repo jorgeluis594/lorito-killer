@@ -16,7 +16,12 @@ import {
   FactproResponseV3,
 } from "@/document/factpro/types";
 import { log } from "@/lib/log";
-import { BusinessCustomer, Customer, NaturalCustomer } from "@/customer/types";
+import {
+  BusinessCustomer,
+  CARNET_EXTRANJERIA,
+  Customer,
+  NaturalCustomer,
+} from "@/customer/types";
 import { isBusinessCustomer } from "@/customer/utils";
 import {
   DocumentGateway,
@@ -61,8 +66,15 @@ function clientParamsBuilder(
     };
   }
 
+  const clienteTipoDocumento =
+    customer.documentType === CARNET_EXTRANJERIA
+      ? "3"
+      : customer.documentNumber
+        ? "2"
+        : "1";
+
   return {
-    cliente_tipo_documento: customer.documentNumber ? "2" : "1",
+    cliente_tipo_documento: clienteTipoDocumento,
     cliente_numero_documento: customer.documentNumber || "00000000",
     cliente_denominacion: customer.fullName,
     cliente_direccion: customer.address || "-",
