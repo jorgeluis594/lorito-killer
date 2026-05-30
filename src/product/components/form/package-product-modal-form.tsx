@@ -51,7 +51,10 @@ import CategoriesModal from "@/category/components/category-list-model/category-
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
 
-const transformToProduct = (data: ProductFormValues): PackageProduct => {
+const transformToProduct = (
+  data: ProductFormValues,
+  hidden = false,
+): PackageProduct => {
   return {
     companyId: data.companyId,
     name: data.name,
@@ -62,7 +65,7 @@ const transformToProduct = (data: ProductFormValues): PackageProduct => {
     photos: data.photos,
     productItems: data.productItems,
     categories: data.categories || [],
-    hidden: false,
+    hidden,
   };
 };
 
@@ -117,7 +120,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
     if (!formStore.isNew) {
       const res = await repository.update({
         id: formStore.product.id,
-        ...transformToProduct(data),
+        ...transformToProduct(data, formStore.product.hidden),
       });
       if (res.success) {
         toast({

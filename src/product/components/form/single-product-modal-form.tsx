@@ -65,7 +65,10 @@ import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
-const transformToProduct = (data: ProductFormValues): SingleProduct => {
+const transformToProduct = (
+  data: ProductFormValues,
+  hidden = false,
+): SingleProduct => {
   const {
     targetMovementProductId,
     targetMovementProductQuantity,
@@ -75,7 +78,7 @@ const transformToProduct = (data: ProductFormValues): SingleProduct => {
     ...productData,
     categories: data.categories || [],
     type: SingleProductType,
-    hidden: false,
+    hidden,
   };
 
   if (
@@ -186,7 +189,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     if (!formStore.isNew) {
       const res = await repository.update({
         id: formStore.product.id,
-        ...transformToProduct(data),
+        ...transformToProduct(data, formStore.product.hidden),
       });
       if (res.success) {
         toast({
