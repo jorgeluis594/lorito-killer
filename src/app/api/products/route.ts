@@ -37,7 +37,7 @@ export const GET = protectedRoute(
   async (req, user) => {
     const { searchParams } = new URL(req.url);
 
-    const param = searchParams.get("param");
+    const q = searchParams.get("q") ?? searchParams.get("param");
     const categoryId = searchParams.get("categoryId");
     const sortKey = searchParams.get("sortBy") as SortKey | null;
     const limit = searchParams.get("limit");
@@ -49,7 +49,7 @@ export const GET = protectedRoute(
         : { createdAt: "desc" };
 
     const response = await getMany({
-      q: param,
+      q,
       companyId: user.companyId,
       sortBy: sortBy,
       limit: limit ? parseInt(limit) : undefined,

@@ -249,11 +249,80 @@ export const create = async (product: Product): Promise<response<Product>> => {
 
 export const getTotal = async ({
   companyId,
+  categoryId,
+  q,
+  productType,
+  includeHidden,
 }: {
   companyId: string;
+  categoryId?: searchParams["categoryId"];
+  q?: string | null;
+  productType?: TypeSingleProductType | TypePackageProductType;
+  includeHidden?: boolean;
 }): Promise<response<number>> => {
-  const total = await prisma().product.count({ where: { companyId } });
-  return { success: true, data: total };
+  try {
+    const normalizedSearchQuery = normalizeProductSearchQuery(q);
+
+    if (normalizedSearchQuery) {
+      let rows = await findProductIdsBySearchVector({
+        companyId,
+        categoryId,
+        q: normalizedSearchQuery,
+        productType,
+        includeHidden,
+      });
+
+      if (rows.length === 0) {
+        rows = await findProductIdsBySearchVectorPrefix({
+          companyId,
+          categoryId,
+          q: normalizedSearchQuery,
+          productType,
+          includeHidden,
+        });
+      }
+
+      if (rows.length > 0) {
+        return { success: true, data: rows.length };
+      }
+
+      const total = await prisma().product.count({
+        where: {
+          ...buildProductWhere({
+            companyId,
+            categoryId,
+            productType,
+            includeHidden,
+          }),
+          OR: [
+            { name: { contains: normalizedSearchQuery, mode: "insensitive" } },
+            { sku: { contains: normalizedSearchQuery, mode: "insensitive" } },
+            {
+              description: {
+                contains: normalizedSearchQuery,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+      });
+
+      return { success: true, data: total };
+    }
+
+    const total = await prisma().product.count({
+      where: buildProductWhere({
+        companyId,
+        categoryId,
+        productType,
+        includeHidden,
+      }),
+    });
+
+    return { success: true, data: total };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
 };
 
 const updateSingleProduct = async (

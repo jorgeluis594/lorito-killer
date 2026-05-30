@@ -31,20 +31,33 @@ async function ProductsWithSuspense({ searchParams }: ResolvedSearchParams) {
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 
+  const q =
+    typeof searchParams.q === "string" ? searchParams.q : undefined;
+  const categoryId =
+    typeof searchParams.categoryId === "string"
+      ? searchParams.categoryId
+      : undefined;
+
   const params: GetManyParams = {
     companyId: session.user.companyId,
     pageNumber: Number(searchParams.page) || 1,
     limit: Number(searchParams.size) || 10,
+    categoryId,
     includeHidden: searchParams.showHidden === "true",
   };
 
-  if (searchParams.q) {
-    params.q = searchParams.q as string;
+  if (q) {
+    params.q = q;
   }
 
   const [productsResponse, productsCountResponse] = await Promise.all([
     getMany(params),
-    getTotal({ companyId: session.user.companyId }),
+    getTotal({
+      companyId: session.user.companyId,
+      q,
+      categoryId,
+      includeHidden: searchParams.showHidden === "true",
+    }),
   ]);
 
   if (!productsResponse.success || !productsCountResponse.success) {
