@@ -50,6 +50,7 @@ export type Order = {
   cashShiftId?: string | null;
   companyId: string;
   customerId?: string;
+  sellerId?: string | null;
   orderItems: OrderItem[];
   netTotal: number;
   discountAmount: number;

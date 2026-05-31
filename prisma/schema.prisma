@@ -205,8 +205,10 @@ model Order {
   cashShiftId        String?
   companyId          String?
   customerId         String?
+  sellerId           String?
   customer           Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   company            Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  seller             User?         @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   discountAmount     Decimal
   discountType       DiscountType?
   discountValue      Decimal?
@@ -224,6 +226,8 @@ model Order {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   orderItems         OrderItem[]
+
+  @@index([companyId, sellerId])
 }
 
 enum DocumentType {
@@ -381,6 +385,7 @@ model User {
   cashShifts     CashShift[]
   stockTransfers StockTransfer[]
   waiterSessions TableSession[]  @relation("WaiterSessions")
+  soldOrders     Order[]         @relation("SellerOrders")
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 

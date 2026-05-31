@@ -29,6 +29,43 @@ import {
   enqueueDocumentTaxDispatch,
 } from "@/document/tax-dispatch-outbox";
 import { protectedAction } from "@/authorization/server";
+import prisma from "@/lib/prisma";
+import type { $Enums } from "@prisma/client";
+
+const ALLOWED_SELLER_ROLES: $Enums.UserRole[] = [
+  "ADMIN",
+  "CASHIER",
+  "WAITER",
+];
+
+async function validateSellerId(
+  sellerId: string | null | undefined,
+  companyId: string,
+): Promise<response<string | null>> {
+  const normalizedSellerId = sellerId?.trim() || null;
+  if (!normalizedSellerId) {
+    return { success: true, data: null };
+  }
+
+  const seller = await prisma().user.findFirst({
+    where: {
+      id: normalizedSellerId,
+      companyId,
+      active: true,
+      role: { in: ALLOWED_SELLER_ROLES },
+    },
+    select: { id: true },
+  });
+
+  if (!seller) {
+    return {
+      success: false,
+      message: "El vendedor seleccionado no es válido",
+    };
+  }
+
+  return { success: true, data: seller.id };
+}
 
 export const create = protectedAction(
   { resource: "orders", action: "create" },
@@ -36,6 +73,7 @@ export const create = protectedAction(
     user,
     userId: string,
     order: Order,
+    sellerId?: string | null,
   ): Promise<response<{ order: Order; document: Document }>> => {
     // Check if company is active
     const companyResponse = await findCompany(user.companyId);
@@ -82,6 +120,11 @@ export const create = protectedAction(
       };
     }
 
+    const sellerResponse = await validateSellerId(sellerId, user.companyId);
+    if (!sellerResponse.success) {
+      return sellerResponse;
+    }
+
     const discountResponse = calculateDiscount(order);
     if (!discountResponse.success) {
       return { success: false, message: "Error generando descuento" };
@@ -91,6 +134,7 @@ export const create = protectedAction(
       ...discountResponse.data,
       cashShiftId: openCashShift.id,
       companyId: user.companyId,
+      sellerId: sellerResponse.data,
       payments: discountResponse.data.payments.map((payment) => ({
         ...payment,
         cashShiftId: openCashShift.id,
