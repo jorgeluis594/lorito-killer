@@ -86,7 +86,25 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
       throw new Error(payload.message ?? "Print data response failed");
     }
 
-    receiptData = payload.data;
+    const data = payload.data;
+
+    console.log("[printing] order print-data response", {
+      orderId,
+      itemCount: data.order.items.length,
+      items: data.order.items,
+      document: data.document,
+      totals: {
+        subtotal: data.order.subtotal,
+        discount: data.order.discount,
+        total: data.order.total,
+        documentNetTotal: data.document.netTotal,
+        documentDiscountAmount: data.document.discountAmount,
+        documentTotal: data.document.total,
+      },
+      data,
+    });
+
+    receiptData = data;
   } catch {
     openPdfFallback(defaultPdfUrl);
     return pdfFallbackResult(
