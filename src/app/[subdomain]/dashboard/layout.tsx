@@ -13,6 +13,7 @@ import { RealtimeProvider } from "@/shared/components/layout/realtime-provider";
 import { getLastOpenCashShift, userExists } from "@/cash-shift/db_repository";
 import { getCompanyFeatures } from "@/feature-flags";
 import { FeatureFlagsProvider } from "@/feature-flags/client";
+import { PrintingProvider } from "@/printing/printing-provider";
 
 export default async function DashboardLayout({
   children,
@@ -45,25 +46,27 @@ export default async function DashboardLayout({
     <CompanyProvider company={companyResponse.data}>
       <FeatureFlagsProvider features={featureFlags}>
         <RealtimeProvider>
-          <OrderFormProvider>
-            <ProductFormProvider>
-              <CategoryStoreProvider>
-                <CashShiftProvider
-                  cashShiftResponse={
-                    userPresent
-                      ? cashShiftResponse
-                      : {
-                          success: false,
-                          message: "Usuario no autenticado",
-                          type: "AuthError",
-                        }
-                  }
-                >
-                  <CategoriesLoader>{children}</CategoriesLoader>
-                </CashShiftProvider>
-              </CategoryStoreProvider>
-            </ProductFormProvider>
-          </OrderFormProvider>
+          <PrintingProvider>
+            <OrderFormProvider>
+              <ProductFormProvider>
+                <CategoryStoreProvider>
+                  <CashShiftProvider
+                    cashShiftResponse={
+                      userPresent
+                        ? cashShiftResponse
+                        : {
+                            success: false,
+                            message: "Usuario no autenticado",
+                            type: "AuthError",
+                          }
+                    }
+                  >
+                    <CategoriesLoader>{children}</CategoriesLoader>
+                  </CashShiftProvider>
+                </CategoryStoreProvider>
+              </ProductFormProvider>
+            </OrderFormProvider>
+          </PrintingProvider>
         </RealtimeProvider>
       </FeatureFlagsProvider>
     </CompanyProvider>
