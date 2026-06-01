@@ -1,6 +1,7 @@
 "use client";
 
 import { iminPrinter } from "@/printing/printers/imin/imin-printer";
+import { requestIminLocalNetworkAccess } from "@/printing/request-local-network-access";
 import {
   getPrintingRuntimeState,
   isFalconPrintingEnabled,
@@ -52,6 +53,14 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
     runtimeState: getPrintingRuntimeState(),
     falconPrintingEnabled: isFalconPrintingEnabled(),
   });
+
+  if (!isFalconPrintingEnabled()) {
+    const localAccess = await requestIminLocalNetworkAccess();
+    const logLocalAccess =
+      localAccess.status === "blocked" ? logger.fail : logger.log;
+
+    logLocalAccess("Preflight Local Network Access iMin", localAccess);
+  }
 
   if (
     !isFalconPrintingEnabled() &&
