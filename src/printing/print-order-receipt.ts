@@ -1,6 +1,11 @@
 "use client";
 
 import { iminPrinter } from "@/printing/printers/imin/imin-printer";
+import {
+  getPrintingRuntimeState,
+  isFalconPrintingEnabled,
+  waitForPrinterInitialization,
+} from "@/printing/printing-runtime";
 import type {
   PrintFailureReason,
   PrintResult,
@@ -39,6 +44,20 @@ const pdfFallbackResult = (
 
 export const printOrderReceipt = async (orderId: string): Promise<PrintResult> => {
   const defaultPdfUrl = orderDocumentPdfUrl(orderId);
+
+  if (
+    !isFalconPrintingEnabled() &&
+    !(await waitForPrinterInitialization())
+  ) {
+    const runtimeHealth = getPrintingRuntimeState().result?.printers.imin;
+    const fallbackReason = runtimeHealth?.reason ?? "sdk_unavailable";
+
+    openPdfFallback(defaultPdfUrl);
+    return pdfFallbackResult(
+      fallbackReason,
+      `${runtimeHealth?.message ?? "Impresora iMin no disponible."} Se abrio el PDF.`,
+    );
+  }
 
   let receiptData: ReceiptPrintData;
 
