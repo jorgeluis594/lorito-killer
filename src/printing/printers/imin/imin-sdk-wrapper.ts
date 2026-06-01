@@ -5,6 +5,7 @@ import type {
   PrinterStatus,
 } from "@/printing/types";
 import type {
+  IminPrintConnectType,
   IminMaybeAsync,
   IminPrintCallback,
   IminPrintInstance,
@@ -38,6 +39,25 @@ type WebSocketResponse = {
   value?: unknown;
   error?: unknown;
   message?: unknown;
+};
+
+type IminPrinterDebugInfo = {
+  page: {
+    href?: string;
+    protocol?: string;
+    userAgent?: string;
+  };
+  windowSdk: {
+    present: boolean;
+    availableMethods: string[];
+    connectTypes?: IminPrintConnectType;
+    selectedConnectType: string | number;
+  };
+  websocket: {
+    constructorAvailable: boolean;
+    url: string;
+    activeTransport?: IminTransport;
+  };
 };
 
 const alignmentToSdkValue: Record<PrintAlignment, number> = {
@@ -117,6 +137,25 @@ const getWebSocketConstructor = (): WebSocketConstructor | undefined => {
   return typeof candidate === "function"
     ? (candidate as unknown as WebSocketConstructor)
     : undefined;
+};
+
+const getWindowDebugInfo = (): IminPrinterDebugInfo["page"] => {
+  if (typeof window === "undefined") return {};
+
+  return {
+    href: window.location.href,
+    protocol: window.location.protocol,
+    userAgent: window.navigator.userAgent,
+  };
+};
+
+const getSdkMethodNames = (sdk: IminPrintInstance | undefined): string[] => {
+  if (!sdk) return [];
+
+  const sdkRecord = sdk as Record<string, unknown>;
+  return Object.keys(sdkRecord)
+    .filter((key) => typeof sdkRecord[key] === "function")
+    .sort();
 };
 
 const normalizeCallbackValue = (value: unknown): unknown => {
@@ -645,6 +684,25 @@ export class IminSdkWrapper {
     return this.activeTransport;
   }
 
+  getDebugInfo(): IminPrinterDebugInfo {
+    const sdk = readWindowSdk();
+
+    return {
+      page: getWindowDebugInfo(),
+      windowSdk: {
+        present: Boolean(sdk),
+        availableMethods: getSdkMethodNames(sdk),
+        connectTypes: sdk?.PrintConnectType,
+        selectedConnectType: this.connectType(sdk),
+      },
+      websocket: {
+        constructorAvailable: Boolean(getWebSocketConstructor()),
+        url: IMIN_WEBSOCKET_URL,
+        activeTransport: this.activeTransport,
+      },
+    };
+  }
+
   private getWebSocketClient(): IminWebSocketClient {
     this.websocketClient ??= new IminWebSocketClient();
     return this.websocketClient;
@@ -688,7 +746,10 @@ export class IminSdkWrapper {
     try {
       return await action();
     } catch (error) {
-      notifyPrintingWarning("iMin window SDK command failed", error);
+      notifyPrintingWarning("iMin window SDK command failed", {
+        error,
+        debug: this.getDebugInfo(),
+      });
       return failedStatus("plugin_unavailable");
     }
   }
@@ -697,15 +758,26 @@ export class IminSdkWrapper {
     action: (client: IminWebSocketClient) => Promise<PrinterStatus>,
   ): Promise<PrinterStatus> {
     const client = this.getWebSocketClient();
-    if (!client.isAvailable()) return failedStatus("sdk_unavailable");
+    if (!client.isAvailable()) {
+      notifyPrintingWarning("iMin websocket SDK unavailable", {
+        debug: this.getDebugInfo(),
+      });
+      return failedStatus("sdk_unavailable");
+    }
 
     try {
       return await action(client);
     } catch (error) {
-      notifyPrintingWarning("iMin websocket command failed", error);
+      notifyPrintingWarning("iMin websocket command failed", {
+        error,
+        debug: this.getDebugInfo(),
+      });
       return failedStatus("plugin_unavailable");
     }
   }
 }
 
 export const iminSdkWrapper = new IminSdkWrapper();
+
+export const getIminPrinterDebugInfo = (): IminPrinterDebugInfo =>
+  iminSdkWrapper.getDebugInfo();

@@ -2,7 +2,7 @@
 
 import { toast } from "@/shared/components/ui/use-toast";
 
-const PRINTING_WARNING_DURATION_MS = 8_000;
+const PRINTING_WARNING_DURATION_MS = 30_000;
 
 const serializePrintingWarningDetail = (detail: unknown): string | undefined => {
   if (detail === undefined) return undefined;
