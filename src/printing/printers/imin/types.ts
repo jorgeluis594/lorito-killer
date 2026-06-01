@@ -21,7 +21,7 @@ export type IminPrintColumnsText = {
     values: string[],
     widths: number[],
     aligns: number[],
-    size: number,
+    size: number[],
     width: number,
     callback?: IminPrintCallback,
   ): IminMaybeAsync;
@@ -52,10 +52,7 @@ export type IminPrintInstance = {
     alignment: number,
     callback?: IminPrintCallback,
   ) => IminMaybeAsync;
-  setTextSize?: (
-    size: number,
-    callback?: IminPrintCallback,
-  ) => IminMaybeAsync;
+  setTextSize?: (size: number, callback?: IminPrintCallback) => IminMaybeAsync;
   setTextStyle?: (
     style: number,
     callback?: IminPrintCallback,

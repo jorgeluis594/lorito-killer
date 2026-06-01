@@ -19,7 +19,7 @@ import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
-import OrderPrintButton from "@/order/components/order-print-button";
+import ReceiptPrintButton from "@/printing/components/receipt-print-button";
 
 export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
@@ -54,7 +54,7 @@ export default async function OrderData({ order }: { order: Order }) {
             )}
           </CardTitle>
           <div className="flex space-x-2">
-            <OrderPrintButton orderId={order.id!} />
+            <ReceiptPrintButton orderId={order.id!} />
             {(documentResponse.data.documentType === "invoice" ||
               documentResponse.data.documentType === "receipt") && (
               <a

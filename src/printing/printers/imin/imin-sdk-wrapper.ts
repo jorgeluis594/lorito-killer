@@ -14,8 +14,8 @@ import type {
 
 const FALCON_80MM_PAGE_FORMAT = 0;
 const FALCON_80MM_TEXT_WIDTH = 576;
-const FALCON_NORMAL_TEXT_SIZE = 24;
-const FALCON_LARGE_TEXT_SIZE = 32;
+const FALCON_NORMAL_TEXT_SIZE = 20;
+const FALCON_LARGE_TEXT_SIZE = 28;
 const FALCON_FEED_DOTS_PER_LINE = 24;
 const FALCON_QR_SIZE = 6;
 const FALCON_QR_ERROR_CORRECTION_LEVEL = 48;
@@ -385,6 +385,7 @@ export class IminSdkWrapper {
     size = 1,
   ): Promise<PrinterStatus> {
     const sdkAligns = aligns.map((align) => this.sdkAlignmentFor(align));
+    const sdkSizes = values.map(() => this.sdkTextSizeFor(size));
 
     return this.withSdk(async ({ sdk }) => {
       this.requireSdkMethod(sdk, "setTextStyle");
@@ -394,7 +395,7 @@ export class IminSdkWrapper {
         values,
         widths,
         sdkAligns,
-        this.sdkTextSizeFor(size),
+        sdkSizes,
         FALCON_80MM_TEXT_WIDTH,
       );
       return readyStatus();

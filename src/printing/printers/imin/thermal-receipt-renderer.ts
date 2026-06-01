@@ -3,18 +3,13 @@ import {
   billableNumberToWords,
   formatPrice,
   formatPriceWithoutCurrency,
-  localizeOnlyDate,
   paymentMethodToText,
   shortLocalizeDate,
 } from "@/lib/utils";
-import type {
-  PrintAlignment,
-  PrintCommand,
-  ReceiptPrintData,
-} from "@/printing/types";
+import type { PrintCommand, ReceiptPrintData } from "@/printing/types";
 
-const COLUMNS = 48;
-const ITEM_NAME_WIDTH = 21;
+const COLUMNS = 36;
+const ITEM_INDENT = 3;
 
 const documentTypeToText: Record<DocumentType, string> = {
   [INVOICE]: "FACTURA ELECTRONICA",
@@ -31,19 +26,6 @@ const text = (
   ...options,
 });
 
-const columns = (
-  values: string[],
-  widths: number[],
-  aligns: PrintAlignment[],
-  bold?: boolean,
-): PrintCommand => ({
-  type: "columns",
-  values,
-  widths,
-  aligns,
-  bold,
-});
-
 const separator = (char = "-") => text(char.repeat(COLUMNS));
 
 const clean = (value: string | number | undefined | null): string =>
@@ -55,10 +37,8 @@ const money = (value: number): string => formatPriceWithoutCurrency(value);
 
 const currency = (value: number): string => clean(formatPrice(value));
 
-const formatDate = (value: string): string => shortLocalizeDate(new Date(value));
-
-const formatOnlyDate = (value: string): string =>
-  localizeOnlyDate(new Date(value));
+const formatDate = (value: string): string =>
+  shortLocalizeDate(new Date(value));
 
 const chunkText = (value: string, width: number): string[] => {
   const words = clean(value).split(" ").filter(Boolean);
@@ -108,6 +88,35 @@ const pushWrappedLabel = (
   });
 };
 
+const pushWrappedText = (
+  commands: PrintCommand[],
+  value: string | undefined,
+  options: Omit<Extract<PrintCommand, { type: "text" }>, "type" | "value"> = {},
+) => {
+  if (!value) return;
+
+  chunkText(value, COLUMNS).forEach((line) => {
+    commands.push(text(line, options));
+  });
+};
+
+const pushAmountLine = (
+  commands: PrintCommand[],
+  label: string,
+  value: string,
+  bold = false,
+) => {
+  const cleanLabel = clean(label);
+  const cleanValue = clean(value);
+  const spaces = Math.max(COLUMNS - cleanLabel.length - cleanValue.length, 1);
+
+  commands.push(
+    text(`${cleanLabel}${" ".repeat(spaces)}${cleanValue}`, { bold }),
+  );
+};
+
+const shortOrderId = (orderId: string): string => orderId.slice(0, 8);
+
 const isBillableDocumentType = (documentType: DocumentType): boolean =>
   documentType === RECEIPT || documentType === INVOICE;
 
@@ -115,57 +124,53 @@ const addHeader = (commands: PrintCommand[], data: ReceiptPrintData) => {
   const { company, document } = data;
   const isBillable = isBillableDocumentType(document.type);
 
-  commands.push(text(clean(company.commercialName || company.legalName), {
-    align: "center",
-    bold: true,
-    size: 2,
-  }));
+  pushWrappedText(
+    commands,
+    clean(company.commercialName || company.legalName),
+    {
+      align: "center",
+      bold: true,
+    },
+  );
 
   if (
     isBillable &&
     company.legalName &&
     company.legalName !== company.commercialName
   ) {
-    commands.push(text(clean(company.legalName), { align: "center" }));
+    pushWrappedText(commands, clean(company.legalName), { align: "center" });
   }
 
   if (isBillable) {
-    if (company.ruc) {
-      commands.push(text(`RUC ${clean(company.ruc)}`, { align: "center" }));
-    }
-    if (company.location) {
-      commands.push(text(clean(company.location), { align: "center" }));
-    }
-    if (company.address) {
-      commands.push(text(clean(company.address), { align: "center" }));
-    }
-    if (company.email) {
-      commands.push(text(clean(company.email), { align: "center" }));
-    }
-    if (company.phone) {
-      commands.push(text(clean(company.phone), { align: "center" }));
-    }
+    pushWrappedLabel(commands, "RUC", company.ruc);
+    pushWrappedLabel(commands, "Direccion", company.address);
+    pushWrappedLabel(commands, "Ubicacion", company.location);
+    pushWrappedLabel(commands, "Email", company.email);
+    pushWrappedLabel(commands, "Telefono", company.phone);
   }
 
   commands.push(separator("="));
-  commands.push(text(documentTypeToText[document.type], {
-    align: "center",
-    bold: true,
-  }));
+  commands.push(
+    text(documentTypeToText[document.type], {
+      align: "center",
+      bold: true,
+    }),
+  );
   commands.push(text(document.correlative, { align: "center", bold: true }));
   commands.push(separator("="));
 };
 
 const addDocumentData = (commands: PrintCommand[], data: ReceiptPrintData) => {
-  const { customer, document } = data;
+  const { customer, document, order } = data;
   const customerDocumentLabel = document.type === INVOICE ? "RUC" : "DNI";
 
   pushWrappedLabel(commands, "F. Emision", formatDate(document.dateOfIssue));
   pushWrappedLabel(
     commands,
-    "F. Vencimiento",
-    formatOnlyDate(document.dateOfIssue),
+    "F. Envio",
+    document.issuedAt ? formatDate(document.issuedAt) : undefined,
   );
+  pushWrappedLabel(commands, "Pedido", shortOrderId(order.id));
   pushWrappedLabel(commands, "Cliente", customer?.name, { showEmpty: true });
   pushWrappedLabel(commands, customerDocumentLabel, customer?.documentNumber, {
     showEmpty: true,
@@ -182,46 +187,35 @@ const addDocumentData = (commands: PrintCommand[], data: ReceiptPrintData) => {
 
 const addItems = (commands: PrintCommand[], data: ReceiptPrintData) => {
   commands.push(separator());
-  commands.push(
-    columns(
-      ["Cant.", "Producto", "Precio", "Total"],
-      [7, 21, 10, 10],
-      ["left", "left", "right", "right"],
-      true,
-    ),
-  );
+  commands.push(text("Detalle", { bold: true }));
   commands.push(separator());
 
   data.order.items.forEach((item) => {
     const quantity = `${item.quantity}`;
-    const productLines = chunkText(item.name, ITEM_NAME_WIDTH);
-    const [firstLine = ""] = productLines;
-
-    commands.push(
-      columns(
-        [quantity, firstLine, money(item.unitPrice), money(item.netTotal)],
-        [7, 21, 10, 10],
-        ["left", "left", "right", "right"],
-      ),
+    const itemPrefix = `${quantity} x `;
+    const itemNameWidth = COLUMNS - itemPrefix.length;
+    const [firstLine = "", ...remainingLines] = chunkText(
+      item.name,
+      itemNameWidth,
     );
 
-    productLines.slice(1).forEach((line) => {
-      commands.push(
-        columns(
-          ["", line, "", ""],
-          [7, 21, 10, 10],
-          ["left", "left", "right", "right"],
-        ),
-      );
+    commands.push(text(`${itemPrefix}${firstLine}`));
+
+    remainingLines.forEach((line) => {
+      commands.push(text(`${" ".repeat(ITEM_INDENT)}${line}`));
     });
 
+    pushAmountLine(
+      commands,
+      `${" ".repeat(ITEM_INDENT)}P.Unit ${money(item.unitPrice)}`,
+      `Total ${money(item.netTotal)}`,
+    );
+
     if (item.discountAmount > 0) {
-      commands.push(
-        columns(
-          ["", "Descuento", "", `- ${money(item.discountAmount)}`],
-          [7, 21, 10, 10],
-          ["left", "left", "right", "right"],
-        ),
+      pushAmountLine(
+        commands,
+        `${" ".repeat(ITEM_INDENT)}Descuento`,
+        `- ${money(item.discountAmount)}`,
       );
     }
   });
@@ -234,87 +228,37 @@ const addTotals = (commands: PrintCommand[], data: ReceiptPrintData) => {
 
   if (document.type === TICKET) {
     if (document.discountAmount > 0) {
-      commands.push(
-        columns(
-          ["Subtotal:", currency(document.netTotal)],
-          [30, 18],
-          ["right", "right"],
-        ),
-      );
-      commands.push(
-        columns(
-          ["Descuento:", currency(document.discountAmount)],
-          [30, 18],
-          ["right", "right"],
-        ),
-      );
+      pushAmountLine(commands, "Subtotal:", currency(document.netTotal));
+      pushAmountLine(commands, "Descuento:", currency(document.discountAmount));
     }
 
-    commands.push(
-      columns(
-        ["Total:", currency(document.total)],
-        [30, 18],
-        ["right", "right"],
-        true,
-      ),
-    );
+    pushAmountLine(commands, "Total:", currency(document.total), true);
   } else {
-    commands.push(
-      columns(
-        ["OP. Exoneradas:", currency(document.netTotal)],
-        [30, 18],
-        ["right", "right"],
-      ),
-    );
+    pushAmountLine(commands, "OP. Exoneradas:", currency(document.netTotal));
 
     if (document.discountAmount > 0) {
-      commands.push(
-        columns(
-          ["DESCUENTO:", currency(document.discountAmount)],
-          [30, 18],
-          ["right", "right"],
-        ),
-      );
+      pushAmountLine(commands, "DESCUENTO:", currency(document.discountAmount));
     }
 
-    commands.push(
-      columns(["IGV:", currency(0)], [30, 18], ["right", "right"]),
-    );
-    commands.push(
-      columns(
-        ["TOTAL A PAGAR:", currency(document.total)],
-        [30, 18],
-        ["right", "right"],
-        true,
-      ),
-    );
+    pushAmountLine(commands, "IGV:", currency(0));
+    pushAmountLine(commands, "TOTAL A PAGAR:", currency(document.total), true);
   }
 
-  chunkText(`Son: ${billableNumberToWords(document.total)}`, COLUMNS).forEach(
-    (line) => commands.push(text(line)),
-  );
+  commands.push(separator());
+  pushWrappedText(commands, `Son: ${billableNumberToWords(document.total)}`);
 };
 
 const addPayments = (commands: PrintCommand[], data: ReceiptPrintData) => {
   if (!data.order.payments.length) return;
 
   commands.push(separator());
-  commands.push(
-    text(
-      `Condicion de pago: ${
-        data.order.payments.length > 1
-          ? "Combinado"
-          : paymentMethodToText(data.order.payments[0].method)
-      }`,
-    ),
-  );
-  commands.push(text("Pagos:", { bold: true }));
+  commands.push(text("Pagos", { bold: true }));
 
   data.order.payments.forEach((payment) => {
-    commands.push(
-      text(
-        `• ${paymentMethodToText(payment.method)} - ${currency(payment.amount)}`,
-      ),
+    pushAmountLine(
+      commands,
+      paymentMethodToText(payment.method),
+      currency(payment.amount),
     );
   });
 };
@@ -324,6 +268,7 @@ const addFooter = (commands: PrintCommand[], data: ReceiptPrintData) => {
     commands.push({ type: "qr", value: data.document.qr });
   }
 
+  commands.push(text("Gracias por su compra", { align: "center" }));
   commands.push({ type: "feed", lines: 4 });
   commands.push({ type: "cut" });
 };
