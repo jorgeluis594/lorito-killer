@@ -19,6 +19,10 @@ export type PrintFailureReason =
 
 export type PrintMode = "imin" | "pdf";
 
+export type PrinterId = "imin";
+
+export type PrinterInitializationStatus = "ready" | "unavailable" | "error";
+
 export type PrintResult =
   | {
       success: true;
@@ -40,6 +44,8 @@ export type PrintResult =
 
 export type PrinterAdapter = {
   isAvailable: () => boolean;
+  initialize?: () => Promise<PrinterStatus>;
+  getStatus?: () => Promise<PrinterStatus>;
   printReceipt: (data: ReceiptPrintData) => Promise<PrintResult>;
 };
 
@@ -50,6 +56,19 @@ export type PrinterStatus = {
   ready: boolean;
   reason?: PrintFailureReason;
   message: string;
+};
+
+export type PrinterHealth = {
+  id: PrinterId;
+  status: PrinterInitializationStatus;
+  ready: boolean;
+  reason?: PrintFailureReason;
+  message: string;
+};
+
+export type PrintersInitializationResult = {
+  initializedAt: string;
+  printers: Record<PrinterId, PrinterHealth>;
 };
 
 export type PrintCommand =
