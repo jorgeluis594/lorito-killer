@@ -28,6 +28,16 @@ export const permissions = {
     delivery: ["create", "read", "update"],
   },
 
+  SELLER: {
+    products: ["read"],
+    categories: ["read"],
+    orders: ["create", "read", "update", "delete"],
+    payments: ["create", "read"],
+    cash_shifts: ["create", "read", "update"],
+    customers: ["create", "read", "update"],
+    delivery: ["create", "read", "update"],
+  },
+
   WAITER: {
     products: ["read"],
     categories: ["read"],

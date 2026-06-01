@@ -89,6 +89,7 @@ model Category {
 enum UserRole {
   ADMIN
   CASHIER
+  SELLER
   WAITER
   KITCHEN
   BARTENDER
@@ -381,6 +382,7 @@ model User {
   name           String?
   role           UserRole        @default(ADMIN)
   active         Boolean         @default(true)
+  sellerCode     String?
   pin            String?
   cashShifts     CashShift[]
   stockTransfers StockTransfer[]
@@ -389,6 +391,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
+  @@unique([companyId, sellerCode])
   @@index([companyId, role])
   @@index([companyId, active])
 }

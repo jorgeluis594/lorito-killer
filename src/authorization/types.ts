@@ -1,6 +1,7 @@
 export const USER_ROLES = [
   "ADMIN",
   "CASHIER",
+  "SELLER",
   "WAITER",
   "KITCHEN",
   "BARTENDER",
@@ -41,6 +42,7 @@ export type PermissionMap = Record<
 export const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrador",
   CASHIER: "Cajero",
+  SELLER: "Seller",
   WAITER: "Mozo",
   KITCHEN: "Cocinero",
   BARTENDER: "Bartender",

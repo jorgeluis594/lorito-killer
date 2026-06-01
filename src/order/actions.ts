@@ -30,29 +30,28 @@ import {
 } from "@/document/tax-dispatch-outbox";
 import { protectedAction } from "@/authorization/server";
 import prisma from "@/lib/prisma";
-import type { $Enums } from "@prisma/client";
 
-const ALLOWED_SELLER_ROLES: $Enums.UserRole[] = [
-  "ADMIN",
-  "CASHIER",
-  "WAITER",
-];
+const SELLER_CODE_REGEX = /^\d{4}$/;
 
-async function validateSellerId(
-  sellerId: string | null | undefined,
+async function resolveSellerIdByCode(
+  sellerCode: string | null | undefined,
   companyId: string,
-): Promise<response<string | null>> {
-  const normalizedSellerId = sellerId?.trim() || null;
-  if (!normalizedSellerId) {
-    return { success: true, data: null };
+): Promise<response<string>> {
+  const normalizedSellerCode =
+    typeof sellerCode === "string" ? sellerCode.trim() : "";
+  if (!SELLER_CODE_REGEX.test(normalizedSellerCode)) {
+    return {
+      success: false,
+      message: "El codigo debe tener exactamente 4 digitos",
+    };
   }
 
   const seller = await prisma().user.findFirst({
     where: {
-      id: normalizedSellerId,
       companyId,
+      role: "SELLER",
       active: true,
-      role: { in: ALLOWED_SELLER_ROLES },
+      sellerCode: normalizedSellerCode,
     },
     select: { id: true },
   });
@@ -60,7 +59,7 @@ async function validateSellerId(
   if (!seller) {
     return {
       success: false,
-      message: "El vendedor seleccionado no es válido",
+      message: "Codigo de seller no encontrado",
     };
   }
 
@@ -73,7 +72,7 @@ export const create = protectedAction(
     user,
     userId: string,
     order: Order,
-    sellerId?: string | null,
+    sellerCode: string,
   ): Promise<response<{ order: Order; document: Document }>> => {
     // Check if company is active
     const companyResponse = await findCompany(user.companyId);
@@ -120,7 +119,10 @@ export const create = protectedAction(
       };
     }
 
-    const sellerResponse = await validateSellerId(sellerId, user.companyId);
+    const sellerResponse = await resolveSellerIdByCode(
+      sellerCode,
+      user.companyId,
+    );
     if (!sellerResponse.success) {
       return sellerResponse;
     }

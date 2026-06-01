@@ -8,6 +8,7 @@ const items = [
   { title: "Perfil", href: "/dashboard/settings" },
   { title: "Empresa", href: "/dashboard/settings/company" },
   { title: "Features", href: "/dashboard/settings/features" },
+  { title: "Sellers", href: "/dashboard/settings/sellers" },
 ];
 
 export default function NavItems() {
