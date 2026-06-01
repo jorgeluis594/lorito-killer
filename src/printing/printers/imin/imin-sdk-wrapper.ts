@@ -15,6 +15,9 @@ import { notifyPrintingWarning } from "@/printing/printing-warning-toast";
 
 const FALCON_80MM_PAGE_FORMAT = 0;
 const FALCON_80MM_TEXT_WIDTH = 576;
+const FALCON_NORMAL_TEXT_SIZE = 24;
+const FALCON_LARGE_TEXT_SIZE = 32;
+const FALCON_FEED_DOTS_PER_LINE = 24;
 const FALCON_QR_SIZE = 6;
 const FALCON_QR_ERROR_CORRECTION_LEVEL = 48;
 const COMMAND_TIMEOUT_MS = 2_500;
@@ -380,6 +383,7 @@ export class IminSdkWrapper {
     widths: number[],
     aligns: PrintAlignment[],
     bold = false,
+    size = 1,
   ): Promise<PrinterStatus> {
     const sdkAligns = aligns.map((align) => this.sdkAlignmentFor(align));
 
@@ -391,7 +395,7 @@ export class IminSdkWrapper {
         values,
         widths,
         sdkAligns,
-        1,
+        this.sdkTextSizeFor(size),
         FALCON_80MM_TEXT_WIDTH,
       );
       return readyStatus();
@@ -411,7 +415,7 @@ export class IminSdkWrapper {
   async feed(lines: number): Promise<PrinterStatus> {
     return this.withSdk(async ({ sdk }) => {
       if (sdk.printAndFeedPaper) {
-        sdk.printAndFeedPaper(lines);
+        sdk.printAndFeedPaper(lines * FALCON_FEED_DOTS_PER_LINE);
         return readyStatus();
       }
 
@@ -441,6 +445,10 @@ export class IminSdkWrapper {
 
   sdkAlignmentFor(align: PrintAlignment = "left"): number {
     return alignmentToSdkValue[align];
+  }
+
+  sdkTextSizeFor(size = 1): number {
+    return size >= 2 ? FALCON_LARGE_TEXT_SIZE : FALCON_NORMAL_TEXT_SIZE;
   }
 
   getActiveTransport(): IminTransport | undefined {
@@ -558,7 +566,7 @@ export class IminSdkWrapper {
     this.requireSdkMethod(sdk, "setTextStyle");
 
     sdk.setAlignment?.(this.sdkAlignmentFor(options?.align));
-    sdk.setTextSize?.(options?.size ?? 1);
+    sdk.setTextSize?.(this.sdkTextSizeFor(options?.size));
     sdk.setTextStyle?.(options?.bold ? 1 : 0);
   }
 
