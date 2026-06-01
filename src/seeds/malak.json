@@ -1,0 +1,2011 @@
+[
+  {
+    "ID": "1725A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "0125A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "0225A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "0325A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "0425A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "0525A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "0625A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "0825A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "1425A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "4",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "1625A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "4",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "0925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "1025A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "1125A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "1225A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "1325A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "21880",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "63"
+  },
+  {
+    "ID": "22020",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "63"
+  },
+  {
+    "ID": "21850",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "63"
+  },
+  {
+    "ID": "11798",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "18",
+    "PRECIO DE VENTA (SOL)": "62"
+  },
+  {
+    "ID": "21890",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "63"
+  },
+  {
+    "ID": "11728",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "18",
+    "PRECIO DE VENTA (SOL)": "62"
+  },
+  {
+    "ID": "1130205",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "13",
+    "PRECIO DE VENTA (SOL)": "62"
+  },
+  {
+    "ID": "22131",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "19502",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "22090",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "63"
+  },
+  {
+    "ID": "0125PL",
+    "NOMBRE DE LA PIEZA": "PULSERA BOLAS ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "14",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0225PL",
+    "NOMBRE DE LA PIEZA": "PULSERA CRUZ ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "14",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0325PL",
+    "NOMBRE DE LA PIEZA": "PULSERA OJO TURCO ROJO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "0425PL",
+    "NOMBRE DE LA PIEZA": "PULSERA BOLAS DE PERLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "13",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0525PL",
+    "NOMBRE DE LA PIEZA": "PULSERA PERLA C/ROSA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "0625PL",
+    "NOMBRE DE LA PIEZA": "PULSERA PERLA C/ESPADAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "15",
+    "PRECIO DE VENTA (SOL)": "60"
+  },
+  {
+    "ID": "0725PL",
+    "NOMBRE DE LA PIEZA": "PULSERA INFINITO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "14",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "0825PL",
+    "NOMBRE DE LA PIEZA": "PULSERA DIAMANTE ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "0925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA MARIPOSA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "1025PL",
+    "NOMBRE DE LA PIEZA": "PULSERA LADRILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "9",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "0125CO",
+    "NOMBRE DE LA PIEZA": "COLLAR BOLAS \"\"M\"\" ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "22",
+    "PRECIO DE VENTA (SOL)": "66"
+  },
+  {
+    "ID": "0225CO",
+    "NOMBRE DE LA PIEZA": "COLLAR COLA DE PEZ VARON ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "25",
+    "PRECIO DE VENTA (SOL)": "75"
+  },
+  {
+    "ID": "0325CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PERLA DE TRES ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "15",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0425CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PERLA DE CINCO ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "60"
+  },
+  {
+    "ID": "0525CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PERLA DE DOS \"\"S\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "15",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0625CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PERLA DE DOS \"\"M\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "15",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0725CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PERLA DE UNO \"\"M\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "15",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0825CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PUNTO DE LUZ C/CRUZ ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "26",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0925CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PUNTO DE LUZ \"\"M\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "1025CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PUNTO DE LUZ \"\"S\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "1125CO",
+    "NOMBRE DE LA PIEZA": "COLLAR PUNTO DE LUZ DE 7 \"\"XS\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "16",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "1225CO",
+    "NOMBRE DE LA PIEZA": "COLLAR BOLA \"\"M\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "45"
+  },
+  {
+    "ID": "1325CO",
+    "NOMBRE DE LA PIEZA": "COLLAR OJO TURCO VERDE ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "45"
+  },
+  {
+    "ID": "1425CO",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE PUNTO DE LUZ \"\"L\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "1525CO",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE DE ADA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "1625CO",
+    "NOMBRE DE LA PIEZA": "COLLAR DE BOLITAS \"\"S\"\" BRILLO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "53"
+  },
+  {
+    "ID": "1725CO",
+    "NOMBRE DE LA PIEZA": "COLLAR ARBOL DE LA VIDA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "1825CO",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE CIRCULAR ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "1925CO",
+    "NOMBRE DE LA PIEZA": "COLLAR SOLO BOLITAS BRILLO \"\"XS\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "45"
+  },
+  {
+    "ID": "0525DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"A\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0125DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"B\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0625DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"E\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0725DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"G\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0225DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"N\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0825DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"O\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0325DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"U\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0425DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA \"\"Y\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "2825AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" ANA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "3025AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" ANDREA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "3125AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"L\"\" ANTONIA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "2925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" MIA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "3225AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" MONI ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "25"
+  },
+  {
+    "ID": "3925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"L\"\" XIMENA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "3825AR",
+    "NOMBRE DE LA PIEZA": "ARETE ARGOLLA \"\"M\"\" ARO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6.5",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "7425AR",
+    "NOMBRE DE LA PIEZA": "ARETE PIEDRA LU ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "13",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "1225AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" ABRIL ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "33"
+  },
+  {
+    "ID": "0525AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA CORAZON ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "13",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "1125AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA TIFANNY ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8.5",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "0925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" PERLITAS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "0225AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" 2 LINEAS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "0125AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA 5 PIEDRAS LUZ ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "0725AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA TRIO",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "0825AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"L\"\" MARY ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "45"
+  },
+  {
+    "ID": "1425AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" MARY ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7.5",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "2425AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" JANNY ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "1725AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ZOE ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "1625AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" ZOE ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "7325AR",
+    "NOMBRE DE LA PIEZA": "ARETE 3 EN 1 LIZY ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "13",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "2025AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" LOLA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "22"
+  },
+  {
+    "ID": "2125AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" LOLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "22"
+  },
+  {
+    "ID": "2525AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" CARMEN ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "23"
+  },
+  {
+    "ID": "4525AR",
+    "NOMBRE DE LA PIEZA": "ARETE ARGOLLA \"\"L\"\" TRIO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "3425AR",
+    "NOMBRE DE LA PIEZA": "ARETE ARGOLLA \"\"L\"\" TERE ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "11",
+    "PRECIO DE VENTA (SOL)": "39"
+  },
+  {
+    "ID": "4425AR",
+    "NOMBRE DE LA PIEZA": "ARETE ARGOLLA \"\"L\"\" MERY ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "3625AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"L\"\" EDY ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "29"
+  },
+  {
+    "ID": "0325AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" CORAZON ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "22"
+  },
+  {
+    "ID": "2325AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" CARITO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "23"
+  },
+  {
+    "ID": "4625AR",
+    "NOMBRE DE LA PIEZA": "ARETE ARGOLLA \"\"M\"\" CORY ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "1025AR",
+    "NOMBRE DE LA PIEZA": "ARETE ARGOLLA \"\"M\"\" PERLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "33"
+  },
+  {
+    "ID": "3325AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"M\"\" CLEO ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "2225AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" KARINA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "22"
+  },
+  {
+    "ID": "1925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" DELY ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "22"
+  },
+  {
+    "ID": "2625AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" MARVE ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "21"
+  },
+  {
+    "ID": "2725AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" MOTELITO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "4225AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" PAOLA ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "4125AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" TERY ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7.5",
+    "PRECIO DE VENTA (SOL)": "25"
+  },
+  {
+    "ID": "4325AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" LAGRIMA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "33"
+  },
+  {
+    "ID": "4025AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" ESTRELLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "25"
+  },
+  {
+    "ID": "5125AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"S\"\" LENTEJA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "5225AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"M\"\" LENTEJA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "30"
+  },
+  {
+    "ID": "5325AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" LENTEJA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "33"
+  },
+  {
+    "ID": "5425AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XL\"\" LENTEJA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "33"
+  },
+  {
+    "ID": "5625AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"S\"\" CORA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "63325AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS\"\" CORA BRILLO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "6225AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS\"\" FOR YOU ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "6325AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"M\"\" LAGRIMA C/PIEDRA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "34"
+  },
+  {
+    "ID": "6125AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS\"\" GAT ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "22"
+  },
+  {
+    "ID": "5725AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"S\"\" CORAZON ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "6425AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"S\"\" PALITO ROSA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "6525AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"M\"\" MARIPOSA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "24"
+  },
+  {
+    "ID": "5925AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"S\"\" LAZO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "23"
+  },
+  {
+    "ID": "6025AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS\"\" LUNA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5.5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "6625AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"S\"\" BRILLANTE ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "6725AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS\"\" FLOR C/PERLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "4825AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"M\"\" LENTEJA PERLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "4925AR",
+    "NOMBRE DE LA PIEZA": "ARETE BOLA \"\"M\"\" PERLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "5025AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"S\"\" PERLITA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "0425AR",
+    "NOMBRE DE LA PIEZA": "ARETE ARGOLLA \"\"M\"\" LAGRIMA PERLA",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "0625AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA BOLAS PERNO ROJO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "1325AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA BOLAS PERNO BLANCO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "6825AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" COLGANTE ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "9",
+    "PRECIO DE VENTA (SOL)": "33"
+  },
+  {
+    "ID": "6925AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" CONSTELACION ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "4725AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"L\"\" CIRCULAR C/FLOR ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "9",
+    "PRECIO DE VENTA (SOL)": "33"
+  },
+  {
+    "ID": "7025AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS\"\" TRIO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "13",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "7125AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"M\"\" ALAS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "26"
+  },
+  {
+    "ID": "7225AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"M\"\" ANGEL ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "10411002",
+    "NOMBRE DE LA PIEZA": "PUÑERAS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "010925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA BENDICION CON DIJE CRUZ MINI ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "62"
+  },
+  {
+    "ID": "020925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA ACERO ACTIVO CON DIJE CRUZ L",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "030925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA ACERO ACTIVO CON DIJE ANGEL NIÑA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "63"
+  },
+  {
+    "ID": "040925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA MALAK CON DIJE BESO ROJO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "050925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA CON DIJE CORAZON \"\"S\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "060925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA LUZ SERENA CON DIJE LOVE PIEDRA ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "3.5",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "070925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA CIELO DE ABRIL CON DIJE ESTRELLA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "080925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA CIELO DE ABRIL CON DIJE ANGEL NIÑA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "4",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "090925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA BRILLO CON DIJE CORONA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "100925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA PEZ CON DIJE PUNTO LILA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "62"
+  },
+  {
+    "ID": "110925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA RAIZ CON DIJE PERLA ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "4",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "120925CO",
+    "NOMBRE DE LA PIEZA": "CADENITA DIJE LABIO",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "4",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "010925A",
+    "NOMBRE DE LA PIEZA": "ANILLO CRUZ DE LUZ ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "020925A",
+    "NOMBRE DE LA PIEZA": "ANILLO LUZ SERENA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "030925A",
+    "NOMBRE DE LA PIEZA": "ANILLO SUSPIRO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "040925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ECO DE PLATA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "050925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ALMA LIGERA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "060925A",
+    "NOMBRE DE LA PIEZA": "ANILLO VERTICE  ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "070925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ANDROMEDA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "080925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ORACULO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "090925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ZAFIRO LUNAR ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "100925A",
+    "NOMBRE DE LA PIEZA": "ANILLO TALISMAN ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "110925A",
+    "NOMBRE DE LA PIEZA": "ANILLO AURA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "120925A",
+    "NOMBRE DE LA PIEZA": "ANILLO PUNTO DE LUZ ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "140925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ARGOLLA ",
+    "CANTIDAD": "4",
+    "PRECIO UNITARIO (SOL)": "3.4",
+    "PRECIO DE VENTA (SOL)": "23"
+  },
+  {
+    "ID": "150925A",
+    "NOMBRE DE LA PIEZA": "ANILLO ESTELA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "160925A",
+    "NOMBRE DE LA PIEZA": "ANILLO RAMA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "170925A",
+    "NOMBRE DE LA PIEZA": "ANILLO FILO CLARO",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "180925A",
+    "NOMBRE DE LA PIEZA": "ANILLO MAGIA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "9",
+    "PRECIO DE VENTA (SOL)": "37"
+  },
+  {
+    "ID": "190925A",
+    "NOMBRE DE LA PIEZA": "ANILLO MELODIA ",
+    "CANTIDAD": "6",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "110925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA MALAK M ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "4.2",
+    "PRECIO DE VENTA (SOL)": "22"
+  },
+  {
+    "ID": "100925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA MALAK S ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "4.2",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "120925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA MALAK XS ",
+    "CANTIDAD": "4",
+    "PRECIO UNITARIO (SOL)": "4.2",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "130925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA ALMA GEMELA XS ",
+    "CANTIDAD": "4",
+    "PRECIO UNITARIO (SOL)": "4.2",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "090925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA CIRCULO DIVINO XS ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "010925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA PROMESA DE LUZ S ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6.5",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "020925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA PROMESA DE LUZ XS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "030925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA AURA DE AMOR XXS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "080925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA FILO XS ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "4.5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "050925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA LINEA PURA XS  ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "040925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA LUZ INTERIOR S ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "070925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA TACTO S ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5.5",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "060925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA AVION ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "160925AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "170925AR",
+    "NOMBRE DE LA PIEZA": "ARETE CRUZ ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "180925AR",
+    "NOMBRE DE LA PIEZA": "ARETE MICHI ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "190925AR",
+    "NOMBRE DE LA PIEZA": "ARETE CORAZON DE LUZ  ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "140925AR",
+    "NOMBRE DE LA PIEZA": "ARETE OJO TURCO ROJO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "4",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "150925AR",
+    "NOMBRE DE LA PIEZA": "ARETE OJO TURCO NEGRO",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "200925AR",
+    "NOMBRE DE LA PIEZA": "ARETE ESTRELLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "010925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA AURA ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "020925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA INSTANTE ",
+    "CANTIDAD": "5",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "040925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA REFLEJO ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7.5",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "050925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA OJO TURCO NEGRO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "060925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA LINEA PURA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "070925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA GALAXIA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "080925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA PUNTO DE LUZ ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "090925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA BRINA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "100925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA CRUZ LUZ ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "020925TOB",
+    "NOMBRE DE LA PIEZA": "TOBILLERA CAMINO DE LUZ ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "110925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA LATIDO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "9",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "120925PL",
+    "NOMBRE DE LA PIEZA": "PULSERA DESTINO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7.5",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "030925TOB",
+    "NOMBRE DE LA PIEZA": "TOBILLERA TREBOL ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "040925TOB",
+    "NOMBRE DE LA PIEZA": "TOBILLERA ESTRELLA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "050925TOB",
+    "NOMBRE DE LA PIEZA": "TOBILLERA MIX CORAZON ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "060925TOB",
+    "NOMBRE DE LA PIEZA": "TOBILLERA CANDADO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "010925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA MINI \"\"C\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "020925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA MINI \"\"D\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "030925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA MINI \"\"H\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "040925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA MINI \"\"I\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "050925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA MINI \"\"K\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "060925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA MINI \"\"R\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "070925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA MINI \"\"S\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "080925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"A\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "090925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"B\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "100925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"D\"\"",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "110925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"E\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "120925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"F\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "130925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"G\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "140925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"H\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "150925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"I\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "160925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"J\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "170925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"K\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "180925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"M\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "190925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"N\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "200925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"P\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "210925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"S\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "220925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"V\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "230925DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE LETRA GRANDE \"\"Y\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0126AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "0226AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\"",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "0326AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "0426AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\"",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "0526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "0626AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "0726AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "0826AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\"",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "0926AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "1026AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA \"\"S\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6",
+    "PRECIO DE VENTA (SOL)": "28"
+  },
+  {
+    "ID": "1126AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "3",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "1226AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "3.5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "1326AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "3.5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "1426AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"XS ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "3.5",
+    "PRECIO DE VENTA (SOL)": "20"
+  },
+  {
+    "ID": "1526AR",
+    "NOMBRE DE LA PIEZA": "ARETE \"\"M\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "",
+    "PRECIO DE VENTA (SOL)": ""
+  },
+  {
+    "ID": "0126CO",
+    "NOMBRE DE LA PIEZA": "COLLAR BOLITAS \"\"S\"\" ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "53"
+  },
+  {
+    "ID": "0226CO",
+    "NOMBRE DE LA PIEZA": "CADENITA CON DIJE CIRCULO BRILLO \"\"XS\"\"",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "0326CO",
+    "NOMBRE DE LA PIEZA": "CADENITA CON DIJE NIÑA ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "20",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "0426CO",
+    "NOMBRE DE LA PIEZA": "CADENITA CON DIJE RENO BRILLO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "52"
+  },
+  {
+    "ID": "0126DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE MINI LETRA \"\"F\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0226DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE MINI LETRA \"\"J\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0326DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE MINI LETRA \"\"T\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0426DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE MINI LETRA \"\"V\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0526DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE GRANDE LETRA \"\"C\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0626DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE GRANDE LETRA \"\"L\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0726DI",
+    "NOMBRE DE LA PIEZA": "COLLAR Y DIJE GRANDE LETRA \"\"R\"\" ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "0126CA",
+    "NOMBRE DE LA PIEZA": "CADENITA LARGA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "16",
+    "PRECIO DE VENTA (SOL)": "50"
+  },
+  {
+    "ID": "0126P",
+    "NOMBRE DE LA PIEZA": "PUÑERA P ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "0126PL",
+    "NOMBRE DE LA PIEZA": "PULSERA 11385 ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "15",
+    "PRECIO DE VENTA (SOL)": "52"
+  },
+  {
+    "ID": "0226PL",
+    "NOMBRE DE LA PIEZA": "PULSERA 11386 ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "15",
+    "PRECIO DE VENTA (SOL)": "52"
+  },
+  {
+    "ID": "0126TOB",
+    "NOMBRE DE LA PIEZA": "TOBILLERA 19820 ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "0526CO",
+    "NOMBRE DE LA PIEZA": "CADENITA CON DIJE PERLA I ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "6.8",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "010526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA AURORA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "020526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA AURORA II",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "030526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA AURORA S",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "040526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA ALMENDRA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "050526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA ALMENDRA II",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "060526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA ANA",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "070526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA ANA II",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "080526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA ALMA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "090526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA LISA",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "5",
+    "PRECIO DE VENTA (SOL)": "32"
+  },
+  {
+    "ID": "100526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA CORY",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "9",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "110526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA CARMEN",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "120526AR ",
+    "NOMBRE DE LA PIEZA": "ARGOLLA IRMA",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "130526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA LIZ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "140526AR",
+    "NOMBRE DE LA PIEZA": "ARGOLLA LUZ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "12",
+    "PRECIO DE VENTA (SOL)": "40"
+  },
+  {
+    "ID": "010526P",
+    "NOMBRE DE LA PIEZA": "PUÑERA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "11.8",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "020526P",
+    "NOMBRE DE LA PIEZA": "PUÑERA ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "7",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "030526P",
+    "NOMBRE DE LA PIEZA": "PUÑERA ",
+    "CANTIDAD": "3",
+    "PRECIO UNITARIO (SOL)": "11",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "040526P",
+    "NOMBRE DE LA PIEZA": "PUÑERA ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "11",
+    "PRECIO DE VENTA (SOL)": "48"
+  },
+  {
+    "ID": "010526CO",
+    "NOMBRE DE LA PIEZA": "COLLAR DE PIEDRAS NE",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "020526CO",
+    "NOMBRE DE LA PIEZA": "COLLAR DE PIEDRAS MA",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "030526CO",
+    "NOMBRE DE LA PIEZA": "COLLAR DE PIEDRAS CE",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "040526CO",
+    "NOMBRE DE LA PIEZA": "COLLAR DE PIEDRAS VER",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "55"
+  },
+  {
+    "ID": "050526CO",
+    "NOMBRE DE LA PIEZA": "COLLAR DIJE CON PIEDRA ROSA ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "10",
+    "PRECIO DE VENTA (SOL)": "65"
+  },
+  {
+    "ID": "010526A",
+    "NOMBRE DE LA PIEZA": "ANILLO A",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8.2",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "020526A",
+    "NOMBRE DE LA PIEZA": "ANILLO B",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8.2",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "030526A",
+    "NOMBRE DE LA PIEZA": "ANILLO C",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8.2",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "040526A",
+    "NOMBRE DE LA PIEZA": "ANILLO D",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8.2",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "050526A",
+    "NOMBRE DE LA PIEZA": "ANILLO MINI",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8.8",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "060526A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7.8",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "070526A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "7.8",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "080526A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7.8",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "090526A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "7.8",
+    "PRECIO DE VENTA (SOL)": "35"
+  },
+  {
+    "ID": "100526A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "1",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "38"
+  },
+  {
+    "ID": "110526A",
+    "NOMBRE DE LA PIEZA": "ANILLO ",
+    "CANTIDAD": "2",
+    "PRECIO UNITARIO (SOL)": "8",
+    "PRECIO DE VENTA (SOL)": "38"
+  }
+]
