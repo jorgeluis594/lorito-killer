@@ -103,6 +103,9 @@ export const buildReceiptPrintData = ({
     xml: isBillableDocument(document) ? document.xml : undefined,
     issuedToTaxEntity: document.issuedToTaxEntity,
     issuedAt: toIsoString(document.issuedAt),
+    netTotal: document.netTotal,
+    discountAmount: document.discountAmount,
+    total: document.total,
   },
   customer: buildCustomer(order.customer),
   order: {

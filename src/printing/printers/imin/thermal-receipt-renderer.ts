@@ -1,7 +1,9 @@
 import { INVOICE, RECEIPT, TICKET, type DocumentType } from "@/document/types";
 import {
   billableNumberToWords,
+  formatPrice,
   formatPriceWithoutCurrency,
+  localizeOnlyDate,
   paymentMethodToText,
   shortLocalizeDate,
 } from "@/lib/utils";
@@ -10,21 +12,14 @@ import type {
   PrintCommand,
   ReceiptPrintData,
 } from "@/printing/types";
-import { UNIT_TYPE_MAPPER } from "@/product/constants";
 
 const COLUMNS = 48;
-const ITEM_NAME_WIDTH = 24;
+const ITEM_NAME_WIDTH = 21;
 
 const documentTypeToText: Record<DocumentType, string> = {
   [INVOICE]: "FACTURA ELECTRONICA",
   [RECEIPT]: "BOLETA ELECTRONICA",
   [TICKET]: "NOTA DE VENTA ELECTRONICA",
-};
-
-const customerDocumentTypeToText: Record<string, string> = {
-  dni: "DNI",
-  ruc: "RUC",
-  carnet_extranjeria: "Carnet de extranjeria",
 };
 
 const text = (
@@ -58,7 +53,12 @@ const clean = (value: string | number | undefined | null): string =>
 
 const money = (value: number): string => formatPriceWithoutCurrency(value);
 
+const currency = (value: number): string => clean(formatPrice(value));
+
 const formatDate = (value: string): string => shortLocalizeDate(new Date(value));
+
+const formatOnlyDate = (value: string): string =>
+  localizeOnlyDate(new Date(value));
 
 const chunkText = (value: string, width: number): string[] => {
   const words = clean(value).split(" ").filter(Boolean);
@@ -99,16 +99,21 @@ const pushWrappedLabel = (
   commands: PrintCommand[],
   label: string,
   value: string | undefined,
+  options: { showEmpty?: boolean } = {},
 ) => {
-  if (!value) return;
+  if (!value && !options.showEmpty) return;
 
-  chunkText(`${label}: ${value}`, COLUMNS).forEach((line) => {
+  chunkText(`${label}: ${value ?? ""}`, COLUMNS).forEach((line) => {
     commands.push(text(line));
   });
 };
 
+const isBillableDocumentType = (documentType: DocumentType): boolean =>
+  documentType === RECEIPT || documentType === INVOICE;
+
 const addHeader = (commands: PrintCommand[], data: ReceiptPrintData) => {
   const { company, document } = data;
+  const isBillable = isBillableDocumentType(document.type);
 
   commands.push(text(clean(company.commercialName || company.legalName), {
     align: "center",
@@ -116,15 +121,31 @@ const addHeader = (commands: PrintCommand[], data: ReceiptPrintData) => {
     size: 2,
   }));
 
-  if (company.legalName && company.legalName !== company.commercialName) {
+  if (
+    isBillable &&
+    company.legalName &&
+    company.legalName !== company.commercialName
+  ) {
     commands.push(text(clean(company.legalName), { align: "center" }));
   }
 
-  pushWrappedLabel(commands, "RUC", company.ruc);
-  pushWrappedLabel(commands, "Direccion", company.address);
-  pushWrappedLabel(commands, "Ubicacion", company.location);
-  pushWrappedLabel(commands, "Email", company.email);
-  pushWrappedLabel(commands, "Telefono", company.phone);
+  if (isBillable) {
+    if (company.ruc) {
+      commands.push(text(`RUC ${clean(company.ruc)}`, { align: "center" }));
+    }
+    if (company.location) {
+      commands.push(text(clean(company.location), { align: "center" }));
+    }
+    if (company.address) {
+      commands.push(text(clean(company.address), { align: "center" }));
+    }
+    if (company.email) {
+      commands.push(text(clean(company.email), { align: "center" }));
+    }
+    if (company.phone) {
+      commands.push(text(clean(company.phone), { align: "center" }));
+    }
+  }
 
   commands.push(separator("="));
   commands.push(text(documentTypeToText[document.type], {
@@ -136,25 +157,22 @@ const addHeader = (commands: PrintCommand[], data: ReceiptPrintData) => {
 };
 
 const addDocumentData = (commands: PrintCommand[], data: ReceiptPrintData) => {
-  const { customer, document, order } = data;
-  const customerDocumentLabel = customer?.documentType
-    ? customerDocumentTypeToText[customer.documentType] ?? customer.documentType
-    : document.type === INVOICE
-      ? "RUC"
-      : "DNI";
+  const { customer, document } = data;
+  const customerDocumentLabel = document.type === INVOICE ? "RUC" : "DNI";
 
   pushWrappedLabel(commands, "F. Emision", formatDate(document.dateOfIssue));
-
-  if (document.issuedAt) {
-    pushWrappedLabel(commands, "F. Envio", formatDate(document.issuedAt));
-  }
-
-  pushWrappedLabel(commands, "Pedido", order.id);
-  pushWrappedLabel(commands, "Cliente", customer?.name || "Cliente varios");
-  pushWrappedLabel(commands, customerDocumentLabel, customer?.documentNumber);
-  pushWrappedLabel(commands, "Direccion", customer?.address);
-  pushWrappedLabel(commands, "Email", customer?.email);
-  pushWrappedLabel(commands, "Telefono", customer?.phone);
+  pushWrappedLabel(
+    commands,
+    "F. Vencimiento",
+    formatOnlyDate(document.dateOfIssue),
+  );
+  pushWrappedLabel(commands, "Cliente", customer?.name, { showEmpty: true });
+  pushWrappedLabel(commands, customerDocumentLabel, customer?.documentNumber, {
+    showEmpty: true,
+  });
+  pushWrappedLabel(commands, "Direccion", customer?.address, {
+    showEmpty: true,
+  });
 
   if (document.status === "cancelled") {
     commands.push(text("DOCUMENTO ANULADO", { align: "center", bold: true }));
@@ -166,8 +184,8 @@ const addItems = (commands: PrintCommand[], data: ReceiptPrintData) => {
   commands.push(separator());
   commands.push(
     columns(
-      ["Cant", "Producto", "P.Unit", "Total"],
-      [6, 24, 8, 10],
+      ["Cant.", "Producto", "Precio", "Total"],
+      [7, 21, 10, 10],
       ["left", "left", "right", "right"],
       true,
     ),
@@ -175,14 +193,14 @@ const addItems = (commands: PrintCommand[], data: ReceiptPrintData) => {
   commands.push(separator());
 
   data.order.items.forEach((item) => {
-    const quantity = `${item.quantity} ${UNIT_TYPE_MAPPER[item.unitType]}`;
+    const quantity = `${item.quantity}`;
     const productLines = chunkText(item.name, ITEM_NAME_WIDTH);
     const [firstLine = ""] = productLines;
 
     commands.push(
       columns(
         [quantity, firstLine, money(item.unitPrice), money(item.netTotal)],
-        [6, 24, 8, 10],
+        [7, 21, 10, 10],
         ["left", "left", "right", "right"],
       ),
     );
@@ -191,7 +209,7 @@ const addItems = (commands: PrintCommand[], data: ReceiptPrintData) => {
       commands.push(
         columns(
           ["", line, "", ""],
-          [6, 24, 8, 10],
+          [7, 21, 10, 10],
           ["left", "left", "right", "right"],
         ),
       );
@@ -200,8 +218,8 @@ const addItems = (commands: PrintCommand[], data: ReceiptPrintData) => {
     if (item.discountAmount > 0) {
       commands.push(
         columns(
-          ["", "Descuento", "", `-${money(item.discountAmount)}`],
-          [6, 24, 8, 10],
+          ["", "Descuento", "", `- ${money(item.discountAmount)}`],
+          [7, 21, 10, 10],
           ["left", "left", "right", "right"],
         ),
       );
@@ -210,35 +228,69 @@ const addItems = (commands: PrintCommand[], data: ReceiptPrintData) => {
 };
 
 const addTotals = (commands: PrintCommand[], data: ReceiptPrintData) => {
+  const { document } = data;
+
   commands.push(separator());
 
-  if (data.order.discount > 0) {
+  if (document.type === TICKET) {
+    if (document.discountAmount > 0) {
+      commands.push(
+        columns(
+          ["Subtotal:", currency(document.netTotal)],
+          [30, 18],
+          ["right", "right"],
+        ),
+      );
+      commands.push(
+        columns(
+          ["Descuento:", currency(document.discountAmount)],
+          [30, 18],
+          ["right", "right"],
+        ),
+      );
+    }
+
     commands.push(
       columns(
-        ["Subtotal", money(data.order.subtotal)],
-        [34, 14],
+        ["Total:", currency(document.total)],
+        [30, 18],
+        ["right", "right"],
+        true,
+      ),
+    );
+  } else {
+    commands.push(
+      columns(
+        ["OP. Exoneradas:", currency(document.netTotal)],
+        [30, 18],
         ["right", "right"],
       ),
     );
+
+    if (document.discountAmount > 0) {
+      commands.push(
+        columns(
+          ["DESCUENTO:", currency(document.discountAmount)],
+          [30, 18],
+          ["right", "right"],
+        ),
+      );
+    }
+
+    commands.push(
+      columns(["IGV:", currency(0)], [30, 18], ["right", "right"]),
+    );
     commands.push(
       columns(
-        ["Descuento", `-${money(data.order.discount)}`],
-        [34, 14],
+        ["TOTAL A PAGAR:", currency(document.total)],
+        [30, 18],
         ["right", "right"],
+        true,
       ),
     );
   }
 
-  commands.push(
-    columns(
-      ["TOTAL S/", money(data.order.total)],
-      [34, 14],
-      ["right", "right"],
-      true,
-    ),
-  );
-
-  chunkText(`Son: ${billableNumberToWords(data.order.total)}`, COLUMNS).forEach(
+  chunkText(`Son: ${billableNumberToWords(document.total)}`, COLUMNS).forEach(
     (line) => commands.push(text(line)),
   );
 };
@@ -247,43 +299,28 @@ const addPayments = (commands: PrintCommand[], data: ReceiptPrintData) => {
   if (!data.order.payments.length) return;
 
   commands.push(separator());
-  commands.push(text("Pagos", { bold: true }));
+  commands.push(
+    text(
+      `Condicion de pago: ${
+        data.order.payments.length > 1
+          ? "Combinado"
+          : paymentMethodToText(data.order.payments[0].method)
+      }`,
+    ),
+  );
+  commands.push(text("Pagos:", { bold: true }));
 
   data.order.payments.forEach((payment) => {
-    const label =
-      payment.method === "wallet" && payment.walletName
-        ? `${paymentMethodToText(payment.method)} ${payment.walletName}`
-        : paymentMethodToText(payment.method);
-
     commands.push(
-      columns([label, money(payment.amount)], [34, 14], ["left", "right"]),
+      text(
+        `• ${paymentMethodToText(payment.method)} - ${currency(payment.amount)}`,
+      ),
     );
-
-    pushWrappedLabel(commands, "Operacion", payment.operationCode);
-
-    if (payment.receivedAmount !== undefined) {
-      commands.push(
-        columns(
-          ["Recibido", money(payment.receivedAmount)],
-          [34, 14],
-          ["left", "right"],
-        ),
-      );
-    }
-
-    if (payment.change !== undefined && payment.change > 0) {
-      commands.push(
-        columns(["Vuelto", money(payment.change)], [34, 14], [
-          "left",
-          "right",
-        ]),
-      );
-    }
   });
 };
 
 const addFooter = (commands: PrintCommand[], data: ReceiptPrintData) => {
-  if (data.document.hash) {
+  if (isBillableDocumentType(data.document.type) && data.document.hash) {
     commands.push(separator());
     commands.push(text("Codigo hash:", { bold: true }));
     chunkText(data.document.hash, COLUMNS).forEach((line) => {
@@ -291,11 +328,10 @@ const addFooter = (commands: PrintCommand[], data: ReceiptPrintData) => {
     });
   }
 
-  if (data.document.qr) {
+  if (isBillableDocumentType(data.document.type) && data.document.qr) {
     commands.push({ type: "qr", value: data.document.qr });
   }
 
-  commands.push(text("Gracias por su compra", { align: "center" }));
   commands.push({ type: "feed", lines: 4 });
   commands.push({ type: "cut" });
 };
