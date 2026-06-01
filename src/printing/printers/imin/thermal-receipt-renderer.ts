@@ -320,14 +320,6 @@ const addPayments = (commands: PrintCommand[], data: ReceiptPrintData) => {
 };
 
 const addFooter = (commands: PrintCommand[], data: ReceiptPrintData) => {
-  if (isBillableDocumentType(data.document.type) && data.document.hash) {
-    commands.push(separator());
-    commands.push(text("Codigo hash:", { bold: true }));
-    chunkText(data.document.hash, COLUMNS).forEach((line) => {
-      commands.push(text(line));
-    });
-  }
-
   if (isBillableDocumentType(data.document.type) && data.document.qr) {
     commands.push({ type: "qr", value: data.document.qr });
   }

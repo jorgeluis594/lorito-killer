@@ -69,8 +69,10 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
   try {
     const response = await fetch(orderPrintDataUrl(orderId), {
       method: "GET",
+      cache: "no-store",
       headers: {
         Accept: "application/json",
+        "Cache-Control": "no-store",
       },
     });
 

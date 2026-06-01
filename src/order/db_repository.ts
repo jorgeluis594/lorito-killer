@@ -6,6 +6,7 @@ import {
   $Enums,
   type Payment as PrismaPayment,
   Prisma,
+  type Product as PrismaProduct,
   type Order as PrismaOrder,
   type OrderItem as PrismaOrderItem,
 } from "@prisma/client";
@@ -130,6 +131,86 @@ const DISCOUNT_TYPE_MAPPER: Record<Discount["type"], $Enums.DiscountType> = {
   percent: "PERCENT",
 };
 
+type ReceiptPrintOrderPayload = Prisma.OrderGetPayload<{
+  include: {
+    customer: true;
+    orderItems: { include: { product: true } };
+    payments: true;
+  };
+}>;
+
+const toOrderDiscount = (
+  discountType: $Enums.DiscountType | null,
+  discountValue: Prisma.Decimal | null,
+): Discount | undefined => {
+  if (!discountType || !discountValue) return undefined;
+
+  return {
+    type: PRISMA_DISCOUNT_TYPE_MAPPER[discountType],
+    value: discountValue.toNumber(),
+  };
+};
+
+const toOrderDocumentType = (
+  documentType: string | null,
+): Order["documentType"] => {
+  if (!isOrderDocumentType(documentType)) {
+    throw new Error(`Invalid order documentType: ${documentType}`);
+  }
+
+  return documentType ?? "ticket";
+};
+
+const mapReceiptPrintOrderItem = (
+  orderItem: PrismaOrderItem & { product: PrismaProduct },
+): OrderItem => {
+  const discount = toOrderDiscount(
+    orderItem.discountType,
+    orderItem.discountValue,
+  );
+
+  return {
+    id: orderItem.id,
+    productId: orderItem.productId,
+    productSku: orderItem.product.sku || undefined,
+    productName: orderItem.product.name,
+    productPrice: orderItem.productPrice.toNumber(),
+    unitType: orderItem.product.unitType
+      ? UNIT_TYPE_MAPPER[orderItem.product.unitType]
+      : "unit",
+    quantity: orderItem.quantity.toNumber(),
+    discount,
+    netTotal: orderItem.netTotal.toNumber(),
+    discountAmount: orderItem.discountAmount.toNumber(),
+    total: orderItem.total.toNumber(),
+    createdAt: orderItem.createdAt,
+    updatedAt: orderItem.updatedAt,
+  };
+};
+
+const mapReceiptPrintOrder = async (
+  prismaOrder: ReceiptPrintOrderPayload,
+): Promise<Order> => ({
+  id: prismaOrder.id,
+  cashShiftId: prismaOrder.cashShiftId,
+  companyId: prismaOrder.companyId || "some_company_id",
+  customerId: prismaOrder.customerId || undefined,
+  orderItems: prismaOrder.orderItems.map(mapReceiptPrintOrderItem),
+  netTotal: prismaOrder.netTotal.toNumber(),
+  discountAmount: prismaOrder.discountAmount.toNumber(),
+  total: prismaOrder.total.toNumber(),
+  cancellationReason: prismaOrder.cancellationReason || "",
+  status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
+  payments: prismaOrder.payments.map(mapPrismaPaymentToPayment),
+  discount: toOrderDiscount(prismaOrder.discountType, prismaOrder.discountValue),
+  documentType: toOrderDocumentType(prismaOrder.documentType),
+  customer: prismaOrder.customer
+    ? await prismaToCustomer(prismaOrder.customer)
+    : undefined,
+  createdAt: prismaOrder.createdAt,
+  updatedAt: prismaOrder.updatedAt,
+});
+
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
     const { orderItems, payments, customer, discount, cancellationReason, ...orderData } = order;
@@ -215,6 +296,35 @@ export const find = async (
           : undefined,
       },
     };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+};
+
+export const findReceiptPrintOrder = async (
+  id: string,
+  companyId: string,
+): Promise<response<Order>> => {
+  try {
+    const prismaOrder = await prisma().order.findFirst({
+      where: { id, companyId },
+      include: {
+        customer: true,
+        orderItems: {
+          include: { product: true },
+          orderBy: { createdAt: "asc" },
+        },
+        payments: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    if (!prismaOrder) {
+      return { success: false, message: "Order not found" };
+    }
+
+    return { success: true, data: await mapReceiptPrintOrder(prismaOrder) };
   } catch (e: any) {
     return { success: false, message: e.message };
   }
