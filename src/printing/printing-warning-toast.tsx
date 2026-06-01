@@ -3,6 +3,7 @@
 import { toast } from "@/shared/components/ui/use-toast";
 
 const PRINTING_WARNING_DURATION_MS = 30_000;
+const PRINTING_LOG_DURATION_MS = 60_000;
 
 const serializePrintingWarningDetail = (detail: unknown): string | undefined => {
   if (detail === undefined) return undefined;
@@ -64,4 +65,68 @@ export const notifyPrintingWarning = (
     variant: "destructive",
     duration: PRINTING_WARNING_DURATION_MS,
   });
+};
+
+type PrintingLogEntry = {
+  at: string;
+  message: string;
+  detail?: unknown;
+};
+
+const renderPrintingLog = (entries: PrintingLogEntry[]) => {
+  const serializedEntries = serializePrintingWarningDetail(entries);
+
+  return (
+    <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
+      {serializedEntries}
+    </pre>
+  );
+};
+
+export const createPrintingToastLogger = (title: string) => {
+  const entries: PrintingLogEntry[] = [];
+
+  const handle = toast({
+    title,
+    description: renderPrintingLog(entries),
+    duration: PRINTING_LOG_DURATION_MS,
+  });
+
+  const log = (message: string, detail?: unknown) => {
+    entries.push({
+      at: new Date().toLocaleTimeString(),
+      message,
+      detail,
+    });
+
+    handle.update({
+      id: handle.id,
+      title,
+      description: renderPrintingLog(entries),
+      duration: PRINTING_LOG_DURATION_MS,
+      open: true,
+    });
+  };
+
+  const fail = (message: string, detail?: unknown) => {
+    entries.push({
+      at: new Date().toLocaleTimeString(),
+      message,
+      detail,
+    });
+
+    handle.update({
+      id: handle.id,
+      title,
+      description: renderPrintingLog(entries),
+      variant: "destructive",
+      duration: PRINTING_LOG_DURATION_MS,
+      open: true,
+    });
+  };
+
+  return {
+    log,
+    fail,
+  };
 };

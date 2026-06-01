@@ -18,6 +18,7 @@ const FALCON_80MM_TEXT_WIDTH = 576;
 const FALCON_QR_SIZE = 6;
 const FALCON_QR_ERROR_CORRECTION_LEVEL = 48;
 const COMMAND_TIMEOUT_MS = 2_500;
+const CONNECTION_TIMEOUT_MS = 3_500;
 const IMIN_SDK_SCRIPT_ID = "imin-printer-sdk";
 const IMIN_SDK_SCRIPT_SRC = "/vendor/imin-printer/imin-printer.js";
 
@@ -31,6 +32,13 @@ type IminTransport = "official-sdk" | "legacy-window-sdk";
 type ResolvedIminSdk = {
   sdk: IminPrintInstance;
   transport: IminTransport;
+};
+
+type IminSdkInternalConnectionState = IminPrintInstance & {
+  isLock?: boolean;
+  h_timer?: number;
+  c_timer?: number;
+  l_timer?: number;
 };
 
 type IminPrinterDebugInfo = {
@@ -295,6 +303,26 @@ const sdkPromise = async <T>(
     }
   });
 
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  errorMessage: string,
+): Promise<T> => {
+  let timeout: number | undefined;
+
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    timeout = window.setTimeout(() => {
+      reject(new Error(errorMessage));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeout) window.clearTimeout(timeout);
+  }
+};
+
 export class IminSdkWrapper {
   private officialSdk?: IminPrintInstance;
   private officialSdkConnected = false;
@@ -488,13 +516,33 @@ export class IminSdkWrapper {
 
     if (this.officialSdkConnected && sdk.ws?.readyState === 1) return;
 
-    const connected = await sdk.connect?.();
+    const connected = await withTimeout(
+      sdk.connect?.() ?? Promise.resolve(false),
+      CONNECTION_TIMEOUT_MS,
+      `iMin SDK connect() timed out after ${CONNECTION_TIMEOUT_MS}ms`,
+    ).catch((error) => {
+      this.stopOfficialSdkReconnect(sdk);
+      throw error;
+    });
+
     if (!connected) {
       this.officialSdkConnected = false;
+      this.stopOfficialSdkReconnect(sdk);
       throw new Error("iMin SDK connect() returned false");
     }
 
     this.officialSdkConnected = true;
+  }
+
+  private stopOfficialSdkReconnect(sdk: IminPrintInstance) {
+    const internalSdk = sdk as IminSdkInternalConnectionState;
+
+    internalSdk.isLock = true;
+    if (internalSdk.h_timer) window.clearTimeout(internalSdk.h_timer);
+    if (internalSdk.c_timer) window.clearTimeout(internalSdk.c_timer);
+    if (internalSdk.l_timer) window.clearTimeout(internalSdk.l_timer);
+    sdk.close?.();
+    this.officialSdkConnected = false;
   }
 
   private connectType(sdk?: IminPrintInstance): string | number {

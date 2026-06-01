@@ -2,6 +2,7 @@ import type {
   PrintCommand,
   PrintFailureReason,
   PrintResult,
+  PrintingDebugLog,
   PrinterAdapter,
   PrinterStatus,
   ReceiptPrintData,
@@ -73,24 +74,51 @@ export const iminPrinter: PrinterAdapter = {
 
   getStatus: () => iminSdkWrapper.getStatus(),
 
-  async printReceipt(data: ReceiptPrintData): Promise<PrintResult> {
+  async printReceipt(
+    data: ReceiptPrintData,
+    debugLog?: PrintingDebugLog,
+  ): Promise<PrintResult> {
+    debugLog?.("Inicializando adaptador iMin");
     const initResult = ensureReady(await this.initialize!());
-    if (initResult) return initResult;
+    if (initResult) {
+      debugLog?.("Inicializacion iMin fallo", initResult);
+      return initResult;
+    }
 
+    debugLog?.("Consultando estado de impresora iMin");
     const statusResult = ensureReady(await iminSdkWrapper.getStatus());
-    if (statusResult) return statusResult;
+    if (statusResult) {
+      debugLog?.("Estado iMin no listo", statusResult);
+      return statusResult;
+    }
 
     let commands: PrintCommand[];
     try {
       commands = buildThermalReceiptCommands(data);
-    } catch {
+      debugLog?.("Comandos termicos construidos", {
+        commandCount: commands.length,
+      });
+    } catch (error) {
+      debugLog?.("No se pudieron construir comandos termicos", { error });
       return failedResult("render_failed");
     }
 
-    for (const command of commands) {
+    for (const [index, command] of commands.entries()) {
+      debugLog?.("Ejecutando comando iMin", {
+        index: index + 1,
+        total: commands.length,
+        type: command.type,
+      });
       const rawCommandStatus = await executeCommand(command);
       const commandStatus = ensureReady(rawCommandStatus);
       if (commandStatus) {
+        debugLog?.("Comando iMin respondio con error", {
+          index: index + 1,
+          type: command.type,
+          rawCommandStatus,
+          commandStatus,
+        });
+
         if (command.type === "cut") {
           notifyPrintingWarning(
             "iMin receipt printed, but paper cut failed",
@@ -105,6 +133,7 @@ export const iminPrinter: PrinterAdapter = {
       }
     }
 
+    debugLog?.("Todos los comandos iMin finalizaron");
     return {
       success: true,
       mode: "imin",
@@ -115,5 +144,7 @@ export const iminPrinter: PrinterAdapter = {
 
 export const isIminPrinterAvailable = (): boolean => iminPrinter.isAvailable();
 
-export const printReceipt = (data: ReceiptPrintData): Promise<PrintResult> =>
-  iminPrinter.printReceipt(data);
+export const printReceipt = (
+  data: ReceiptPrintData,
+  debugLog?: PrintingDebugLog,
+): Promise<PrintResult> => iminPrinter.printReceipt(data, debugLog);
