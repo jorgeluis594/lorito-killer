@@ -6,7 +6,7 @@ import type { UserRole, Resource, Action } from "@/authorization/types";
 export const config = {
   matcher: [
     "/",
-    "/((?!api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).+)",
+    "/((?!api/|_next/|_static/|_vercel|vendor/|[\\w-]+\\.\\w+).+)",
     "/dashboard/:path*",
   ],
 };
