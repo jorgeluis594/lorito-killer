@@ -73,10 +73,6 @@ export const iminPrinter: PrinterAdapter = {
   getStatus: () => iminSdkWrapper.getStatus(),
 
   async printReceipt(data: ReceiptPrintData): Promise<PrintResult> {
-    if (!iminSdkWrapper.isAvailable()) {
-      return failedResult("sdk_unavailable");
-    }
-
     const initResult = ensureReady(await this.initialize!());
     if (initResult) return initResult;
 

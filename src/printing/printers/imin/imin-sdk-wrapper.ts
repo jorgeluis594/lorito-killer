@@ -17,6 +17,7 @@ const FALCON_QR_ERROR_CORRECTION_LEVEL = 48;
 const IMIN_WEBSOCKET_URL = "ws://127.0.0.1:8081/websocket";
 const COMMAND_TIMEOUT_MS = 2_500;
 const CONNECT_TIMEOUT_MS = 1_500;
+const IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX = "[iMin WebSocket contract]";
 
 type TextCommandOptions = Pick<
   Extract<PrintCommand, { type: "text" }>,
@@ -33,6 +34,7 @@ type WebSocketResponse = {
   data?: unknown;
   status?: unknown;
   code?: unknown;
+  value?: unknown;
   error?: unknown;
   message?: unknown;
 };
@@ -143,6 +145,7 @@ const numericFrom = (value: unknown): number | undefined => {
 
   const objectValue = normalized as Record<string, unknown>;
   return (
+    numericFrom(objectValue.value) ??
     numericFrom(objectValue.status) ??
     numericFrom(objectValue.code) ??
     numericFrom(objectValue.result) ??
@@ -152,7 +155,27 @@ const numericFrom = (value: unknown): number | undefined => {
 
 const statusFromCommandValue = (value: unknown): PrinterStatus => {
   const statusCode = numericFrom(value);
-  if (statusCode === undefined || statusCode === 0) return readyStatus();
+  if (statusCode === undefined) {
+    if (value !== undefined) {
+      console.warn(
+        `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Command response did not include a numeric status code.`,
+        {
+          response: value,
+          expectedShapes: [
+            0,
+            { value: 0 },
+            { result: { value: 0 } },
+            { data: { value: 0 } },
+            { status: { value: 0 } },
+          ],
+        },
+      );
+    }
+
+    return readyStatus();
+  }
+
+  if (statusCode === 0) return readyStatus();
   return mapIminStatus(statusCode);
 };
 
@@ -201,6 +224,8 @@ class IminWebSocketClient {
       resolve: (value: unknown) => void;
       reject: (reason?: unknown) => void;
       timeout: ReturnType<typeof setTimeout>;
+      method: string;
+      params: unknown[];
     }
   >();
 
@@ -228,23 +253,34 @@ class IminWebSocketClient {
   async command(method: string, params: unknown[] = []): Promise<unknown> {
     const socket = await this.connect();
     const id = this.nextRequestId++;
+    const payload = {
+      jsonrpc: "2.0",
+      id,
+      method,
+      params,
+    };
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(id);
+        console.warn(
+          `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Command timed out waiting for a response with matching id.`,
+          {
+            request: payload,
+            expectedResponseShapes: [
+              { id, result: { value: 0 } },
+              { id, data: { value: 0 } },
+              { id, status: { value: 0 } },
+              { id, value: 0 },
+            ],
+          },
+        );
         reject(new Error(`iMin websocket command timed out: ${method}`));
       }, COMMAND_TIMEOUT_MS);
 
-      this.pendingRequests.set(id, { resolve, reject, timeout });
+      this.pendingRequests.set(id, { resolve, reject, timeout, method, params });
 
-      socket.send(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          id,
-          method,
-          params,
-        }),
-      );
+      socket.send(JSON.stringify(payload));
     });
   }
 
@@ -306,23 +342,69 @@ class IminWebSocketClient {
 
   private handleMessage = (event: MessageEvent) => {
     const response = this.parseResponse(event.data);
-    if (!response) return;
+    if (!response) {
+      console.warn(
+        `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Received a non-JSON or unsupported response.`,
+        {
+          rawResponse: event.data,
+        },
+      );
+      return;
+    }
 
     const id = typeof response.id === "number" ? response.id : undefined;
-    if (id === undefined) return;
+    if (id === undefined) {
+      console.warn(
+        `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Received a response without numeric id.`,
+        {
+          response,
+          pendingRequests: Array.from(this.pendingRequests.values()).map(
+            ({ method, params }) => ({ method, params }),
+          ),
+        },
+      );
+      return;
+    }
 
     const request = this.pendingRequests.get(id);
-    if (!request) return;
+    if (!request) {
+      console.warn(
+        `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Received a response for an unknown id.`,
+        {
+          response,
+          pendingRequestIds: Array.from(this.pendingRequests.keys()),
+        },
+      );
+      return;
+    }
 
     clearTimeout(request.timeout);
     this.pendingRequests.delete(id);
 
     if (response.error) {
+      console.warn(
+        `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Service returned an error response.`,
+        {
+          request: {
+            id,
+            method: request.method,
+            params: request.params,
+          },
+          response,
+        },
+      );
       request.reject(response.error);
       return;
     }
 
-    request.resolve(response.result ?? response.data ?? response.status ?? response.code);
+    request.resolve(
+      response.result ??
+        response.data ??
+        response.status ??
+        response.code ??
+        response.value ??
+        response,
+    );
   };
 
   private parseResponse(data: unknown): WebSocketResponse | undefined {
@@ -341,7 +423,7 @@ export class IminSdkWrapper {
   private activeTransport?: IminTransport;
 
   isAvailable(): boolean {
-    return Boolean(readWindowSdk()) || this.getWebSocketClient().isAvailable();
+    return Boolean(readWindowSdk()) || this.activeTransport === "websocket";
   }
 
   async initialize(): Promise<PrinterStatus> {
@@ -458,7 +540,13 @@ export class IminSdkWrapper {
     return this.withWebSocket(async (client) => {
       await client.command("setTextStyle", [bold ? 1 : 0]);
       return statusFromCommandValue(
-        await client.command("printColumnsText", [values, widths, sdkAligns]),
+        await client.command("printColumnsText", [
+          values,
+          widths,
+          sdkAligns,
+          FALCON_80MM_TEXT_WIDTH,
+          1,
+        ]),
       );
     });
   }

@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  iminSdkWrapper,
-  messageForPrintFailure,
-} from "@/printing/printers/imin/imin-sdk-wrapper";
+import { iminSdkWrapper } from "@/printing/printers/imin/imin-sdk-wrapper";
 import type {
   PrinterHealth,
   PrinterStatus,
@@ -21,17 +18,7 @@ const healthFromStatus = (status: PrinterStatus): PrinterHealth => ({
   message: status.message,
 });
 
-const unavailableHealth = (): PrinterHealth => ({
-  id: "imin",
-  status: "unavailable",
-  ready: false,
-  reason: "sdk_unavailable",
-  message: messageForPrintFailure("sdk_unavailable"),
-});
-
 const initializeImin = async (): Promise<PrinterHealth> => {
-  if (!iminSdkWrapper.isAvailable()) return unavailableHealth();
-
   const initStatus = await iminSdkWrapper.initialize();
   if (!initStatus.ready) return healthFromStatus(initStatus);
 
@@ -42,18 +29,20 @@ const initializeImin = async (): Promise<PrinterHealth> => {
 };
 
 export const initPrinters = async (): Promise<PrintersInitializationResult> => {
-  if (initializationResult) return initializationResult;
+  if (initializationResult?.printers.imin.ready) return initializationResult;
   if (initializationPromise) return initializationPromise;
 
   initializationPromise = initializeImin()
     .then((imin) => {
-      initializationResult = {
+      const result: PrintersInitializationResult = {
         initializedAt: new Date().toISOString(),
         printers: {
           imin,
         },
       };
-      return initializationResult;
+
+      if (imin.ready) initializationResult = result;
+      return result;
     })
     .finally(() => {
       initializationPromise = undefined;
