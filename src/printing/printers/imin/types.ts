@@ -9,6 +9,23 @@ export type IminPrintCallback<T = unknown> = (result: T) => void;
 
 export type IminMaybeAsync<T = unknown> = Promise<T> | T | void;
 
+export type IminPrintColumnsText = {
+  (
+    values: string[],
+    widths: number[],
+    aligns: number[],
+    callback?: IminPrintCallback,
+  ): IminMaybeAsync;
+  (
+    values: string[],
+    widths: number[],
+    aligns: number[],
+    width: number,
+    size: number,
+    callback?: IminPrintCallback,
+  ): IminMaybeAsync;
+};
+
 export type IminPrintInstance = {
   PrintConnectType?: IminPrintConnectType;
   initPrinter?: (
@@ -40,12 +57,7 @@ export type IminPrintInstance = {
     callback?: IminPrintCallback,
   ) => IminMaybeAsync;
   printText?: (text: string, callback?: IminPrintCallback) => IminMaybeAsync;
-  printColumnsText?: (
-    values: string[],
-    widths: number[],
-    aligns: number[],
-    callback?: IminPrintCallback,
-  ) => IminMaybeAsync;
+  printColumnsText?: IminPrintColumnsText;
   setQrCodeSize?: (
     size: number,
     callback?: IminPrintCallback,

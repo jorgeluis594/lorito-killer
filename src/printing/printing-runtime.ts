@@ -21,7 +21,7 @@ const statusFromResult = (
 
 export const initializePrintingRuntime =
   async (): Promise<PrintersInitializationResult> => {
-    if (runtimeState.result) return runtimeState.result;
+    if (runtimeState.result?.printers.imin.ready) return runtimeState.result;
     if (runtimePromise) return runtimePromise;
 
     runtimeState = {
@@ -69,7 +69,6 @@ export const isFalconPrintingEnabled = (): boolean =>
 
 export const waitForPrinterInitialization = async (): Promise<boolean> => {
   if (runtimeState.status === "ready") return true;
-  if (runtimeState.status === "disabled") return false;
 
   try {
     const result = await initializePrintingRuntime();
