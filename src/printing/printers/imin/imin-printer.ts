@@ -12,6 +12,7 @@ import {
 } from "@/printing/printers/imin/imin-sdk-wrapper";
 import { initPrinters } from "@/printing/init-printers";
 import { buildThermalReceiptCommands } from "@/printing/printers/imin/thermal-receipt-renderer";
+import { notifyPrintingWarning } from "@/printing/printing-warning-toast";
 
 const failedResult = (
   reason: PrintFailureReason,
@@ -91,7 +92,12 @@ export const iminPrinter: PrinterAdapter = {
       const commandStatus = ensureReady(rawCommandStatus);
       if (commandStatus) {
         if (command.type === "cut") {
-          console.warn("iMin receipt printed, but paper cut failed", rawCommandStatus);
+          notifyPrintingWarning(
+            "iMin receipt printed, but paper cut failed",
+            {
+              rawCommandStatus,
+            },
+          );
           continue;
         }
 

@@ -9,6 +9,7 @@ import type {
   IminPrintCallback,
   IminPrintInstance,
 } from "@/printing/printers/imin/types";
+import { notifyPrintingWarning } from "@/printing/printing-warning-toast";
 
 const FALCON_80MM_PAGE_FORMAT = 0;
 const FALCON_80MM_TEXT_WIDTH = 576;
@@ -157,7 +158,7 @@ const statusFromCommandValue = (value: unknown): PrinterStatus => {
   const statusCode = numericFrom(value);
   if (statusCode === undefined) {
     if (value !== undefined) {
-      console.warn(
+      notifyPrintingWarning(
         `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Command response did not include a numeric status code.`,
         {
           response: value,
@@ -263,7 +264,7 @@ class IminWebSocketClient {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(id);
-        console.warn(
+        notifyPrintingWarning(
           `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Command timed out waiting for a response with matching id.`,
           {
             request: payload,
@@ -343,7 +344,7 @@ class IminWebSocketClient {
   private handleMessage = (event: MessageEvent) => {
     const response = this.parseResponse(event.data);
     if (!response) {
-      console.warn(
+      notifyPrintingWarning(
         `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Received a non-JSON or unsupported response.`,
         {
           rawResponse: event.data,
@@ -354,7 +355,7 @@ class IminWebSocketClient {
 
     const id = typeof response.id === "number" ? response.id : undefined;
     if (id === undefined) {
-      console.warn(
+      notifyPrintingWarning(
         `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Received a response without numeric id.`,
         {
           response,
@@ -368,7 +369,7 @@ class IminWebSocketClient {
 
     const request = this.pendingRequests.get(id);
     if (!request) {
-      console.warn(
+      notifyPrintingWarning(
         `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Received a response for an unknown id.`,
         {
           response,
@@ -382,7 +383,7 @@ class IminWebSocketClient {
     this.pendingRequests.delete(id);
 
     if (response.error) {
-      console.warn(
+      notifyPrintingWarning(
         `${IMIN_WEBSOCKET_CONTRACT_LOG_PREFIX} Service returned an error response.`,
         {
           request: {
@@ -687,7 +688,7 @@ export class IminSdkWrapper {
     try {
       return await action();
     } catch (error) {
-      console.warn("iMin window SDK command failed", error);
+      notifyPrintingWarning("iMin window SDK command failed", error);
       return failedStatus("plugin_unavailable");
     }
   }
@@ -701,7 +702,7 @@ export class IminSdkWrapper {
     try {
       return await action(client);
     } catch (error) {
-      console.warn("iMin websocket command failed", error);
+      notifyPrintingWarning("iMin websocket command failed", error);
       return failedStatus("plugin_unavailable");
     }
   }
