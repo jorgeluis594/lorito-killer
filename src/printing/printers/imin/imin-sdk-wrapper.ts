@@ -11,7 +11,6 @@ import type {
   IminPrinterConstructor,
   IminPrintInstance,
 } from "@/printing/printers/imin/types";
-import { notifyPrintingWarning } from "@/printing/printing-warning-toast";
 
 const FALCON_80MM_PAGE_FORMAT = 0;
 const FALCON_80MM_TEXT_WIDTH = 576;
@@ -587,27 +586,19 @@ export class IminSdkWrapper {
     try {
       resolvedSdk = await this.resolveSdk();
     } catch (error) {
-      notifyPrintingWarning("iMin SDK connection failed", {
-        error,
-        debug: this.getDebugInfo(),
-      });
+      console.warn("iMin SDK connection failed", error, this.getDebugInfo());
       return failedStatus("plugin_unavailable");
     }
 
     if (!resolvedSdk) {
-      notifyPrintingWarning("iMin SDK unavailable", {
-        debug: this.getDebugInfo(),
-      });
+      console.warn("iMin SDK unavailable", this.getDebugInfo());
       return failedStatus("sdk_unavailable");
     }
 
     try {
       return await action(resolvedSdk);
     } catch (error) {
-      notifyPrintingWarning("iMin SDK command failed", {
-        error,
-        debug: this.getDebugInfo(),
-      });
+      console.warn("iMin SDK command failed", error, this.getDebugInfo());
       return failedStatus("plugin_unavailable");
     }
   }

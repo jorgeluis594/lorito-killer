@@ -12,7 +12,6 @@ import type {
   PrintResult,
   ReceiptPrintData,
 } from "@/printing/types";
-import { createPrintingToastLogger } from "@/printing/printing-warning-toast";
 
 type PrintDataResponse =
   | {
@@ -46,20 +45,9 @@ const pdfFallbackResult = (
 
 export const printOrderReceipt = async (orderId: string): Promise<PrintResult> => {
   const defaultPdfUrl = orderDocumentPdfUrl(orderId);
-  const logger = createPrintingToastLogger("Diagnostico impresion iMin");
-
-  logger.log("Inicio de impresion", {
-    orderId,
-    runtimeState: getPrintingRuntimeState(),
-    falconPrintingEnabled: isFalconPrintingEnabled(),
-  });
 
   if (!isFalconPrintingEnabled()) {
-    const localAccess = await requestIminLocalNetworkAccess();
-    const logLocalAccess =
-      localAccess.status === "blocked" ? logger.fail : logger.log;
-
-    logLocalAccess("Preflight Local Network Access iMin", localAccess);
+    await requestIminLocalNetworkAccess();
   }
 
   if (
@@ -69,11 +57,6 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
     const runtimeHealth = getPrintingRuntimeState().result?.printers.imin;
     const fallbackReason = runtimeHealth?.reason ?? "sdk_unavailable";
 
-    logger.fail("Runtime iMin no disponible, abriendo PDF", {
-      runtimeHealth,
-      fallbackReason,
-      runtimeState: getPrintingRuntimeState(),
-    });
     openPdfFallback(defaultPdfUrl);
     return pdfFallbackResult(
       fallbackReason,
@@ -84,10 +67,6 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
   let receiptData: ReceiptPrintData;
 
   try {
-    logger.log("Solicitando datos de impresion", {
-      url: orderPrintDataUrl(orderId),
-    });
-
     const response = await fetch(orderPrintDataUrl(orderId), {
       method: "GET",
       headers: {
@@ -106,14 +85,7 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
     }
 
     receiptData = payload.data;
-    logger.log("Datos de impresion recibidos", {
-      document: receiptData.document,
-      items: receiptData.order.items.length,
-    });
-  } catch (error) {
-    logger.fail("No se pudieron obtener datos de impresion", {
-      error,
-    });
+  } catch {
     openPdfFallback(defaultPdfUrl);
     return pdfFallbackResult(
       "data_fetch_failed",
@@ -124,9 +96,6 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
   const fallbackPdfUrl = receiptData.fallbackPdfUrl || defaultPdfUrl;
 
   if (!iminPrinter.isAvailable()) {
-    logger.fail("Adaptador iMin no disponible antes de imprimir", {
-      runtimeState: getPrintingRuntimeState(),
-    });
     openPdfFallback(fallbackPdfUrl);
     return pdfFallbackResult(
       "sdk_unavailable",
@@ -137,14 +106,8 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
   let printResult: PrintResult;
 
   try {
-    logger.log("Enviando comandos a impresora iMin");
-    printResult = await iminPrinter.printReceipt(receiptData, logger.log);
-    logger.log("Resultado de impresion iMin", printResult);
-  } catch (error) {
-    logger.fail("Excepcion durante impresion iMin, abriendo PDF", {
-      error,
-      runtimeState: getPrintingRuntimeState(),
-    });
+    printResult = await iminPrinter.printReceipt(receiptData);
+  } catch {
     openPdfFallback(fallbackPdfUrl);
     return pdfFallbackResult(
       "print_failed",
@@ -153,9 +116,6 @@ export const printOrderReceipt = async (orderId: string): Promise<PrintResult> =
   }
 
   if (!printResult.success) {
-    logger.fail("La impresora iMin respondio con error, abriendo PDF", {
-      printResult,
-    });
     openPdfFallback(fallbackPdfUrl);
     return pdfFallbackResult(
       printResult.reason,

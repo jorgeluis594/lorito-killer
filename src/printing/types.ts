@@ -42,16 +42,11 @@ export type PrintResult =
       message: string;
     };
 
-export type PrintingDebugLog = (message: string, detail?: unknown) => void;
-
 export type PrinterAdapter = {
   isAvailable: () => boolean;
   initialize?: () => Promise<PrinterStatus>;
   getStatus?: () => Promise<PrinterStatus>;
-  printReceipt: (
-    data: ReceiptPrintData,
-    debugLog?: PrintingDebugLog,
-  ) => Promise<PrintResult>;
+  printReceipt: (data: ReceiptPrintData) => Promise<PrintResult>;
 };
 
 export type PrintAlignment = "left" | "center" | "right";
@@ -127,6 +122,9 @@ export type ReceiptPrintData = {
     xml?: string;
     issuedToTaxEntity?: boolean;
     issuedAt?: string;
+    netTotal: number;
+    discountAmount: number;
+    total: number;
   };
   customer?: {
     name: string;
