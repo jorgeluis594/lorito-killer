@@ -10,6 +10,7 @@ import {
   iminSdkWrapper,
   messageForPrintFailure,
 } from "@/printing/printers/imin/imin-sdk-wrapper";
+import { initPrinters } from "@/printing/init-printers";
 import { buildThermalReceiptCommands } from "@/printing/printers/imin/thermal-receipt-renderer";
 
 const failedResult = (
@@ -45,6 +46,7 @@ const executeCommand = async (
         command.values,
         command.widths,
         command.aligns,
+        command.bold,
       );
     case "qr":
       return iminSdkWrapper.printQr(command.value);
@@ -58,16 +60,25 @@ const executeCommand = async (
 export const iminPrinter: PrinterAdapter = {
   isAvailable: () => iminSdkWrapper.isAvailable(),
 
+  initialize: () =>
+    initPrinters().then((result) => {
+      const health = result.printers.imin;
+      return {
+        ready: health.ready,
+        reason: health.reason,
+        message: health.message,
+      };
+    }),
+
+  getStatus: () => iminSdkWrapper.getStatus(),
+
   async printReceipt(data: ReceiptPrintData): Promise<PrintResult> {
     if (!iminSdkWrapper.isAvailable()) {
       return failedResult("sdk_unavailable");
     }
 
-    const initResult = ensureReady(await iminSdkWrapper.initialize());
+    const initResult = ensureReady(await this.initialize!());
     if (initResult) return initResult;
-
-    const configResult = ensureReady(await iminSdkWrapper.configure80mm());
-    if (configResult) return configResult;
 
     const statusResult = ensureReady(await iminSdkWrapper.getStatus());
     if (statusResult) return statusResult;
@@ -80,8 +91,16 @@ export const iminPrinter: PrinterAdapter = {
     }
 
     for (const command of commands) {
-      const commandStatus = ensureReady(await executeCommand(command));
-      if (commandStatus) return commandStatus;
+      const rawCommandStatus = await executeCommand(command);
+      const commandStatus = ensureReady(rawCommandStatus);
+      if (commandStatus) {
+        if (command.type === "cut") {
+          console.warn("iMin receipt printed, but paper cut failed", rawCommandStatus);
+          continue;
+        }
+
+        return commandStatus;
+      }
     }
 
     return {
