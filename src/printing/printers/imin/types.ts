@@ -1,6 +1,7 @@
 export type IminPrintConnectType = {
   USB?: string | number;
   BLUETOOTH?: string | number;
+  Bluetooth?: string | number;
   SPI?: string | number;
   SERIAL?: string | number;
 };
@@ -20,14 +21,17 @@ export type IminPrintColumnsText = {
     values: string[],
     widths: number[],
     aligns: number[],
-    width: number,
     size: number,
+    width: number,
     callback?: IminPrintCallback,
   ): IminMaybeAsync;
 };
 
 export type IminPrintInstance = {
   PrintConnectType?: IminPrintConnectType;
+  connect?: () => Promise<boolean>;
+  close?: () => void;
+  ws?: WebSocket | null;
   initPrinter?: (
     connectType?: string | number,
     callback?: IminPrintCallback,
@@ -66,10 +70,14 @@ export type IminPrintInstance = {
     level: number,
     callback?: IminPrintCallback,
   ) => IminMaybeAsync;
-  printQrCode?: (
-    value: string,
-    callback?: IminPrintCallback,
-  ) => IminMaybeAsync;
+  printQrCode?: {
+    (value: string, callback?: IminPrintCallback): IminMaybeAsync;
+    (
+      value: string,
+      alignmentMode: number,
+      callback?: IminPrintCallback,
+    ): IminMaybeAsync;
+  };
   printAndLineFeed?: (callback?: IminPrintCallback) => IminMaybeAsync;
   printAndFeedPaper?: (
     lines: number,
@@ -79,8 +87,16 @@ export type IminPrintInstance = {
   partialCutPaper?: (callback?: IminPrintCallback) => IminMaybeAsync;
 };
 
+export type IminPrinterConstructor = {
+  new (url?: string): IminPrintInstance;
+  version?: string;
+  connect_type?: string | number;
+  PrintConnectType?: IminPrintConnectType;
+};
+
 declare global {
   interface Window {
+    IminPrinter?: IminPrinterConstructor;
     IminPrintInstance?: IminPrintInstance;
   }
 }
