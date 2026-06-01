@@ -7,11 +7,10 @@ import {
 } from "@/shared/components/ui/card";
 import {
   formatPrice,
-  localizeDate,
   paymentMethodToText,
   shortLocalizeDate,
 } from "@/lib/utils";
-import { FileCode,Printer } from "lucide-react";
+import { FileCode } from "lucide-react";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { fullName } from "@/customer/utils";
@@ -20,15 +19,18 @@ import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
+import OrderPrintButton from "@/order/components/order-print-button";
 
 export default async function OrderData({ order }: { order: Order }) {
   const documentResponse = await findBillingDocumentFor(order.id!);
 
-  if(!documentResponse.success) {
-    return <p>No se encontro el documento</p>
+  if (!documentResponse.success) {
+    return <p>No se encontro el documento</p>;
   }
 
-  const hasADiscount = order.orderItems.some((orderItem) => orderItem.discountAmount > 0);
+  const hasADiscount = order.orderItems.some(
+    (orderItem) => orderItem.discountAmount > 0,
+  );
 
   return (
     <div className="h-full mt-8 flex justify-center">
@@ -52,23 +54,17 @@ export default async function OrderData({ order }: { order: Order }) {
             )}
           </CardTitle>
           <div className="flex space-x-2">
-            <a
-              className={buttonVariants({variant: "ghost", size: "icon"})}
-              href={`/api/orders/${order.id}/documents`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Printer className="cursor-pointer"/>
-            </a>
-            {documentResponse.data.documentType === "invoice" || documentResponse.data.documentType === "receipt" && (
-                <a
-                  className={buttonVariants({variant: "ghost", size: "icon"})}
-                  href={`${documentResponse.data.xml}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <FileCode/>
-                </a>
+            <OrderPrintButton orderId={order.id!} />
+            {(documentResponse.data.documentType === "invoice" ||
+              documentResponse.data.documentType === "receipt") && (
+              <a
+                className={buttonVariants({ variant: "ghost", size: "icon" })}
+                href={`${documentResponse.data.xml}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileCode />
+              </a>
             )}
             {differenceInHours(new Date(), order.createdAt!) < 168 &&
               order.status === "completed" && (
@@ -84,10 +80,10 @@ export default async function OrderData({ order }: { order: Order }) {
         <CardContent>
           <table className="table-auto border w-full">
             <tbody>
-            <tr>
-              <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
-                Cliente
-              </td>
+              <tr>
+                <td className="pl-2 border w-13 py-1 bg-slate-100 font-light w-56">
+                  Cliente
+                </td>
                 <td className="pl-2 border py-1">
                   {order.customer ? fullName(order.customer) : "-"}
                 </td>
@@ -122,72 +118,75 @@ export default async function OrderData({ order }: { order: Order }) {
           <div className="overflow-y-auto w-screen md:w-full">
             <table className="table-auto border min-w-[600px] md:w-full mt-8">
               <thead>
-              <tr>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Cantidad
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Producto
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Precio
-                </th>
-                {hasADiscount && (
+                <tr>
                   <th className="bg-slate-100 pl-2 border py-1 font-light">
-                    Descuento
+                    Cantidad
                   </th>
-                )}
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Total
-                </th>
-              </tr>
+                  <th className="bg-slate-100 pl-2 border py-1 font-light">
+                    Producto
+                  </th>
+                  <th className="bg-slate-100 pl-2 border py-1 font-light">
+                    Precio
+                  </th>
+                  {hasADiscount && (
+                    <th className="bg-slate-100 pl-2 border py-1 font-light">
+                      Descuento
+                    </th>
+                  )}
+                  <th className="bg-slate-100 pl-2 border py-1 font-light">
+                    Total
+                  </th>
+                </tr>
               </thead>
               <tbody>
-              {order.orderItems.map((orderItem) => (
-                <tr key={orderItem.id}>
-                  <td className="pl-2 border py-1">
-                    {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
-                  </td>
-                  <td className="pl-2 border py-1">{orderItem.productName}</td>
-                  <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.productPrice)}
-                  </td>
-                  {hasADiscount && (
+                {order.orderItems.map((orderItem) => (
+                  <tr key={orderItem.id}>
                     <td className="pl-2 border py-1">
-                      {formatPrice(orderItem.discountAmount)}
+                      {orderItem.quantity}{" "}
+                      {UNIT_TYPE_MAPPER[orderItem.unitType]}
                     </td>
-                  )}
-                  <td className="pl-2 border py-1">
-                    {formatPrice(orderItem.total)}
-                  </td>
-                </tr>
-              ))}
+                    <td className="pl-2 border py-1">
+                      {orderItem.productName}
+                    </td>
+                    <td className="pl-2 border py-1">
+                      {formatPrice(orderItem.productPrice)}
+                    </td>
+                    {hasADiscount && (
+                      <td className="pl-2 border py-1">
+                        {formatPrice(orderItem.discountAmount)}
+                      </td>
+                    )}
+                    <td className="pl-2 border py-1">
+                      {formatPrice(orderItem.total)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
           <div className="w-full flex justify-between mt-8">
             <table className="table-auto border w-64">
               <thead>
-              <tr>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Método de pago
-                </th>
-                <th className="bg-slate-100 pl-2 border py-1 font-light">
-                  Monto
-                </th>
-              </tr>
+                <tr>
+                  <th className="bg-slate-100 pl-2 border py-1 font-light">
+                    Método de pago
+                  </th>
+                  <th className="bg-slate-100 pl-2 border py-1 font-light">
+                    Monto
+                  </th>
+                </tr>
               </thead>
               <tbody>
-              {order.payments.map((payment) => (
-                <tr key={payment.id}>
-                  <td className="pl-2 border py-1">
-                    {paymentMethodToText(payment.method)}
-                  </td>
-                  <td className="pl-2 border py-1">
-                    {formatPrice(payment.amount)}
-                  </td>
-                </tr>
-              ))}
+                {order.payments.map((payment) => (
+                  <tr key={payment.id}>
+                    <td className="pl-2 border py-1">
+                      {paymentMethodToText(payment.method)}
+                    </td>
+                    <td className="pl-2 border py-1">
+                      {formatPrice(payment.amount)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
             <div className="w-56 flex flex-col">

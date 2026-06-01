@@ -1,0 +1,1 @@
+ALTER TYPE "CustomerDocumentType" ADD VALUE 'CARNET_EXTRANJERIA';

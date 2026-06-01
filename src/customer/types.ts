@@ -2,17 +2,24 @@ export const DNI = "dni";
 
 export type DniType = typeof DNI;
 
+export const CARNET_EXTRANJERIA = "carnet_extranjeria";
+
+export type CarnetExtranjeriaType = typeof CARNET_EXTRANJERIA;
+
 export const RUC = "ruc";
 
 export type RucType = typeof RUC;
 
-export type CustomerDocumentType = DniType | RucType;
+export type CustomerDocumentType =
+  | DniType
+  | CarnetExtranjeriaType
+  | RucType;
 
 export type NaturalCustomer = {
   _branch: "NaturalCustomer";
   id: string;
   companyId: string;
-  documentType?: DniType;
+  documentType?: DniType | CarnetExtranjeriaType;
   documentNumber?: string;
   geoCode?: string;
   fullName: string;

@@ -17,7 +17,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/shared/components/ui/command";
-import { CustomerType, DNI, InferCustomerType, RUC } from "@/customer/types";
+import {
+  CARNET_EXTRANJERIA,
+  CustomerType,
+  DNI,
+  InferCustomerType,
+  RUC,
+} from "@/customer/types";
 import { getMany } from "@/customer/api_repository";
 import * as React from "react";
 import { useEffect, useState } from "react";
@@ -45,7 +51,9 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   const { toast } = useToast();
 
   const naturalCustomer = customers.filter(
-    (customer) => customer.documentType === DNI,
+    (customer) =>
+      customer.documentType === DNI ||
+      customer.documentType === CARNET_EXTRANJERIA,
   );
   const businessCustomer = customers.filter(
     (customer) => customer.documentType === RUC,
@@ -103,7 +111,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
         <Command shouldFilter={false}>
           <CommandInput
             value={search}
-            placeholder="Nombre o dni de cliente"
+            placeholder="Nombre o documento de cliente"
             onValueChange={setSearch}
           />
           <CommandList>

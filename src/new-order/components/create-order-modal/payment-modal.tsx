@@ -28,6 +28,7 @@ import { useUserSession } from "@/lib/use-user-session";
 import DiscountFields from "@/new-order/components/create-order-modal/discount-fields";
 import { useCompany } from "@/lib/use-company";
 import useSignOut from "@/lib/use-sign-out";
+import { printOrderReceipt } from "@/printing/print-order-receipt";
 
 const PaymentViews = {
   none: NonePayment,
@@ -48,6 +49,40 @@ const allowedCompanyIdsToSeDiscount = (
 
 const companyHasDiscountFeature = (companyId: string) =>
   allowedCompanyIdsToSeDiscount.includes(companyId);
+
+const CreateOrderButton = ({
+  amountIsInvalid,
+  creatingOrder,
+  onCreateOrder,
+  paymentMode,
+}: {
+  amountIsInvalid: boolean;
+  creatingOrder: boolean;
+  onCreateOrder: () => void;
+  paymentMode: keyof typeof PaymentViews;
+}) => {
+  if (creatingOrder) {
+    return (
+      <Button className="btn-success" type="button" disabled={true}>
+        <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+      </Button>
+    );
+  }
+
+  if (paymentMode !== "none") {
+    return (
+      <Button type="button" disabled={amountIsInvalid} onClick={onCreateOrder}>
+        Realiza pago
+      </Button>
+    );
+  }
+
+  return (
+    <Button type="button" disabled={true}>
+      Realiza pago
+    </Button>
+  );
+};
 
 const PaymentModal: React.FC<CreateOrderModalProps> = ({
   isOpen,
@@ -85,7 +120,18 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
       });
       reset();
       onOpenChange(false);
-      window.open(`/api/orders/${response.data.order.id}/documents`, "_blank");
+      const printResult = await printOrderReceipt(response.data.order.id!);
+
+      if (printResult.success && printResult.mode === "pdf") {
+        toast({
+          description: printResult.message,
+        });
+      } else if (!printResult.success) {
+        toast({
+          variant: "destructive",
+          description: printResult.message,
+        });
+      }
     } else {
       if (response.type === "CompanyInactive") {
         toast({
@@ -106,37 +152,6 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     setCreatingOrder(false);
   };
 
-  const CreateOrderButton = ({
-    amountIsInvalid,
-  }: {
-    amountIsInvalid: boolean;
-    paidAmount: number;
-    total: number;
-  }) => {
-    if (creatingOrder) {
-      return (
-        <Button className="btn-success" type="button" disabled={true}>
-          <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
-        </Button>
-      );
-    } else if (paymentMode !== "none") {
-      return (
-        <Button
-          type="button"
-          disabled={amountIsInvalid}
-          onClick={handleOrderCreation}
-        >
-          Realiza pago
-        </Button>
-      );
-    } else {
-      return (
-        <Button type="button" disabled={true}>
-          Realiza pago
-        </Button>
-      );
-    }
-  };
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       setDiscount(undefined);
@@ -168,14 +183,14 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           </div>
           {paymentMode !== "none" && (
             <div className="flex justify-center mt-2">
-            <Button
-              type="button"
-              variant="link"
-              onClick={resetPayment}
-              className="mt-2 md:absolute md:top-0 md:right-0 md:py-0"
-            >
-              CAMBIAR MÉTODO
-            </Button>
+              <Button
+                type="button"
+                variant="link"
+                onClick={resetPayment}
+                className="mt-2 md:absolute md:top-0 md:right-0 md:py-0"
+              >
+                CAMBIAR MÉTODO
+              </Button>
             </div>
           )}
           <PaymentView />
@@ -186,8 +201,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         <DialogFooter>
           <CreateOrderButton
             amountIsInvalid={getPaidAmount() !== order.total}
-            paidAmount={getPaidAmount()}
-            total={order.total}
+            creatingOrder={creatingOrder}
+            onCreateOrder={handleOrderCreation}
+            paymentMode={paymentMode}
           />
         </DialogFooter>
       </DialogContent>

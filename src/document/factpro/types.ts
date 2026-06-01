@@ -1,144 +1,95 @@
-export interface FactproDocumentItem {
-  // NIU = PRODUCTO
-  // ZZ = SERVICIO
+export interface FactproDocumentItemV3 {
   unidad: "NIU";
   codigo: string;
-  descripcion: string; // product name
+  descripcion: string;
   cantidad: number;
-  valor_unitario: number; // without igv
-  precio_unitario: number; // with igv
-  // 10 = Gravado - Operación Onerosa
-  // 20= Exonerado - Operación Onerosa
-  tipo_tax: "10" | "20";
-  total_base_tax: number;
-  codigo_producto_sunat: string;
-  codigo_producto_gsl: string;
-  porcentaje_tax: 18 | 0;
-  total_tax: number;
-  total: number;
-  descuentos?: {
-    codigo: string;
-    descripcion: string;
-    porcentaje: number;
-    monto: number;
-    base: number;
-  };
+  precio: number;
+  incluye_tax: true;
+  // 1 = Gravado - Operacion Onerosa
+  // 20 = Exonerado - Operacion Onerosa
+  tipo_tax: "1" | "20";
+  descuento?: number;
 }
 
-export interface FactproDocument {
-  tipo_documento: "01" | "03" | "07" | "08"; // 01 = Factura, 03 = Boleta, 07 = Nota de Crédito, 08 = Nota de Débito
+export interface FactproDocumentV3 {
   serie: string;
   numero: string;
-  tipo_operacion: "0101"; // by default is 0101
-  fecha_de_emision: string; // example 2024-05-14
-  hora_de_emision: string; // example 10:11:11
+  tipo_operacion: "1";
+  fecha_de_emision: string;
   moneda: "PEN" | "USD";
-  fecha_de_vencimiento?: string; // example 2024-05-14
   enviar_automaticamente_al_cliente?: boolean;
-  datos_del_emisor: {
-    codigo_establecimiento: string;
-  };
   cliente: {
-    // 6 = RUC - REGISTRO ÚNICO DE CONTRIBUYENTE
-    // 1 = DNI - DOC. NACIONAL DE IDENTIDAD
-    // 4 = CARNET DE EXTRANJERÍA
-    // 7 = PASAPORTE
-    // A = CÉDULA DIPLOMÁTICA DE IDENTIDAD
-    // 0 = NO DOMICILIADO, SIN RUC
-    cliente_tipo_documento: "6" | "1" | "4" | "7" | "A" | "0";
+    // FactPro v3 catalog: 4 = RUC, 3 = CE, 2 = DNI, 1 = Otros
+    cliente_tipo_documento: "4" | "3" | "2" | "1";
     cliente_numero_documento: string;
-    cliente_denominacion: string; // legal name
-    codigo_pais: "PE";
-    ubigeo: string;
+    cliente_denominacion: string;
     cliente_direccion: string;
     cliente_email?: string;
     cliente_telefono: string;
   };
-  totales: {
-    total_venta: number;
-    total_tax: number;
-    total_exoneradas: number;
-    total_exportacion: number;
-    total_gravadas: number;
-    total_inafectas: number;
-    total_gratuitas: number;
-    descuentos?: {
-      codigo: string;
-      descripcion: string;
-      porcentaje: number;
-      monto: number;
-      base: number;
-    };
+  items: FactproDocumentItemV3[];
+  condicion_de_pago: Array<{
+    tipo_de_condicion: "0" | "1";
+    forma_de_pago: "0";
+    monto: number;
+  }>;
+  totales?: {
+    monto_descuento_global: number;
   };
-  items: FactproDocumentItem[];
-  acciones: {
-    formato_pdf: "a4"; // revisar mas formatos
-  };
-  termino_de_pago: {
-    descripcion: "Contado" | "Crédito";
-    tipo: "0" | "1";
-  };
-  metodo_de_pago?: string;
-  canal_de_venta: "";
-  orden_de_compra: "";
-  observaciones: "";
-  almacen: "";
+  observaciones: string;
+  formato_pdf: "a4";
 }
 
-export interface FactproSuccessResponse {
-  success: true;
+export interface FactproSuccessResponseV3 {
+  exito: true;
+  mensaje: string | null;
   data: {
-    number: string;
-    filename: string;
-    external_id: string;
-    number_to_letter: string;
+    numero: string;
+    archivo: string;
+    letras: string;
     hash: string;
     qr: string;
+    tipo_estado?: string;
+    descripcion_estado?: string;
   };
-  links: {
+  archivos: {
     xml: string;
     pdf: string;
     cdr: string;
   };
-  response: {
-    code: string;
+  eventos?: Array<{
+    date: string;
     description: string;
-    notes: string[];
-  };
+  }>;
 }
 
-export type FactproDocumentConsult = {
-  exito: boolean; //true,
-  mensaje: string | null; //null
-  data: {
-    numero: string; //"F100-61",
-    archivo: string; //"20466590247-01-F100-61",
-    letras: string; //"Cien  con 00/100 ",
-    hash: string; //"Slhxy95DqLmoi5vxDpC7u6c89b4=",
-    qr: string; //"Nkz9Sy8AAAAASUVORK5CYII=",
-    tipo_estado: string; //"05",
-    descripcion_estado: string; //"ACEPTADO"
-  },
+export interface FactproErrorResponseV3 {
+  exito: false;
+  mensaje?: string | null;
+}
+
+export type FactproResponseV3 =
+  | FactproErrorResponseV3
+  | FactproSuccessResponseV3;
+
+export interface FactproCancelSuccessResponseV3 {
+  exito: true;
+  mensaje: string | null;
+  ticket: string;
+  hash: string;
+  fecha_de_emision: string;
+  estado_documento: string;
   archivos: {
-    pdf: string; //"https://api.factpro.la/invoice/20460590200-01-F100-61.pdf",
-    xml: string; //"https://api.factpro.la/invoice/20460590200-01-F100-61.xml",
-    cdr: string; //"https://api.factpro.la/invoice/20460590200-01-F100-61.cdr"
-  },
-  eventos: [
-    {
-      date: string; //"2025-07-11 14:08:51.151033",
-      description: string; //"El documento ha sido registrado y enviado"
-    },
-    {
-      date: string; //"2025-07-11 14:11:45.428059",
-      description: string; //"La Factura numero F100-61, ha sido aceptada"
-    }
-  ]
+    xml: string;
+    pdf: string;
+    cdr: string;
+  };
+  eventos?: Array<{
+    date: string;
+    description: string;
+  }>;
 }
 
-export interface FactproErrorResponse {
-  success: false;
-  message?: string;
-}
-
-export type FactproResponse = FactproErrorResponse | FactproSuccessResponse;
+export type FactproCancelResponseV3 =
+  | FactproErrorResponseV3
+  | FactproCancelSuccessResponseV3;
