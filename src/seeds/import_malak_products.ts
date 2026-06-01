@@ -125,23 +125,6 @@ const readMalakProducts = (): ProductInput[] => {
   });
 };
 
-const validateCompany = async () => {
-  if (COMPANY_ID === "placeholder") {
-    throw new Error(
-      'Reemplaza COMPANY_ID en src/seeds/import_malak_products.ts antes de ejecutar el seed.',
-    );
-  }
-
-  const company = await prisma().company.findUnique({
-    where: { id: COMPANY_ID },
-    select: { id: true },
-  });
-
-  if (!company) {
-    throw new Error(`No existe una compania con id ${COMPANY_ID}.`);
-  }
-};
-
 const importProducts = async (
   products: ProductInput[],
 ): Promise<ImportSummary> => {
@@ -204,8 +187,6 @@ const importProducts = async (
 };
 
 const execute = async () => {
-  await validateCompany();
-
   const products = readMalakProducts();
   const summary = await importProducts(products);
 
