@@ -161,9 +161,9 @@ const orderItemToDocumentItem = (
 };
 
 const orderTotals = (order: Order) => ({
-  totalExoneradas: order.total,
+  netTotal: order.netTotal,
   totalTax: 0,
-  totalVenta: order.total,
+  total: order.total,
   discountAmount: order.discount ? order.discountAmount : 0,
 });
 
@@ -239,10 +239,10 @@ export default function gateway({
         orderId: order.id!,
         companyId: order.companyId,
         customerId: order.customer.id!,
-        netTotal: totals.totalExoneradas,
+        netTotal: totals.netTotal,
         taxTotal: totals.totalTax,
         discountAmount: totals.discountAmount,
-        total: totals.totalVenta,
+        total: totals.total,
         documentType: "invoice",
         series: body.serie,
         number: body.numero,
@@ -308,10 +308,10 @@ export default function gateway({
         orderId: order.id!,
         companyId: order.companyId,
         customerId: order.customer?.id!,
-        netTotal: totals.totalExoneradas,
+        netTotal: totals.netTotal,
         taxTotal: totals.totalTax,
         discountAmount: totals.discountAmount,
-        total: totals.totalVenta,
+        total: totals.total,
         documentType: "receipt",
         series: body.serie,
         number: body.numero,

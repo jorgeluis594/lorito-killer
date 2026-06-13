@@ -94,7 +94,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       issuedToTaxEntity: prismaDocument.issuedToTaxEntity,
       issuedAt: prismaDocument.issuedAt || undefined,
       taxTotal: 0,
-      netTotal: +prismaDocument.total,
+      netTotal: +prismaDocument.netTotal,
       qr: prismaDocument.qr!,
       hash: prismaDocument.hash!,
       ...statusAttributesForPrismaDocument(prismaDocument)
@@ -116,7 +116,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       issuedToTaxEntity: prismaDocument.issuedToTaxEntity,
       issuedAt: prismaDocument.issuedAt || undefined,
       taxTotal: 0,
-      netTotal: +prismaDocument.total,
+      netTotal: +prismaDocument.netTotal,
       qr: prismaDocument.qr!,
       hash: prismaDocument.hash!,
       ...statusAttributesForPrismaDocument(prismaDocument)
@@ -145,6 +145,7 @@ export const createDocument = async (
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
+        xml: document.documentType == "ticket" ? undefined : document.xml,
       },
     });
 
@@ -397,6 +398,7 @@ export const update = async (document: Document): Promise<response<Document>> =>
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
+        xml: document.documentType == "ticket" ? undefined : document.xml,
       },
     });
 
