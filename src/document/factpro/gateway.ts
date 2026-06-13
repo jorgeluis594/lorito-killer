@@ -1,6 +1,5 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
 import { response } from "@/lib/types";
-import { format, parse } from "date-fns";
 import {
   Invoice,
   Receipt,
@@ -8,12 +7,13 @@ import {
   Document,
   RegisteredTicket,
   RegisteredInvoince,
-  RegisteredReceipt
+  RegisteredReceipt,
 } from "@/document/types";
 import {
-  FactproDocument, FactproDocumentConsult,
-  FactproDocumentItem,
-  FactproResponse,
+  FactproCancelResponseV3,
+  FactproDocumentItemV3,
+  FactproDocumentV3,
+  FactproResponseV3,
 } from "@/document/factpro/types";
 import { log } from "@/lib/log";
 import { BusinessCustomer, Customer, NaturalCustomer } from "@/customer/types";
@@ -23,22 +23,27 @@ import {
   DocumentMetadata,
 } from "@/document/use_cases/create-document";
 import { formatInTimeZone } from "date-fns-tz";
-import {div, errorResponse} from "@/lib/utils";
-import {findDocument, update as updateDocument} from "@/document/db_repository";
-import {isInvoice, isReceipt} from "@/document/utils";
+import { errorResponse } from "@/lib/utils";
+import { update as updateDocument } from "@/document/db_repository";
+import { isInvoice, isReceipt } from "@/document/utils";
 
 const url = process.env.FACTPRO_URL;
 
+const factproEndpoint = (path: "documentos" | "anular") => {
+  if (!url) return `/${path}`;
+  return `${url.replace(/\/$/, "")}/${path}`;
+};
+
+const FACTPRO_DOCUMENT_ERROR = "Error al crear el documento en FactPro";
+
 function clientParamsBuilder(
   customer: Customer | undefined,
-): FactproDocument["cliente"] {
+): FactproDocumentV3["cliente"] {
   if (!customer) {
     return {
       cliente_tipo_documento: "1",
-      cliente_numero_documento: "11111111",
+      cliente_numero_documento: "00000000",
       cliente_denominacion: "Clientes Varios",
-      codigo_pais: "PE",
-      ubigeo: "",
       cliente_direccion: "-",
       cliente_telefono: "",
       cliente_email: "",
@@ -47,11 +52,9 @@ function clientParamsBuilder(
 
   if (isBusinessCustomer(customer)) {
     return {
-      cliente_tipo_documento: "6",
+      cliente_tipo_documento: "4",
       cliente_numero_documento: customer.documentNumber,
       cliente_denominacion: customer.legalName,
-      codigo_pais: "PE",
-      ubigeo: customer.geoCode,
       cliente_direccion: customer.address,
       cliente_email: customer.email,
       cliente_telefono: customer.phoneNumber,
@@ -59,11 +62,9 @@ function clientParamsBuilder(
   }
 
   return {
-    cliente_tipo_documento: "1",
+    cliente_tipo_documento: customer.documentNumber ? "2" : "1",
     cliente_numero_documento: customer.documentNumber || "00000000",
     cliente_denominacion: customer.fullName,
-    codigo_pais: "PE",
-    ubigeo: customer.geoCode || "",
     cliente_direccion: customer.address || "-",
     cliente_email: customer.email || "",
     cliente_telefono: customer.phoneNumber || "",
@@ -71,12 +72,12 @@ function clientParamsBuilder(
 }
 
 const sendDocument = async (
-  body: FactproDocument,
+  body: FactproDocumentV3,
   orderId: string,
   token: string,
-): Promise<response<FactproResponse>> => {
+): Promise<response<FactproResponseV3>> => {
   const startDate = new Date();
-  const endpoint = `${url!}/documentos`;
+  const endpoint = factproEndpoint("documentos");
   log.info("sending_factpro_document", { orderId, document: body });
   const res = await fetch(endpoint, {
     method: "POST",
@@ -89,9 +90,9 @@ const sendDocument = async (
 
   const responseBody = await res.text();
 
-  let resJson: FactproResponse;
+  let resJson: FactproResponseV3;
   try {
-    resJson = JSON.parse(responseBody) as FactproResponse;
+    resJson = JSON.parse(responseBody) as FactproResponseV3;
   } catch {
     log.error("factpro_document_processed", {
       status: "error",
@@ -108,7 +109,7 @@ const sendDocument = async (
     };
   }
 
-  if (res.status === 200 && resJson.success) {
+  if (res.ok && resJson.exito) {
     log.info("factpro_document_processed", {
       status: "success",
       document: body,
@@ -122,8 +123,7 @@ const sendDocument = async (
   }
 
   const errorMessage =
-    (!resJson.success && resJson.message) ||
-    "Error al crear el documento en FactPro";
+    (!resJson.exito && resJson.mensaje) || FACTPRO_DOCUMENT_ERROR;
 
   log.error("factpro_document_processed", {
     status: "error",
@@ -140,37 +140,32 @@ const sendDocument = async (
   };
 };
 
-const orderItemToDocumentItem = (orderItem: OrderItem): FactproDocumentItem => {
-  const item: FactproDocumentItem = {
+const orderItemToDocumentItem = (
+  orderItem: OrderItem,
+): FactproDocumentItemV3 => {
+  const item: FactproDocumentItemV3 = {
     unidad: "NIU",
     codigo: orderItem.productSku || "",
     descripcion: orderItem.productName,
     cantidad: orderItem.quantity,
-    valor_unitario: orderItem.productPrice,
-    precio_unitario: orderItem.productPrice,
-    codigo_producto_sunat: "",
-    codigo_producto_gsl: "",
+    precio: orderItem.productPrice,
+    incluye_tax: true,
     tipo_tax: "20", // Exonerado - Operación Onerosa
-    total_base_tax: orderItem.total,
-    porcentaje_tax: 0, // All products are exonerated in Pucallpa
-    total_tax: 0,
-    total: orderItem.total,
   };
 
   if (orderItem.discountAmount) {
-    item.descuentos = {
-      codigo: "00",
-      descripcion: "Descuento",
-      porcentaje: parseFloat(
-        div(orderItem.discountAmount)(orderItem.netTotal).toFixed(4),
-      ),
-      monto: orderItem.discountAmount,
-      base: orderItem.netTotal,
-    };
+    item.descuento = orderItem.discountAmount;
   }
 
   return item;
 };
+
+const orderTotals = (order: Order) => ({
+  netTotal: order.netTotal,
+  totalTax: 0,
+  total: order.total,
+  discountAmount: order.discount ? order.discountAmount : 0,
+});
 
 // Api documentation https://docs.factpro.la/
 export default function gateway({
@@ -188,7 +183,7 @@ export default function gateway({
   ) => Promise<response<NaturalCustomer>>;
   cancelDocument: (
     document: Document,
-    cancellationReason: string
+    cancellationReason: string,
   ) => Promise<response<Document>>;
 } {
   const createInvoice = async (
@@ -199,67 +194,42 @@ export default function gateway({
       return { success: false, message: "Billing token not found" };
     }
 
-    const body: FactproDocument = {
-      tipo_documento: "01",
+    const totals = orderTotals(order);
+    const body: FactproDocumentV3 = {
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
-      tipo_operacion: "0101", // By default
+      tipo_operacion: "1",
       fecha_de_emision: formatInTimeZone(
         order.createdAt,
         "America/Lima",
         "yyyy-MM-dd",
       ),
-      hora_de_emision: formatInTimeZone(
-        order.createdAt,
-        "America/Lima",
-        "hh:mm:ss",
-      ),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
-      datos_del_emisor: {
-        codigo_establecimiento: documentMetadata.establishmentCode,
-      },
       cliente: clientParamsBuilder(order.customer),
-      totales: {
-        total_exoneradas: order.total,
-        total_tax: 0,
-        total_venta: order.total,
-        total_gravadas: 0,
-        total_exportacion: 0,
-        total_inafectas: 0,
-        total_gratuitas: 0,
-        descuentos: order.discount && {
-          codigo: "02",
-          descripcion: "Descuento general",
-          porcentaje: div(order.discountAmount)(order.netTotal),
-          monto: order.discountAmount,
-          base: order.netTotal,
-        },
-      },
       items: order.orderItems.map((orderItem) =>
         orderItemToDocumentItem(orderItem),
       ),
-      acciones: {
-        formato_pdf: "a4",
-      },
-      termino_de_pago: {
-        descripcion: "Contado",
-        tipo: "0",
-      },
-      metodo_de_pago: "Efectivo", // agregar metodo de pago
-      canal_de_venta: "",
-      orden_de_compra: "",
-      almacen: "",
+      condicion_de_pago: [
+        {
+          tipo_de_condicion: "0",
+          forma_de_pago: "0",
+          monto: 0,
+        },
+      ],
+      ...(order.discount
+        ? { totales: { monto_descuento_global: order.discountAmount } }
+        : {}),
       observaciones: "",
-      fecha_de_vencimiento: "",
+      formato_pdf: "a4",
     };
 
     const response = await sendDocument(body, order.id!, billingToken);
     if (!response.success) return response;
-    if (!response.data.success)
+    if (!response.data.exito)
       return {
         success: false,
-        message: response.data.message || "Error al crear el documento en FactPro",
+        message: response.data.mensaje || FACTPRO_DOCUMENT_ERROR,
       };
 
     return {
@@ -269,14 +239,14 @@ export default function gateway({
         orderId: order.id!,
         companyId: order.companyId,
         customerId: order.customer.id!,
-        netTotal: body.totales.total_exoneradas,
-        taxTotal: body.totales.total_tax,
-        discountAmount: body.totales.descuentos?.monto || 0,
-        total: body.totales.total_venta,
+        netTotal: totals.netTotal,
+        taxTotal: totals.totalTax,
+        discountAmount: totals.discountAmount,
+        total: totals.total,
         documentType: "invoice",
         series: body.serie,
         number: body.numero,
-        xml: response.data.links.xml,
+        xml: response.data.archivos.xml,
         status: "registered",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
@@ -293,67 +263,42 @@ export default function gateway({
       return { success: false, message: "Billing token not found" };
     }
 
-    const body: FactproDocument = {
-      tipo_documento: "03",
+    const totals = orderTotals(order);
+    const body: FactproDocumentV3 = {
       serie: documentMetadata.serialNumber,
       numero: documentMetadata.documentNumber.toString(),
-      tipo_operacion: "0101", // By default
+      tipo_operacion: "1",
       fecha_de_emision: formatInTimeZone(
         order.createdAt,
         "America/Lima",
         "yyyy-MM-dd",
       ),
-      hora_de_emision: formatInTimeZone(
-        order.createdAt,
-        "America/Lima",
-        "hh:mm:ss",
-      ),
       moneda: "PEN",
       enviar_automaticamente_al_cliente: false,
-      datos_del_emisor: {
-        codigo_establecimiento: documentMetadata.establishmentCode,
-      },
       cliente: clientParamsBuilder(order.customer),
-      totales: {
-        total_exoneradas: order.total,
-        total_tax: 0,
-        total_venta: order.total,
-        total_gravadas: 0,
-        total_exportacion: 0,
-        total_inafectas: 0,
-        total_gratuitas: 0,
-        descuentos: order.discount && {
-          codigo: "02",
-          descripcion: "Descuento general",
-          porcentaje: div(order.discountAmount)(order.netTotal),
-          monto: order.discountAmount,
-          base: order.netTotal,
-        },
-      },
       items: order.orderItems.map((orderItem) =>
         orderItemToDocumentItem(orderItem),
       ),
-      acciones: {
-        formato_pdf: "a4",
-      },
-      termino_de_pago: {
-        descripcion: "Contado",
-        tipo: "0",
-      },
-      metodo_de_pago: "Efectivo", // agregar metodo de pago
-      canal_de_venta: "",
-      orden_de_compra: "",
-      almacen: "",
+      condicion_de_pago: [
+        {
+          tipo_de_condicion: "0",
+          forma_de_pago: "0",
+          monto: 0,
+        },
+      ],
+      ...(order.discount
+        ? { totales: { monto_descuento_global: order.discountAmount } }
+        : {}),
       observaciones: "",
-      fecha_de_vencimiento: "",
+      formato_pdf: "a4",
     };
 
     const response = await sendDocument(body, order.id!, billingToken);
     if (!response.success) return response;
-    if (!response.data.success)
+    if (!response.data.exito)
       return {
         success: false,
-        message: response.data.message || "Error al crear el documento en FactPro",
+        message: response.data.mensaje || FACTPRO_DOCUMENT_ERROR,
       };
 
     return {
@@ -363,14 +308,14 @@ export default function gateway({
         orderId: order.id!,
         companyId: order.companyId,
         customerId: order.customer?.id!,
-        netTotal: body.totales.total_exoneradas,
-        taxTotal: body.totales.total_tax,
-        discountAmount: body.totales.descuentos?.monto || 0,
-        total: body.totales.total_venta,
+        netTotal: totals.netTotal,
+        taxTotal: totals.totalTax,
+        discountAmount: totals.discountAmount,
+        total: totals.total,
         documentType: "receipt",
         series: body.serie,
         number: body.numero,
-        xml: response.data.links.xml,
+        xml: response.data.archivos.xml,
         status: "registered",
         qr: response.data.data.qr,
         hash: response.data.data.hash,
@@ -505,29 +450,40 @@ export default function gateway({
     };
   };
 
-  const cancelTicket = async (document: Ticket, cancellationReason: string): Promise<response<Document>> => {
-    const updatedDocument = await updateDocument({...document,cancellationReason: cancellationReason, status: 'cancelled'})
-    if(!updatedDocument.success){
-      log.error("update_document_failed",{document, updatedDocument})
-      return errorResponse('Update document failed')
+  const cancelTicket = async (
+    document: Ticket,
+    cancellationReason: string,
+  ): Promise<response<Document>> => {
+    const updatedDocument = await updateDocument({
+      ...document,
+      cancellationReason: cancellationReason,
+      status: "cancelled",
+    });
+    if (!updatedDocument.success) {
+      log.error("update_document_failed", { document, updatedDocument });
+      return errorResponse("Update document failed");
     }
 
-    return {success: true, data: updatedDocument.data}
-  }
+    return { success: true, data: updatedDocument.data };
+  };
 
-  const cancelBillingDocument = async (document: Invoice | Receipt, cancellationReason: string): Promise<response<Document>> => {
-    if (document.status != 'registered') {
-      throw new Error('Invalid document, only registered documents are supported')
+  const cancelBillingDocument = async (
+    document: Invoice | Receipt,
+    cancellationReason: string,
+  ): Promise<response<Document>> => {
+    if (document.status != "registered") {
+      throw new Error(
+        "Invalid document, only registered documents are supported",
+      );
     }
 
     const body = {
-      tipo_documento: isInvoice(document) ? "01" : '03',
       serie: document.series,
       numero: document.number,
       motivo: cancellationReason,
     };
 
-    const res = await fetch(`${url!}/anular`, {
+    const res = await fetch(factproEndpoint("anular"), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${billingToken}`,
@@ -536,21 +492,46 @@ export default function gateway({
       body: JSON.stringify(body),
     });
 
-    const result = await res.json();
-    if (!result.success) {
-      log.error('cancel_factpro_document_failed', { document, result });
-      return errorResponse(result.message);
+    const responseBody = await res.text();
+    let result: FactproCancelResponseV3;
+    try {
+      result = JSON.parse(responseBody) as FactproCancelResponseV3;
+    } catch {
+      log.error("cancel_factpro_document_failed", {
+        document,
+        response_body: responseBody,
+        error: "format_error",
+      });
+      return errorResponse("FactPro devolvió una respuesta no JSON");
     }
 
-    log.info('cancel_factpro_document_succeeded', { document, result });
-    return { success: true, data: { ...document, status: 'cancelled', cancellationReason: cancellationReason } };
+    if (!res.ok || !result.exito) {
+      log.error("cancel_factpro_document_failed", { document, result });
+      return errorResponse(
+        result.mensaje || "Error al anular el documento en FactPro",
+      );
+    }
+
+    log.info("cancel_factpro_document_succeeded", { document, result });
+    return {
+      success: true,
+      data: {
+        ...document,
+        status: "cancelled",
+        cancellationReason: cancellationReason,
+      },
+    };
   };
 
-  const cancelDocument = async (document: Document, cancellationReason: string): Promise<response<Document>> => {
-    if (isReceipt(document) || isInvoice(document)) return cancelBillingDocument(document, cancellationReason)
+  const cancelDocument = async (
+    document: Document,
+    cancellationReason: string,
+  ): Promise<response<Document>> => {
+    if (isReceipt(document) || isInvoice(document))
+      return cancelBillingDocument(document, cancellationReason);
 
-    return cancelTicket(document, cancellationReason)
-  }
+    return cancelTicket(document, cancellationReason);
+  };
 
   return {
     createInvoice,

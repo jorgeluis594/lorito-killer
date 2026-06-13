@@ -6,7 +6,6 @@ import { Product, ProductService } from "@/product/types";
 import { revalidatePath } from "next/cache";
 import { protectedAction } from "@/authorization/server";
 import productCreatorV2 from "@/product/use-cases/product-creator-v2";
-import { getSession } from "@/lib/auth";
 
 const createProduct = productCreatorV2({ create, findBy });
 
@@ -40,27 +39,22 @@ export const hideProduct = protectedAction(
   },
 );
 
-export const unhideProduct = async (
-  productId: string,
-): Promise<response<Product>> => {
-  const session = await getSession();
+export const unhideProduct = protectedAction(
+  { resource: "products", action: "delete" },
+  async (user, productId: string): Promise<response<Product>> => {
+    const productResponse = await find(productId, user.companyId);
+    if (!productResponse.success) return productResponse;
 
-  if (!session.user) {
-    return { success: false, message: "Unauthenticated user" };
-  }
+    const updatedProduct = { ...productResponse.data, hidden: false };
+    const updateResponse = await update(updatedProduct);
 
-  const productResponse = await find(productId, session.user.companyId);
-  if (!productResponse.success) return productResponse;
+    if (updateResponse.success) {
+      revalidatePath("/[subdomain]/dashboard/products", "page");
+    }
 
-  const updatedProduct = { ...productResponse.data, hidden: false };
-  const updateResponse = await update(updatedProduct);
-
-  if (updateResponse.success) {
-    revalidatePath("/[subdomain]/dashboard/products", "page");
-  }
-
-  return updateResponse;
-};
+    return updateResponse;
+  },
+);
 
 export const createServiceProduct = protectedAction(
   { resource: "products", action: "create" },

@@ -8,11 +8,15 @@ import { protectedRoute } from "@/authorization/server";
 
 export const GET = protectedRoute(
   { resource: "products", action: "export" },
-  async (_req, user) => {
+  async (req, user) => {
+    const { searchParams } = new URL(req.url);
+
     const productsResponse = await getMany({
       companyId: user.companyId,
+      q: searchParams.get("q"),
+      categoryId: searchParams.get("categoryId"),
       productType: SingleProductType,
-      includeHidden: false,
+      includeHidden: searchParams.get("showHidden") === "true",
     });
 
     if (!productsResponse.success) {
