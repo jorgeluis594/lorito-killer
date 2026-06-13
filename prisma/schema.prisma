@@ -292,6 +292,7 @@ model DocumentTaxDispatch {
 enum CustomerDocumentType {
   RUC
   DNI
+  CARNET_EXTRANJERIA
 }
 
 model Customer {

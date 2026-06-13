@@ -1,5 +1,6 @@
 import {
   BusinessCustomer,
+  CARNET_EXTRANJERIA,
   type Customer,
   CustomerDocumentType,
   DNI,
@@ -10,22 +11,47 @@ import {
 } from "@/customer/types";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import { $Enums, Customer as PrismaCustomer, Prisma } from "@prisma/client";
+import {
+  Customer as PrismaCustomer,
+  CustomerDocumentType as PrismaCustomerDocumentType,
+  Prisma,
+} from "@prisma/client";
 import { isBusinessCustomer, isNaturalCustomer } from "@/customer/utils";
-import PrismaCustomerDocumentType = $Enums.CustomerDocumentType;
 
 const CustomerDocumentTypeToPrismaMapper: Record<
   CustomerDocumentType,
   PrismaCustomerDocumentType
 > = {
+  [CARNET_EXTRANJERIA]: PrismaCustomerDocumentType.CARNET_EXTRANJERIA,
   [DNI]: PrismaCustomerDocumentType.DNI,
   [RUC]: PrismaCustomerDocumentType.RUC,
+};
+
+const prismaToNaturalCustomerDocumentType = (
+  documentType: PrismaCustomerDocumentType | null,
+): NaturalCustomer["documentType"] => {
+  if (documentType === PrismaCustomerDocumentType.CARNET_EXTRANJERIA) {
+    return CARNET_EXTRANJERIA;
+  }
+
+  if (documentType === PrismaCustomerDocumentType.DNI) {
+    return DNI;
+  }
+
+  return undefined;
 };
 
 export const createCustomer = async (
   customer: Customer,
 ): Promise<response<Customer>> => {
   try {
+    if (isNaturalCustomer(customer) && !customer.documentType) {
+      return {
+        success: false,
+        message: "Natural customer document type is required",
+      };
+    }
+
     const documentType = customer.documentType
       ? CustomerDocumentTypeToPrismaMapper[customer.documentType]
       : undefined;
@@ -82,7 +108,9 @@ export const createCustomer = async (
         _branch: "NaturalCustomer",
         id: customerCreatedResponse.id,
         companyId: customerCreatedResponse.companyId,
-        documentType: "dni",
+        documentType: prismaToNaturalCustomerDocumentType(
+          customerCreatedResponse.documentType,
+        ),
         documentNumber: customerCreatedResponse.documentNumber!,
         geoCode: customerCreatedResponse.geoCode || undefined,
         fullName: customerCreatedResponse.legalName!,
@@ -130,7 +158,7 @@ export const findByDocumentNumber = async (
       where: { documentNumber, companyId },
     });
 
-    if (customer) {
+    if (customer.length > 0) {
       return { success: true, data: await prismaToCustomer(customer[0]) };
     } else {
       return { success: false, message: "Customer not found" };
@@ -212,7 +240,9 @@ export const prismaToCustomer = async (
       _branch: "NaturalCustomer",
       id: prismaCustomer.id,
       companyId: prismaCustomer.companyId,
-      documentType: "dni",
+      documentType: prismaToNaturalCustomerDocumentType(
+        prismaCustomer.documentType,
+      ),
       documentNumber: prismaCustomer.documentNumber!,
       fullName: prismaCustomer.legalName!,
       address: prismaCustomer.address!,

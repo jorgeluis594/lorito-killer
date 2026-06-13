@@ -23,9 +23,14 @@ import {
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type Customer, DNI, RUC } from "@/customer/types";
+import {
+  CARNET_EXTRANJERIA,
+  type Customer,
+  DNI,
+  RUC,
+} from "@/customer/types";
 import {
   Select,
   SelectContent,
@@ -44,12 +49,11 @@ import { useEffect, useState } from "react";
 import { createCustomer, searchCustomer } from "@/customer/actions";
 import DistrictSelector from "@/locality/components/district_selector";
 import { District } from "@/locality/types";
+import { type DocumentType } from "@/document/types";
 
 const CustomerSchema = z.object({
-  documentType: z.enum([DNI, RUC]).optional(),
-  documentNumber: z.coerce
-    .string()
-    .max(11, { message: "El número máximo de dígitos es 11." }),
+  documentType: z.enum([DNI, CARNET_EXTRANJERIA, RUC]),
+  documentNumber: z.coerce.string(),
   geoCode: z.string().optional(),
   fullName: z.string().min(3, {
     message: "El nombre del cliente debe tener al menos 3 caracteres",
@@ -57,20 +61,39 @@ const CustomerSchema = z.object({
   address: z.string().optional(),
   email: z.string().optional(),
   phoneNumber: z.string().optional(),
+}).superRefine((values, ctx) => {
+  const maxLength = values.documentType === CARNET_EXTRANJERIA ? 15 : 11;
+
+  if (values.documentNumber.length > maxLength) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_big,
+      maximum: maxLength,
+      type: "string",
+      inclusive: true,
+      path: ["documentNumber"],
+      message: `El número máximo de caracteres es ${maxLength}.`,
+    });
+  }
 });
 
 type CustomerFormValues = z.infer<typeof CustomerSchema>;
+
+const defaultCustomerDocumentType = (documentType: DocumentType) =>
+  documentType === "receipt" || documentType === "ticket" ? DNI : RUC;
 
 const formValuesToCustomer = (
   values: CustomerFormValues,
   companyId: string,
 ): Customer => {
-  if (values.documentType === DNI) {
+  if (
+    values.documentType === DNI ||
+    values.documentType === CARNET_EXTRANJERIA
+  ) {
     return {
       _branch: "NaturalCustomer",
       id: crypto.randomUUID(),
       companyId: companyId,
-      documentType: DNI,
+      documentType: values.documentType,
       documentNumber: values.documentNumber.toString(),
       geoCode: values.geoCode || "",
       fullName: values.fullName,
@@ -100,6 +123,15 @@ const formValuesToCustomer = (
 export default function NewCustomerModal() {
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(CustomerSchema),
+    defaultValues: {
+      documentType: defaultCustomerDocumentType("ticket"),
+      documentNumber: "",
+      geoCode: "",
+      fullName: "",
+      address: "",
+      email: "",
+      phoneNumber: "",
+    },
   });
   const order = useOrderFormStore((state) => state.order);
   const [open, setOpen] = useState(false);
@@ -107,10 +139,19 @@ export default function NewCustomerModal() {
   const user = useUserSession();
   const [locality, setLocality] = useState<District | undefined>();
   const { setCustomer } = useOrderFormActions();
+  const selectedDocumentType = useWatch({
+    control: form.control,
+    name: "documentType",
+  });
 
   const onSubmit = async (data: CustomerFormValues) => {
+    const customerDocumentType =
+      data.documentType ?? selectedDocumentType ?? defaultCustomerDocumentType(order.documentType);
     const res = await createCustomer(
-      formValuesToCustomer(data, user!.companyId!),
+      formValuesToCustomer(
+        { ...data, documentType: customerDocumentType },
+        user!.companyId!,
+      ),
     );
     if (res.success) {
       toast({
@@ -132,12 +173,19 @@ export default function NewCustomerModal() {
   const handleDialogChange = (isOpen: boolean) => {
     if (!isOpen) {
       form.reset();
+    } else {
+      form.setValue(
+        "documentType",
+        defaultCustomerDocumentType(order.documentType),
+      );
     }
     setOpen(isOpen);
   };
 
   const handleSearch = async () => {
-    const documentNumberSearch = form.watch("documentNumber");
+    if (selectedDocumentType === CARNET_EXTRANJERIA) return;
+
+    const documentNumberSearch = form.getValues("documentNumber");
     const res = await searchCustomer(
       String(documentNumberSearch),
       order.documentType,
@@ -171,11 +219,10 @@ export default function NewCustomerModal() {
   };
 
   useEffect(() => {
-    const defaultDocumentType =
-      order.documentType === "receipt" || order.documentType === "ticket"
-        ? DNI
-        : RUC;
-    form.setValue("documentType", defaultDocumentType);
+    form.setValue(
+      "documentType",
+      defaultCustomerDocumentType(order.documentType),
+    );
   }, [order.documentType, form]);
 
   return (
@@ -214,6 +261,7 @@ export default function NewCustomerModal() {
                   type="button"
                   className="mt-8 md:h-10 md:w-14 flex md:mt-8 items-center md:px-4"
                   onClick={handleSearch}
+                  disabled={selectedDocumentType === CARNET_EXTRANJERIA}
                 >
                   <Search/>
                 </Button>
@@ -226,13 +274,8 @@ export default function NewCustomerModal() {
                       <FormLabel>Tipo de Documento</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={
-                          order.documentType === "receipt" ||
-                          order.documentType === "ticket"
-                            ? DNI
-                            : RUC
-                        }
-                        disabled
+                        value={field.value}
+                        disabled={order.documentType === "invoice"}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -242,7 +285,12 @@ export default function NewCustomerModal() {
                         <SelectContent>
                           {order.documentType === "receipt" ||
                           order.documentType === "ticket" ? (
-                            <SelectItem value={DNI}>DNI</SelectItem>
+                            <>
+                              <SelectItem value={DNI}>DNI</SelectItem>
+                              <SelectItem value={CARNET_EXTRANJERIA}>
+                                Carnet de extranjería
+                              </SelectItem>
+                            </>
                           ) : (
                             <SelectItem value={RUC}>RUC</SelectItem>
                           )}
