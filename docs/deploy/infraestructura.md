@@ -84,7 +84,7 @@ Las variables `NEXT_PUBLIC_*` deben inyectarse como **build args** porque Next.j
 | `NEXTAUTH_URL`            | URL base de la aplicacion para NextAuth                            |
 | `UPLOADTHING_SECRET`      | Clave secreta de UploadThing para subida de archivos               |
 | `UPLOADTHING_APP_ID`      | ID de la aplicacion en UploadThing                                 |
-| `FACTPRO_URL`             | URL de la API de FactPro v3 para emision de comprobantes electronicos (`https://api.factpro.la/api/v3`) |
+| `FACTPRO_URL`             | URL de la API de FactPro v2 para emision de comprobantes electronicos (`https://dev.factpro.la/api/v2`) |
 | `TELEGRAM_BOT_TOKEN`      | Token del bot de Telegram para notificaciones                      |
 | `TELEGRAM_CHAT_ID`        | ID del chat de Telegram donde se envian notificaciones             |
 | `DISCORD_BOT_TOKEN`       | Token del bot de Discord para notificaciones                       |

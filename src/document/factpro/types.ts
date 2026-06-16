@@ -1,95 +1,120 @@
-export interface FactproDocumentItemV3 {
+export type FactproDiscount = {
+  codigo: string;
+  descripcion: string;
+  porcentaje: number;
+  monto: number;
+  base: number;
+};
+
+export interface FactproDocumentItem {
   unidad: "NIU";
   codigo: string;
   descripcion: string;
   cantidad: number;
-  precio: number;
-  incluye_tax: true;
-  // 1 = Gravado - Operacion Onerosa
+  valor_unitario: number;
+  precio_unitario: number;
+  // 10 = Gravado - Operacion Onerosa
   // 20 = Exonerado - Operacion Onerosa
-  tipo_tax: "1" | "20";
-  descuento?: number;
+  tipo_tax: "10" | "20";
+  total_base_tax: number;
+  codigo_producto_sunat: string;
+  codigo_producto_gsl: string;
+  porcentaje_tax: 18 | 0;
+  total_tax: number;
+  total: number;
+  descuentos?: FactproDiscount;
 }
 
-export interface FactproDocumentV3 {
+export interface FactproDocument {
+  tipo_documento: "01" | "03" | "07" | "08";
   serie: string;
   numero: string;
-  tipo_operacion: "1";
+  tipo_operacion: "0101";
   fecha_de_emision: string;
+  hora_de_emision: string;
   moneda: "PEN" | "USD";
+  fecha_de_vencimiento?: string;
   enviar_automaticamente_al_cliente?: boolean;
+  datos_del_emisor: {
+    codigo_establecimiento: string;
+  };
   cliente: {
-    // FactPro v3 catalog: 4 = RUC, 3 = CE, 2 = DNI, 1 = Otros
-    cliente_tipo_documento: "4" | "3" | "2" | "1";
+    // 6 = RUC, 1 = DNI, 4 = Carnet de Extranjeria
+    cliente_tipo_documento: "6" | "1" | "4" | "7" | "A" | "0";
     cliente_numero_documento: string;
     cliente_denominacion: string;
+    codigo_pais: "PE";
+    ubigeo: string;
     cliente_direccion: string;
     cliente_email?: string;
     cliente_telefono: string;
   };
-  items: FactproDocumentItemV3[];
-  condicion_de_pago: Array<{
-    tipo_de_condicion: "0" | "1";
-    forma_de_pago: "0";
-    monto: number;
-  }>;
-  totales?: {
-    monto_descuento_global: number;
+  totales: {
+    total_venta: number;
+    total_tax: number;
+    total_exoneradas: number;
+    total_exportacion: number;
+    total_gravadas: number;
+    total_inafectas: number;
+    total_gratuitas: number;
+    descuentos?: FactproDiscount;
   };
-  observaciones: string;
-  formato_pdf: "a4";
+  items: FactproDocumentItem[];
+  acciones: {
+    formato_pdf: "a4";
+  };
+  termino_de_pago: {
+    descripcion: "Contado" | "Credito";
+    tipo: "0" | "1";
+  };
+  metodo_de_pago?: string;
+  canal_de_venta: "";
+  orden_de_compra: "";
+  observaciones: "";
+  almacen: "";
 }
 
-export interface FactproSuccessResponseV3 {
-  exito: true;
-  mensaje: string | null;
+export interface FactproSuccessResponse {
+  success: true;
   data: {
-    numero: string;
-    archivo: string;
-    letras: string;
+    number: string;
+    filename: string;
+    external_id: string;
+    number_to_letter: string;
     hash: string;
     qr: string;
-    tipo_estado?: string;
-    descripcion_estado?: string;
   };
-  archivos: {
+  links: {
     xml: string;
     pdf: string;
     cdr: string;
   };
-  eventos?: Array<{
-    date: string;
+  response?: {
+    code: string;
     description: string;
-  }>;
-}
-
-export interface FactproErrorResponseV3 {
-  exito: false;
-  mensaje?: string | null;
-}
-
-export type FactproResponseV3 =
-  | FactproErrorResponseV3
-  | FactproSuccessResponseV3;
-
-export interface FactproCancelSuccessResponseV3 {
-  exito: true;
-  mensaje: string | null;
-  ticket: string;
-  hash: string;
-  fecha_de_emision: string;
-  estado_documento: string;
-  archivos: {
-    xml: string;
-    pdf: string;
-    cdr: string;
+    notes: string[];
   };
-  eventos?: Array<{
-    date: string;
-    description: string;
-  }>;
+  message?: string;
 }
 
-export type FactproCancelResponseV3 =
-  | FactproErrorResponseV3
-  | FactproCancelSuccessResponseV3;
+export interface FactproErrorResponse {
+  success: false;
+  message?: string;
+}
+
+export type FactproResponse = FactproErrorResponse | FactproSuccessResponse;
+
+export interface FactproCancelSuccessResponse {
+  success: true;
+  message?: string;
+  data?: unknown;
+  links?: {
+    xml?: string;
+    pdf?: string;
+    cdr?: string;
+  };
+}
+
+export type FactproCancelResponse =
+  | FactproErrorResponse
+  | FactproCancelSuccessResponse;
