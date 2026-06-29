@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architecture Design"
+  short_description: "Lorito architecture conventions"
+  default_prompt: "Use $architecture-design to design a Lorito Killer feature structure."
