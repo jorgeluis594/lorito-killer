@@ -44,6 +44,7 @@ async function ProductsWithSuspense({ searchParams }: ResolvedSearchParams) {
     limit: Number(searchParams.size) || 10,
     categoryId,
     includeHidden: searchParams.showHidden === "true",
+    stock: searchParams.stock === "zero" ? "zero" : undefined,
   };
 
   if (q) {
@@ -57,6 +58,7 @@ async function ProductsWithSuspense({ searchParams }: ResolvedSearchParams) {
       q,
       categoryId,
       includeHidden: searchParams.showHidden === "true",
+      stock: searchParams.stock === "zero" ? "zero" : undefined,
     }),
   ]);
 

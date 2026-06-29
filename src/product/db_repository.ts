@@ -253,12 +253,14 @@ export const getTotal = async ({
   q,
   productType,
   includeHidden,
+  stock,
 }: {
   companyId: string;
   categoryId?: searchParams["categoryId"];
   q?: string | null;
   productType?: TypeSingleProductType | TypePackageProductType;
   includeHidden?: boolean;
+  stock?: "zero";
 }): Promise<response<number>> => {
   try {
     const normalizedSearchQuery = normalizeProductSearchQuery(q);
@@ -270,6 +272,7 @@ export const getTotal = async ({
         q: normalizedSearchQuery,
         productType,
         includeHidden,
+        stock,
       });
 
       if (rows.length === 0) {
@@ -279,6 +282,7 @@ export const getTotal = async ({
           q: normalizedSearchQuery,
           productType,
           includeHidden,
+          stock,
         });
       }
 
@@ -293,6 +297,7 @@ export const getTotal = async ({
             categoryId,
             productType,
             includeHidden,
+            stock,
           }),
           OR: [
             { name: { contains: normalizedSearchQuery, mode: "insensitive" } },
@@ -316,6 +321,7 @@ export const getTotal = async ({
         categoryId,
         productType,
         includeHidden,
+        stock,
       }),
     });
 
@@ -492,6 +498,7 @@ export type GetManyParams = {
   q?: string | null;
   productType?: TypeSingleProductType | TypePackageProductType;
   includeHidden?: boolean;
+  stock?: "zero";
 };
 
 type ProductSearchIdRow = {
@@ -639,9 +646,10 @@ const buildProductWhere = ({
   categoryId,
   productType,
   includeHidden,
+  stock,
 }: Pick<
   GetManyParams,
-  "companyId" | "categoryId" | "productType" | "includeHidden"
+  "companyId" | "categoryId" | "productType" | "includeHidden" | "stock"
 >): Prisma.ProductWhereInput => {
   const where: Prisma.ProductWhereInput = { companyId };
 
@@ -653,6 +661,11 @@ const buildProductWhere = ({
 
   if (prismaProductType) {
     where.productType = prismaProductType;
+  }
+
+  if (stock === "zero") {
+    where.productType = "SINGLE_PRODUCT";
+    where.stock = 0;
   }
 
   if (categoryId) {
@@ -671,6 +684,7 @@ const findProductsByPartialSearch = async ({
   pageNumber,
   productType,
   includeHidden,
+  stock,
 }: GetManyParams & { q: string }) => {
   const query = {
     where: {
@@ -679,6 +693,7 @@ const findProductsByPartialSearch = async ({
         categoryId,
         productType,
         includeHidden,
+        stock,
       }),
       OR: [
         { name: { contains: q, mode: "insensitive" } },
@@ -704,6 +719,7 @@ export const getMany = async ({
   q,
   productType,
   includeHidden,
+  stock,
 }: GetManyParams): Promise<response<Product[]>> => {
   try {
     const normalizedSearchQuery = normalizeProductSearchQuery(q);
@@ -718,6 +734,7 @@ export const getMany = async ({
         q: normalizedSearchQuery,
         productType,
         includeHidden,
+        stock,
       });
 
       if (rows.length === 0) {
@@ -730,6 +747,7 @@ export const getMany = async ({
           q: normalizedSearchQuery,
           productType,
           includeHidden,
+          stock,
         });
       }
 
@@ -745,6 +763,7 @@ export const getMany = async ({
           q: normalizedSearchQuery,
           productType,
           includeHidden,
+          stock,
         });
         const products = await Promise.all(result.map(prismaToProduct));
 
@@ -773,6 +792,7 @@ export const getMany = async ({
         categoryId,
         productType,
         includeHidden,
+        stock,
       }),
       orderBy: sortBy ? [{ ...sortBy }, { stock: "desc" }] : { stock: "desc" },
     };
