@@ -543,8 +543,6 @@ export async function findOperationalAlerts(
       openCashShifts,
       openOrders,
       activeTables,
-      pendingDispatches,
-      failedDispatches,
       zeroStockProducts,
       cancellations,
       cancellationAmount,
@@ -570,20 +568,6 @@ export async function findOperationalAlerts(
             },
           })
         : Promise.resolve(0),
-      prisma().documentTaxDispatch.count({
-        where: {
-          companyId: query.companyId,
-          status: { in: ["PENDING", "ENQUEUED"] },
-          createdAt: { gte: query.startDate, lte: query.endDate },
-        },
-      }),
-      prisma().documentTaxDispatch.count({
-        where: {
-          companyId: query.companyId,
-          status: "FAILED",
-          createdAt: { gte: query.startDate, lte: query.endDate },
-        },
-      }),
       prisma().product.count({
         where: {
           companyId: query.companyId,
@@ -638,8 +622,6 @@ export async function findOperationalAlerts(
     const operationHref = restaurantsEnabled
       ? "/dashboard/tables"
       : "/dashboard/orders?status=pending";
-    const dispatchSeverity =
-      failedDispatches > 0 ? "critical" : pendingDispatches > 0 ? "warning" : "success";
     const discountTotal =
       numberFromDecimal(orderDiscounts._sum.discountAmount) +
       numberFromDecimal(itemDiscounts._sum.discountAmount);
@@ -669,19 +651,6 @@ export async function findOperationalAlerts(
                 : "No hay operaciones abiertas.",
             href: operationHref,
             severity: operationCount > 0 ? "warning" : "success",
-          },
-          {
-            id: "tax-dispatch",
-            title: "Comprobantes",
-            value: failedDispatches > 0 ? `${failedDispatches} fallidos` : `${pendingDispatches} pendientes`,
-            description:
-              failedDispatches > 0
-                ? "Hay comprobantes con envio fallido."
-                : pendingDispatches > 0
-                  ? "Hay comprobantes esperando envio."
-                  : "Todos los comprobantes estan al dia.",
-            href: "/dashboard/orders",
-            severity: dispatchSeverity,
           },
           {
             id: "zero-stock",

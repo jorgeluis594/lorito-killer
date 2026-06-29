@@ -97,6 +97,26 @@ describe("normalizeDashboardQuery", () => {
     expect(result.data.endDate).toEqual(new Date(2026, 5, 12, 23, 59, 59, 999));
   });
 
+  test("uses today's range when custom has no dates yet", () => {
+    const result = normalizeDashboardQuery({
+      companyId: "company-1",
+      searchParams: {
+        period: "custom",
+      },
+      now,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.data).toMatchObject({
+      period: "custom",
+      bucket: "day",
+    });
+    expect(result.data.startDate).toEqual(new Date(2026, 5, 28, 0, 0, 0, 0));
+    expect(result.data.endDate).toEqual(new Date(2026, 5, 28, 23, 59, 59, 999));
+  });
+
   test("returns an error for invalid custom ranges", () => {
     const result = normalizeDashboardQuery({
       companyId: "company-1",

@@ -16,6 +16,7 @@ import {
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { buildDashboardFilterSearchParams } from "@/dashboard/use-cases/build-dashboard-filter-search-params";
 
 const PERIOD_OPTIONS: Array<{ value: DashboardPeriod; label: string }> = [
   { value: "today", label: "Hoy" },
@@ -39,14 +40,12 @@ export function DashboardFilters({
   const searchParams = useSearchParams();
 
   const updateFilter = (key: string, nextValue: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(key, nextValue);
-    params.delete("page");
-
-    if (key === "period" && nextValue !== "custom") {
-      params.delete("start");
-      params.delete("end");
-    }
+    const params = buildDashboardFilterSearchParams({
+      currentSearchParams: new URLSearchParams(searchParams.toString()),
+      currentFilterState: value,
+      key,
+      nextValue,
+    });
 
     router.push(`${pathname}?${params.toString()}`);
   };

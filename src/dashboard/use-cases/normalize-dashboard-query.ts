@@ -104,6 +104,13 @@ const resolveRange = ({
     };
   }
 
+  if (!start && !end) {
+    return {
+      success: true,
+      data: { startDate: startOfDay(now), endDate: endOfDay(now) },
+    };
+  }
+
   const customStart = parseDateOnly(start);
   const customEnd = parseDateOnly(end);
 
