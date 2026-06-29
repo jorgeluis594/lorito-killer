@@ -9,7 +9,7 @@ import {
 } from "@/document/types";
 import { response } from "@/lib/types";
 import prisma from "@/lib/prisma";
-import { $Enums, Document as PrismaDocument } from "@prisma/client";
+import { $Enums, Document as PrismaDocument, Prisma } from "@prisma/client";
 import PrismaDocumentType = $Enums.DocumentType;
 import { errorResponse, isEmpty } from "@/lib/utils";
 import { log } from "@/lib/log";
@@ -238,6 +238,9 @@ const buildDocumentQuery = ({
   invoice,
   receipt,
   orderId,
+  sellerId,
+  sellerMode,
+  orderStatus,
 }: Omit<SearchParams, "pageSize" | "pageNumber">) => {
   const documentTypes: { documentType: PrismaDocumentType }[] = [];
 
@@ -266,6 +269,27 @@ const buildDocumentQuery = ({
   if (startDate) dateFilter.gte = startDate;
   if (endDate) dateFilter.lte = endDate;
 
+  const orderFilter: Prisma.OrderWhereInput = {};
+  if (sellerMode === "specific" && sellerId) {
+    orderFilter.sellerId = sellerId;
+  }
+
+  if (sellerMode === "unassigned") {
+    orderFilter.sellerId = null;
+  }
+
+  if (orderStatus === "paid") {
+    orderFilter.status = "COMPLETED";
+  }
+
+  if (orderStatus === "cancelled") {
+    orderFilter.status = "CANCELLED";
+  }
+
+  if (orderStatus === "all") {
+    orderFilter.status = { in: ["COMPLETED", "CANCELLED"] };
+  }
+
   return {
     companyId,
     ...(correlative && { number: parseInt(correlative.number) }),
@@ -274,6 +298,7 @@ const buildDocumentQuery = ({
     ...(customerId && { customerId }),
     ...((ticket || invoice || receipt) && { OR: documentTypes }),
     ...(orderQuery && { orderId: orderQuery }),
+    ...(Object.keys(orderFilter).length > 0 && { order: orderFilter }),
   };
 };
 
@@ -286,6 +311,9 @@ export const getTotal = async ({
   ticket,
   invoice,
   receipt,
+  sellerId,
+  sellerMode,
+  orderStatus,
 }: Omit<SearchParams, "pageSize" | "pageNumber">): Promise<
   response<number>
 > => {
@@ -300,6 +328,9 @@ export const getTotal = async ({
         ticket,
         invoice,
         receipt,
+        sellerId,
+        sellerMode,
+        orderStatus,
       }),
     });
 
@@ -321,6 +352,9 @@ export const getMany = async ({
   invoice,
   receipt,
   orderId,
+  sellerId,
+  sellerMode,
+  orderStatus,
 }: SearchParams): Promise<response<(Document & { customer?: Customer })[]>> => {
   log.info("get_many_documents", {
     startDate,
@@ -339,6 +373,9 @@ export const getMany = async ({
       invoice,
       receipt,
       orderId,
+      sellerId,
+      sellerMode,
+      orderStatus,
     }),
     skip: pageNumber && pageSize && (pageNumber - 1) * pageSize,
     take: pageSize,

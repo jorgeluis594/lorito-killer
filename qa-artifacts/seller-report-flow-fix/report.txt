@@ -1,0 +1,24 @@
+REPORTE QA FIX - Vista reporte de vendedores
+Fecha: 2026-06-28
+URL: http://fantastidog.localhost:3000/dashboard/sales_reports/sellers
+
+Estado general: PASSED.
+
+Casos corregidos:
+- Ana + status=all ahora muestra S/1,149.00, 3 ventas y 1 anulacion.
+- Ana + status=cancelled ahora muestra S/999.00, 1 venta y 1 anulacion.
+
+Regresion validada:
+- Ana + status=paid sigue mostrando S/150.00, 2 ventas y 0 anulaciones.
+
+Validaciones ejecutadas:
+- npx tsx /private/tmp/validate-seller-report-fix.ts
+- npm run test -- src/sale_report/__TEST__/calculate-seller-performance-report.test.ts src/sale_report/__TEST__/normalize-seller-report-query.test.ts src/sale_report/__TEST__/search-params.test.ts
+- npx eslint src/sale_report/use-cases/calculate-seller-performance-report.ts src/sale_report/__TEST__/calculate-seller-performance-report.test.ts src/sale_report/components/sellers/seller-report-filters.tsx
+- npm run build:dev
+- npx tsc --noEmit
+
+Evidencias:
+- qa-artifacts/seller-report-flow-fix/01-ana-status-all-fixed.png
+- qa-artifacts/seller-report-flow-fix/02-ana-status-cancelled-fixed.png
+- qa-artifacts/seller-report-flow-fix/03-ana-status-paid-still-ok.png

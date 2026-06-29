@@ -1,0 +1,26 @@
+REPORTE QA - Vista reporte de vendedores
+Fecha: 2026-06-28
+URL: http://fantastidog.localhost:3000/dashboard/sales_reports/sellers
+
+Estado general: FAILED parcial - 9/11 casos pasan, 2 fallan.
+
+PASAN:
+- Vista separada /dashboard/sales_reports/sellers carga correctamente.
+- Default respeta rango por defecto y no incluye Bruno S/777 fuera de rango.
+- Ana + status=paid muestra S/150 y 2 ventas; no incluye S/999 cancelada.
+- Filtro Sin vendedor funciona; muestra el total real de ventas sin vendedor del rango.
+- Carla inactiva aparece al filtrar explicitamente.
+- Bruno + invoice muestra S/80.
+- Bruno + ticket=true en rango default no muestra S/777 viejo.
+- Rango futuro muestra estado vacio sin romper UI.
+- Ver ventas desde Ana paid preserva sellerId y status=paid; no muestra S/999.
+
+FALLAN:
+- Ana + status=all muestra S/150 y 2 ventas con anulaciones=1, pero no incluye el monto cancelado S/999.
+- Ana + status=cancelled muestra S/0 y 0 ventas con anulaciones=1, pero deberia mostrar S/999.
+
+Screenshots:
+- qa-artifacts/seller-report-flow-rerun/03-ana-status-all.png
+- qa-artifacts/seller-report-flow-rerun/04-ana-status-cancelled.png
+- qa-artifacts/seller-report-flow-rerun/08-bruno-ticket-default-range.png
+- qa-artifacts/seller-report-flow-rerun/10-ver-ventas-ana-paid.png

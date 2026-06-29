@@ -93,6 +93,9 @@ export type SearchParams = {
   receipt?: boolean;
   ticket?: boolean;
   orderId?: string | string[];
+  sellerId?: string;
+  sellerMode?: "all" | "specific" | "unassigned";
+  orderStatus?: "paid" | "cancelled" | "all";
 };
 
 export type Registered<T extends Document> = T & { status: "registered" };
