@@ -12,18 +12,6 @@
 /coverage
 /qa-artifacts/
 
-# local docs
-/docs/plans/2026-06-28-product-dashboard-technical-solution.md
-/docs/plans/2026-06-28-seller-performance-product-design.md
-/docs/plans/2026-06-28-seller-performance-technical-design.md
-/docs/casos-uso-seller-por-codigo-en-ordenes.md
-/docs/estilo-y-convenciones-de-programacion.md
-/docs/product-dashboard.md
-/docs/qa-carnet-extranjeria-agent-results.md
-/docs/qa-carnet-extranjeria-fixes.md
-/docs/qa-carnet-extranjeria-remaining-verification-20260530.md
-/docs/sellers-configuracion-empresa.md
-
 # next.js
 /.next/
 /out/
