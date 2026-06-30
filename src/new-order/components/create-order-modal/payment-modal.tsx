@@ -32,6 +32,7 @@ import SellerCodeField, {
   type ValidSellerSelection,
 } from "@/new-order/components/create-order-modal/seller-code-field";
 import { printOrderReceipt } from "@/printing/print-order-receipt";
+import { useFeatureEnabled } from "@/feature-flags/client";
 
 const PaymentViews = {
   none: NonePayment,
@@ -102,9 +103,10 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const user = useUserSession();
   const company = useCompany();
   const signOut = useSignOut();
+  const sellerEnabled = useFeatureEnabled("seller");
 
   const handleOrderCreation = async () => {
-    if (!validatedSeller) {
+    if (sellerEnabled && !validatedSeller) {
       toast({
         variant: "destructive",
         description: "Ingrese un codigo de seller valido",
@@ -128,7 +130,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         status: "completed",
         createdAt: new Date(),
       },
-      validatedSeller.sellerCode,
+      sellerEnabled ? validatedSeller?.sellerCode : null,
     );
     if (response.success) {
       toast({
@@ -187,7 +189,9 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const paidAmount = getPaidAmount();
   const amountIsInvalid = paidAmount !== order.total;
   const paymentCanBeCreated =
-    paymentMode !== "none" && !amountIsInvalid && Boolean(validatedSeller);
+    paymentMode !== "none" &&
+    !amountIsInvalid &&
+    (!sellerEnabled || Boolean(validatedSeller));
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -223,10 +227,12 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               </Button>
             </div>
           )}
-          <SellerCodeField
-            key={isOpen ? "seller-code-open" : "seller-code-closed"}
-            onValidSellerChange={handleValidSellerChange}
-          />
+          {sellerEnabled && (
+            <SellerCodeField
+              key={isOpen ? "seller-code-open" : "seller-code-closed"}
+              onValidSellerChange={handleValidSellerChange}
+            />
+          )}
           <PaymentView />
           {paymentMode !== "none" && companyHasDiscountFeature(company.id) && (
             <DiscountFields defaultDiscount={order.discount} />
@@ -234,7 +240,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         </div>
         <DialogFooter>
           <CreateOrderButton
-            amountIsInvalid={getPaidAmount() !== order.total}
+            amountIsInvalid={!paymentCanBeCreated}
             creatingOrder={creatingOrder}
             onCreateOrder={handleOrderCreation}
             paymentMode={paymentMode}

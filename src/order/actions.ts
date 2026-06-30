@@ -30,40 +30,24 @@ import {
 } from "@/document/tax-dispatch-outbox";
 import { protectedAction } from "@/authorization/server";
 import prisma from "@/lib/prisma";
+import { isFeatureEnabled } from "@/feature-flags";
+import { resolveOrderSellerId } from "@/order/use-cases/resolve-order-seller-id";
 
-const SELLER_CODE_REGEX = /^\d{4}$/;
-
-async function resolveSellerIdByCode(
-  sellerCode: string | null | undefined,
+async function findActiveSellerIdByCode(
+  sellerCode: string,
   companyId: string,
-): Promise<response<string>> {
-  const normalizedSellerCode =
-    typeof sellerCode === "string" ? sellerCode.trim() : "";
-  if (!SELLER_CODE_REGEX.test(normalizedSellerCode)) {
-    return {
-      success: false,
-      message: "El codigo debe tener exactamente 4 digitos",
-    };
-  }
-
+): Promise<string | null> {
   const seller = await prisma().user.findFirst({
     where: {
       companyId,
       role: "SELLER",
       active: true,
-      sellerCode: normalizedSellerCode,
+      sellerCode,
     },
     select: { id: true },
   });
 
-  if (!seller) {
-    return {
-      success: false,
-      message: "Codigo de seller no encontrado",
-    };
-  }
-
-  return { success: true, data: seller.id };
+  return seller?.id ?? null;
 }
 
 export const create = protectedAction(
@@ -72,7 +56,7 @@ export const create = protectedAction(
     user,
     userId: string,
     order: Order,
-    sellerCode: string,
+    sellerCode?: string | null,
   ): Promise<response<{ order: Order; document: Document }>> => {
     // Check if company is active
     const companyResponse = await findCompany(user.companyId);
@@ -119,9 +103,9 @@ export const create = protectedAction(
       };
     }
 
-    const sellerResponse = await resolveSellerIdByCode(
-      sellerCode,
-      user.companyId,
+    const sellerResponse = await resolveOrderSellerId(
+      { sellerCode, companyId: user.companyId },
+      { isFeatureEnabled, findActiveSellerIdByCode },
     );
     if (!sellerResponse.success) {
       return sellerResponse;
