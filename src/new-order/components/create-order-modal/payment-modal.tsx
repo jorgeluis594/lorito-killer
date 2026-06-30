@@ -22,12 +22,15 @@ import {
 } from "./payment_views";
 import { create } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
 import DiscountFields from "@/new-order/components/create-order-modal/discount-fields";
 import { useCompany } from "@/lib/use-company";
 import useSignOut from "@/lib/use-sign-out";
+import SellerCodeField, {
+  type ValidSellerSelection,
+} from "@/new-order/components/create-order-modal/seller-code-field";
 import { printOrderReceipt } from "@/printing/print-order-receipt";
 
 const PaymentViews = {
@@ -94,11 +97,21 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const PaymentView = PaymentViews[paymentMode];
   const { toast } = useToast();
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const [validatedSeller, setValidatedSeller] =
+    useState<ValidSellerSelection | null>(null);
   const user = useUserSession();
   const company = useCompany();
   const signOut = useSignOut();
 
   const handleOrderCreation = async () => {
+    if (!validatedSeller) {
+      toast({
+        variant: "destructive",
+        description: "Ingrese un codigo de seller valido",
+      });
+      return;
+    }
+
     if (!order.documentType) {
       toast({
         variant: "destructive",
@@ -108,11 +121,15 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     }
 
     setCreatingOrder(true);
-    const response = await create(user!.id, {
-      ...order,
-      status: "completed",
-      createdAt: new Date(),
-    });
+    const response = await create(
+      user!.id,
+      {
+        ...order,
+        status: "completed",
+        createdAt: new Date(),
+      },
+      validatedSeller.sellerCode,
+    );
     if (response.success) {
       toast({
         title: "En hora buena!",
@@ -155,9 +172,22 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       setDiscount(undefined);
+      setValidatedSeller(null);
     }
     onOpenChange(isOpen);
   };
+
+  const handleValidSellerChange = useCallback(
+    (selection: ValidSellerSelection | null) => {
+      setValidatedSeller(selection);
+    },
+    [],
+  );
+
+  const paidAmount = getPaidAmount();
+  const amountIsInvalid = paidAmount !== order.total;
+  const paymentCanBeCreated =
+    paymentMode !== "none" && !amountIsInvalid && Boolean(validatedSeller);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -193,6 +223,10 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
               </Button>
             </div>
           )}
+          <SellerCodeField
+            key={isOpen ? "seller-code-open" : "seller-code-closed"}
+            onValidSellerChange={handleValidSellerChange}
+          />
           <PaymentView />
           {paymentMode !== "none" && companyHasDiscountFeature(company.id) && (
             <DiscountFields defaultDiscount={order.discount} />

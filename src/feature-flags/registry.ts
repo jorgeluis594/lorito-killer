@@ -3,6 +3,10 @@ export const FEATURES = {
     label: "Restaurantes",
     defaultEnabled: false,
   },
+  seller: {
+    label: "Vendedor",
+    defaultEnabled: false,
+  },
 } as const;
 
 export type FeatureKey = keyof typeof FEATURES;

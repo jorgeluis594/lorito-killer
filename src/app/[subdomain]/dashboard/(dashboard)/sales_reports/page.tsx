@@ -5,13 +5,15 @@ import DataTable from "@/sale_report/components/table/client";
 import { columns } from "@/sale_report/components/table/columns";
 import { getSession } from "@/lib/auth";
 import { getMany, getTotal } from "@/document/db_repository";
-import { SearchParams } from "@/document/types";
+import type { SearchParams } from "@/document/types";
 import { Suspense } from "react";
 import Filters from "@/sale_report/components/filter/filters";
 import DownloadXLSXButton from "@/sale_report/components/download_xlsx_button";
 import { errorResponse, objectToQueryString } from "@/lib/utils";
 import { response } from "@/lib/types";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import ReportViewTabs from "@/sale_report/components/report-view-tabs";
+import { salesReportDocumentQueryFromSearchParams } from "@/sale_report/search-params";
 
 export const dynamic = "force-dynamic";
 
@@ -36,44 +38,13 @@ const getSearchParams = async ({
   if (!session.user)
     return errorResponse("Usuario no autenticado", "AuthError");
 
-  const params: SearchParams = {
-    companyId: session.user.companyId,
-    pageNumber: Number(searchParams.page) || 1,
-    pageSize: Number(searchParams.size) || 10,
+  return {
+    success: true,
+    data: salesReportDocumentQueryFromSearchParams(
+      searchParams,
+      session.user.companyId,
+    ),
   };
-
-  if (searchParams.series && searchParams.number) {
-    params.correlative = {
-      number: searchParams.number as string,
-      series: searchParams.series as string,
-    };
-  }
-
-  if (searchParams.invoice && searchParams.invoice == "true") {
-    params.invoice = true;
-  }
-
-  if (searchParams.receipt && searchParams.receipt == "true") {
-    params.receipt = true;
-  }
-
-  if (searchParams.ticket && searchParams.ticket == "true") {
-    params.ticket = true;
-  }
-
-  if (searchParams.start) {
-    params.startDate = new Date(searchParams.start as string);
-  }
-
-  if (searchParams.end) {
-    params.endDate = new Date(searchParams.end as string);
-  }
-
-  if (searchParams.customerId) {
-    params.customerId = searchParams.customerId as string;
-  }
-
-  return { success: true, data: params };
 };
 
 async function DocumentsWithSuspense({ searchParams }: ResolvedSearchParams) {
@@ -104,12 +75,14 @@ async function DocumentsWithSuspense({ searchParams }: ResolvedSearchParams) {
 
 export default async function Page(props: PageProps) {
   const searchParams = await props.searchParams;
+
   return (
     <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
       <BreadCrumb items={breadcrumbItems} />
 
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <Heading title="Reporte de ventas" />
+        <ReportViewTabs current="sales" searchParams={searchParams} />
       </div>
       <Separator />
       <div className="items-center md:flex md:flex-row md:space-x-12 md:space-y-0 md:mt-8">

@@ -213,7 +213,14 @@ const mapReceiptPrintOrder = async (
 
 export const create = async (order: Order): Promise<response<Order>> => {
   try {
-    const { orderItems, payments, customer, discount, cancellationReason, ...orderData } = order;
+    const {
+      orderItems,
+      payments,
+      customer,
+      discount,
+      cancellationReason,
+      ...orderData
+    } = order;
 
     const createdOrderResponse = await prisma().order.create({
       data: {
@@ -241,6 +248,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       ...createdOrderData,
       customerId: createdOrderResponse.customerId!,
       companyId: createdOrderResponse.companyId || "some_company_id",
+      sellerId: createdOrderResponse.sellerId,
       total: createdOrderResponse.total.toNumber(),
       netTotal: createdOrderResponse.netTotal.toNumber(),
       discountAmount: createdOrderResponse.discountAmount.toNumber(),
@@ -433,6 +441,7 @@ export async function transformOrdersData(
     return {
       ...prismaOrder,
       customerId: prismaOrder.customerId!,
+      sellerId: prismaOrder.sellerId,
       status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
       companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,

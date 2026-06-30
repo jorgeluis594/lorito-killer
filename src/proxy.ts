@@ -49,6 +49,7 @@ function getDefaultRoute(role: UserRole): string {
     case "ADMIN":
       return "/dashboard";
     case "CASHIER":
+    case "SELLER":
     case "WAITER":
       return "/dashboard/orders/new";
     default:

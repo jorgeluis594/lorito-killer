@@ -41,6 +41,7 @@ import type { UserRole } from "@/authorization/types";
 import { useFeatureEnabled } from "@/feature-flags/client";
 
 const RESTAURANT_ROLES: UserRole[] = ["WAITER", "KITCHEN", "BARTENDER"];
+const SETTINGS_ONLY_ROLES: UserRole[] = ["SELLER"];
 
 const userFormSchema = z
   .object({
@@ -67,7 +68,9 @@ export default function NewUserModal() {
   const user = useUserSession();
   const restaurantsEnabled = useFeatureEnabled("restaurants");
   const availableRoles = USER_ROLES.filter(
-    (role) => restaurantsEnabled || !RESTAURANT_ROLES.includes(role),
+    (role) =>
+      !SETTINGS_ONLY_ROLES.includes(role) &&
+      (restaurantsEnabled || !RESTAURANT_ROLES.includes(role)),
   );
   const form = useForm<UserFormValue>({
     resolver: zodResolver(userFormSchema),

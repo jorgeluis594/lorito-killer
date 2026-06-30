@@ -18,6 +18,13 @@ export const createUser = protectedAction(
     password: string,
     role: UserRole = "CASHIER",
   ): Promise<response<User>> => {
+    if (role === "SELLER") {
+      return {
+        success: false,
+        message: "Los sellers deben crearse desde configuracion de Sellers",
+      };
+    }
+
     const createdUserResponse = await registerUser(repository, {
       companyId: user.companyId,
       email,

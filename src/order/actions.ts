@@ -29,6 +29,42 @@ import {
   enqueueDocumentTaxDispatch,
 } from "@/document/tax-dispatch-outbox";
 import { protectedAction } from "@/authorization/server";
+import prisma from "@/lib/prisma";
+
+const SELLER_CODE_REGEX = /^\d{4}$/;
+
+async function resolveSellerIdByCode(
+  sellerCode: string | null | undefined,
+  companyId: string,
+): Promise<response<string>> {
+  const normalizedSellerCode =
+    typeof sellerCode === "string" ? sellerCode.trim() : "";
+  if (!SELLER_CODE_REGEX.test(normalizedSellerCode)) {
+    return {
+      success: false,
+      message: "El codigo debe tener exactamente 4 digitos",
+    };
+  }
+
+  const seller = await prisma().user.findFirst({
+    where: {
+      companyId,
+      role: "SELLER",
+      active: true,
+      sellerCode: normalizedSellerCode,
+    },
+    select: { id: true },
+  });
+
+  if (!seller) {
+    return {
+      success: false,
+      message: "Codigo de seller no encontrado",
+    };
+  }
+
+  return { success: true, data: seller.id };
+}
 
 export const create = protectedAction(
   { resource: "orders", action: "create" },
@@ -36,6 +72,7 @@ export const create = protectedAction(
     user,
     userId: string,
     order: Order,
+    sellerCode: string,
   ): Promise<response<{ order: Order; document: Document }>> => {
     // Check if company is active
     const companyResponse = await findCompany(user.companyId);
@@ -82,6 +119,14 @@ export const create = protectedAction(
       };
     }
 
+    const sellerResponse = await resolveSellerIdByCode(
+      sellerCode,
+      user.companyId,
+    );
+    if (!sellerResponse.success) {
+      return sellerResponse;
+    }
+
     const discountResponse = calculateDiscount(order);
     if (!discountResponse.success) {
       return { success: false, message: "Error generando descuento" };
@@ -91,6 +136,7 @@ export const create = protectedAction(
       ...discountResponse.data,
       cashShiftId: openCashShift.id,
       companyId: user.companyId,
+      sellerId: sellerResponse.data,
       payments: discountResponse.data.payments.map((payment) => ({
         ...payment,
         cashShiftId: openCashShift.id,

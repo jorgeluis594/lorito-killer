@@ -2,6 +2,13 @@ import { NavItem } from "@/ui/types";
 
 export const navItems: NavItem[] = [
   {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: "dashboard",
+    label: "dashboard",
+    permission: { resource: "reports", action: "read" },
+  },
+  {
     title: "Nueva venta",
     href: "/dashboard/orders/new",
     icon: "shoppingCart",
