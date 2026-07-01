@@ -18,13 +18,14 @@ export const permissions = {
   },
 
   CASHIER: {
-    products: ["read"],
-    categories: ["read"],
+    products: ["create", "read", "update", "delete", "export"],
+    categories: ["create", "read", "update", "delete"],
     orders: ["create", "read", "update", "delete"],
     payments: ["create", "read"],
     cash_shifts: ["create", "read", "update"],
     tables: ["read"],
     customers: ["create", "read", "update"],
+    stock: ["create", "read", "update"],
     delivery: ["create", "read", "update"],
   },
 
