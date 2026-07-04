@@ -66,6 +66,33 @@ const serverError = errorResponse(
   "Error al enviar el documento a la entidad tributaria",
 );
 
+type TaxEntityFailureResponse = Extract<
+  response<Document>,
+  { success: false }
+> & {
+  rawResponseBody?: string;
+  responseStatus?: number;
+  responseContentType?: string | null;
+};
+
+const taxEntityFailureLogData = (
+  taxEntityResponse: Extract<response<Document>, { success: false }>,
+) => {
+  const response = taxEntityResponse as TaxEntityFailureResponse;
+
+  return {
+    ...(response.rawResponseBody !== undefined && {
+      response_body: response.rawResponseBody,
+    }),
+    ...(response.responseStatus !== undefined && {
+      response_status: response.responseStatus,
+    }),
+    ...(response.responseContentType !== undefined && {
+      response_content_type: response.responseContentType,
+    }),
+  };
+};
+
 export const sendToTaxEntity = async (
   documentGateway: DocumentGateway,
   repository: Repository,
@@ -151,7 +178,8 @@ export const sendToTaxEntity = async (
       log.error("tax_entity_submission_failed", { 
         documentId, 
         documentType: document.documentType,
-        error: taxEntityResponse.message 
+        error: taxEntityResponse.message,
+        ...taxEntityFailureLogData(taxEntityResponse),
       });
       if (notifyOnFailure) {
         await notifyDocumentFailure({

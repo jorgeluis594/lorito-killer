@@ -1,5 +1,5 @@
 import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
-import { response } from "@/lib/types";
+import { ErrorResponse, successResponse, response } from "@/lib/types";
 import {
   Invoice,
   Receipt,
@@ -40,6 +40,28 @@ const factproEndpoint = (path: "documentos" | "anular") => {
 };
 
 const FACTPRO_DOCUMENT_ERROR = "Error al crear el documento en FactPro";
+
+type FactproDocumentErrorResponse = ErrorResponse & {
+  rawResponseBody?: string;
+  responseStatus?: number;
+  responseContentType?: string | null;
+};
+
+type FactproDocumentResponse =
+  | successResponse<FactproResponse>
+  | FactproDocumentErrorResponse;
+
+const factproDocumentErrorResponse = (
+  message: string,
+  res: Response,
+  responseBody: string,
+): FactproDocumentErrorResponse => ({
+  success: false,
+  message,
+  rawResponseBody: responseBody,
+  responseStatus: res.status,
+  responseContentType: res.headers.get("content-type"),
+});
 
 function clientParamsBuilder(
   customer: Customer | undefined,
@@ -89,7 +111,7 @@ const sendDocument = async (
   body: FactproDocument,
   orderId: string,
   token: string,
-): Promise<response<FactproResponse>> => {
+): Promise<FactproDocumentResponse> => {
   const startDate = new Date();
   const endpoint = factproEndpoint("documentos");
   log.info("sending_factpro_document", { orderId, document: body });
@@ -117,10 +139,11 @@ const sendDocument = async (
       error: "format_error",
     });
 
-    return {
-      success: false,
-      message: "FactPro devolvió una respuesta no JSON",
-    };
+    return factproDocumentErrorResponse(
+      "FactPro devolvió una respuesta no JSON",
+      res,
+      responseBody,
+    );
   }
 
   if (res.ok && resJson.success) {
@@ -148,10 +171,7 @@ const sendDocument = async (
     error: errorMessage,
     factpro_response: resJson,
   });
-  return {
-    success: false,
-    message: errorMessage,
-  };
+  return factproDocumentErrorResponse(errorMessage, res, responseBody);
 };
 
 const orderItemToDocumentItem = (
