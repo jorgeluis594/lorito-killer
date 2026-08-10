@@ -50,7 +50,6 @@ import {useProductFormStore} from "@/product/components/form/product-form-store-
 import {ReloadIcon} from "@radix-ui/react-icons";
 import {debounce} from "@/lib/utils";
 import {useUserSession} from "@/lib/use-user-session";
-import {getCompany} from "@/order/actions";
 import {
   Select,
   SelectContent,
@@ -64,6 +63,13 @@ import {Switch} from "@/shared/components/ui/switch";
 import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
+
+const getEmptyProductFormValues = (
+  companyId?: string,
+): ProductFormValues => ({
+  ...EMPTY_SINGLE_PRODUCT,
+  companyId: companyId || "",
+});
 
 const transformToProduct = (
   data: ProductFormValues,
@@ -125,9 +131,15 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(SingleProductSchema),
     defaultValues: formStore.isNew
-      ? {...EMPTY_SINGLE_PRODUCT}
+      ? getEmptyProductFormValues(user?.companyId)
       : productData || EMPTY_SINGLE_PRODUCT,
   });
+
+  const resetForm = () => {
+    form.reset(getEmptyProductFormValues(user?.companyId));
+    setShowTransferProduct(false);
+    setTargetMovementProduct(undefined);
+  };
 
   const productSku = form.watch("sku");
 
@@ -157,12 +169,10 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
   }, [productSku]);
 
   useEffect(() => {
+    if (!formStore.open) return;
+
     if (formStore.isNew) {
-      getCompany().then((response) => {
-        if (response.success) {
-          form.setValue("companyId", response.data.id);
-        }
-      });
+      resetForm();
     } else {
       form.reset({
         ...productData,
@@ -182,7 +192,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formStore.isNew, formStore.product, user]);
+  }, [formStore.open, formStore.isNew, formStore.product, user?.companyId]);
 
   const onSubmit = async (data: ProductFormValues) => {
     formStore.setOpen(false);
@@ -203,8 +213,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           description: "Error al actualizar el producto, " + res.message,
         });
       }
-      formStore.resetProduct(SingleProductType);
-      form.reset({...EMPTY_SINGLE_PRODUCT});
     } else {
       const res = await repository.create(transformToProduct(data));
       if (res.success) {
@@ -219,9 +227,10 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           description: "Error al registrar el producto, " + res.message,
         });
       }
-      formStore.resetProduct(SingleProductType);
-      form.reset({...EMPTY_SINGLE_PRODUCT});
     }
+
+    formStore.resetProduct(SingleProductType);
+    resetForm();
   };
 
   const addCategoryToProduct = async (category: Category) => {
@@ -362,12 +371,12 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     <Dialog
       open={formStore.open}
       onOpenChange={(val) => {
-        formStore.resetProduct(SingleProductType);
-        form.reset({...EMPTY_SINGLE_PRODUCT});
-        formStore.setOpen(val);
         if (!val) {
-          setShowTransferProduct(false);
+          resetForm();
+          formStore.resetProduct(SingleProductType);
+          return;
         }
+        formStore.setOpen(true);
       }}
     >
       <DialogContent className="w-full h-full sm:max-w-[750px] sm:h-[750px] flex flex-col justify-center items-center p-0">

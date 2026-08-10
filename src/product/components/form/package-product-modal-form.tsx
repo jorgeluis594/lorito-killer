@@ -16,10 +16,7 @@ import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { PackageProduct, PackageProductType, Photo } from "@/product/types";
-import {
-  EMPTY_PACKAGE_PRODUCT,
-  EMPTY_SINGLE_PRODUCT,
-} from "@/product/constants";
+import { EMPTY_PACKAGE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
@@ -45,11 +42,16 @@ import { useProductFormStore } from "@/product/components/form/product-form-stor
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { useUserSession } from "@/lib/use-user-session";
 import ProductItemsSelector from "@/product/components/form/product-items-selector";
-import { useProductsStore } from "@/product/components/products-store-provider";
-import { getCompany } from "@/order/actions";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
 
 type ProductFormValues = z.infer<typeof PackageProductSchema>;
+
+const getEmptyProductFormValues = (
+  companyId?: string,
+): ProductFormValues => ({
+  ...EMPTY_PACKAGE_PRODUCT,
+  companyId: companyId || "",
+});
 
 const transformToProduct = (
   data: ProductFormValues,
@@ -97,23 +99,24 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(PackageProductSchema),
     defaultValues: formStore.isNew
-      ? { ...EMPTY_PACKAGE_PRODUCT }
+      ? getEmptyProductFormValues(user?.companyId)
       : productData || EMPTY_PACKAGE_PRODUCT,
   });
 
-  // Setting the companyId to the product
+  const resetForm = () => {
+    form.reset(getEmptyProductFormValues(user?.companyId));
+  };
+
   useEffect(() => {
+    if (!formStore.open) return;
+
     if (formStore.isNew) {
-      getCompany().then((response) => {
-        if (response.success) {
-          form.setValue("companyId", response.data.id);
-        }
-      });
+      resetForm();
     } else {
       form.reset(productData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formStore.isNew, formStore.product, user]);
+  }, [formStore.open, formStore.isNew, formStore.product, user?.companyId]);
 
   const onSubmit = async (data: ProductFormValues) => {
     formStore.setOpen(false);
@@ -134,7 +137,6 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
           description:
             "Error al actualizar el pack de productos, " + res.message,
         });
-        formStore.resetProduct(PackageProductType);
       }
     } else {
       const res = await repository.create(transformToProduct(data));
@@ -150,9 +152,11 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
           description:
             "Error al registrar el pack de productos, " + res.message,
         });
-        formStore.resetProduct(PackageProductType);
       }
     }
+
+    formStore.resetProduct(PackageProductType);
+    resetForm();
   };
 
   const addCategoryToProduct = async (category: Category) => {
@@ -270,7 +274,17 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
   };
 
   return (
-    <Dialog open={formStore.open} onOpenChange={formStore.setOpen}>
+    <Dialog
+      open={formStore.open}
+      onOpenChange={(val) => {
+        if (!val) {
+          resetForm();
+          formStore.resetProduct(PackageProductType);
+          return;
+        }
+        formStore.setOpen(true);
+      }}
+    >
       <DialogContent className="w-full h-full sm:max-w-[750px] sm:h-[750px] w-full flex flex-col justify-center items-center p-0">
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <ScrollArea className="p-6 w-full">

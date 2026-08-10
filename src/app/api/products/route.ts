@@ -20,8 +20,12 @@ export const POST = protectedRoute(
   { resource: "products", action: "create" },
   async (req, user) => {
     const data: Product = await req.json();
+    const product: Product = {
+      ...data,
+      companyId: user.companyId,
+    };
 
-    const response = await productCreator({ create, findBy }, data);
+    const response = await productCreator({ create, findBy }, product);
     if (response.success) {
       revalidatePath("/api/products");
     }
