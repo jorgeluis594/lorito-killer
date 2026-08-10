@@ -3,6 +3,11 @@ import { IMG_MAX_LIMIT } from "@/product/constants";
 import { CategorySchema } from "@/category/schema";
 import { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
 
+const CompanyIdSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "La empresa es requerida" });
+
 export const PhotoSchema = z.object({
   id: z.string().optional(),
   name: z.string(),
@@ -15,7 +20,7 @@ export const PhotoSchema = z.object({
 
 export const SingleProductSchema = z.object({
   id: z.string().optional(),
-  companyId: z.string(),
+  companyId: CompanyIdSchema,
   name: z.string().min(3, {
     message: "El nombre del producto debe tener al menos 3 caracteres",
   }),
@@ -54,7 +59,7 @@ export const ProductItemSchema = z.object({
 
 export const PackageProductSchema = z.object({
   id: z.string().optional(),
-  companyId: z.string(),
+  companyId: CompanyIdSchema,
   name: z.string().min(3, {
     message: "El nombre del producto debe tener al menos 3 caracteres",
   }),
@@ -80,7 +85,7 @@ export const PackageProductSchema = z.object({
 
 export const ServiceProductSchema = z.object({
   id: z.string().optional(),
-  companyId: z.string(),
+  companyId: CompanyIdSchema,
   name: z.string().min(3, {
     message: "El nombre del servicio debe tener al menos 3 caracteres",
   }),
