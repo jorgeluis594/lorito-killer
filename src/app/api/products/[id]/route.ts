@@ -17,6 +17,8 @@ export const PUT = protectedRoute(
     const url = new URL(req.url);
     const id = url.pathname.split("/").pop()!;
     const productData: SingleProduct = await req.json();
+    productData.id = id;
+    productData.companyId = user.companyId;
 
     const findProductResponse = await findProduct(id, user.companyId);
     if (!findProductResponse.success) {
@@ -27,8 +29,11 @@ export const PUT = protectedRoute(
     }
 
     if (productData.sku && productData.sku.length) {
-      const response = await findBy({ sku: productData.sku });
-      if (response.success && response.data.id !== productData.id) {
+      const response = await findBy({
+        sku: productData.sku,
+        companyId: user.companyId,
+      });
+      if (response.success && response.data.id !== id) {
         return NextResponse.json({
           success: false,
           message: "Ya existe un producto con el sku",
