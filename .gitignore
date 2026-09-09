@@ -45,3 +45,7 @@ env.example
 package-lock.json
 package.json
 .playwright-cli
+
+# Local design review artifacts
+/.impeccable/review/
+/docs/design/jade.check.mjs

@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter as FontSans } from "next/font/google";
 import { Toaster } from "@/shared/components/ui/toaster";
 import { getServerSession } from "next-auth";
 import Providers from "@/shared/components/layout/providers";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import { cn } from "@/lib/utils";
 import { authConfig } from "@/lib/auth-config";
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   title: "Tu aplicación de tiendas",
@@ -26,13 +20,8 @@ export default async function RootLayout({
   const session = await getServerSession(authConfig)
 
   return (
-    <html lang="en">
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable,
-        )}
-      >
+    <html lang="es">
+      <body className="min-h-screen bg-background font-sans antialiased">
         <Providers session={session}>
           {children}
         </Providers>

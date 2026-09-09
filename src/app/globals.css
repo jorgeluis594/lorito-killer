@@ -1,68 +1,74 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: "Manrope";
+  src: url("/vendor/manrope/manrope-regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("/vendor/manrope/manrope-bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    --font-sans: "Manrope";
+    --background: 100 23.08% 97.45%;
+    --foreground: 166.67 43.90% 16.08%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
- 
+    --card-foreground: var(--foreground);
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
- 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
- 
-    --radius: 0.5rem;
+    --popover-foreground: var(--foreground);
+    --primary: 168.40 88.15% 26.47%;
+    --primary-hover: 167.37 88.79% 20.98%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 164.44 52.94% 90%;
+    --secondary-foreground: 167.37 88.79% 20.98%;
+    --muted: 137.14 30.43% 95.49%;
+    --muted-foreground: 161.54 13.54% 37.65%;
+    --accent: var(--secondary);
+    --accent-foreground: var(--secondary-foreground);
+    --lavender: 252 60% 90.20%;
+    --lavender-foreground: 258.14 26.38% 31.96%;
+    --destructive: 352.50 67.29% 41.96%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 147.69 16.88% 84.90%;
+    --input: 152.14 12.50% 56.08%;
+    --ring: var(--primary);
+    --radius: 0.75rem;
   }
- 
+
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
- 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
- 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
- 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
- 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --background: 166 30% 8%;
+    --foreground: 160 25% 92%;
+    --card: 166 26% 11%;
+    --card-foreground: var(--foreground);
+    --popover: 166 26% 11%;
+    --popover-foreground: var(--foreground);
+    --primary: 164 55% 64%;
+    --primary-hover: 164 55% 72%;
+    --primary-foreground: 166 40% 10%;
+    --secondary: 166 30% 19%;
+    --secondary-foreground: 164 55% 80%;
+    --muted: 166 20% 15%;
+    --muted-foreground: 160 16% 70%;
+    --accent: var(--secondary);
+    --accent-foreground: var(--secondary-foreground);
+    --lavender: 258 22% 24%;
+    --lavender-foreground: 252 60% 90%;
+    --destructive: 352 74% 65%;
+    --destructive-foreground: 352 55% 10%;
+    --border: 166 18% 25%;
+    --input: 160 14% 48%;
+    --ring: var(--primary);
   }
 }
  
@@ -72,5 +78,29 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  ::selection {
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+  }
+  input, textarea {
+    caret-color: hsl(var(--primary));
+  }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

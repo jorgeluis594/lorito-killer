@@ -1,0 +1,340 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-09T19:33:15.801133+00:00",
+  "title": "Design System: Lorito Killer — Jade",
+  "extensions": {
+    "colorMeta": {
+      "jade": {
+        "displayName": "jade",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.09979 173.86)",
+          "oklch(26.43% 0.09979 173.86)",
+          "oklch(37.86% 0.09979 173.86)",
+          "oklch(49.29% 0.09979 173.86)",
+          "oklch(60.71% 0.09979 173.86)",
+          "oklch(72.14% 0.09979 173.86)",
+          "oklch(83.57% 0.09979 173.86)",
+          "oklch(95.00% 0.09979 173.86)"
+        ]
+      },
+      "jade-hover": {
+        "displayName": "jade-hover",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.08540 172.62)",
+          "oklch(26.43% 0.08540 172.62)",
+          "oklch(37.86% 0.08540 172.62)",
+          "oklch(49.29% 0.08540 172.62)",
+          "oklch(60.71% 0.08540 172.62)",
+          "oklch(72.14% 0.08540 172.62)",
+          "oklch(83.57% 0.08540 172.62)",
+          "oklch(95.00% 0.08540 172.62)"
+        ]
+      },
+      "water": {
+        "displayName": "water",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.02974 178.33)",
+          "oklch(26.43% 0.02974 178.33)",
+          "oklch(37.86% 0.02974 178.33)",
+          "oklch(49.29% 0.02974 178.33)",
+          "oklch(60.71% 0.02974 178.33)",
+          "oklch(72.14% 0.02974 178.33)",
+          "oklch(83.57% 0.02974 178.33)",
+          "oklch(95.00% 0.02974 178.33)"
+        ]
+      },
+      "ground": {
+        "displayName": "ground",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.00447 134.85)",
+          "oklch(26.43% 0.00447 134.85)",
+          "oklch(37.86% 0.00447 134.85)",
+          "oklch(49.29% 0.00447 134.85)",
+          "oklch(60.71% 0.00447 134.85)",
+          "oklch(72.14% 0.00447 134.85)",
+          "oklch(83.57% 0.00447 134.85)",
+          "oklch(95.00% 0.00447 134.85)"
+        ]
+      },
+      "lavender": {
+        "displayName": "lavender",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.04123 294.72)",
+          "oklch(26.43% 0.04123 294.72)",
+          "oklch(37.86% 0.04123 294.72)",
+          "oklch(49.29% 0.04123 294.72)",
+          "oklch(60.71% 0.04123 294.72)",
+          "oklch(72.14% 0.04123 294.72)",
+          "oklch(83.57% 0.04123 294.72)",
+          "oklch(95.00% 0.04123 294.72)"
+        ]
+      },
+      "ink": {
+        "displayName": "ink",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.04413 176.73)",
+          "oklch(26.43% 0.04413 176.73)",
+          "oklch(37.86% 0.04413 176.73)",
+          "oklch(49.29% 0.04413 176.73)",
+          "oklch(60.71% 0.04413 176.73)",
+          "oklch(72.14% 0.04413 176.73)",
+          "oklch(83.57% 0.04413 176.73)",
+          "oklch(95.00% 0.04413 176.73)"
+        ]
+      },
+      "muted": {
+        "displayName": "muted",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.03315 174.12)",
+          "oklch(26.43% 0.03315 174.12)",
+          "oklch(37.86% 0.03315 174.12)",
+          "oklch(49.29% 0.03315 174.12)",
+          "oklch(60.71% 0.03315 174.12)",
+          "oklch(72.14% 0.03315 174.12)",
+          "oklch(83.57% 0.03315 174.12)",
+          "oklch(95.00% 0.03315 174.12)"
+        ]
+      },
+      "line": {
+        "displayName": "line",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.01684 162.71)",
+          "oklch(26.43% 0.01684 162.71)",
+          "oklch(37.86% 0.01684 162.71)",
+          "oklch(49.29% 0.01684 162.71)",
+          "oklch(60.71% 0.01684 162.71)",
+          "oklch(72.14% 0.01684 162.71)",
+          "oklch(83.57% 0.01684 162.71)",
+          "oklch(95.00% 0.01684 162.71)"
+        ]
+      },
+      "surface": {
+        "displayName": "surface",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "success": {
+        "displayName": "success",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.08850 169.05)",
+          "oklch(26.43% 0.08850 169.05)",
+          "oklch(37.86% 0.08850 169.05)",
+          "oklch(49.29% 0.08850 169.05)",
+          "oklch(60.71% 0.08850 169.05)",
+          "oklch(72.14% 0.08850 169.05)",
+          "oklch(83.57% 0.08850 169.05)",
+          "oklch(95.00% 0.08850 169.05)"
+        ]
+      },
+      "success-bg": {
+        "displayName": "success-bg",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.01653 162.75)",
+          "oklch(26.43% 0.01653 162.75)",
+          "oklch(37.86% 0.01653 162.75)",
+          "oklch(49.29% 0.01653 162.75)",
+          "oklch(60.71% 0.01653 162.75)",
+          "oklch(72.14% 0.01653 162.75)",
+          "oklch(83.57% 0.01653 162.75)",
+          "oklch(95.00% 0.01653 162.75)"
+        ]
+      },
+      "warning": {
+        "displayName": "warning",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.10172 67.66)",
+          "oklch(26.43% 0.10172 67.66)",
+          "oklch(37.86% 0.10172 67.66)",
+          "oklch(49.29% 0.10172 67.66)",
+          "oklch(60.71% 0.10172 67.66)",
+          "oklch(72.14% 0.10172 67.66)",
+          "oklch(83.57% 0.10172 67.66)",
+          "oklch(95.00% 0.10172 67.66)"
+        ]
+      },
+      "warning-bg": {
+        "displayName": "warning-bg",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.02367 79.75)",
+          "oklch(26.43% 0.02367 79.75)",
+          "oklch(37.86% 0.02367 79.75)",
+          "oklch(49.29% 0.02367 79.75)",
+          "oklch(60.71% 0.02367 79.75)",
+          "oklch(72.14% 0.02367 79.75)",
+          "oklch(83.57% 0.02367 79.75)",
+          "oklch(95.00% 0.02367 79.75)"
+        ]
+      },
+      "error": {
+        "displayName": "error",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.17822 20.57)",
+          "oklch(26.43% 0.17822 20.57)",
+          "oklch(37.86% 0.17822 20.57)",
+          "oklch(49.29% 0.17822 20.57)",
+          "oklch(60.71% 0.17822 20.57)",
+          "oklch(72.14% 0.17822 20.57)",
+          "oklch(83.57% 0.17822 20.57)",
+          "oklch(95.00% 0.17822 20.57)"
+        ]
+      },
+      "error-bg": {
+        "displayName": "error-bg",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.01627 12.78)",
+          "oklch(26.43% 0.01627 12.78)",
+          "oklch(37.86% 0.01627 12.78)",
+          "oklch(49.29% 0.01627 12.78)",
+          "oklch(60.71% 0.01627 12.78)",
+          "oklch(72.14% 0.01627 12.78)",
+          "oklch(83.57% 0.01627 12.78)",
+          "oklch(95.00% 0.01627 12.78)"
+        ]
+      }
+    },
+    "shadows": [
+      {
+        "name": "toast",
+        "value": "0 6px 24px #173b3324",
+        "purpose": "Aviso temporal; contenedores planos."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button",
+        "value": "140ms ease-out",
+        "purpose": "Color de botones; se desactiva con movimiento reducido."
+      },
+      {
+        "name": "control",
+        "value": "160ms ease-out",
+        "purpose": "Interruptor y muestra de color."
+      },
+      {
+        "name": "toast",
+        "value": "180ms ease-out",
+        "purpose": "Entrada del aviso temporal."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "prototype-mobile",
+        "value": "720px"
+      },
+      {
+        "name": "prototype-compact",
+        "value": "1050px"
+      },
+      {
+        "name": "prototype-wide",
+        "value": "1450px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Guardar cambios",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Jerarquía primary de la muestra Jade.",
+      "html": "<button class=\"ds-primary\">Guardar cambios</button>",
+      "css": ".ds-primary{min-height:44px;border-radius:var(--radius,8px);border:1px solid transparent;padding:10px 18px;font:700 13px Manrope,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background-color 140ms ease-out,color 140ms ease-out;background:var(--jade,#087f68);color:var(--surface,#ffffff);}.ds-primary:hover:not(:disabled){background:var(--jade-hover,#066551);}.ds-primary:focus-visible{outline:2px solid var(--jade,#087f68);outline-offset:4px}.ds-primary:disabled{opacity:.5;cursor:not-allowed}.ds-primary:active:not(:disabled){background:var(--ink,#173b33)}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}"
+    },
+    {
+      "name": "Restablecer",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Jerarquía secondary de la muestra Jade.",
+      "html": "<button class=\"ds-secondary\">Restablecer</button>",
+      "css": ".ds-secondary{min-height:44px;border-radius:var(--radius,8px);border:1px solid transparent;padding:10px 18px;font:700 13px Manrope,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background-color 140ms ease-out,color 140ms ease-out;background:var(--surface,#ffffff);border-color:var(--line,#d2dfd8);color:var(--ink,#173b33);}.ds-secondary:hover:not(:disabled){background:var(--ground,#f8faf7);border-color:#91b1a4;}.ds-secondary:focus-visible{outline:2px solid var(--jade,#087f68);outline-offset:4px}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}"
+    },
+    {
+      "name": "Ver detalles",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Jerarquía quiet de la muestra Jade.",
+      "html": "<button class=\"ds-quiet\">Ver detalles</button>",
+      "css": ".ds-quiet{min-height:44px;border-radius:var(--radius,8px);border:1px solid transparent;padding:10px 18px;font:700 13px Manrope,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background-color 140ms ease-out,color 140ms ease-out;background:transparent;color:var(--jade-hover,#066551);}.ds-quiet:hover:not(:disabled){background:var(--water,#d8f3ec);}.ds-quiet:focus-visible{outline:2px solid var(--jade,#087f68);outline-offset:4px}.ds-quiet:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-quiet{transition:none}}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Etiqueta persistente y foco explícito.",
+      "html": "<label class=\"ds-field\">Nombre<input placeholder=\"Local principal\"></label>",
+      "css": ".ds-field{font:13px Manrope,sans-serif;color:var(--ink,#173b33)}.ds-field input{display:block;margin-top:8px;height:44px;padding:10px 12px;border:1px solid #9bb4a8;border-radius:var(--radius,8px);background:var(--surface,#ffffff);color:var(--ink,#173b33);font:14px Manrope,sans-serif}.ds-field input::placeholder{color:var(--muted,#536d65)}.ds-field input:hover,.ds-field input:focus{border-color:var(--jade,#087f68)}.ds-field input:focus-visible{outline:2px solid var(--jade,#087f68);outline-offset:4px}"
+    },
+    {
+      "name": "Navegación seleccionada",
+      "kind": "nav",
+      "refersTo": "navigation-selected",
+      "description": "Superficie agua, peso y línea lateral.",
+      "html": "<nav aria-label=\"Ejemplo\"><button class=\"ds-nav\" aria-current=\"page\">Inicio</button></nav>",
+      "css": ".ds-nav{font:700 15px Manrope,sans-serif;min-height:44px;padding:10px 14px;border:0;border-radius:var(--radius,8px);background:var(--water,#d8f3ec);color:var(--jade-hover,#066551);box-shadow:inset 2px 0 var(--jade,#087f68);cursor:pointer}.ds-nav:hover{background:var(--water,#d8f3ec)}.ds-nav:focus-visible{outline:2px solid var(--jade,#087f68);outline-offset:4px}"
+    },
+    {
+      "name": "Etiqueta",
+      "kind": "chip",
+      "description": "Acento lavanda de la muestra.",
+      "html": "<span class=\"ds-tag\">Muestra interactiva</span>",
+      "css": ".ds-tag{font:12px Manrope,sans-serif;color:#4e416e;background:var(--lavender,#ddd7f5);padding:6px 10px;border-radius:5px}"
+    },
+    {
+      "name": "Nota de principio",
+      "kind": "card",
+      "description": "Superficie lavanda secundaria.",
+      "html": "<div class=\"ds-note\"><strong>El foco se gana.</strong><br>Lo importante destaca.<br>Lo demás acompaña.</div>",
+      "css": ".ds-note{background:var(--lavender,#ddd7f5);color:#493c67;padding:20px;border-radius:var(--radius,8px);font:13px/1.8 Manrope,sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Claridad cercana",
+    "overview": "Color presente, atención selectiva; cercanía en lenguaje y formas, precisión en jerarquía, alineación y cifras. La persona debe reconocer dónde empezar a trabajar. Vercel aporta una referencia de orden; la identidad propia combina jade, agua, lavanda y tinta verde.",
+    "keyCharacteristics": [
+      "Una acción principal por contexto.",
+      "Superficies suaves con presencia de color.",
+      "Etiquetas visibles y cifras tabulares."
+    ],
+    "rules": [
+      {
+        "name": "The Atención selectiva Rule",
+        "body": "La saturación y el contraste más altos señalan lo importante; agua acompaña las selecciones y lavanda aporta un acento secundario.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do usar jade sólido para la acción principal y agua para selecciones.",
+      "Do mantener etiquetas visibles, foco de teclado inequívoco y estados con icono y texto.",
+      "Do alinear importes y usar cifras tabulares.",
+      "Do respetar movimiento reducido y describir acciones con lenguaje concreto."
+    ],
+    "donts": [
+      "Don't dar igual énfasis a todas las acciones ni comunicar estados solo mediante color.",
+      "Don't envolver cada elemento en una tarjeta ni convertir todos los controles en píldoras.",
+      "Don't trasladar la composición de catálogo o sus datos de ejemplo a todas las pantallas."
+    ]
+  }
+}
