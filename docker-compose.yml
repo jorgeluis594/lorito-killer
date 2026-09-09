@@ -1,19 +1,73 @@
+x-dev-image: &dev-image
+  image: lorito-killer-dev
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql://jorge:123456@postgres:5432/lorito_killer_development
+    REDIS_URL: redis://redis:6379
+
 services:
+  web:
+    <<: *dev-image
+    command: npm run dev -- -H 0.0.0.0
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - next_data:/app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *dev-image
+    command: npx tsx watch src/worker.ts
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    <<: *dev-image
+    command: npx prisma migrate deploy
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   postgres:
     image: postgres:16-bookworm
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_USER: jorge
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: lorito_killer_development
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jorge -d lorito_killer_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -23,5 +77,7 @@ services:
       retries: 3
 
 volumes:
+  node_modules:
+  next_data:
   postgres_data:
   redis_data:
