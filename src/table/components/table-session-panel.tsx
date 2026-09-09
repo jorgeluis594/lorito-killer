@@ -10,6 +10,18 @@ import { getTableDerivedStatus } from "../types";
 import { TableStatusBadge } from "./table-status-badge";
 import { SESSION_STATUS_LABELS } from "../constants";
 import { requestBillAction, closeTable } from "../actions";
+import { Textarea } from "@/shared/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/components/ui/alert-dialog";
 
 interface TableSessionPanelProps {
   table: TableWithSession;
@@ -19,6 +31,7 @@ export function TableSessionPanel({ table }: TableSessionPanelProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
   const status = getTableDerivedStatus(table);
   const session = table.activeSession;
 
@@ -35,8 +48,10 @@ export function TableSessionPanel({ table }: TableSessionPanelProps) {
   };
 
   const handleCancel = async () => {
+    const reason = cancellationReason.trim();
+    if (!reason) return;
     setLoading(true);
-    const result = await closeTable(table.id, true);
+    const result = await closeTable(table.id, true, reason);
     setLoading(false);
     if (result.success) {
       toast({ title: "Sesion cancelada" });
@@ -111,27 +126,56 @@ export function TableSessionPanel({ table }: TableSessionPanelProps) {
 
           <div className="flex flex-wrap gap-2 pt-2">
             {session.status === "OPEN" && (
-              <>
-                <Button size="sm" className="gap-1" onClick={handleRequestBill} disabled={loading}>
-                  <Receipt className="h-3.5 w-3.5" />
-                  Pedir cuenta
-                </Button>
-                <Button size="sm" variant="destructive" className="gap-1" onClick={handleCancel} disabled={loading}>
-                  <Ban className="h-3.5 w-3.5" />
-                  Cancelar
-                </Button>
-              </>
+              <Button size="sm" className="gap-1" onClick={handleRequestBill} disabled={loading}>
+                <Receipt className="h-3.5 w-3.5" />
+                Pedir cuenta
+              </Button>
             )}
             {session.status === "BILL_REQUESTED" && (
-              <>
-                <Button size="sm" className="gap-1" onClick={handleClose} disabled={loading}>
-                  Cerrar mesa
-                </Button>
-                <Button size="sm" variant="destructive" className="gap-1" onClick={handleCancel} disabled={loading}>
-                  <Ban className="h-3.5 w-3.5" />
-                  Cancelar
-                </Button>
-              </>
+              <Button size="sm" className="gap-1" onClick={handleClose} disabled={loading}>
+                Cerrar mesa
+              </Button>
+            )}
+            {(session.status === "OPEN" || session.status === "BILL_REQUESTED") && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive" className="gap-1" disabled={loading}>
+                    <Ban className="h-3.5 w-3.5" />
+                    Cancelar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancelar sesión</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción no se puede deshacer. Indica el motivo antes de confirmar.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="order-cancellation-reason" className="text-sm font-medium">
+                      Motivo de cancelación
+                    </label>
+                    <Textarea
+                      id="order-cancellation-reason"
+                      value={cancellationReason}
+                      onChange={(event) => setCancellationReason(event.target.value)}
+                      maxLength={500}
+                      required
+                      placeholder="Describe el motivo (obligatorio)"
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Volver</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleCancel}
+                      disabled={loading || !cancellationReason.trim()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Cancelar sesión
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>

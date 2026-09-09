@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import {
   Sheet,
   SheetContent,
@@ -10,6 +11,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Receipt,
@@ -63,7 +65,40 @@ type CartItem = {
   productName: string;
   productPrice: number;
   quantity: number;
+  notes: string;
 };
+
+function OrderSummary({ session }: { session: NonNullable<TableWithSession["activeSession"]> }) {
+  const items = session.order?.orderItems ?? [];
+  const total = items.reduce((sum, item) => sum + item.total, 0);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border p-3 text-sm">
+      {items.map((item) => (
+        <div key={item.id} className="flex flex-col gap-1 border-b pb-2 last:border-0 last:pb-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-medium break-words">{item.productName}</p>
+              <p className="text-muted-foreground tabular-nums">
+                {item.quantity} × {formatPrice(item.productPrice)}
+              </p>
+            </div>
+            <span className="shrink-0 font-medium tabular-nums">{formatPrice(item.total)}</span>
+          </div>
+          {item.notes ? (
+            <p className="text-muted-foreground break-words">Observación: {item.notes}</p>
+          ) : null}
+        </div>
+      ))}
+      <div className="flex justify-between border-t pt-2 font-semibold">
+        <span>Total</span>
+        <span className="tabular-nums">{formatPrice(total)}</span>
+      </div>
+    </div>
+  );
+}
 
 interface TableActionsMenuProps {
   table: TableWithSession;
@@ -96,11 +131,12 @@ export function TableActionsMenu({
   // Cart state
   const [cart, setCart] = useState<CartItem[]>([]);
   const [sendingRound, setSendingRound] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
 
   // View existing order toggle (for BILL_REQUESTED)
   const [showOrder, setShowOrder] = useState(false);
 
-  const hasOrderItems = (session?.currentRound ?? 0) > 0;
+  const hasOrderItems = (session?.order?.orderItems.length ?? 0) > 0;
   const elapsedMinutes = session
     ? differenceInMinutes(new Date(), new Date(session.openedAt))
     : 0;
@@ -149,6 +185,7 @@ export function TableActionsMenu({
       setShowTransfer(false);
       setTransferWaiterId("");
       setShowOrder(false);
+      setCancellationReason("");
     }
   }, [open]);
 
@@ -169,6 +206,7 @@ export function TableActionsMenu({
           productName: product.name,
           productPrice: product.price,
           quantity: 1,
+          notes: "",
         },
       ];
     });
@@ -184,6 +222,12 @@ export function TableActionsMenu({
         )
         .filter((item) => item.quantity > 0);
     });
+  }, []);
+
+  const updateCartNotes = useCallback((productId: string, notes: string) => {
+    setCart((prev) =>
+      prev.map((item) => item.productId === productId ? { ...item, notes } : item),
+    );
   }, []);
 
   const cartTotal = cart.reduce((sum, item) => sum + item.productPrice * item.quantity, 0);
@@ -205,6 +249,7 @@ export function TableActionsMenu({
         productId: item.productId,
         quantity: item.quantity,
         productPrice: item.productPrice,
+        notes: item.notes.trim() || undefined,
       }));
       const result = await addRoundAction(table.id, items);
       if (result.success) {
@@ -240,8 +285,10 @@ export function TableActionsMenu({
   };
 
   const handleClose = async (cancelled: boolean) => {
+    const reason = cancellationReason.trim();
+    if (cancelled && !reason) return;
     setLoading(true);
-    const result = await closeTable(table.id, cancelled);
+    const result = await closeTable(table.id, cancelled, cancelled ? reason : undefined);
     setLoading(false);
     if (result.success) {
       toast({ title: cancelled ? "Sesion cancelada" : "Mesa cerrada", duration: 2000 });
@@ -383,6 +430,14 @@ export function TableActionsMenu({
                             <p className="text-xs text-muted-foreground">
                               {formatPrice(item.productPrice)} c/u
                             </p>
+                            <Input
+                              value={item.notes}
+                              onChange={(event) => updateCartNotes(item.productId, event.target.value)}
+                              maxLength={200}
+                              placeholder="Observación (opcional)"
+                              aria-label={`Observación para ${item.productName}`}
+                              className="mt-2"
+                            />
                           </div>
                           <div className="flex items-center gap-1.5 ml-2">
                             <button
@@ -408,14 +463,7 @@ export function TableActionsMenu({
                       ))}
                     </div>
                   ) : hasOrderItems ? (
-                    <div className="rounded-lg bg-muted/50 p-4 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        {session!.currentRound} {session!.currentRound === 1 ? "ronda enviada" : "rondas enviadas"}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Busca un producto para agregar a la siguiente ronda
-                      </p>
-                    </div>
+                    <OrderSummary session={session!} />
                   ) : (
                     <div className="rounded-lg bg-muted/50 p-4 text-center">
                       <p className="text-sm text-muted-foreground">
@@ -476,6 +524,13 @@ export function TableActionsMenu({
                 </Button>
               </div>
 
+              <Button asChild className="w-full gap-2 min-h-[44px]" variant="outline">
+                <Link href={`/dashboard/tables/${table.id}/order`}>
+                  <Eye className="h-4 w-4" />
+                  Ver pedido completo
+                </Link>
+              </Button>
+
               {/* Transfer dropdown - progressive disclosure */}
               {showTransfer && (
                 <div className="flex gap-2">
@@ -525,10 +580,24 @@ export function TableActionsMenu({
                       Esta accion cancelara la sesion de la mesa {table.label || table.number}. Esta accion no se puede deshacer.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="occupied-cancellation-reason" className="text-sm font-medium">
+                      Motivo de cancelación
+                    </label>
+                    <Textarea
+                      id="occupied-cancellation-reason"
+                      value={cancellationReason}
+                      onChange={(event) => setCancellationReason(event.target.value)}
+                      maxLength={500}
+                      required
+                      placeholder="Describe el motivo (obligatorio)"
+                    />
+                  </div>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Volver</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleClose(true)}
+                      disabled={loading || !cancellationReason.trim()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Cancelar sesion
@@ -583,14 +652,7 @@ export function TableActionsMenu({
             </Button>
 
             {showOrder && session && hasOrderItems && (
-              <div className="rounded-lg border p-3 text-sm space-y-1">
-                <p className="font-medium">
-                  {session.currentRound} {session.currentRound === 1 ? "ronda" : "rondas"} enviadas
-                </p>
-                {session.notes && (
-                  <p className="text-muted-foreground">Notas: {session.notes}</p>
-                )}
-              </div>
+              <OrderSummary session={session} />
             )}
 
             {/* Destructive action */}
@@ -613,10 +675,24 @@ export function TableActionsMenu({
                     Esta accion cancelara la sesion de la mesa {table.label || table.number}. Esta accion no se puede deshacer.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="bill-cancellation-reason" className="text-sm font-medium">
+                    Motivo de cancelación
+                  </label>
+                  <Textarea
+                    id="bill-cancellation-reason"
+                    value={cancellationReason}
+                    onChange={(event) => setCancellationReason(event.target.value)}
+                    maxLength={500}
+                    required
+                    placeholder="Describe el motivo (obligatorio)"
+                  />
+                </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Volver</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => handleClose(true)}
+                    disabled={loading || !cancellationReason.trim()}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     Cancelar sesion

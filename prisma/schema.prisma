@@ -487,6 +487,7 @@ model TableSession {
   closedAt   DateTime?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
+  cancellationReason String?
 
   @@unique([tableId, current])
   @@index([companyId, status])

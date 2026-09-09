@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Plus, Minus, Send } from "lucide-react";
 import { useToast } from "@/shared/components/ui/use-toast";
-import type { TableWithSession } from "../types";
+import type { TableOrderItem, TableWithSession } from "../types";
 import { addRoundAction } from "../actions";
 
 type CartItem = {
@@ -28,8 +28,8 @@ export function TableOrderView({ table }: TableOrderViewProps) {
   const session = table.activeSession;
 
   // Get existing order items from session
-  const existingItems: any[] = (session?.order as any)?.orderItems || [];
-  const rounds = existingItems.reduce((acc: Record<number, any[]>, item: any) => {
+  const existingItems = session?.order?.orderItems ?? [];
+  const rounds = existingItems.reduce((acc: Record<number, TableOrderItem[]>, item) => {
     const round = item.round || 1;
     if (!acc[round]) acc[round] = [];
     acc[round].push(item);
@@ -37,7 +37,7 @@ export function TableOrderView({ table }: TableOrderViewProps) {
   }, {});
 
   const orderTotal = existingItems.reduce(
-    (sum: number, item: any) => sum + (item.total?.toNumber?.() ?? item.total ?? 0),
+    (sum, item) => sum + item.total,
     0,
   );
   const cartTotal = cart.reduce(
@@ -119,18 +119,27 @@ export function TableOrderView({ table }: TableOrderViewProps) {
                   Ronda {round}
                 </p>
                 <div className="space-y-1">
-                  {items.map((item: any, idx: number) => (
+                  {items.map((item) => (
                     <div
-                      key={idx}
-                      className="flex justify-between text-sm"
+                      key={item.id}
+                      className="flex flex-col gap-1 border-b pb-2 text-sm last:border-0 last:pb-0"
                     >
-                      <span>
-                        {item.product?.name || "Producto"} x
-                        {item.quantity?.toNumber?.() ?? item.quantity}
-                      </span>
-                      <span className="text-muted-foreground">
-                        S/ {(item.total?.toNumber?.() ?? item.total ?? 0).toFixed(2)}
-                      </span>
+                      <div className="flex justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-medium break-words">{item.productName}</p>
+                          <p className="text-muted-foreground tabular-nums">
+                            {item.quantity} × S/ {item.productPrice.toFixed(2)}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-muted-foreground tabular-nums">
+                          S/ {item.total.toFixed(2)}
+                        </span>
+                      </div>
+                      {item.notes ? (
+                        <p className="text-muted-foreground break-words">
+                          Observación: {item.notes}
+                        </p>
+                      ) : null}
                     </div>
                   ))}
                 </div>

@@ -1,8 +1,22 @@
-import type { Order } from "@/order/types";
-
 export type TableSessionStatus = "OPEN" | "BILL_REQUESTED" | "CLOSED" | "CANCELLED";
 export type TableDerivedStatus = "AVAILABLE" | "OCCUPIED" | "BILL_REQUESTED";
 export type OrderType = "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
+
+export type TableOrderItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  total: number;
+  notes?: string | null;
+  round: number;
+};
+
+export type TableOrder = {
+  id: string;
+  orderItems: TableOrderItem[];
+};
 
 export type Zone = {
   id: string;
@@ -40,7 +54,8 @@ export type TableSession = {
   current: boolean | null;
   guestCount?: number | null;
   notes?: string | null;
-  order?: Order | null;
+  cancellationReason?: string | null;
+  order?: TableOrder | null;
   orderId?: string | null;
   currentRound: number;
   openedAt: Date;

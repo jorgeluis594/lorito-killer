@@ -14,12 +14,25 @@ type PrismaSessionResult = {
   current: boolean | null;
   guestCount: number | null;
   notes: string | null;
+  cancellationReason: string | null;
   openedAt: Date;
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   waiter?: { id: string; name: string | null } | null;
-  order?: { id: string; orderItems: Array<{ round: number }> } | null;
+  order?: {
+    id: string;
+    orderItems: Array<{
+      id: string;
+      productId: string;
+      productPrice: { toNumber(): number } | number;
+      quantity: { toNumber(): number } | number;
+      total: { toNumber(): number } | number;
+      notes: string | null;
+      round: number;
+      product: { name: string };
+    }>;
+  } | null;
 };
 
 type PrismaZoneResult = {
@@ -71,6 +84,22 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
     current: s.current,
     guestCount: s.guestCount,
     notes: s.notes,
+    cancellationReason: s.cancellationReason,
+    order: s.order
+      ? {
+          id: s.order.id,
+          orderItems: s.order.orderItems.map((item) => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.product.name,
+            productPrice: Number(item.productPrice),
+            quantity: Number(item.quantity),
+            total: Number(item.total),
+            notes: item.notes,
+            round: item.round,
+          })),
+        }
+      : null,
     orderId: s.order?.id ?? null,
     currentRound: maxRound,
     openedAt: s.openedAt,
@@ -202,7 +231,14 @@ export async function findTables(companyId: string, zoneId?: string): Promise<re
           where: { current: true },
           include: {
             waiter: { select: { id: true, name: true } },
-            order: { include: { orderItems: { select: { round: true } } } },
+            order: {
+              include: {
+                orderItems: {
+                  include: { product: { select: { name: true } } },
+                  orderBy: { createdAt: "asc" },
+                },
+              },
+            },
           },
         },
       },
@@ -377,6 +413,7 @@ export async function updateSessionStatus(
   sessionId: string,
   companyId: string,
   status: "OPEN" | "BILL_REQUESTED" | "CLOSED" | "CANCELLED",
+  cancellationReason?: string,
 ): Promise<response<TableSession>> {
   try {
     const existing = await prisma().tableSession.findFirst({ where: { id: sessionId, companyId } });
@@ -388,10 +425,15 @@ export async function updateSessionStatus(
         status,
         current: isClosed ? null : true,
         closedAt: isClosed ? new Date() : null,
+        cancellationReason: status === "CANCELLED" ? cancellationReason : null,
       },
       include: {
         waiter: { select: { id: true, name: true } },
-        order: { include: { orderItems: true } },
+        order: {
+          include: {
+            orderItems: { include: { product: { select: { name: true } } } },
+          },
+        },
       },
     });
     return { success: true, data: mapPrismaSession(session) };
@@ -414,7 +456,11 @@ export async function updateSessionWaiter(
       data: { waiterId: newWaiterId },
       include: {
         waiter: { select: { id: true, name: true } },
-        order: { include: { orderItems: true } },
+        order: {
+          include: {
+            orderItems: { include: { product: { select: { name: true } } } },
+          },
+        },
       },
     });
     return { success: true, data: mapPrismaSession(session) };

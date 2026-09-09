@@ -49,10 +49,25 @@ export const AddRoundSchema = z.object({
     .min(1, "Debes agregar al menos un producto"),
 });
 
-export const CloseTableSchema = z.object({
-  tableId: z.string().min(1, "El ID de mesa es requerido"),
-  cancelled: z.boolean().default(false),
-});
+export const CloseTableSchema = z
+  .object({
+    tableId: z.string().min(1, "El ID de mesa es requerido"),
+    cancelled: z.boolean().default(false),
+    cancellationReason: z
+      .string()
+      .trim()
+      .max(500, "El motivo no puede exceder 500 caracteres")
+      .optional(),
+  })
+  .superRefine(({ cancelled, cancellationReason }, ctx) => {
+    if (cancelled && !cancellationReason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cancellationReason"],
+        message: "El motivo de cancelacion es requerido",
+      });
+    }
+  });
 
 export const RequestBillSchema = z.object({
   tableId: z.string().min(1, "El ID de mesa es requerido"),

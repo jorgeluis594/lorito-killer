@@ -204,13 +204,27 @@ export const openTable = protectedAction(
 
 export const closeTable = protectedAction(
   { resource: "tables", action: "update" },
-  async (user, tableId: string, cancelled?: boolean): Promise<response<TableSession>> => {
-    const parsed = CloseTableSchema.safeParse({ tableId, cancelled: cancelled ?? false });
+  async (
+    user,
+    tableId: string,
+    cancelled?: boolean,
+    cancellationReason?: string,
+  ): Promise<response<TableSession>> => {
+    const parsed = CloseTableSchema.safeParse({
+      tableId,
+      cancelled: cancelled ?? false,
+      cancellationReason,
+    });
     if (!parsed.success) {
       return { success: false, message: parsed.error.errors[0]?.message ?? "Datos invalidos" };
     }
 
-    const result = await closeTableSession(user.companyId, parsed.data.tableId, parsed.data.cancelled);
+    const result = await closeTableSession(
+      user.companyId,
+      parsed.data.tableId,
+      parsed.data.cancelled,
+      parsed.data.cancellationReason,
+    );
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
