@@ -89,3 +89,17 @@ Comprobada el 2026-09-09 antes de modificar implementación:
   Build: /tmp/gap09-build-baseline.log.
 
 Estos resultados no constituyen aprobación de las compuertas de entrega.
+
+## Resultado de implementación
+
+El diseño fue implementado. La pantalla usa un solo componente para escuchar los eventos de
+las colas del administrador y recupera datos cada 15 segundos mientras está
+visible, además de actualizar al volver a la pestaña. Esta recuperación cubre
+la desconexión de realtime observada durante QA. Se reutilizó el helper de ruta
+por rol para corregir el ingreso de Cocina y Barra y se habilitó el formulario
+de edición de servicios, necesario para modificar su estación.
+
+La migración se aplicó en PostgreSQL de QA. Las pruebas específicas, la prueba
+de integración y el lint de archivos modificados pasan. La validación global
+conserva bloqueos anteriores, detallados junto con las capturas en
+[el reporte QA](../restaurant-mvp/qa-flujos/09-separacion-cocina-barra-resultados.md).

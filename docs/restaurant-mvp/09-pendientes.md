@@ -149,16 +149,32 @@ Una comanda puede quedar lista permanentemente porque no existe una acción que 
 
 ### GAP-09 — Separación de Cocina y Barra
 
+**Estado:** implementado y probado con `qa-tester` en navegador y PostgreSQL
+local aislado. Migración: `20260910000000_add_preparation_station` (aplicarla en
+los demás entornos antes de ejecutar esta versión).
+
+- Cada producto simple, pack o servicio configura Cocina, Barra o Sin configurar.
+- La línea del pedido conserva la estación al enviarse; editar el producto no
+  modifica rondas anteriores.
+- Cocina y Barra consultan y operan solo su estación, con control en el servidor.
+- El administrador ve las tres colas y puede atender los productos sin configurar.
+- La entrega de una ronda mixta exige que todos sus productos vigentes estén listos.
+- La pantalla recupera cambios cada 15 segundos mientras está visible y al volver
+  a la pestaña, además de escuchar los eventos de preparación y entrega.
+
+Evidencia y límites de validación: [reporte QA GAP-09](qa-flujos/09-separacion-cocina-barra-resultados.md).
+
+
 #### Problema
 
 Cocineros y bartenders comparten una cola general. El sistema no conoce la estación responsable de cada producto.
 
-#### Decisiones necesarias
+#### Decisiones implementadas
 
-- Determinar si la estación pertenece al producto o a la categoría.
-- Definir las estaciones iniciales: Cocina y Barra.
-- Definir quién puede consultar todas las estaciones.
-- Resolver productos que no tengan estación asignada.
+- La estación pertenece al producto; un pack no se descompone por componentes.
+- Estaciones iniciales: Cocina y Barra.
+- Solo ADMIN consulta todas las estaciones.
+- Sin configurar corresponde a null y queda en una cola atendida por ADMIN.
 
 #### Alcance mínimo recomendado
 
