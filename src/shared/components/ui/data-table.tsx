@@ -16,6 +16,8 @@ export type TableColumn<T> = {
   header: React.ReactNode;
   cell: (row: T) => React.ReactNode;
   align?: "left" | "center" | "right";
+  className?: string;
+  mobile?: "title" | "value" | "description" | "actions";
 };
 
 type TableLayoutProps<T> = {
@@ -27,7 +29,8 @@ type TableLayoutProps<T> = {
 type TableContentProps<T> = TableLayoutProps<T> & {
   data: readonly T[];
   getRowId: (row: T) => string;
-  emptyMessage?: string;
+  getRowClassName?: (row: T) => string;
+  emptyMessage?: React.ReactNode;
   isLoading?: boolean;
   skeletonRows?: number;
 };
@@ -51,31 +54,55 @@ function TableLayout<T>({
   className,
   isLoading = false,
 }: TableLayoutProps<T> & { children: React.ReactNode; isLoading?: boolean }) {
+  const hasMobileLayout = columns.some((column) => column.mobile);
+
+  if (process.env.NODE_ENV !== "production" && hasMobileLayout) {
+    const roles = columns.map((column) => column.mobile);
+    if (
+      roles.filter((role) => role === "title").length !== 1 ||
+      roles.filter((role) => role === "value").length > 1 ||
+      roles.filter((role) => role === "actions").length > 1
+    ) {
+      throw new Error(
+        'DataTable mobile layout requires one "title" and at most one "value" and "actions" column.',
+      );
+    }
+  }
+
   return (
-    <div className={cn("overflow-hidden rounded-xl border bg-card", className)}>
-      {isLoading && (
-        <span role="status" className="sr-only">
-          Cargando {caption}…
-        </span>
-      )}
-      <Table role="table" aria-busy={isLoading} className="min-w-[40rem]">
-        <TableCaption className="sr-only">{caption}</TableCaption>
-        <TableHeader role="rowgroup">
-          <TableRow role="row">
-            {columns.map((column) => (
-              <TableHead
-                key={column.id}
-                scope="col"
-                role="columnheader"
-                className={alignment[column.align ?? "left"]}
-              >
-                {column.header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody role="rowgroup">{children}</TableBody>
-      </Table>
+    <div className="data-table-container min-w-0">
+      <div
+        className={cn("overflow-hidden rounded-xl border bg-card", className)}
+        data-mobile-table={hasMobileLayout || undefined}
+      >
+        {isLoading && (
+          <span role="status" className="sr-only">
+            Cargando {caption}…
+          </span>
+        )}
+        <Table role="table" aria-busy={isLoading}>
+          <TableCaption className="sr-only">{caption}</TableCaption>
+          <TableHeader role="rowgroup">
+            <TableRow role="row">
+              {columns.map((column) => (
+                <TableHead
+                  key={column.id}
+                  scope="col"
+                  role="columnheader"
+                  data-mobile-role={column.mobile}
+                  className={cn(
+                    alignment[column.align ?? "left"],
+                    column.className,
+                  )}
+                >
+                  {column.header}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody role="rowgroup">{children}</TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
@@ -96,7 +123,16 @@ export function DataTableSkeleton<T>({
       {Array.from({ length: rows }, (_, index) => (
         <TableRow key={index} role="row" aria-hidden="true">
           {columns.map((column) => (
-            <TableCell key={column.id} role="cell" data-column={column.id}>
+            <TableCell
+              key={column.id}
+              role="cell"
+              data-column={column.id}
+              data-mobile-role={column.mobile}
+              data-mobile-label={
+                typeof column.header === "string" ? column.header : undefined
+              }
+              className={column.className}
+            >
               <Skeleton className="h-5 w-full min-w-12" />
             </TableCell>
           ))}
@@ -113,18 +149,30 @@ function TableContent<T>({
   getRowId,
   className,
   emptyMessage = "Sin resultados.",
+  getRowClassName,
 }: TableContentProps<T>) {
   return (
     <TableLayout columns={columns} caption={caption} className={className}>
       {data.length ? (
         data.map((row) => (
-          <TableRow key={getRowId(row)} role="row">
+          <TableRow
+            key={getRowId(row)}
+            role="row"
+            className={getRowClassName?.(row)}
+          >
             {columns.map((column) => (
               <TableCell
                 key={column.id}
                 role="cell"
                 data-column={column.id}
-                className={alignment[column.align ?? "left"]}
+                data-mobile-role={column.mobile}
+                data-mobile-label={
+                  typeof column.header === "string" ? column.header : undefined
+                }
+                className={cn(
+                  alignment[column.align ?? "left"],
+                  column.className,
+                )}
               >
                 {column.cell(row)}
               </TableCell>
@@ -132,7 +180,7 @@ function TableContent<T>({
           </TableRow>
         ))
       ) : (
-        <TableRow role="row">
+        <TableRow role="row" data-mobile-empty>
           <TableCell
             role="cell"
             colSpan={columns.length}

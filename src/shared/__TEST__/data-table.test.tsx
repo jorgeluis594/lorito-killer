@@ -87,22 +87,47 @@ test("renders each cell once and forwards the same layout to loading", () => {
   const html = renderToStaticMarkup(
     <DataTable
       {...props}
-      className="product-table-layout"
-      columns={[{ id: "name", header: "Producto", cell }]}
+      columns={[{ id: "renamed", header: "Producto", cell, mobile: "title" }]}
       data={[{ id: "1", name: "Lomo saltado" }]}
     />,
   );
   expect(cell).toHaveBeenCalledTimes(1);
   expect(html.match(/<table\b/g)).toHaveLength(1);
-  expect(html.match(/data-column="name"/g)).toHaveLength(1);
+  expect(html.match(/data-column="renamed"/g)).toHaveLength(1);
+  expect(html).toContain('data-mobile-table="true"');
+  expect(html).toContain('data-mobile-label="Producto"');
+  expect(html.match(/data-mobile-role="title"/g)).toHaveLength(2);
   const loading = renderToStaticMarkup(
     <DataTable
       {...props}
-      className="product-table-layout"
+      columns={[
+        {
+          id: "renamed",
+          header: "Producto",
+          cell: (row: Row) => row.name,
+          mobile: "title",
+        },
+      ]}
       data={[]}
       isLoading
     />,
   );
-  expect(loading).toContain("product-table-layout");
+  expect(loading).toContain('data-mobile-role="title"');
+  expect(loading).toContain('data-mobile-label="Producto"');
   expect(loading.match(/<table\b/g)).toHaveLength(1);
+});
+
+test("rejects ambiguous mobile roles during development", () => {
+  expect(() =>
+    renderToStaticMarkup(
+      <DataTable
+        {...props}
+        columns={[
+          { ...props.columns[0], mobile: "title" },
+          { ...props.columns[0], id: "other", mobile: "title" },
+        ]}
+        data={[]}
+      />,
+    ),
+  ).toThrow('requires one "title"');
 });

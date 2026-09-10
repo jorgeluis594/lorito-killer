@@ -5,7 +5,6 @@ import { Badge } from "./badge";
 import { Button } from "./button";
 import { MoreVertical } from "lucide-react";
 import { Input } from "./input";
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,7 +213,6 @@ export const Actions: Story = {
   render: () => <ActionsExample />,
 };
 
-// Storybook trial: product-specific composition, pending adoption in DataTable's API.
 function ProductsListTrial({ mobileOnly = false, loading = false }) {
   const [query, setQuery] = React.useState("");
   const [category, setCategory] = React.useState("Todas");
@@ -280,6 +278,7 @@ function ProductsListTrial({ mobileOnly = false, loading = false }) {
   const responsiveColumns: TableColumn<Product>[] = [
     {
       ...columns[0],
+      mobile: "title",
       cell: (row) => (
         <button
           className="min-h-11 text-left hover:underline"
@@ -289,34 +288,32 @@ function ProductsListTrial({ mobileOnly = false, loading = false }) {
         </button>
       ),
     },
-    columns[1],
+    { ...columns[1], mobile: "description" },
     {
       ...columns[2],
+      mobile: "description",
       cell: (row) => (
         <Badge
-          data-available={row.available}
           variant={row.available ? "secondary" : "outline"}
         >
           {row.available ? "Disponible" : "Agotado"}
         </Badge>
       ),
     },
-    columns[3],
+    { ...columns[3], mobile: "value" },
     {
       id: "actions",
       header: <span className="sr-only">Acciones</span>,
       cell: actions,
       align: "right",
+      mobile: "actions",
     },
   ];
 
   return (
     <section
       aria-label="Prueba de lista de productos"
-      className={cn(
-        "product-table-trial flex flex-col gap-5 text-foreground",
-        mobileOnly && "mx-auto max-w-[390px]",
-      )}
+      className={`flex flex-col gap-5 text-foreground ${mobileOnly ? "mx-auto max-w-[390px]" : ""}`}
     >
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="text-xl font-bold tracking-tight">Productos</h2>
@@ -407,7 +404,6 @@ function ProductsListTrial({ mobileOnly = false, loading = false }) {
       ) : (
         <DataTable
           {...props}
-          className="product-table-layout"
           columns={responsiveColumns}
           data={visible}
           isLoading={loading}
