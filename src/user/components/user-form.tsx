@@ -6,21 +6,25 @@ import { LoadingButton } from "@/shared/components/ui/button";
 
 import { updateUser } from "@/user/actions";
 import { useUserSession } from "@/lib/use-user-session";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { useSession } from "next-auth/react";
+import { User } from "@/user/types";
 
 export default function UserForm() {
-  const user = useUserSession()!;
+  const user = useUserSession();
+
+  if (!user) return null;
+
+  return <UserFormFields user={user} />;
+}
+
+function UserFormFields({ user }: { user: User }) {
   const { update } = useSession();
 
-  const [name, setName] = useState<string>(user?.name || "");
+  const [name, setName] = useState<string>(user.name || "");
   const [loading, setLoading] = useState<boolean>(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setName(user.name || "");
-  }, [user]);
 
   const onSubmit = async () => {
     setLoading(true);

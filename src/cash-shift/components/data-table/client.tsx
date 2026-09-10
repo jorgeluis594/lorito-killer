@@ -18,6 +18,8 @@ export default function TableClient() {
 
   const fetchData = useCallback(async () => {
     const response = await getManyCashShifts();
+    setLoading(false);
+
     if (!response.success) {
       toast({
         title: "Error",
@@ -30,12 +32,33 @@ export default function TableClient() {
       setCashShifts(response.data);
     }
 
-    setLoading(false);
   }, [toast]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let ignore = false;
+
+    getManyCashShifts().then((response) => {
+      if (ignore) return;
+
+      setLoading(false);
+
+      if (!response.success) {
+        toast({
+          title: "Error",
+          description:
+            "Ocurrió un error al cargar las cajas: " + response.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setCashShifts(response.data);
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, [toast]);
 
   return (
     <>
