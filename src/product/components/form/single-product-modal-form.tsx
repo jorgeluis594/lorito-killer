@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/ui/sheet";
 import * as z from "zod";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -26,7 +26,6 @@ import {
 } from "@/product/types";
 import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
-import { findProduct } from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
   Form,
@@ -57,9 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import ProductSelector from "@/product/components/form/product-selector";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
-import { Switch } from "@/shared/components/ui/switch";
 import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
@@ -106,17 +103,12 @@ interface ProductFormProps {
 const SingleProductModalForm: React.FC<ProductFormProps> = ({
   onActionPerformed,
 }) => {
-  const [showTransferProduct, setShowTransferProduct] = useState(false);
   const formStore = useProductFormStore((store) => store);
   const user = useUserSession();
   const title = formStore.isNew ? "Agregar producto" : "Editar producto";
   const description = formStore.isNew
     ? "Registra un nuevo producto"
     : "Editar producto.";
-
-  const [targetMovementProduct, setTargetMovementProduct] = useState<
-    SingleProduct | undefined
-  >();
 
   const action = formStore.isNew ? "Agregar Producto" : "Guardar cambios";
 
@@ -135,8 +127,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
 
   const resetForm = () => {
     form.reset(getEmptyProductFormValues(user?.companyId));
-    setShowTransferProduct(false);
-    setTargetMovementProduct(undefined);
   };
 
   const productSku = form.watch("sku");
@@ -179,15 +169,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         targetMovementProductQuantity:
           productData.stockConfig && productData.stockConfig.quantity,
       });
-      const targetMovementProductId = form.getValues("targetMovementProductId");
-
-      if (targetMovementProductId) {
-        findProduct(targetMovementProductId).then((response) => {
-          if (response.success && response.data.type === SingleProductType) {
-            setTargetMovementProduct(response.data);
-          }
-        });
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formStore.open, formStore.isNew, formStore.product, user?.companyId]);
@@ -361,10 +342,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleSwitchChange = () => {
-    setShowTransferProduct((prev) => !prev);
-  };
-
   return (
     <Sheet
       open={formStore.open}
@@ -385,23 +362,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8">
-          {!formStore.isNew && (
-            <div className="mb-6 flex flex-wrap items-center gap-2 rounded-lg bg-secondary px-4 py-3">
-              <label
-                htmlFor="transform-product"
-                className="text-sm font-semibold"
-              >
-                Transformar producto
-              </label>
-              <Switch
-                id="transform-product"
-                checked={showTransferProduct}
-                onCheckedChange={handleSwitchChange}
-              />
-              <HelpTooltip text="Activa para poder traspasar stock" />
-            </div>
-          )}
-
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
@@ -489,7 +449,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          disabled={!showTransferProduct}
+                          disabled={!formStore.isNew}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -561,59 +521,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                     </FormItem>
                   )}
                 />
-                {!formStore.isNew && showTransferProduct && (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <FormField
-                      name="targetMovementProductId"
-                      control={form.control}
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center">
-                            <FormLabel>Producto de traspaso de stock</FormLabel>
-                            <HelpTooltip text="Elige un producto para transformarlo en un paquete" />
-                          </div>
-                          <FormControl>
-                            <ProductSelector
-                              value={targetMovementProduct}
-                              onSelect={(product) => {
-                                setTargetMovementProduct(product);
-                                form.setValue(
-                                  "targetMovementProductId",
-                                  product.id!,
-                                );
-                              }}
-                              productType="SingleProduct"
-                              skipProductIds={
-                                !formStore.isNew
-                                  ? [formStore.product.id!]
-                                  : undefined
-                              }
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      name="targetMovementProductQuantity"
-                      control={form.control}
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center mt-0.5">
-                            <FormLabel>Cantidad a traspasar</FormLabel>
-                          </div>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Ingrese cantidad"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
                 <div className="border-t pt-5">
                   <h3 className="mb-4 text-base font-bold">Imágenes</h3>
                   <FormField
