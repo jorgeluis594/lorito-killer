@@ -1,3 +1,4 @@
+import { mapPrismaPaymentToPayment } from "@/order/db_repository";
 import {
   BillingCredentials,
   Document, DocumentStatus,
@@ -380,6 +381,7 @@ export const getMany = async ({
     skip: pageNumber && pageSize && (pageNumber - 1) * pageSize,
     take: pageSize,
     orderBy: { dateOfIssue: "desc" },
+    include: { order: { include: { payments: true } } },
   });
 
   const customerIds = prismaDocuments
@@ -403,6 +405,7 @@ export const getMany = async ({
       const customerId = prismaDocument.customerId || undefined;
       const document: Document & { customer?: Customer } = {
         ...prismaDocumentToDocument(prismaDocument),
+        payments: prismaDocument.order.payments.map(mapPrismaPaymentToPayment),
       };
 
       if (customerId) {

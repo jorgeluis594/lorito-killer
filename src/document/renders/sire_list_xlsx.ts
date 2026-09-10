@@ -288,5 +288,22 @@ export const createWorkbookBufferSire = async (documents: Document[], company: C
   reportSheet.addRow(["", "", "", "", "", "", "", "","","","","","","","", "Igv", 0]);
   reportSheet.addRow(["", "", "", "", "", "", "", "","","","","","","","", "Total", total]);
 
+  const walletSheet = workbook.addWorksheet("Pagos por billetera");
+  walletSheet.columns = [
+    { header: "Comprobante", key: "document", width: 24 },
+    { header: "Fecha", key: "date", width: 16 },
+    { header: "Billetera", key: "wallet", width: 30 },
+    { header: "Código de operación", key: "operation", width: 36 },
+    { header: "Monto", key: "amount", width: 16 },
+  ];
+  walletSheet.getRow(1).font = { bold: true };
+  walletSheet.views = [{ state: "frozen", ySplit: 1 }];
+  walletSheet.getColumn("amount").numFmt = '"S/ "#,##0.00';
+  for (const doc of documents) {
+    for (const payment of doc.payments ?? []) {
+      if (payment.method !== "wallet") continue;
+      walletSheet.addRow({ document: correlative(doc), date: localizeOnlyDate(doc.dateOfIssue), wallet: payment.name ?? "", operation: payment.operationCode ?? "", amount: payment.amount });
+    }
+  }
   return workbook.xlsx.writeBuffer();
 };

@@ -1,3 +1,4 @@
+import { walletPaymentReference } from "@/order/wallet-payment";
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
@@ -36,6 +37,11 @@ export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
     accessorKey: "total",
     header: "TOTAL",
     cell: ({ row }) => formatPrice(row.original.total),
+  },
+  {
+    id: "walletReference",
+    header: "BILLETERA / OPERACIÓN",
+    cell: ({ row }) => <span className="whitespace-normal break-words">{row.original.payments?.map(walletPaymentReference).filter(Boolean).join("; ") || "—"}</span>,
   },
   {
     accessorKey: "descarga",

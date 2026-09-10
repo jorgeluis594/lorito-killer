@@ -1,5 +1,5 @@
 import { Customer } from "@/customer/types";
-import {Status} from "@/order/types";
+import {Status, Payment} from "@/order/types";
 
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
@@ -31,6 +31,7 @@ type DocumentBase = {
   series: string;
   number: string;
   customer?: Customer;
+  payments?: Payment[];
   dateOfIssue: Date;
   issuedToTaxEntity?: boolean;
   issuedAt?: Date;
