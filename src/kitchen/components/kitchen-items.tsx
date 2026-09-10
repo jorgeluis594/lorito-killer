@@ -23,6 +23,8 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const realtime = useRealtime<{
+    "order-item-taken": { orderItemId: string };
+    "kitchen-item-ready": { orderItemId: string };
     "table-round-added": { tableId: string };
     "order-item-cancelled": { orderItemId: string };
     "kitchen-ticket-served": { tableId: string; round: number };
@@ -32,6 +34,8 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
     const refresh = () => router.refresh();
     const unsubscribes = [
       realtime.on("table-round-added", refresh),
+      realtime.on("order-item-taken", refresh),
+      realtime.on("kitchen-item-ready", refresh),
       realtime.on("order-item-cancelled", refresh),
       realtime.on("kitchen-ticket-served", refresh),
     ];
@@ -50,7 +54,7 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
         router.refresh();
         return;
       }
-      toast({ title: "Producto tomado por Cocina" });
+      toast({ title: "Producto en preparación" });
       router.refresh();
     });
   };
@@ -75,7 +79,7 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
   if (items.length === 0) {
     return (
       <p className="text-muted-foreground">
-        No hay productos activos para Cocina.
+        No hay productos activos en esta estación.
       </p>
     );
   }
@@ -85,9 +89,12 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
       {items.map((item) => (
         <article
           key={item.id}
-          className="flex items-center justify-between gap-4 rounded-lg border p-4"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4"
         >
           <div className="flex min-w-0 flex-col gap-1">
+            <p className="text-sm text-muted-foreground">
+              {item.preparationStation === "KITCHEN" ? "Cocina" : item.preparationStation === "BAR" ? "Barra" : "Sin configurar"}
+            </p>
             <p className="font-medium break-words">
               Mesa {item.tableLabel} · Ronda {item.round}
             </p>

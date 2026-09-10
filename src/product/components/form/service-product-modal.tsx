@@ -1,5 +1,7 @@
 "use client";
 
+import { PreparationStationField } from "./preparation-station-field";
+
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import {
@@ -16,6 +18,7 @@ import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ProductService, ServiceProductType, Photo } from "@/product/types";
+import { update } from "@/product/api_repository";
 import { createServiceProduct } from "@/product/actions";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
@@ -51,12 +54,14 @@ const transformToProduct = (data: ServiceProductFormValues): ProductService => {
 };
 
 interface ServiceProductModalProps {
+  product?: ProductService;
   open: boolean;
   onClose: () => void;
   onActionPerformed: () => void;
 }
 
 export default function ServiceProductModal({
+  product: existingProduct,
   open,
   onClose,
   onActionPerformed
@@ -66,7 +71,7 @@ export default function ServiceProductModal({
 
   const form = useForm<ServiceProductFormValues>({
     resolver: zodResolver(ServiceProductSchema),
-    defaultValues: {
+    defaultValues: existingProduct ? { ...existingProduct, createdAt: undefined, updatedAt: undefined } : {
       companyId: "",
       name: "",
       price: 0,
@@ -90,14 +95,17 @@ export default function ServiceProductModal({
     setPerformingAction(true);
     try {
       const product = transformToProduct(data);
-      const response = await createServiceProduct(product);
+      const response = existingProduct
+        ? await update({ ...product, id: existingProduct.id, hidden: existingProduct.hidden })
+        : await createServiceProduct(product);
 
       if (response.success) {
         toast({
-          description: "Servicio creado con éxito",
+          description: existingProduct ? "Servicio actualizado con éxito" : "Servicio creado con éxito",
         });
         onActionPerformed();
         form.reset({
+          preparationStation: null,
           companyId: data.companyId,
           name: "",
           price: 0,
@@ -143,6 +151,7 @@ export default function ServiceProductModal({
   const handleDialogChange = (isOpen: boolean) => {
     if (!isOpen) {
       form.reset({
+        preparationStation: null,
         companyId: form.getValues("companyId"),
         name: "",
         price: 0,
@@ -158,10 +167,10 @@ export default function ServiceProductModal({
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="w-full h-full sm:max-w-[750px] sm:h-[750px] flex flex-col justify-center items-center p-0">
-        <DialogTitle className="sr-only">Agregar servicio</DialogTitle>
+        <DialogTitle className="sr-only">{existingProduct ? "Editar servicio" : "Agregar servicio"}</DialogTitle>
         <ScrollArea className="p-6 w-full">
           <div className="flex items-center justify-between">
-            <Heading title="Agregar servicio" />
+            <Heading title={existingProduct ? "Editar servicio" : "Agregar servicio"} />
           </div>
           <Form {...form}>
             <form
@@ -169,6 +178,7 @@ export default function ServiceProductModal({
               className="mx-auto space-y-8"
             >
               <div className="space-y-4 p-2">
+                <PreparationStationField />
                 <FormField
                   control={form.control}
                   name="photos"
@@ -289,7 +299,7 @@ export default function ServiceProductModal({
               {performingAction ? (
                 <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                "Agregar Servicio"
+                existingProduct ? "Guardar cambios" : "Agregar Servicio"
               )}
             </Button>
           </DialogFooter>

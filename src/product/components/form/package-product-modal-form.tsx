@@ -1,5 +1,7 @@
 "use client";
 
+import { PreparationStationField } from "./preparation-station-field";
+
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import {
@@ -59,6 +61,7 @@ const transformToProduct = (
 ): PackageProduct => {
   return {
     companyId: data.companyId,
+    preparationStation: data.preparationStation,
     name: data.name,
     price: data.price,
     sku: data.sku,
@@ -297,6 +300,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
               className="mx-auto space-y-8"
             >
               <div className="space-y-4 p-2">
+                <PreparationStationField />
                 <FormField
                   control={form.control}
                   name="photos"

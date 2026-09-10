@@ -1,5 +1,7 @@
 "use client";
 
+import { PreparationStationField } from "./preparation-station-field";
+
 import {Button} from "@/shared/components/ui/button";
 import {Input, MoneyInput} from "@/shared/components/ui/input";
 import {
@@ -398,6 +400,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
               className="mx-auto space-y-8"
             >
               <div className="space-y-4 p-2">
+                <PreparationStationField />
                 <FormField
                   control={form.control}
                   name="photos"

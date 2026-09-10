@@ -52,7 +52,7 @@ export const navItems: NavItem[] = [
     feature: "restaurants",
   },
   {
-    title: "Cocina",
+    title: "Cocina y Barra",
     href: "/dashboard/kitchen",
     icon: "receipt",
     label: "cocina",
