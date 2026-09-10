@@ -1,5 +1,7 @@
 "use client";
 
+import { getDefaultRouteForRole } from "@/authorization/default-route";
+
 import { Button } from "@/shared/components/ui/button";
 import {
   Form,
@@ -79,17 +81,13 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
       }
 
       if (callbackUrl) {
-        window.location.href = callbackUrl;
+        window.location.assign(callbackUrl);
         return;
       }
 
       const session = await getSession();
       const role = (session?.user as any)?.role;
-      if (role === "CASHIER") {
-        window.location.href = "/dashboard/orders/new";
-      } else {
-        window.location.href = "/dashboard";
-      }
+      window.location.assign(getDefaultRouteForRole(role));
     }
   };
 
