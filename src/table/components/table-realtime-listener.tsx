@@ -7,6 +7,8 @@ type TableEvents = {
   "table-session-changed": { tableId: string; sessionStatus: string };
   "table-waiter-changed": { tableId: string; newWaiterId: string };
   "table-round-added": { tableId: string; orderId: string; round: number };
+  "order-item-taken": { orderItemId: string };
+  "order-item-cancelled": { orderItemId: string };
 };
 
 interface TableRealtimeListenerProps {
@@ -31,14 +33,24 @@ export function TableRealtimeListener({ onEvent }: TableRealtimeListenerProps) {
   }, []);
 
   useEffect(() => {
-    const unsub1 = realtime.on("table-session-changed", () => debouncedOnEvent());
-    const unsub2 = realtime.on("table-waiter-changed", () => debouncedOnEvent());
+    const unsub1 = realtime.on("table-session-changed", () =>
+      debouncedOnEvent(),
+    );
+    const unsub2 = realtime.on("table-waiter-changed", () =>
+      debouncedOnEvent(),
+    );
     const unsub3 = realtime.on("table-round-added", () => debouncedOnEvent());
+    const unsub4 = realtime.on("order-item-taken", () => debouncedOnEvent());
+    const unsub5 = realtime.on("order-item-cancelled", () =>
+      debouncedOnEvent(),
+    );
 
     return () => {
       unsub1();
       unsub2();
       unsub3();
+      unsub4();
+      unsub5();
     };
   }, [realtime, debouncedOnEvent]);
 

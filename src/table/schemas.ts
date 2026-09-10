@@ -15,7 +15,11 @@ export const TableFormSchema = z.object({
     .number()
     .int("El numero debe ser entero")
     .min(1, "El numero debe ser mayor a 0"),
-  label: z.string().max(20, "La etiqueta no puede exceder 20 caracteres").optional().or(z.literal("")),
+  label: z
+    .string()
+    .max(20, "La etiqueta no puede exceder 20 caracteres")
+    .optional()
+    .or(z.literal("")),
   capacity: z.coerce
     .number()
     .int("La capacidad debe ser un numero entero")
@@ -71,6 +75,19 @@ export const CloseTableSchema = z
 
 export const RequestBillSchema = z.object({
   tableId: z.string().min(1, "El ID de mesa es requerido"),
+});
+
+export const CancelOrderItemSchema = z.object({
+  orderItemId: z.string().uuid("El producto no es valido"),
+  reason: z
+    .string()
+    .trim()
+    .min(1, "El motivo de cancelacion es requerido")
+    .max(500, "El motivo no puede exceder 500 caracteres"),
+});
+
+export const TakeOrderItemSchema = z.object({
+  orderItemId: z.string().uuid("El producto no es valido"),
 });
 
 export const TransferTableSchema = z.object({

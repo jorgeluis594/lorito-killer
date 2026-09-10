@@ -30,6 +30,11 @@ type PrismaSessionResult = {
       total: { toNumber(): number } | number;
       notes: string | null;
       round: number;
+      kitchenStatus?: $Enums.OrderItemKitchenStatus;
+      kitchenTakenAt?: Date | null;
+      cancellationReason?: string | null;
+      cancelledAt?: Date | null;
+      cancelledBy?: { id: string; name: string | null } | null;
       product: { name: string };
     }>;
   } | null;
@@ -61,7 +66,10 @@ type PrismaTableResult = {
 
 // -- Mappers --
 
-const SESSION_STATUS_MAPPER: Record<$Enums.TableSessionStatus, TableSession["status"]> = {
+const SESSION_STATUS_MAPPER: Record<
+  $Enums.TableSessionStatus,
+  TableSession["status"]
+> = {
   OPEN: "OPEN",
   BILL_REQUESTED: "BILL_REQUESTED",
   CLOSED: "CLOSED",
@@ -70,9 +78,10 @@ const SESSION_STATUS_MAPPER: Record<$Enums.TableSessionStatus, TableSession["sta
 
 function mapPrismaSession(s: PrismaSessionResult): TableSession {
   const orderItems = s.order?.orderItems || [];
-  const maxRound = orderItems.length > 0
-    ? Math.max(...orderItems.map((oi) => oi.round ?? 1))
-    : 0;
+  const maxRound =
+    orderItems.length > 0
+      ? Math.max(...orderItems.map((oi) => oi.round ?? 1))
+      : 0;
 
   return {
     id: s.id,
@@ -97,6 +106,11 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
             total: Number(item.total),
             notes: item.notes,
             round: item.round,
+            kitchenStatus: item.kitchenStatus ?? "PENDING",
+            kitchenTakenAt: item.kitchenTakenAt,
+            cancellationReason: item.cancellationReason,
+            cancelledAt: item.cancelledAt,
+            cancelledBy: item.cancelledBy,
           })),
         }
       : null,
@@ -153,7 +167,10 @@ export async function findZones(companyId: string): Promise<response<Zone[]>> {
   }
 }
 
-export async function findZone(id: string, companyId: string): Promise<response<Zone>> {
+export async function findZone(
+  id: string,
+  companyId: string,
+): Promise<response<Zone>> {
   try {
     const zone = await prisma().zone.findFirst({ where: { id, companyId } });
     if (!zone) return { success: false, message: "Zona no encontrada" };
@@ -164,7 +181,10 @@ export async function findZone(id: string, companyId: string): Promise<response<
   }
 }
 
-export async function createZone(companyId: string, data: { name: string; order?: number }): Promise<response<Zone>> {
+export async function createZone(
+  companyId: string,
+  data: { name: string; order?: number },
+): Promise<response<Zone>> {
   try {
     const zone = await prisma().zone.create({
       data: { companyId, name: data.name, order: data.order ?? 0 },
@@ -179,9 +199,15 @@ export async function createZone(companyId: string, data: { name: string; order?
   }
 }
 
-export async function updateZone(id: string, companyId: string, data: { name?: string; order?: number }): Promise<response<Zone>> {
+export async function updateZone(
+  id: string,
+  companyId: string,
+  data: { name?: string; order?: number },
+): Promise<response<Zone>> {
   try {
-    const existing = await prisma().zone.findFirst({ where: { id, companyId } });
+    const existing = await prisma().zone.findFirst({
+      where: { id, companyId },
+    });
     if (!existing) return { success: false, message: "Zona no encontrada" };
     const zone = await prisma().zone.update({
       where: { id },
@@ -197,15 +223,23 @@ export async function updateZone(id: string, companyId: string, data: { name?: s
   }
 }
 
-export async function deleteZone(id: string, companyId: string): Promise<response<void>> {
+export async function deleteZone(
+  id: string,
+  companyId: string,
+): Promise<response<void>> {
   try {
-    const existing = await prisma().zone.findFirst({ where: { id, companyId } });
+    const existing = await prisma().zone.findFirst({
+      where: { id, companyId },
+    });
     if (!existing) return { success: false, message: "Zona no encontrada" };
     const activeTables = await prisma().table.count({
       where: { zoneId: id, companyId, active: true },
     });
     if (activeTables > 0) {
-      return { success: false, message: "No se puede eliminar una zona con mesas activas" };
+      return {
+        success: false,
+        message: "No se puede eliminar una zona con mesas activas",
+      };
     }
     await prisma().zone.update({ where: { id }, data: { active: false } });
     return { success: true, data: undefined };
@@ -217,7 +251,10 @@ export async function deleteZone(id: string, companyId: string): Promise<respons
 
 // -- Table CRUD --
 
-export async function findTables(companyId: string, zoneId?: string): Promise<response<TableWithSession[]>> {
+export async function findTables(
+  companyId: string,
+  zoneId?: string,
+): Promise<response<TableWithSession[]>> {
   try {
     const tables = await prisma().table.findMany({
       where: {
@@ -234,7 +271,10 @@ export async function findTables(companyId: string, zoneId?: string): Promise<re
             order: {
               include: {
                 orderItems: {
-                  include: { product: { select: { name: true } } },
+                  include: {
+                    product: { select: { name: true } },
+                    cancelledBy: { select: { id: true, name: true } },
+                  },
                   orderBy: { createdAt: "asc" },
                 },
               },
@@ -251,7 +291,10 @@ export async function findTables(companyId: string, zoneId?: string): Promise<re
   }
 }
 
-export async function findTable(id: string, companyId: string): Promise<response<TableWithSession>> {
+export async function findTable(
+  id: string,
+  companyId: string,
+): Promise<response<TableWithSession>> {
   try {
     const table = await prisma().table.findFirst({
       where: { id, companyId },
@@ -264,7 +307,10 @@ export async function findTable(id: string, companyId: string): Promise<response
             order: {
               include: {
                 orderItems: {
-                  include: { product: { include: { photos: true } } },
+                  include: {
+                    product: { include: { photos: true } },
+                    cancelledBy: { select: { id: true, name: true } },
+                  },
                   orderBy: { createdAt: "asc" },
                 },
                 payments: true,
@@ -282,10 +328,15 @@ export async function findTable(id: string, companyId: string): Promise<response
   }
 }
 
-export async function createTable(companyId: string, data: { number: number; label?: string; capacity: number; zoneId: string }): Promise<response<Table>> {
+export async function createTable(
+  companyId: string,
+  data: { number: number; label?: string; capacity: number; zoneId: string },
+): Promise<response<Table>> {
   try {
     // Validate zone belongs to same company
-    const zone = await prisma().zone.findFirst({ where: { id: data.zoneId, companyId } });
+    const zone = await prisma().zone.findFirst({
+      where: { id: data.zoneId, companyId },
+    });
     if (!zone) return { success: false, message: "Zona no encontrada" };
 
     const table = await prisma().table.create({
@@ -301,14 +352,22 @@ export async function createTable(companyId: string, data: { number: number; lab
   }
 }
 
-export async function updateTable(id: string, companyId: string, data: { number?: number; label?: string; capacity?: number; zoneId?: string }): Promise<response<Table>> {
+export async function updateTable(
+  id: string,
+  companyId: string,
+  data: { number?: number; label?: string; capacity?: number; zoneId?: string },
+): Promise<response<Table>> {
   try {
-    const existing = await prisma().table.findFirst({ where: { id, companyId } });
+    const existing = await prisma().table.findFirst({
+      where: { id, companyId },
+    });
     if (!existing) return { success: false, message: "Mesa no encontrada" };
 
     // Validate zone belongs to same company if zoneId is being updated
     if (data.zoneId) {
-      const zone = await prisma().zone.findFirst({ where: { id: data.zoneId, companyId } });
+      const zone = await prisma().zone.findFirst({
+        where: { id: data.zoneId, companyId },
+      });
       if (!zone) return { success: false, message: "Zona no encontrada" };
     }
 
@@ -332,15 +391,23 @@ export async function updateTable(id: string, companyId: string, data: { number?
   }
 }
 
-export async function deleteTable(id: string, companyId: string): Promise<response<void>> {
+export async function deleteTable(
+  id: string,
+  companyId: string,
+): Promise<response<void>> {
   try {
-    const existing = await prisma().table.findFirst({ where: { id, companyId } });
+    const existing = await prisma().table.findFirst({
+      where: { id, companyId },
+    });
     if (!existing) return { success: false, message: "Mesa no encontrada" };
     const activeSessions = await prisma().tableSession.count({
       where: { tableId: id, current: true },
     });
     if (activeSessions > 0) {
-      return { success: false, message: "No se puede eliminar una mesa con sesion activa" };
+      return {
+        success: false,
+        message: "No se puede eliminar una mesa con sesion activa",
+      };
     }
     await prisma().table.update({ where: { id }, data: { active: false } });
     return { success: true, data: undefined };
@@ -352,7 +419,10 @@ export async function deleteTable(id: string, companyId: string): Promise<respon
 
 // -- Table Session --
 
-export async function findActiveSession(tableId: string, companyId: string): Promise<response<TableSession>> {
+export async function findActiveSession(
+  tableId: string,
+  companyId: string,
+): Promise<response<TableSession>> {
   try {
     const session = await prisma().tableSession.findFirst({
       where: { tableId, companyId, current: true },
@@ -361,7 +431,10 @@ export async function findActiveSession(tableId: string, companyId: string): Pro
         order: {
           include: {
             orderItems: {
-              include: { product: true },
+              include: {
+                product: true,
+                cancelledBy: { select: { id: true, name: true } },
+              },
               orderBy: { createdAt: "asc" },
             },
             payments: true,
@@ -402,7 +475,10 @@ export async function createSession(data: {
     return { success: true, data: mapPrismaSession(session) };
   } catch (e: any) {
     if (e.code === "P2002") {
-      return { success: false, message: "Esta mesa ya tiene una sesion activa" };
+      return {
+        success: false,
+        message: "Esta mesa ya tiene una sesion activa",
+      };
     }
     console.error("createSession error:", e);
     return { success: false, message: "Error interno del servidor" };
@@ -416,7 +492,9 @@ export async function updateSessionStatus(
   cancellationReason?: string,
 ): Promise<response<TableSession>> {
   try {
-    const existing = await prisma().tableSession.findFirst({ where: { id: sessionId, companyId } });
+    const existing = await prisma().tableSession.findFirst({
+      where: { id: sessionId, companyId },
+    });
     if (!existing) return { success: false, message: "Sesion no encontrada" };
     const isClosed = status === "CLOSED" || status === "CANCELLED";
     const session = await prisma().tableSession.update({
@@ -431,7 +509,12 @@ export async function updateSessionStatus(
         waiter: { select: { id: true, name: true } },
         order: {
           include: {
-            orderItems: { include: { product: { select: { name: true } } } },
+            orderItems: {
+              include: {
+                product: { select: { name: true } },
+                cancelledBy: { select: { id: true, name: true } },
+              },
+            },
           },
         },
       },
@@ -449,7 +532,9 @@ export async function updateSessionWaiter(
   newWaiterId: string,
 ): Promise<response<TableSession>> {
   try {
-    const existing = await prisma().tableSession.findFirst({ where: { id: sessionId, companyId } });
+    const existing = await prisma().tableSession.findFirst({
+      where: { id: sessionId, companyId },
+    });
     if (!existing) return { success: false, message: "Sesion no encontrada" };
     const session = await prisma().tableSession.update({
       where: { id: sessionId },
@@ -458,7 +543,12 @@ export async function updateSessionWaiter(
         waiter: { select: { id: true, name: true } },
         order: {
           include: {
-            orderItems: { include: { product: { select: { name: true } } } },
+            orderItems: {
+              include: {
+                product: { select: { name: true } },
+                cancelledBy: { select: { id: true, name: true } },
+              },
+            },
           },
         },
       },
@@ -493,7 +583,10 @@ export async function createDineInOrder(
   }
 }
 
-export async function getOrderBySessionId(sessionId: string, companyId: string): Promise<response<{ id: string; orderItems: Array<{ round: number }> }>> {
+export async function getOrderBySessionId(
+  sessionId: string,
+  companyId: string,
+): Promise<response<{ id: string; orderItems: Array<{ round: number }> }>> {
   try {
     const order = await prisma().order.findFirst({
       where: {
@@ -508,7 +601,10 @@ export async function getOrderBySessionId(sessionId: string, companyId: string):
       },
     });
     if (!order) return { success: false, message: "Orden no encontrada" };
-    return { success: true, data: { id: order.id, orderItems: order.orderItems } };
+    return {
+      success: true,
+      data: { id: order.id, orderItems: order.orderItems },
+    };
   } catch (e: any) {
     console.error("getOrderBySessionId error:", e);
     return { success: false, message: "Error interno del servidor" };
@@ -542,7 +638,7 @@ export async function addOrderItems(
 
     // Update order totals using aggregate
     const { _sum } = await prisma().orderItem.aggregate({
-      where: { orderId },
+      where: { orderId, kitchenStatus: { not: "CANCELLED" } },
       _sum: { total: true },
     });
     const total = _sum.total?.toNumber() ?? 0;
@@ -558,7 +654,68 @@ export async function addOrderItems(
   }
 }
 
-export async function getWaiters(companyId: string): Promise<response<Array<{ id: string; name: string | null }>>> {
+export async function cancelPendingOrderItem(input: {
+  orderItemId: string;
+  companyId: string;
+  userId: string;
+  reason: string;
+}): Promise<response<void>> {
+  try {
+    return await prisma().$transaction(async (tx) => {
+      const cancelled = await tx.orderItem.updateMany({
+        where: {
+          id: input.orderItemId,
+          kitchenStatus: "PENDING",
+          order: {
+            companyId: input.companyId,
+            status: "PENDING",
+            tableSession: { current: true, status: "OPEN" },
+          },
+        },
+        data: {
+          kitchenStatus: "CANCELLED",
+          cancellationReason: input.reason,
+          cancelledAt: new Date(),
+          cancelledById: input.userId,
+        },
+      });
+
+      if (cancelled.count !== 1) {
+        return {
+          success: false,
+          message: "El producto ya fue tomado por cocina o cancelado",
+        };
+      }
+
+      const item = await tx.orderItem.findUnique({
+        where: { id: input.orderItemId },
+        select: { orderId: true },
+      });
+      if (!item) return { success: false, message: "Producto no encontrado" };
+
+      const totals = await tx.orderItem.aggregate({
+        where: { orderId: item.orderId, kitchenStatus: { not: "CANCELLED" } },
+        _sum: { total: true, netTotal: true },
+      });
+      await tx.order.update({
+        where: { id: item.orderId },
+        data: {
+          total: totals._sum.total ?? 0,
+          netTotal: totals._sum.netTotal ?? 0,
+        },
+      });
+
+      return { success: true, data: undefined };
+    });
+  } catch (error) {
+    console.error("cancelPendingOrderItem error:", error);
+    return { success: false, message: "Error interno del servidor" };
+  }
+}
+
+export async function getWaiters(
+  companyId: string,
+): Promise<response<Array<{ id: string; name: string | null }>>> {
   try {
     const waiters = await prisma().user.findMany({
       where: { companyId, active: true, role: { in: ["WAITER", "ADMIN"] } },
@@ -582,7 +739,11 @@ export async function findProductsByIds(
     });
     return {
       success: true,
-      data: products.map((p) => ({ id: p.id, price: p.price.toNumber(), name: p.name })),
+      data: products.map((p) => ({
+        id: p.id,
+        price: p.price.toNumber(),
+        name: p.name,
+      })),
     };
   } catch (e: any) {
     console.error("findProductsByIds error:", e);

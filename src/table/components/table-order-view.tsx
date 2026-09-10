@@ -7,6 +7,8 @@ import { Plus, Minus, Send } from "lucide-react";
 import { useToast } from "@/shared/components/ui/use-toast";
 import type { TableOrderItem, TableWithSession } from "../types";
 import { addRoundAction } from "../actions";
+import { Badge } from "@/shared/components/ui/badge";
+import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
 
 type CartItem = {
   productId: string;
@@ -29,17 +31,19 @@ export function TableOrderView({ table }: TableOrderViewProps) {
 
   // Get existing order items from session
   const existingItems = session?.order?.orderItems ?? [];
-  const rounds = existingItems.reduce((acc: Record<number, TableOrderItem[]>, item) => {
-    const round = item.round || 1;
-    if (!acc[round]) acc[round] = [];
-    acc[round].push(item);
-    return acc;
-  }, {});
-
-  const orderTotal = existingItems.reduce(
-    (sum, item) => sum + item.total,
-    0,
+  const rounds = existingItems.reduce(
+    (acc: Record<number, TableOrderItem[]>, item) => {
+      const round = item.round || 1;
+      if (!acc[round]) acc[round] = [];
+      acc[round].push(item);
+      return acc;
+    },
+    {},
   );
+
+  const orderTotal = existingItems
+    .filter((item) => item.kitchenStatus !== "CANCELLED")
+    .reduce((sum, item) => sum + item.total, 0);
   const cartTotal = cart.reduce(
     (sum, item) => sum + item.productPrice * item.quantity,
     0,
@@ -126,7 +130,9 @@ export function TableOrderView({ table }: TableOrderViewProps) {
                     >
                       <div className="flex justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-medium break-words">{item.productName}</p>
+                          <p className="font-medium break-words">
+                            {item.productName}
+                          </p>
                           <p className="text-muted-foreground tabular-nums">
                             {item.quantity} × S/ {item.productPrice.toFixed(2)}
                           </p>
@@ -139,6 +145,21 @@ export function TableOrderView({ table }: TableOrderViewProps) {
                         <p className="text-muted-foreground break-words">
                           Observación: {item.notes}
                         </p>
+                      ) : null}
+                      {item.kitchenStatus === "CANCELLED" ? (
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="destructive">Cancelado</Badge>
+                          <p className="text-muted-foreground break-words">
+                            Motivo: {item.cancellationReason}
+                            {item.cancelledBy?.name
+                              ? ` · ${item.cancelledBy.name}`
+                              : ""}
+                          </p>
+                        </div>
+                      ) : item.kitchenStatus === "PREPARING" ? (
+                        <Badge variant="secondary">En preparación</Badge>
+                      ) : session?.status === "OPEN" ? (
+                        <CancelOrderItemDialog itemId={item.id} />
                       ) : null}
                     </div>
                   ))}
@@ -156,7 +177,8 @@ export function TableOrderView({ table }: TableOrderViewProps) {
         <div className="space-y-3">
           <h3 className="font-semibold">Nueva ronda</h3>
           <p className="text-xs text-muted-foreground">
-            Busca productos por nombre desde la pagina de Nueva Venta o agrega items manualmente.
+            Busca productos por nombre desde la pagina de Nueva Venta o agrega
+            items manualmente.
           </p>
 
           {cart.length > 0 && (
@@ -197,9 +219,7 @@ export function TableOrderView({ table }: TableOrderViewProps) {
               ))}
               <div className="flex justify-between border-t pt-2">
                 <span className="font-medium">Subtotal ronda</span>
-                <span className="font-medium">
-                  S/ {cartTotal.toFixed(2)}
-                </span>
+                <span className="font-medium">S/ {cartTotal.toFixed(2)}</span>
               </div>
               <Button
                 className="w-full gap-2"

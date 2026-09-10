@@ -1,6 +1,11 @@
-export type TableSessionStatus = "OPEN" | "BILL_REQUESTED" | "CLOSED" | "CANCELLED";
+export type TableSessionStatus =
+  | "OPEN"
+  | "BILL_REQUESTED"
+  | "CLOSED"
+  | "CANCELLED";
 export type TableDerivedStatus = "AVAILABLE" | "OCCUPIED" | "BILL_REQUESTED";
 export type OrderType = "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
+export type OrderItemKitchenStatus = "PENDING" | "PREPARING" | "CANCELLED";
 
 export type TableOrderItem = {
   id: string;
@@ -11,6 +16,11 @@ export type TableOrderItem = {
   total: number;
   notes?: string | null;
   round: number;
+  kitchenStatus: OrderItemKitchenStatus;
+  kitchenTakenAt?: Date | null;
+  cancellationReason?: string | null;
+  cancelledAt?: Date | null;
+  cancelledBy?: { id: string; name?: string | null } | null;
 };
 
 export type TableOrder = {
