@@ -1,0 +1,14 @@
+{
+  "completedOrders": 1,
+  "payments": [
+    {
+      "orderId": "4a7326b3-1ea7-4495-bfb5-087c578c5b13",
+      "method": "WALLET",
+      "amount": "10",
+      "data": {
+        "name": "Yape",
+        "operationCode": "000GAP10-A"
+      }
+    }
+  ]
+}

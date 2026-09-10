@@ -1,0 +1,22 @@
+{
+  "worksheets": [
+    "Reporte de ventas",
+    "Pagos por billetera"
+  ],
+  "walletRows": [
+    [
+      "T010-00000002",
+      "10/09/2026",
+      "Plin",
+      "000GAP10-B",
+      4
+    ],
+    [
+      "T010-00000001",
+      "10/09/2026",
+      "Yape",
+      "000GAP10-A",
+      10
+    ]
+  ]
+}

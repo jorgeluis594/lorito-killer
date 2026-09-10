@@ -1,0 +1,38 @@
+[
+  {
+    "id": "4a7326b3-1ea7-4495-bfb5-087c578c5b13",
+    "total": "10",
+    "payments": [
+      {
+        "method": "WALLET",
+        "amount": "10",
+        "data": {
+          "name": "Yape",
+          "operationCode": "000GAP10-A"
+        }
+      }
+    ]
+  },
+  {
+    "id": "683fcbce-cc9c-40e3-acc2-3a8d2f9de49d",
+    "total": "10",
+    "payments": [
+      {
+        "method": "CASH",
+        "amount": "6",
+        "data": {
+          "change": 0,
+          "received_amount": 6
+        }
+      },
+      {
+        "method": "WALLET",
+        "amount": "4",
+        "data": {
+          "name": "Plin",
+          "operationCode": "000GAP10-B"
+        }
+      }
+    ]
+  }
+]

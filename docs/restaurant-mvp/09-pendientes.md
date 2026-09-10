@@ -192,15 +192,29 @@ Cocineros y bartenders comparten una cola general. El sistema no conoce la estac
 
 ### GAP-10 — Datos de pagos por billetera
 
+**Estado:** implementado y probado con `qa-tester` en navegador y PostgreSQL
+local aislado. No requiere migración: reutiliza `Payment.data`.
+
+- Billetera en texto libre (1–80 caracteres) y código obligatorio (1–100).
+- Ambos campos se recortan en servidor antes de escribir la venta.
+- Se permiten referencias repetidas; los pagos históricos incompletos siguen
+  siendo consultables.
+- El formulario captura los datos tanto en billetera como en combinado.
+- Detalle, comprobante PDF, reporte de ventas y hoja Excel “Pagos por billetera”
+  conservan la referencia y el importe de cada pago.
+- Una referencia inválida rechaza toda la escritura, incluso con efectivo combinado.
+
+Evidencia y límites: [reporte QA GAP-10](qa-flujos/10-pagos-billetera-resultados.md).
+
 #### Problema
 
 El flujo de cobro acepta un monto de billetera, pero no captura de forma visible la billetera ni el código de operación.
 
-#### Decisiones necesarias
+#### Decisiones aprobadas
 
-- Definir si la billetera será una lista configurada o texto libre.
-- Definir si el código de operación será obligatorio.
-- Determinar si se validarán referencias duplicadas.
+- Nombre de billetera como texto libre, sin catálogo adicional.
+- Código de operación obligatorio para pagos nuevos.
+- Referencias duplicadas permitidas; no se definió una clave única por proveedor.
 
 #### Alcance mínimo recomendado
 
