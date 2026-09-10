@@ -9,6 +9,8 @@ type TableEvents = {
   "table-round-added": { tableId: string; orderId: string; round: number };
   "order-item-taken": { orderItemId: string };
   "order-item-cancelled": { orderItemId: string };
+  "kitchen-item-ready": { orderItemId: string };
+  "kitchen-ticket-served": { tableId: string; round: number };
 };
 
 interface TableRealtimeListenerProps {
@@ -44,6 +46,10 @@ export function TableRealtimeListener({ onEvent }: TableRealtimeListenerProps) {
     const unsub5 = realtime.on("order-item-cancelled", () =>
       debouncedOnEvent(),
     );
+    const unsub6 = realtime.on("kitchen-item-ready", () => debouncedOnEvent());
+    const unsub7 = realtime.on("kitchen-ticket-served", () =>
+      debouncedOnEvent(),
+    );
 
     return () => {
       unsub1();
@@ -51,6 +57,8 @@ export function TableRealtimeListener({ onEvent }: TableRealtimeListenerProps) {
       unsub3();
       unsub4();
       unsub5();
+      unsub6();
+      unsub7();
     };
   }, [realtime, debouncedOnEvent]);
 

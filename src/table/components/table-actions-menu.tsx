@@ -416,6 +416,13 @@ export function TableActionsMenu({
             )}
           </div>
         )}
+        {(session?.readyKitchenTickets ?? 0) > 0 ? (
+          <p className="text-sm font-medium">
+            {session!.readyKitchenTickets} comanda
+            {session!.readyKitchenTickets === 1 ? "" : "s"} lista
+            {session!.readyKitchenTickets === 1 ? "" : "s"} para servir
+          </p>
+        ) : null}
 
         {/* ===== OCCUPIED TABLE: Mini-POS ===== */}
         {status === "OCCUPIED" && (

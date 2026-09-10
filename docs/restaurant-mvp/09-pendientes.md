@@ -122,6 +122,11 @@ de Cocina sea `PENDING`. Cocina bloquea la cancelación al tomarla y pasarla a
 
 ### GAP-08 — Marcar comandas como servidas
 
+**Estado:** implementado. Cocina marca productos en preparación como `READY`;
+cuando todos los productos vigentes de una ronda están listos, Salón puede marcar
+la comanda `SERVED`. La entrega conserva historial, usuario y fecha, actualiza el
+contador en tiempo real y rechaza repeticiones concurrentes.
+
 #### Problema
 
 Una comanda puede quedar lista permanentemente porque no existe una acción que confirme su entrega al cliente.

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
-import { Plus, Minus, Send } from "lucide-react";
+import { CheckCheck, Plus, Minus, Send } from "lucide-react";
 import { useToast } from "@/shared/components/ui/use-toast";
 import type { TableOrderItem, TableWithSession } from "../types";
-import { addRoundAction } from "../actions";
+import { addRoundAction, serveKitchenRoundAction } from "../actions";
 import { Badge } from "@/shared/components/ui/badge";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
 
@@ -109,6 +109,22 @@ export function TableOrderView({ table }: TableOrderViewProps) {
     }
   };
 
+  const handleServeRound = async (round: number) => {
+    setLoading(true);
+    const result = await serveKitchenRoundAction(table.id, round);
+    setLoading(false);
+    if (result.success) {
+      toast({ title: `Ronda ${round} servida` });
+      router.refresh();
+    } else {
+      toast({
+        title: "No se pudo marcar servida",
+        description: result.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Existing rounds */}
@@ -117,55 +133,85 @@ export function TableOrderView({ table }: TableOrderViewProps) {
           <h3 className="font-semibold">Pedido actual</h3>
           {Object.entries(rounds)
             .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([round, items]) => (
-              <div key={round} className="rounded-lg border p-3">
-                <p className="text-xs font-medium text-muted-foreground mb-2">
-                  Ronda {round}
-                </p>
-                <div className="space-y-1">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-col gap-1 border-b pb-2 text-sm last:border-0 last:pb-0"
-                    >
-                      <div className="flex justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium break-words">
-                            {item.productName}
-                          </p>
-                          <p className="text-muted-foreground tabular-nums">
-                            {item.quantity} × S/ {item.productPrice.toFixed(2)}
-                          </p>
+            .map(([round, items]) => {
+              const activeItems = items.filter(
+                (item) => item.kitchenStatus !== "CANCELLED",
+              );
+              const ready =
+                activeItems.length > 0 &&
+                activeItems.every((item) => item.kitchenStatus === "READY");
+              return (
+                <div key={round} className="rounded-lg border p-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Ronda {round}
+                  </p>
+                  <div className="space-y-1">
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-1 border-b pb-2 text-sm last:border-0 last:pb-0"
+                      >
+                        <div className="flex justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium break-words">
+                              {item.productName}
+                            </p>
+                            <p className="text-muted-foreground tabular-nums">
+                              {item.quantity} × S/{" "}
+                              {item.productPrice.toFixed(2)}
+                            </p>
+                          </div>
+                          <span className="shrink-0 text-muted-foreground tabular-nums">
+                            S/ {item.total.toFixed(2)}
+                          </span>
                         </div>
-                        <span className="shrink-0 text-muted-foreground tabular-nums">
-                          S/ {item.total.toFixed(2)}
-                        </span>
-                      </div>
-                      {item.notes ? (
-                        <p className="text-muted-foreground break-words">
-                          Observación: {item.notes}
-                        </p>
-                      ) : null}
-                      {item.kitchenStatus === "CANCELLED" ? (
-                        <div className="flex flex-col gap-1">
-                          <Badge variant="destructive">Cancelado</Badge>
+                        {item.notes ? (
                           <p className="text-muted-foreground break-words">
-                            Motivo: {item.cancellationReason}
-                            {item.cancelledBy?.name
-                              ? ` · ${item.cancelledBy.name}`
-                              : ""}
+                            Observación: {item.notes}
                           </p>
-                        </div>
-                      ) : item.kitchenStatus === "PREPARING" ? (
-                        <Badge variant="secondary">En preparación</Badge>
-                      ) : session?.status === "OPEN" ? (
-                        <CancelOrderItemDialog itemId={item.id} />
-                      ) : null}
-                    </div>
-                  ))}
+                        ) : null}
+                        {item.kitchenStatus === "CANCELLED" ? (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="destructive">Cancelado</Badge>
+                            <p className="text-muted-foreground break-words">
+                              Motivo: {item.cancellationReason}
+                              {item.cancelledBy?.name
+                                ? ` · ${item.cancelledBy.name}`
+                                : ""}
+                            </p>
+                          </div>
+                        ) : item.kitchenStatus === "PREPARING" ? (
+                          <Badge variant="secondary">En preparación</Badge>
+                        ) : item.kitchenStatus === "READY" ? (
+                          <Badge>Listo</Badge>
+                        ) : item.kitchenStatus === "SERVED" ? (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="outline">Servido</Badge>
+                            {item.servedBy?.name ? (
+                              <p className="text-muted-foreground">
+                                Entregado por {item.servedBy.name}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : session?.status === "OPEN" ? (
+                          <CancelOrderItemDialog itemId={item.id} />
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                  {ready ? (
+                    <Button
+                      className="mt-3 w-full"
+                      onClick={() => handleServeRound(Number(round))}
+                      disabled={loading}
+                    >
+                      <CheckCheck data-icon="inline-start" />
+                      Marcar comanda servida
+                    </Button>
+                  ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           <div className="text-right font-semibold">
             Total: S/ {orderTotal.toFixed(2)}
           </div>
