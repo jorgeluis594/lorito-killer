@@ -2,18 +2,9 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import * as z from "zod";
 import { Button } from "@/shared/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/shared/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -29,7 +20,6 @@ import { CategorySchema } from "@/category/schema";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { useUserSession } from "@/lib/use-user-session";
 import { useToast } from "@/shared/components/ui/use-toast";
-import {MenuSquare} from "lucide-react";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
 
@@ -37,11 +27,10 @@ interface NewSectionDialogProps {
   addCategory: (category: Category) => void;
 }
 
-export default function NewCategoryDialog({
+export default function NewCategoryForm({
   addCategory,
 }: NewSectionDialogProps) {
   const user = useUserSession();
-  const [open, setOpen] = useState(false);
   const { categories, setCategories } = useCategoryStore((store) => store);
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(CategorySchema),
@@ -55,78 +44,66 @@ export default function NewCategoryDialog({
   }, [user, form]);
 
   const onSubmit = async (data: CategoryFormValues) => {
-    const createdCategory = await createCategory({
-      ...data,
-      companyId: user!.companyId,
-    });
-
-    if (createdCategory.success) {
-      setCategories([...categories, createdCategory.data]);
-      addCategory(createdCategory.data);
-      form.setValue("name", "");
-      toast({
-        description: `Categoria ${createdCategory.data.name} creada con exito`,
+    try {
+      const createdCategory = await createCategory({
+        ...data,
+        companyId: user!.companyId,
       });
-      setOpen(false);
-    } else {
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: `Error al crear la categoria. ${createdCategory.message}`,
+
+      if (createdCategory.success) {
+        setCategories([...categories, createdCategory.data]);
+        addCategory(createdCategory.data);
+        form.setValue("name", "");
+        toast({
+          description: `Categoria ${createdCategory.data.name} creada con exito`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: `Error al crear la categoria. ${createdCategory.message}`,
+        });
+      }
+    } catch {
+      form.setError("name", {
+        message: "No se pudo crear la categoría. Inténtalo de nuevo.",
       });
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default" className="text-xs md:text-sm">Nueva Categoria</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <Form {...form}>
-          <form id="gategory-form">
-            <DialogHeader>
-              <DialogTitle>Agregar categoría</DialogTitle>
-              <DialogDescription>
-                Categoriza tus productos para una mejor organización.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Input
-                          id="category"
-                          placeholder="Nombre de categoría..."
-                          className="col-span-4"
-                          {...field}
-                        />
-                        <FormMessage className="col-span-4" />
-                      </div>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              {
-                // button submit form
-              }
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.handleSubmit(onSubmit)}
-              >
-                Agregar categoría
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <Form {...form}>
+      <form
+        className="space-y-4"
+        onSubmit={(event) => {
+          event.stopPropagation();
+          void form.handleSubmit(onSubmit)(event);
+        }}
+      >
+        <h3 className="text-sm font-semibold">Nueva categoría</h3>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nombre de la categoría</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Ej. Bebidas"
+                  autoComplete="off"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-end">
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "Creando…" : "Crear categoría"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

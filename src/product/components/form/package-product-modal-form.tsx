@@ -31,7 +31,6 @@ import {
 import { PackageProductSchema } from "@/product/schema";
 import CategoriesSelector from "@/product/components/category/categories-selector";
 import { useToast } from "@/shared/components/ui/use-toast";
-import NewCategorySheet from "@/product/components/category/new-category-dialog";
 import { Category } from "@/category/types";
 import {
   addCategoryToProduct as attachCategoryToProduct,
@@ -296,21 +295,59 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex flex-col gap-6"
             >
-              <div className="flex flex-col gap-4">
-                <h3 className="text-base font-bold">Datos generales</h3>
+              <div className="border-b pb-5">
+                <h3 className="mb-3 text-base font-bold">Imágenes</h3>
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="photos"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
-                        <Input autoComplete="off" {...field} />
+                        <FileUpload
+                          onChange={handlePhotosUpdated}
+                          value={field.value || []}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
+              <div className="flex flex-col gap-4">
+                <h3 className="text-base font-bold">Datos generales</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="min-w-0">
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                          <Input autoComplete="off" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="categories"
+                    render={({ field }) => (
+                      <FormItem className="min-w-0">
+                        <FormLabel>Categoría</FormLabel>
+                        <div className="flex min-w-0 items-start gap-2">
+                          <CategoriesSelector
+                            value={field.value || []}
+                            onCategoryAdded={onCategoryAdded}
+                            onCategoryRemoved={onCategoryRemoved}
+                          />
+                          <CategoriesModal addCategory={addCategoryToProduct} />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -350,24 +387,6 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
                 </div>
                 <FormField
                   control={form.control}
-                  name="categories"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Categoría</FormLabel>
-                      <div className="flex min-w-0 items-start gap-2">
-                        <CategoriesSelector
-                          value={field.value || []}
-                          onCategoryAdded={onCategoryAdded}
-                          onCategoryRemoved={onCategoryRemoved}
-                        />
-                        <CategoriesModal addCategory={addCategoryToProduct} />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
@@ -397,24 +416,6 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
                     </FormItem>
                   )}
                 />
-                <div className="border-t pt-5">
-                  <h3 className="mb-4 text-base font-bold">Imágenes</h3>
-                  <FormField
-                    control={form.control}
-                    name="photos"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <FileUpload
-                            onChange={handlePhotosUpdated}
-                            value={field.value || []}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </div>
             </form>
           </Form>
@@ -426,7 +427,7 @@ const PackageProductModalForm: React.FC<ProductFormProps> = ({
             </Button>
           </SheetClose>
           <Button
-            className="min-w-40"
+            className="sm:min-w-40"
             type="button"
             disabled={formStore.performingAction}
             onClick={form.handleSubmit(onSubmit)}
