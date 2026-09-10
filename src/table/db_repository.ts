@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import type { Zone, Table, TableSession, TableWithSession } from "./types";
 import { $Enums } from "@prisma/client";
+import { countReadyRounds } from "./use-cases/count-ready-rounds";
 
 // -- Mapper types --
 
@@ -32,6 +33,9 @@ type PrismaSessionResult = {
       round: number;
       kitchenStatus?: $Enums.OrderItemKitchenStatus;
       kitchenTakenAt?: Date | null;
+      kitchenReadyAt?: Date | null;
+      servedAt?: Date | null;
+      servedBy?: { id: string; name: string | null } | null;
       cancellationReason?: string | null;
       cancelledAt?: Date | null;
       cancelledBy?: { id: string; name: string | null } | null;
@@ -82,6 +86,7 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
     orderItems.length > 0
       ? Math.max(...orderItems.map((oi) => oi.round ?? 1))
       : 0;
+  const readyKitchenTickets = countReadyRounds(orderItems);
 
   return {
     id: s.id,
@@ -108,6 +113,9 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
             round: item.round,
             kitchenStatus: item.kitchenStatus ?? "PENDING",
             kitchenTakenAt: item.kitchenTakenAt,
+            kitchenReadyAt: item.kitchenReadyAt,
+            servedAt: item.servedAt,
+            servedBy: item.servedBy,
             cancellationReason: item.cancellationReason,
             cancelledAt: item.cancelledAt,
             cancelledBy: item.cancelledBy,
@@ -116,6 +124,7 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
       : null,
     orderId: s.order?.id ?? null,
     currentRound: maxRound,
+    readyKitchenTickets,
     openedAt: s.openedAt,
     closedAt: s.closedAt,
     createdAt: s.createdAt,
@@ -274,6 +283,7 @@ export async function findTables(
                   include: {
                     product: { select: { name: true } },
                     cancelledBy: { select: { id: true, name: true } },
+                    servedBy: { select: { id: true, name: true } },
                   },
                   orderBy: { createdAt: "asc" },
                 },
@@ -310,6 +320,7 @@ export async function findTable(
                   include: {
                     product: { include: { photos: true } },
                     cancelledBy: { select: { id: true, name: true } },
+                    servedBy: { select: { id: true, name: true } },
                   },
                   orderBy: { createdAt: "asc" },
                 },
@@ -434,6 +445,7 @@ export async function findActiveSession(
               include: {
                 product: true,
                 cancelledBy: { select: { id: true, name: true } },
+                servedBy: { select: { id: true, name: true } },
               },
               orderBy: { createdAt: "asc" },
             },
@@ -513,6 +525,7 @@ export async function updateSessionStatus(
               include: {
                 product: { select: { name: true } },
                 cancelledBy: { select: { id: true, name: true } },
+                servedBy: { select: { id: true, name: true } },
               },
             },
           },
@@ -547,6 +560,7 @@ export async function updateSessionWaiter(
               include: {
                 product: { select: { name: true } },
                 cancelledBy: { select: { id: true, name: true } },
+                servedBy: { select: { id: true, name: true } },
               },
             },
           },

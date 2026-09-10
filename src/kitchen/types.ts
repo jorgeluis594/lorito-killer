@@ -9,5 +9,6 @@ export type KitchenItem = {
   tableLabel: string;
   status: OrderItemKitchenStatus;
   cancellationReason?: string | null;
+  kitchenReadyAt?: Date | null;
   createdAt: Date;
 };

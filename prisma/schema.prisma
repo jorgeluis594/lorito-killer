@@ -173,12 +173,18 @@ model OrderItem {
   kitchenStatus      OrderItemKitchenStatus @default(PENDING)
   kitchenTakenAt     DateTime?
   kitchenTakenById   String?
+  kitchenReadyAt     DateTime?
+  kitchenReadyById   String?
+  servedAt           DateTime?
+  servedById         String?
   cancellationReason String?
   cancelledAt        DateTime?
   cancelledById      String?
   product            Product                @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   kitchenTakenBy     User?                  @relation("KitchenTakenOrderItems", fields: [kitchenTakenById], references: [id], onDelete: SetNull)
+  kitchenReadyBy     User?                  @relation("KitchenReadyOrderItems", fields: [kitchenReadyById], references: [id], onDelete: SetNull)
+  servedBy           User?                  @relation("ServedOrderItems", fields: [servedById], references: [id], onDelete: SetNull)
   cancelledBy        User?                  @relation("CancelledOrderItems", fields: [cancelledById], references: [id], onDelete: SetNull)
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
@@ -189,6 +195,8 @@ model OrderItem {
 enum OrderItemKitchenStatus {
   PENDING
   PREPARING
+  READY
+  SERVED
   CANCELLED
 }
 
@@ -405,6 +413,8 @@ model User {
   waiterSessions         TableSession[]  @relation("WaiterSessions")
   soldOrders             Order[]         @relation("SellerOrders")
   kitchenTakenOrderItems OrderItem[]     @relation("KitchenTakenOrderItems")
+  kitchenReadyOrderItems OrderItem[]     @relation("KitchenReadyOrderItems")
+  servedOrderItems       OrderItem[]     @relation("ServedOrderItems")
   cancelledOrderItems    OrderItem[]     @relation("CancelledOrderItems")
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt

@@ -38,8 +38,10 @@ import {
   UpdateTableSchema,
   DeleteTableSchema,
   CancelOrderItemSchema,
+  ServeKitchenRoundSchema,
 } from "./schemas";
 import { cancelOrderItem } from "./use-cases/cancel-order-item";
+import { serveReadyRound } from "@/kitchen/db_repository";
 
 // -- Zone Actions --
 
@@ -374,6 +376,39 @@ export const cancelOrderItemAction = protectedAction(
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "order-item-cancelled", {
         orderItemId: parsed.data.orderItemId,
+      });
+    }
+    return result;
+  },
+);
+
+export const serveKitchenRoundAction = protectedAction(
+  { resource: "tables", action: "update" },
+  async (
+    user,
+    tableId: string,
+    round: number,
+  ): Promise<response<void>> => {
+    const parsed = ServeKitchenRoundSchema.safeParse({ tableId, round });
+    if (!parsed.success) {
+      return {
+        success: false,
+        message: parsed.error.errors[0]?.message ?? "Datos invalidos",
+      };
+    }
+
+    const result = await serveReadyRound({
+      tableId: parsed.data.tableId,
+      round: parsed.data.round,
+      companyId: user.companyId,
+      userId: user.id,
+    });
+    if (result.success) {
+      revalidatePath("/dashboard/tables");
+      revalidatePath("/dashboard/kitchen");
+      await broadcast(user.companyId, "tables", "kitchen-ticket-served", {
+        tableId: parsed.data.tableId,
+        round: parsed.data.round,
       });
     }
     return result;
