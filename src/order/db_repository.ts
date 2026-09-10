@@ -15,6 +15,7 @@ import PaymentMethod = $Enums.PaymentMethod;
 import { UNIT_TYPE_MAPPER } from "@/product/db_repository";
 import { prismaToCustomer } from "@/customer/db_repository";
 import { log } from "@/lib/log";
+import { walletPaymentDetailsSchema } from "./wallet-payment";
 
 async function addOrderItem(
   orderId: string,
@@ -67,15 +68,14 @@ function mapPaymentToPrisma(payment: Payment): PaymentPrismaMatch {
       data: { received_amount, change },
     };
   } else if (payment.method == "wallet") {
-    const { name, operationCode, ...paymentData } = payment;
+    const details = walletPaymentDetailsSchema.safeParse(payment);
+    if (!details.success) throw new Error(details.error.issues[0].message);
+    const { name: _name, operationCode: _operationCode, ...paymentData } = payment;
     return {
       ...paymentData,
       method: payment.method.toUpperCase() as PaymentMethod,
       amount: new Prisma.Decimal(payment.amount),
-      data: {
-        operationCode: operationCode,
-        name: name,
-      },
+      data: details.data,
     };
   } else {
     return {
