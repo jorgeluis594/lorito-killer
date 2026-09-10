@@ -1,6 +1,6 @@
 "use client";
 
-import {createContext, type ReactNode, useContext, useRef} from "react";
+import {createContext, type ReactNode, useContext, useState} from "react";
 import {StoreApi, useStore} from "zustand";
 import {
   Actions,
@@ -19,13 +19,12 @@ interface ProductFormProviderProps {
 }
 
 export const ProductFormProvider = ({ children }: ProductFormProviderProps) => {
-  const storeRef = useRef<StoreApi<ProductFormStore>>(undefined);
-  if (!storeRef.current) {
-    storeRef.current = createProductFormStore(initProductFormStore());
-  }
+  const [store] = useState(() =>
+    createProductFormStore(initProductFormStore()),
+  );
 
   return (
-    <ProductFormStoreContext.Provider value={storeRef.current}>
+    <ProductFormStoreContext.Provider value={store}>
       {children}
     </ProductFormStoreContext.Provider>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, createContext, useRef, useContext } from "react";
+import { type ReactNode, createContext, useState, useContext } from "react";
 import { type StoreApi, useStore } from "zustand";
 
 import {
@@ -36,13 +36,12 @@ interface OrderFormProviderProps {
 }
 
 export const OrderFormProvider = ({ children }: OrderFormProviderProps) => {
-  const storeRef = useRef<StoreApi<OrderFormStore>>(undefined);
-  if (!storeRef.current) {
-    storeRef.current = createOrderFormStore(initOrderFormStore());
-  }
+  const [store] = useState(() =>
+    createOrderFormStore(initOrderFormStore()),
+  );
 
   return (
-    <OrderFormStoreContext.Provider value={storeRef.current}>
+    <OrderFormStoreContext.Provider value={store}>
       {children}
     </OrderFormStoreContext.Provider>
   );
