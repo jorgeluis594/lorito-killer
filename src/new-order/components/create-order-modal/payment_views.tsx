@@ -98,18 +98,32 @@ export const CashPayment: React.FC = () => {
     });
   }
 
-  const change = Math.max(0, (payment.received_amount ?? 0) - orderTotal);
   useEffect(() => {
     if (payment.received_amount === null) return;
+
+    if (payment.received_amount >= orderTotal) {
+      setPayment((p) => ({
+        ...p,
+        amount: orderTotal,
+        change: p.received_amount! - orderTotal,
+      }));
+    } else {
+      setPayment((p) => ({
+        ...p,
+        amount: p.received_amount!,
+        change: 0,
+      }));
+    }
+  }, [payment.received_amount, orderTotal]);
+
+  useEffect(() => {
+    const { received_amount, ...rest } = payment;
+    if (received_amount === null) return;
+
     removePayment("cash");
-    addPayment({
-      ...payment,
-      received_amount: payment.received_amount,
-      amount: Math.min(payment.received_amount, orderTotal),
-      change,
-    });
+    addPayment({ ...rest, received_amount });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payment, orderTotal, change]);
+  }, [payment]);
 
   useEffect(() => {
     removePayment("cash");
@@ -134,11 +148,11 @@ export const CashPayment: React.FC = () => {
             : ""}
         </p>
       </div>
-      {change !== 0 && (
+      {payment.change !== 0 && (
         <div className="mt-5">
           Vuelto:
           <span className="text-lg font-medium text-destructive ml-3">
-            {formatPrice(change)}
+            {formatPrice(payment.change)}
           </span>
         </div>
       )}
