@@ -219,7 +219,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
         <DialogHeader>
           <DialogTitle>Pagar pedido</DialogTitle>
         </DialogHeader>
-        <div className="my-2 relative">
+        <div className="my-2 relative pb-16">
           <div className="text-center">
             <div className="grid grid-cols-2 gap-1 mt-3">
               <div className="text-3xl font-medium leading-none md:text-right ">
@@ -258,7 +258,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
             <DiscountFields defaultDiscount={order.discount} />
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 bg-background pt-2">
           <CreateOrderButton
             amountIsInvalid={!paymentCanBeCreated}
             creatingOrder={creatingOrder}

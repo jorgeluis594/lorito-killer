@@ -423,6 +423,7 @@ export const CombinedPayment: React.FC = () => {
                 type="button"
                 variant="ghost_destructive"
                 size="icon"
+                className="justify-self-end sm:justify-self-auto"
                 aria-label={`Eliminar aporte ${index + 1}`}
                 disabled={contributions.length === 1}
                 onClick={() =>
