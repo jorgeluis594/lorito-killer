@@ -1,6 +1,13 @@
 "use client";
 
-import { HandCoins, Smartphone, CreditCard, PiggyBank } from "lucide-react";
+import {
+  HandCoins,
+  Smartphone,
+  CreditCard,
+  PiggyBank,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import {
   useOrderFormActions,
   useOrderFormStore,
@@ -8,10 +15,11 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AMOUNT,
   CashPayment as CashPaymentMethod,
+  Payment,
   PaymentMethod,
   PERCENT,
   WalletPayment as WalletPaymentMethod,
@@ -23,8 +31,18 @@ import {
 } from "@/shared/components/ui/toggle-group";
 import * as React from "react";
 import * as z from "zod";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice, plus } from "@/lib/utils";
 import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
+import { Button } from "@/shared/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { splitPaymentAmounts } from "@/order/use-cases/split-payments";
 
 export const NonePayment: React.FC = () => {
   const { setPaymentMode } = useOrderFormActions();
@@ -165,17 +183,19 @@ const WalletDetails = ({
   operationCode,
   onNameChange,
   onOperationCodeChange,
+  idSuffix = "",
 }: {
   name: string;
   operationCode: string;
   onNameChange: (value: string) => void;
   onOperationCodeChange: (value: string) => void;
+  idSuffix?: string;
 }) => (
   <div className="grid gap-3 my-3 sm:grid-cols-2">
     <div>
-      <Label htmlFor="wallet-name">Billetera (obligatorio)</Label>
+      <Label htmlFor={`wallet-name${idSuffix}`}>Billetera (obligatorio)</Label>
       <Input
-        id="wallet-name"
+        id={`wallet-name${idSuffix}`}
         placeholder="Yape, Plin u otra"
         value={name}
         maxLength={80}
@@ -184,11 +204,11 @@ const WalletDetails = ({
       />
     </div>
     <div>
-      <Label htmlFor="wallet-operation-code">
+      <Label htmlFor={`wallet-operation-code${idSuffix}`}>
         Código de operación (obligatorio)
       </Label>
       <Input
-        id="wallet-operation-code"
+        id={`wallet-operation-code${idSuffix}`}
         placeholder="Código del pago recibido"
         value={operationCode}
         maxLength={100}
@@ -293,131 +313,207 @@ export const CardPayment: React.FC = () => {
 export const CombinedPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
   const cashShift = useCashShift();
-  const { removeAllPayments, addPayment } = useOrderFormActions();
-  const [cashAmount, setCashAmount] = useState(0);
-  const [creditCardAmount, setCreditCardAmount] = useState(0);
-  const [debitCardAmount, setDebitCardAmount] = useState(0);
-  const [walletAmount, setWalletAmount] = useState(0);
-  const [walletName, setWalletName] = useState("");
-  const [operationCode, setOperationCode] = useState("");
-
-  const totalAmount = useCallback((): number => {
-    return [cashAmount, creditCardAmount, debitCardAmount, walletAmount].reduce(
-      (acc, amount) => {
-        if (amount) return acc + amount;
-        return acc;
-      },
-      0,
-    );
-  }, [cashAmount, creditCardAmount, debitCardAmount, walletAmount]);
-
-  const updatePayments = useCallback(() => {
-    removeAllPayments();
-
-    if (cashAmount > 0) {
-      addPayment({
-        cashShiftId: cashShift!.id,
-        amount: cashAmount,
-        method: "cash",
-        received_amount: cashAmount,
-        change: 0,
-      });
-    }
-    if (walletAmount > 0) {
-      addPayment({
-        cashShiftId: cashShift!.id,
-        amount: walletAmount,
-        method: "wallet",
-        name: walletName,
-        operationCode,
-      });
-    }
-    if (creditCardAmount > 0) {
-      addPayment({
-        cashShiftId: cashShift!.id,
-        amount: creditCardAmount,
-        method: "credit_card",
-      });
-    }
-    if (debitCardAmount > 0) {
-      addPayment({
-        cashShiftId: cashShift!.id,
-        amount: debitCardAmount,
-        method: "debit_card",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    cashAmount,
-    creditCardAmount,
-    debitCardAmount,
-    walletAmount,
-    walletName,
-    operationCode,
+  const { setPayments } = useOrderFormActions();
+  const [parts, setParts] = useState(2);
+  const [contributions, setContributions] = useState<Contribution[]>([
+    blankContribution(1),
   ]);
 
-  useEffect(() => {
-    if (totalAmount() !== orderTotal) {
-      removeAllPayments();
-      return;
-    }
+  const updateContributions = (next: Contribution[]) => {
+    setContributions(next);
+    setPayments(
+      next
+        .filter(({ amount }) => Number.isFinite(amount) && amount > 0)
+        .map((contribution) => toPayment(contribution, cashShift!.id)),
+    );
+  };
 
-    updatePayments();
-    // Store actions are recreated by the provider.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalAmount, orderTotal, updatePayments]);
+  const covered = contributions.reduce(
+    (total, contribution) => plus(total)(contribution.amount || 0),
+    0,
+  );
+  const balance = orderTotal - covered;
+
+  const editContribution = (id: number, update: Partial<Contribution>) =>
+    updateContributions(
+      contributions.map((item) =>
+        item.id === id ? { ...item, ...update } : item,
+      ),
+    );
+
+  const splitEqually = () =>
+    updateContributions(
+      splitPaymentAmounts(orderTotal, parts).map((amount, index) => ({
+        ...blankContribution(index + 1),
+        amount,
+      })),
+    );
 
   return (
-    <div className="mt-4">
-      <p className="text-sm font-medium text-destructive">
-        {totalAmount() != 0 && totalAmount() !== orderTotal
-          ? `El monto ${totalAmount()} recibido no coincide con el total`
-          : ""}
-      </p>
-      <div className="my-3">
-        <Label>Efectivo</Label>
-        <MoneyInput
-          placeholder="Ingrese monto"
-          type="number"
-          value={cashAmount || ""}
-          onChange={(e) => setCashAmount(parseFloat(e.target.value))}
-        />
+    <div className="mt-4 flex flex-col gap-4">
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div>
+          <Label htmlFor="split-parts">Número de comensales</Label>
+          <Input
+            id="split-parts"
+            type="number"
+            min={2}
+            max={20}
+            value={parts}
+            onChange={(event) =>
+              setParts(Math.min(20, Math.max(2, Number(event.target.value))))
+            }
+          />
+        </div>
+        <Button type="button" variant="outline" onClick={splitEqually}>
+          Dividir en partes iguales
+        </Button>
       </div>
-      <div className="my-3">
-        <Label>Tarjeta de crédito</Label>
-        <MoneyInput
-          placeholder="Ingrese monto"
-          type="number"
-          value={creditCardAmount}
-          onChange={(e) => setCreditCardAmount(parseFloat(e.target.value))}
-        />
+
+      <div className="flex flex-col gap-3">
+        {contributions.map((contribution, index) => (
+          <div key={contribution.id} className="rounded-md border p-3">
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+              <div>
+                <Label htmlFor={`contribution-amount-${contribution.id}`}>
+                  Aporte {index + 1}
+                </Label>
+                <Input
+                  id={`contribution-amount-${contribution.id}`}
+                  placeholder="Ingrese monto"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={contribution.amount || ""}
+                  onChange={(event) =>
+                    editContribution(contribution.id, {
+                      amount: Number(event.target.value),
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor={`contribution-method-${contribution.id}`}>
+                  Medio de pago
+                </Label>
+                <Select
+                  value={contribution.method}
+                  onValueChange={(method: PaymentMethod) =>
+                    editContribution(contribution.id, { method })
+                  }
+                >
+                  <SelectTrigger id={`contribution-method-${contribution.id}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="cash">Efectivo</SelectItem>
+                      <SelectItem value="debit_card">
+                        Tarjeta de débito
+                      </SelectItem>
+                      <SelectItem value="credit_card">
+                        Tarjeta de crédito
+                      </SelectItem>
+                      <SelectItem value="wallet">Billetera digital</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="ghost_destructive"
+                size="icon"
+                aria-label={`Eliminar aporte ${index + 1}`}
+                disabled={contributions.length === 1}
+                onClick={() =>
+                  updateContributions(
+                    contributions.filter(({ id }) => id !== contribution.id),
+                  )
+                }
+              >
+                <Trash2 aria-hidden="true" />
+              </Button>
+            </div>
+            {contribution.method === "wallet" && (
+              <WalletDetails
+                idSuffix={`-${contribution.id}`}
+                name={contribution.name}
+                operationCode={contribution.operationCode}
+                onNameChange={(name) =>
+                  editContribution(contribution.id, { name })
+                }
+                onOperationCodeChange={(operationCode) =>
+                  editContribution(contribution.id, { operationCode })
+                }
+              />
+            )}
+          </div>
+        ))}
       </div>
-      <div className="my-3">
-        <Label>Tarjeta de débito</Label>
-        <MoneyInput
-          placeholder="Ingrese monto"
-          type="number"
-          value={debitCardAmount}
-          onChange={(e) => setDebitCardAmount(parseFloat(e.target.value))}
-        />
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() =>
+          updateContributions([
+            ...contributions,
+            blankContribution(
+              Math.max(...contributions.map(({ id }) => id)) + 1,
+            ),
+          ])
+        }
+      >
+        <Plus aria-hidden="true" />
+        Agregar aporte
+      </Button>
+
+      <div className="grid grid-cols-2 gap-2 rounded-md bg-muted p-3 text-sm tabular-nums">
+        <span>Total cubierto</span>
+        <strong className="text-right">{formatPrice(covered)}</strong>
+        <span>{balance < 0 ? "Exceso" : "Saldo pendiente"}</span>
+        <strong
+          className={cn("text-right", balance !== 0 && "text-destructive")}
+          aria-live="polite"
+        >
+          {formatPrice(Math.abs(balance))}
+        </strong>
       </div>
-      <div className="my-3">
-        <Label>Billetera virtual (Yape, Plin, etc)</Label>
-        <MoneyInput
-          placeholder="Ingrese monto"
-          type="number"
-          value={walletAmount}
-          onChange={(e) => setWalletAmount(parseFloat(e.target.value))}
-        />
-      </div>
-      {walletAmount > 0 && (
-        <WalletDetails
-          name={walletName}
-          operationCode={operationCode}
-          onNameChange={setWalletName}
-          onOperationCodeChange={setOperationCode}
-        />
-      )}
     </div>
   );
+};
+
+type Contribution = {
+  id: number;
+  amount: number;
+  method: PaymentMethod;
+  name: string;
+  operationCode: string;
+};
+
+const blankContribution = (id: number): Contribution => ({
+  id,
+  amount: 0,
+  method: "cash",
+  name: "",
+  operationCode: "",
+});
+
+const toPayment = (
+  contribution: Contribution,
+  cashShiftId: string,
+): Payment => {
+  const { method, amount } = contribution;
+  if (method === "cash") {
+    return { method, amount, cashShiftId, received_amount: amount, change: 0 };
+  }
+  if (method === "wallet") {
+    return {
+      method,
+      amount,
+      cashShiftId,
+      name: contribution.name,
+      operationCode: contribution.operationCode,
+    };
+  }
+  return { method, amount, cashShiftId };
 };

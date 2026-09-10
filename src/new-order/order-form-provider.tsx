@@ -129,7 +129,7 @@ export const useOrderFormActions = (): Actions => {
       log.error("calculate_discount", {
         discountResponse,
       });
-      return;
+      return
     }
     orderFormStoreContext.setState(() => {
       return { order: discountResponse.data };
@@ -164,7 +164,7 @@ export const useOrderFormActions = (): Actions => {
         title: "No se pudo agregar la cantidad del producto",
         description: response.message,
       });
-      return
+      return;
     }
 
     order.orderItems[index] = response.data;
@@ -526,6 +526,10 @@ export const useOrderFormActions = (): Actions => {
       });
 
       return { success: true, data: { ...payment } };
+    },
+    setPayments: (payments) => {
+      const { order } = orderFormStoreContext.getState();
+      orderFormStoreContext.setState({ order: { ...order, payments } });
     },
     removePayment,
     removeAllPayments: () => {

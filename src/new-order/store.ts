@@ -33,6 +33,7 @@ export type Actions = {
   decreaseQuantity: (productId: string) => void;
   setPaymentMode: (mode: OrderFormStore["paymentMode"]) => void;
   addPayment: (payment: Payment) => response<Payment>;
+  setPayments: (payments: Payment[]) => void;
   getPaidAmount: () => number;
   removePayment: (paymentMethod: PaymentMethod) => void;
   removeAllPayments: () => void;
