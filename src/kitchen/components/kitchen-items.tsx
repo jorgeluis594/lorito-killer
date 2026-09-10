@@ -18,7 +18,7 @@ const statusLabel = {
   CANCELLED: "Cancelado",
 } as const;
 
-export function KitchenItems({ items }: { items: KitchenItem[] }) {
+export function KitchenItems({ items, groupByStation = false }: { items: KitchenItem[]; groupByStation?: boolean }) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -41,6 +41,21 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
     ];
     return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
   }, [realtime, router]);
+
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    // ponytail: recovery polls every 15s while visible; use reliable push if lower latency is required.
+    const interval = window.setInterval(refresh, 15_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [router]);
 
   const takeItem = (itemId: string) => {
     startTransition(async () => {
@@ -76,17 +91,18 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
     });
   };
 
-  if (items.length === 0) {
-    return (
-      <p className="text-muted-foreground">
-        No hay productos activos en esta estación.
-      </p>
-    );
-  }
+  const groups = groupByStation
+    ? ([ ["KITCHEN", "Cocina"], ["BAR", "Barra"], [null, "Sin configurar"] ] as const).map(([station, label]) => ({ label, items: items.filter((item) => item.preparationStation === station) }))
+    : [{ label: "", items }];
 
   return (
-    <div className="flex flex-col gap-3">
-      {items.map((item) => (
+    <div className={groupByStation ? "grid gap-6 xl:grid-cols-3" : "flex flex-col gap-3"}>
+      {groups.map((group) => (
+        <section key={group.label} className="flex min-w-0 flex-col gap-3">
+          {group.label ? <h3 className="text-xl font-semibold">{group.label}</h3> : null}
+          {group.items.length === 0 ? <p className="text-muted-foreground">No hay productos activos en esta estación.</p> : null}
+      {group.items.map((item) => (
+
         <article
           key={item.id}
           className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4"
@@ -131,6 +147,8 @@ export function KitchenItems({ items }: { items: KitchenItem[] }) {
             ) : null}
           </div>
         </article>
+      ))}
+        </section>
       ))}
     </div>
   );
