@@ -7,7 +7,7 @@ export default async function KitchenPage() {
   if (!auth.success)
     return <p className="p-4 text-destructive">{auth.message}</p>;
 
-  const result = await findKitchenItems(auth.data.companyId);
+  const result = await findKitchenItems(auth.data.companyId, auth.data.role);
   if (!result.success)
     return <p className="p-4 text-destructive">{result.message}</p>;
 

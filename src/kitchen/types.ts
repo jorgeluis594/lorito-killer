@@ -1,7 +1,9 @@
+import type { PreparationStation } from "@/product/types";
 import type { OrderItemKitchenStatus } from "@/table/types";
 
 export type KitchenItem = {
   id: string;
+  preparationStation: PreparationStation | null;
   productName: string;
   quantity: number;
   notes?: string | null;

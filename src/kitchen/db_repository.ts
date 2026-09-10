@@ -1,13 +1,24 @@
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+import type { UserRole } from "@/authorization/types";
 import type { response } from "@/lib/types";
 import type { KitchenItem } from "./types";
 
+function stationFilter(role: UserRole): Prisma.OrderItemWhereInput {
+  if (role === "ADMIN") return {};
+  if (role === "KITCHEN") return { preparationStation: "KITCHEN" };
+  if (role === "BARTENDER") return { preparationStation: "BAR" };
+  return { id: { in: [] } };
+}
+
 export async function findKitchenItems(
   companyId: string,
+  role: UserRole,
 ): Promise<response<KitchenItem[]>> {
   try {
     const items = await prisma().orderItem.findMany({
       where: {
+        ...stationFilter(role),
         order: {
           companyId,
           status: "PENDING",
@@ -28,6 +39,7 @@ export async function findKitchenItems(
       success: true,
       data: items.map((item) => ({
         id: item.id,
+        preparationStation: item.preparationStation,
         productName: item.product.name,
         quantity: Number(item.quantity),
         notes: item.notes,
@@ -51,11 +63,13 @@ export async function takePendingOrderItem(input: {
   orderItemId: string;
   companyId: string;
   userId: string;
+  role: UserRole;
 }): Promise<response<void>> {
   try {
     const result = await prisma().orderItem.updateMany({
       where: {
         id: input.orderItemId,
+        AND: stationFilter(input.role),
         kitchenStatus: "PENDING",
         order: {
           companyId: input.companyId,
@@ -86,11 +100,13 @@ export async function markPreparingOrderItemReady(input: {
   orderItemId: string;
   companyId: string;
   userId: string;
+  role: UserRole;
 }): Promise<response<void>> {
   try {
     const result = await prisma().orderItem.updateMany({
       where: {
         id: input.orderItemId,
+        AND: stationFilter(input.role),
         kitchenStatus: "PREPARING",
         order: {
           companyId: input.companyId,

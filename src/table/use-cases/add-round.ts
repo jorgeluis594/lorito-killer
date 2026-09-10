@@ -50,6 +50,7 @@ export async function addRound(
     productId: item.productId,
     quantity: item.quantity,
     productPrice: productMap.get(item.productId)!.price,
+    preparationStation: productMap.get(item.productId)!.preparationStation,
     notes: item.notes,
   }));
 

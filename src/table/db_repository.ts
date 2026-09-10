@@ -1,3 +1,4 @@
+import type { PreparationStation } from "@/product/types";
 import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import type { Zone, Table, TableSession, TableWithSession } from "./types";
@@ -632,6 +633,7 @@ export async function addOrderItems(
     productId: string;
     quantity: number;
     productPrice: number;
+    preparationStation: PreparationStation | null;
     notes?: string;
   }>,
 ): Promise<response<void>> {
@@ -640,6 +642,7 @@ export async function addOrderItems(
       data: items.map((item) => ({
         orderId,
         productId: item.productId,
+        preparationStation: item.preparationStation,
         quantity: item.quantity,
         productPrice: item.productPrice,
         discountAmount: 0,
@@ -745,11 +748,11 @@ export async function getWaiters(
 export async function findProductsByIds(
   productIds: string[],
   companyId: string,
-): Promise<response<Array<{ id: string; price: number; name: string }>>> {
+): Promise<response<Array<{ id: string; price: number; name: string; preparationStation: PreparationStation | null }>>> {
   try {
     const products = await prisma().product.findMany({
       where: { id: { in: productIds }, companyId, hidden: false },
-      select: { id: true, price: true, name: true },
+      select: { id: true, price: true, name: true, preparationStation: true },
     });
     return {
       success: true,
@@ -757,6 +760,7 @@ export async function findProductsByIds(
         id: p.id,
         price: p.price.toNumber(),
         name: p.name,
+        preparationStation: p.preparationStation,
       })),
     };
   } catch (e: any) {

@@ -33,6 +33,7 @@ describe("markPreparingOrderItemReady", () => {
       orderItemId: "item-1",
       companyId: "company-1",
       userId: "cook-1",
+      role: "KITCHEN",
     });
 
     expect(result.success).toBe(true);

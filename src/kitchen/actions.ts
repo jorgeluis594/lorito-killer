@@ -22,6 +22,7 @@ export const takeOrderItemAction = protectedAction(
       orderItemId: parsed.data.orderItemId,
       companyId: user.companyId,
       userId: user.id,
+      role: user.role,
     });
     if (result.success) {
       revalidatePath("/dashboard/kitchen");
@@ -49,6 +50,7 @@ export const markOrderItemReadyAction = protectedAction(
       orderItemId: parsed.data.orderItemId,
       companyId: user.companyId,
       userId: user.id,
+      role: user.role,
     });
     if (result.success) {
       revalidatePath("/dashboard/kitchen");
