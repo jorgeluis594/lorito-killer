@@ -18,7 +18,13 @@ const statusLabel = {
   CANCELLED: "Cancelado",
 } as const;
 
-export function KitchenItems({ items, groupByStation = false }: { items: KitchenItem[]; groupByStation?: boolean }) {
+export function KitchenItems({
+  items,
+  groupByStation = false,
+}: {
+  items: KitchenItem[];
+  groupByStation?: boolean;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -92,62 +98,84 @@ export function KitchenItems({ items, groupByStation = false }: { items: Kitchen
   };
 
   const groups = groupByStation
-    ? ([ ["KITCHEN", "Cocina"], ["BAR", "Barra"], [null, "Sin configurar"] ] as const).map(([station, label]) => ({ label, items: items.filter((item) => item.preparationStation === station) }))
+    ? (
+        [
+          ["KITCHEN", "Cocina"],
+          ["BAR", "Barra"],
+          [null, "Sin configurar"],
+        ] as const
+      ).map(([station, label]) => ({
+        label,
+        items: items.filter((item) => item.preparationStation === station),
+      }))
     : [{ label: "", items }];
 
   return (
-    <div className={groupByStation ? "grid gap-6 xl:grid-cols-3" : "flex flex-col gap-3"}>
+    <div
+      className={
+        groupByStation ? "grid gap-6 xl:grid-cols-3" : "flex flex-col gap-3"
+      }
+    >
       {groups.map((group) => (
         <section key={group.label} className="flex min-w-0 flex-col gap-3">
-          {group.label ? <h3 className="text-xl font-semibold">{group.label}</h3> : null}
-          {group.items.length === 0 ? <p className="text-muted-foreground">No hay productos activos en esta estación.</p> : null}
-      {group.items.map((item) => (
-
-        <article
-          key={item.id}
-          className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4"
-        >
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="text-sm text-muted-foreground">
-              {item.preparationStation === "KITCHEN" ? "Cocina" : item.preparationStation === "BAR" ? "Barra" : "Sin configurar"}
+          {group.label ? (
+            <h3 className="text-xl font-semibold">{group.label}</h3>
+          ) : null}
+          {group.items.length === 0 ? (
+            <p className="text-muted-foreground">
+              No hay productos activos en esta estación.
             </p>
-            <p className="font-medium break-words">
-              Mesa {item.tableLabel} · Ronda {item.round}
-            </p>
-            <p className="break-words">
-              {item.quantity} × {item.productName}
-            </p>
-            {item.notes ? (
-              <p className="text-sm text-muted-foreground">{item.notes}</p>
-            ) : null}
-            {item.cancellationReason ? (
-              <p className="text-sm text-muted-foreground">
-                Motivo: {item.cancellationReason}
-              </p>
-            ) : null}
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <Badge
-              variant={
-                item.status === "CANCELLED" ? "destructive" : "secondary"
-              }
+          ) : null}
+          {group.items.map((item) => (
+            <article
+              key={item.id}
+              className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4"
             >
-              {statusLabel[item.status]}
-            </Badge>
-            {item.status === "PENDING" ? (
-              <Button onClick={() => takeItem(item.id)} disabled={pending}>
-                <ChefHat data-icon="inline-start" />
-                Tomar producto
-              </Button>
-            ) : item.status === "PREPARING" ? (
-              <Button onClick={() => markReady(item.id)} disabled={pending}>
-                <Check data-icon="inline-start" />
-                Marcar listo
-              </Button>
-            ) : null}
-          </div>
-        </article>
-      ))}
+              <div className="flex min-w-0 flex-col gap-1">
+                <p className="text-sm text-muted-foreground">
+                  {item.preparationStation === "KITCHEN"
+                    ? "Cocina"
+                    : item.preparationStation === "BAR"
+                      ? "Barra"
+                      : "Sin configurar"}
+                </p>
+                <p className="font-medium break-words">
+                  Mesa {item.tableLabel} · Ronda {item.round}
+                </p>
+                <p className="break-words">
+                  {item.quantity} × {item.productName}
+                </p>
+                {item.notes ? (
+                  <p className="text-sm text-muted-foreground">{item.notes}</p>
+                ) : null}
+                {item.cancellationReason ? (
+                  <p className="text-sm text-muted-foreground">
+                    Motivo: {item.cancellationReason}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <Badge
+                  variant={
+                    item.status === "CANCELLED" ? "destructive" : "secondary"
+                  }
+                >
+                  {statusLabel[item.status]}
+                </Badge>
+                {item.status === "PENDING" ? (
+                  <Button onClick={() => takeItem(item.id)} disabled={pending}>
+                    <ChefHat data-icon="inline-start" />
+                    Tomar producto
+                  </Button>
+                ) : item.status === "PREPARING" ? (
+                  <Button onClick={() => markReady(item.id)} disabled={pending}>
+                    <Check data-icon="inline-start" />
+                    Marcar listo
+                  </Button>
+                ) : null}
+              </div>
+            </article>
+          ))}
         </section>
       ))}
     </div>
