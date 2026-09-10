@@ -157,7 +157,26 @@ function FilterExample({
             </PageHeader.Main>
           </PageHeader>
         )}
-        <FilterBar role="group" aria-label="Filtros del listado">
+        <FilterBar
+          role="group"
+          aria-label="Filtros del listado"
+          control={
+            <Input
+              aria-label="Buscar documentos"
+              placeholder="Buscar por nombre…"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          }
+          action={
+            <Trigger asChild>
+              <FilterBar.FilterTrigger onClick={() => setOpen(true)}>
+                <SlidersHorizontal aria-hidden="true" className="size-4" />{" "}
+                Filtros
+              </FilterBar.FilterTrigger>
+            </Trigger>
+          }
+        >
           <FilterBar.QuickFilters>
             <ToggleGroup
               type="single"
@@ -179,21 +198,6 @@ function FilterExample({
               ))}
             </ToggleGroup>
           </FilterBar.QuickFilters>
-          <div className="flex min-w-0 max-w-full flex-[0_1_24rem] flex-wrap items-center gap-2">
-            <Input
-              aria-label="Buscar documentos"
-              placeholder="Buscar por nombre…"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="min-w-0 flex-[1_1_10rem]"
-            />
-            <Trigger asChild>
-              <FilterBar.FilterTrigger onClick={() => setOpen(true)}>
-                <SlidersHorizontal aria-hidden="true" className="size-4" />{" "}
-                Filtros
-              </FilterBar.FilterTrigger>
-            </Trigger>
-          </div>
         </FilterBar>
         <section
           aria-label="Listado de documentos"

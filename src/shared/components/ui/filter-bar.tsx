@@ -1,8 +1,19 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactElement, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 
-function Root({ className, ...props }: ComponentProps<"div">) {
+type FilterBarProps = ComponentProps<"div"> & {
+  control?: ReactElement;
+  action?: ReactNode;
+};
+
+function Root({
+  control,
+  action,
+  children,
+  className,
+  ...props
+}: FilterBarProps) {
   return (
     <div
       className={cn(
@@ -10,7 +21,19 @@ function Root({ className, ...props }: ComponentProps<"div">) {
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {control || action ? (
+        <div className="ml-auto flex w-full min-w-0 flex-wrap items-center gap-3 md:w-auto">
+          {control ? (
+            <div className="min-w-0 flex-[1_1_18rem] md:w-96 md:flex-none [&>*]:w-full">
+              {control}
+            </div>
+          ) : null}
+          {action}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
