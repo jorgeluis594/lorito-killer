@@ -132,7 +132,7 @@ export const CashPayment: React.FC = () => {
 
   return (
     <div className="mt-4">
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Monto recibido</Label>
         <MoneyInput
           placeholder="Ingrese monto"
@@ -182,12 +182,12 @@ export const WalletPayment: React.FC = () => {
 
   return (
     <div className="mt-4">
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Monto recibido</Label>
         <MoneyInput type="number" value={orderTotal} disabled />
       </div>
 
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Nombre de cliente</Label>
         <Input
           placeholder="Ingrese nombre"
@@ -196,7 +196,7 @@ export const WalletPayment: React.FC = () => {
         />
       </div>
 
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Código de operación</Label>
         <Input
           placeholder="Código de operación"
@@ -228,7 +228,7 @@ export const CardPayment: React.FC = () => {
 
   return (
     <div className="mt-4">
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Monto recibido</Label>
         <MoneyInput
           placeholder="Ingrese monto"
@@ -332,7 +332,7 @@ export const CombinedPayment: React.FC = () => {
           ? `El monto ${totalAmount()} recibido no coincide con el total`
           : ""}
       </p>
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Efectivo</Label>
         <MoneyInput
           placeholder="Ingrese monto"
@@ -341,7 +341,7 @@ export const CombinedPayment: React.FC = () => {
           onChange={(e) => setCashAmount(parseFloat(e.target.value))}
         />
       </div>
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Tarjeta de crédito</Label>
         <MoneyInput
           placeholder="Ingrese monto"
@@ -350,7 +350,7 @@ export const CombinedPayment: React.FC = () => {
           onChange={(e) => setCreditCardAmount(parseFloat(e.target.value))}
         />
       </div>
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Tarjeta de débito</Label>
         <MoneyInput
           placeholder="Ingrese monto"
@@ -359,7 +359,7 @@ export const CombinedPayment: React.FC = () => {
           onChange={(e) => setDebitCardAmount(parseFloat(e.target.value))}
         />
       </div>
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Billetera virtual (Yape, Plin, etc)</Label>
         <MoneyInput
           placeholder="Ingrese monto"

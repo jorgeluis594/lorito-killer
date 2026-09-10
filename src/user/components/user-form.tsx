@@ -54,7 +54,7 @@ function UserFormFields({ user }: { user: User }) {
 
   return (
     <>
-      <div className="grid w-full max-w-sm items-center gap-2">
+      <div className="grid w-full max-w-sm items-center gap-1">
         <Label htmlFor="name">Nombre</Label>
         <Input
           type="text"

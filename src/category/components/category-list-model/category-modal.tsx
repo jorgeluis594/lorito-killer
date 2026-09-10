@@ -31,7 +31,8 @@ export default function CategoriesModal({
         <Button
           variant="outline"
           size="icon"
-          className="mb-2"
+          className="size-[var(--field-height)] shrink-0"
+          aria-label="Administrar categorías"
         >
           <List />
         </Button>

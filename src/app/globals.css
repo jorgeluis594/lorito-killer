@@ -44,6 +44,13 @@
     --input: 152.14 12.5% 56.08%;
     --ring: var(--primary);
     --radius: 0.75rem;
+    --field-height: 2.75rem;
+  }
+
+  @media (min-width: 640px) and (pointer: fine) {
+    :root {
+      --field-height: 2.5rem;
+    }
   }
 
   .dark {

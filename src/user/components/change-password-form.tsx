@@ -82,14 +82,14 @@ export default function ChangePasswordForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <div className="space-y-2">
-          <div>
+        <div className="space-y-4">
+          <div className="grid gap-4">
             <Label>Cambiar contraseña</Label>
             <FormField
               control={form.control}
               name="currentPassword"
               render={({ field }) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormControl>
                     <Input
                       type="password"
@@ -105,7 +105,7 @@ export default function ChangePasswordForm() {
               control={form.control}
               name="newPassword"
               render={({ field }) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormControl>
                     <Input
                       type="password"
@@ -121,7 +121,7 @@ export default function ChangePasswordForm() {
               control={form.control}
               name="repeatNewPassword"
               render={({ field }) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormControl>
                     <Input
                       type="password"

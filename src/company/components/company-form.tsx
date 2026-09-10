@@ -136,8 +136,8 @@ export default function CompanyForm({ company }: { company: Company }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <div className="space-y-2">
-          <div>
+        <div className="space-y-4">
+          <div className="grid gap-4">
             <FormField
               control={form.control}
               name="logo"
@@ -157,7 +157,7 @@ export default function CompanyForm({ company }: { company: Company }) {
               control={form.control}
               name="name"
               render={({field}) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormLabel>Razón Social</FormLabel>
                   <FormControl>
                     <Input placeholder="Razón social" {...field} />
@@ -170,7 +170,7 @@ export default function CompanyForm({ company }: { company: Company }) {
               control={form.control}
               name="subName"
               render={({field}) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormLabel>Nombre Comercial</FormLabel>
                   <FormControl>
                     <Input placeholder="Nombre Comercial" {...field} />
@@ -183,7 +183,7 @@ export default function CompanyForm({ company }: { company: Company }) {
               control={form.control}
               name="ruc"
               render={({field}) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormLabel>Ruc</FormLabel>
                   <FormControl>
                     <Input placeholder="ej: 10326545678" {...field} />
@@ -197,7 +197,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 control={form.control}
                 name="district"
                 render={({field}) => (
-                  <FormItem className="my-2 max-w-sm">
+                  <FormItem className="max-w-sm">
                     <FormLabel>Distrito</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -210,7 +210,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 control={form.control}
                 name="provincial"
                 render={({field}) => (
-                  <FormItem className="my-2 max-w-sm">
+                  <FormItem className="max-w-sm">
                     <FormLabel>Provincia</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -223,7 +223,7 @@ export default function CompanyForm({ company }: { company: Company }) {
                 control={form.control}
                 name="department"
                 render={({field}) => (
-                  <FormItem className="my-2 max-w-sm">
+                  <FormItem className="max-w-sm">
                     <FormLabel>Departamento</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -237,7 +237,7 @@ export default function CompanyForm({ company }: { company: Company }) {
               control={form.control}
               name="address"
               render={({field}) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormLabel>Dirección</FormLabel>
                   <FormControl>
                     <Input placeholder="Dirección" {...field} />
@@ -250,7 +250,7 @@ export default function CompanyForm({ company }: { company: Company }) {
               control={form.control}
               name="email"
               render={({field}) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
                     <Input placeholder="Correo electónico" {...field} />
@@ -263,7 +263,7 @@ export default function CompanyForm({ company }: { company: Company }) {
               control={form.control}
               name="phone"
               render={({field}) => (
-                <FormItem className="my-2 max-w-sm">
+                <FormItem className="max-w-sm">
                   <FormLabel>Teléfono</FormLabel>
                   <FormControl>
                     <Input

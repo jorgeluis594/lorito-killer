@@ -52,7 +52,7 @@ export function DashboardFilters({
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[180px_180px_180px_150px_150px]">
-      <div className="space-y-1.5">
+      <div className="grid gap-1">
         <Label>Periodo</Label>
         <Select
           value={value.period}
@@ -71,7 +71,7 @@ export function DashboardFilters({
         </Select>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="grid gap-1">
         <Label>Caja</Label>
         <Select
           value={value.cashShiftId}
@@ -91,7 +91,7 @@ export function DashboardFilters({
         </Select>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="grid gap-1">
         <Label>Vendedor</Label>
         <Select
           value={value.sellerId}
@@ -111,7 +111,7 @@ export function DashboardFilters({
         </Select>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="grid gap-1">
         <Label>Inicio</Label>
         <Input
           type="date"
@@ -121,7 +121,7 @@ export function DashboardFilters({
         />
       </div>
 
-      <div className="space-y-1.5">
+      <div className="grid gap-1">
         <Label>Fin</Label>
         <Input
           type="date"
