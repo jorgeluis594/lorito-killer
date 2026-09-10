@@ -1,7 +1,7 @@
 "use client";
 
 import { columns } from "@/cash-shift/components/data-table/columns";
-import { DataTable } from "@/shared/components/ui/data-table";
+import { InteractiveDataTable as DataTable } from "@/shared/components/ui/interactive-data-table";
 import { useState, useEffect, useCallback } from "react";
 import { CashShiftWithOutOrders } from "@/cash-shift/types";
 import { getManyCashShifts } from "@/cash-shift/api_repository";
