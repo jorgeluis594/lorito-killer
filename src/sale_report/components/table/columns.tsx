@@ -1,5 +1,6 @@
-import { walletPaymentReference } from "@/order/wallet-payment";
 "use client";
+
+import { walletPaymentReference } from "@/order/wallet-payment";
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Document } from "@/document/types";
