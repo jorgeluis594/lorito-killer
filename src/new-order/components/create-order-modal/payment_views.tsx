@@ -46,7 +46,7 @@ export const NonePayment: React.FC = () => {
           onClick={() => setPaymentMode("wallet")}
         >
           <Smartphone className="w-12 h-12" />
-          <p className="w-full text-center">YAPE</p>
+          <p className="w-full text-center">BILLETERA</p>
         </div>
         <div
           className="border col-span-1 md:h-28 md:w-48 py-4 flex items-center justify-center flex-wrap cursor-pointer hover:bg-accent"
@@ -98,32 +98,18 @@ export const CashPayment: React.FC = () => {
     });
   }
 
+  const change = Math.max(0, (payment.received_amount ?? 0) - orderTotal);
   useEffect(() => {
     if (payment.received_amount === null) return;
-
-    if (payment.received_amount >= orderTotal) {
-      setPayment((p) => ({
-        ...p,
-        amount: orderTotal,
-        change: p.received_amount! - orderTotal,
-      }));
-    } else {
-      setPayment((p) => ({
-        ...p,
-        amount: p.received_amount!,
-        change: 0,
-      }));
-    }
-  }, [payment.received_amount, orderTotal]);
-
-  useEffect(() => {
-    const { received_amount, ...rest } = payment;
-    if (received_amount === null) return;
-
     removePayment("cash");
-    addPayment({ ...rest, received_amount });
+    addPayment({
+      ...payment,
+      received_amount: payment.received_amount,
+      amount: Math.min(payment.received_amount, orderTotal),
+      change,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payment]);
+  }, [payment, orderTotal, change]);
 
   useEffect(() => {
     removePayment("cash");
@@ -148,17 +134,56 @@ export const CashPayment: React.FC = () => {
             : ""}
         </p>
       </div>
-      {payment.change !== 0 && (
+      {change !== 0 && (
         <div className="mt-5">
           Vuelto:
           <span className="text-lg font-medium text-destructive ml-3">
-            {formatPrice(payment.change)}
+            {formatPrice(change)}
           </span>
         </div>
       )}
     </div>
   );
 };
+
+const WalletDetails = ({
+  name,
+  operationCode,
+  onNameChange,
+  onOperationCodeChange,
+}: {
+  name: string;
+  operationCode: string;
+  onNameChange: (value: string) => void;
+  onOperationCodeChange: (value: string) => void;
+}) => (
+  <div className="grid gap-3 my-3 sm:grid-cols-2">
+    <div>
+      <Label htmlFor="wallet-name">Billetera (obligatorio)</Label>
+      <Input
+        id="wallet-name"
+        placeholder="Yape, Plin u otra"
+        value={name}
+        maxLength={80}
+        required
+        onChange={(event) => onNameChange(event.target.value)}
+      />
+    </div>
+    <div>
+      <Label htmlFor="wallet-operation-code">
+        Código de operación (obligatorio)
+      </Label>
+      <Input
+        id="wallet-operation-code"
+        placeholder="Código del pago recibido"
+        value={operationCode}
+        maxLength={100}
+        required
+        onChange={(event) => onOperationCodeChange(event.target.value)}
+      />
+    </div>
+  </div>
+);
 
 export const WalletPayment: React.FC = () => {
   const orderTotal = useOrderFormStore((state) => state.order.total);
@@ -187,23 +212,12 @@ export const WalletPayment: React.FC = () => {
         <MoneyInput type="number" value={orderTotal} disabled />
       </div>
 
-      <div className="my-3">
-        <Label>Nombre de cliente</Label>
-        <Input
-          placeholder="Ingrese nombre"
-          value={name || ""}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-
-      <div className="my-3">
-        <Label>Código de operación</Label>
-        <Input
-          placeholder="Código de operación"
-          value={operationCode || ""}
-          onChange={(e) => setOperationCode(e.target.value)}
-        />
-      </div>
+      <WalletDetails
+        name={name || ""}
+        operationCode={operationCode || ""}
+        onNameChange={setName}
+        onOperationCodeChange={setOperationCode}
+      />
     </div>
   );
 };
@@ -270,6 +284,8 @@ export const CombinedPayment: React.FC = () => {
   const [creditCardAmount, setCreditCardAmount] = useState(0);
   const [debitCardAmount, setDebitCardAmount] = useState(0);
   const [walletAmount, setWalletAmount] = useState(0);
+  const [walletName, setWalletName] = useState("");
+  const [operationCode, setOperationCode] = useState("");
 
   const totalAmount = useCallback((): number => {
     return [cashAmount, creditCardAmount, debitCardAmount, walletAmount].reduce(
@@ -298,6 +314,8 @@ export const CombinedPayment: React.FC = () => {
         cashShiftId: cashShift!.id,
         amount: walletAmount,
         method: "wallet",
+        name: walletName,
+        operationCode,
       });
     }
     if (creditCardAmount > 0) {
@@ -315,14 +333,24 @@ export const CombinedPayment: React.FC = () => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cashAmount, creditCardAmount, debitCardAmount, walletAmount]);
+  }, [
+    cashAmount,
+    creditCardAmount,
+    debitCardAmount,
+    walletAmount,
+    walletName,
+    operationCode,
+  ]);
 
   useEffect(() => {
     if (totalAmount() !== orderTotal) {
+      removeAllPayments();
       return;
     }
 
     updatePayments();
+    // Store actions are recreated by the provider.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalAmount, orderTotal, updatePayments]);
 
   return (
@@ -368,6 +396,14 @@ export const CombinedPayment: React.FC = () => {
           onChange={(e) => setWalletAmount(parseFloat(e.target.value))}
         />
       </div>
+      {walletAmount > 0 && (
+        <WalletDetails
+          name={walletName}
+          operationCode={operationCode}
+          onNameChange={setWalletName}
+          onOperationCodeChange={setOperationCode}
+        />
+      )}
     </div>
   );
 };

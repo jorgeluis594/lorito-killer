@@ -34,6 +34,8 @@ import SellerCodeField, {
 import { printOrderReceipt } from "@/printing/print-order-receipt";
 import { useFeatureEnabled } from "@/feature-flags/client";
 
+import { walletPaymentDetailsSchema } from "@/order/wallet-payment";
+
 const PaymentViews = {
   none: NonePayment,
   cash: CashPayment,
@@ -106,6 +108,10 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
   const sellerEnabled = useFeatureEnabled("seller");
 
   const handleOrderCreation = async () => {
+    if (walletError) {
+      toast({ variant: "destructive", description: walletError });
+      return;
+    }
     if (sellerEnabled && !validatedSeller) {
       toast({
         variant: "destructive",
@@ -160,7 +166,7 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
           duration: 10000,
         });
         await signOut();
-        window.location.href = window.location.origin;
+        window.location.assign(window.location.origin);
       } else {
         toast({
           variant: "destructive",
@@ -186,17 +192,26 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
     [],
   );
 
+  const invalidWallet = order.payments
+    .filter((payment) => payment.method === "wallet")
+    .map((payment) => walletPaymentDetailsSchema.safeParse(payment))
+    .find((result) => !result.success);
+  const walletError =
+    invalidWallet && !invalidWallet.success
+      ? invalidWallet.error.issues[0].message
+      : undefined;
   const paidAmount = getPaidAmount();
   const amountIsInvalid = paidAmount !== order.total;
   const paymentCanBeCreated =
     paymentMode !== "none" &&
     !amountIsInvalid &&
+    !walletError &&
     (!sellerEnabled || Boolean(validatedSeller));
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="w-full md:max-w-4xl sm:max-w-3xl"
+        className="w-full max-h-[90dvh] overflow-y-auto md:max-w-4xl sm:max-w-3xl"
         onInteractOutside={(e) => {
           e.preventDefault(); // Prevents close modal when clicking outside of modal
         }}
@@ -234,6 +249,11 @@ const PaymentModal: React.FC<CreateOrderModalProps> = ({
             />
           )}
           <PaymentView />
+          {walletError && (
+            <p role="status" className="text-sm text-destructive">
+              {walletError}
+            </p>
+          )}
           {paymentMode !== "none" && companyHasDiscountFeature(company.id) && (
             <DiscountFields defaultDiscount={order.discount} />
           )}
