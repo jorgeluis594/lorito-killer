@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { PreparationStationSchema } from "./schema";
 import {
   KG_UNIT_TYPE,
   PackageProduct,
@@ -408,6 +409,9 @@ const updatePackageProduct = async (
 };
 
 export const update = async (product: Product): Promise<response<Product>> => {
+  if (!PreparationStationSchema.safeParse(product.preparationStation).success) {
+    return { success: false, message: "Estación de preparación inválida" };
+  }
   if (product.type === SingleProductType) {
     return updateSingleProduct(product);
   } else if (product.type === PackageProductType) {

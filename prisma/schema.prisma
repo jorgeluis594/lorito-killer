@@ -25,11 +25,17 @@ enum ProductType {
   SERVICE_PRODUCT
 }
 
+enum PreparationStation {
+  KITCHEN
+  BAR
+}
+
 model Product {
   id                         String                   @id @default(uuid())
   companyId                  String?
   company                    Company?                 @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   name                       String
+  preparationStation         PreparationStation?
   price                      Decimal
   sku                        String?
   stock                      Decimal?
@@ -169,6 +175,7 @@ model OrderItem {
   orderId            String
   productPrice       Decimal
   notes              String?
+  preparationStation PreparationStation?
   round              Int                    @default(1)
   kitchenStatus      OrderItemKitchenStatus @default(PENDING)
   kitchenTakenAt     DateTime?
