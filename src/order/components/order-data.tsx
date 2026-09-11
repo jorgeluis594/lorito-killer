@@ -14,15 +14,21 @@ import { FileCode } from "lucide-react";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { fullName } from "@/customer/utils";
-import { differenceInHours } from "date-fns";
 import CancelOrderButton from "@/order/components/cancel-order-button";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { correlative } from "@/document/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import ReceiptPrintButton from "@/printing/components/receipt-print-button";
+import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/authorization/helpers";
+import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 
 export default async function OrderData({ order }: { order: Order }) {
-  const documentResponse = await findBillingDocumentFor(order.id!);
+  const session = await getSession();
+  const documentResponse = await findBillingDocumentFor(
+    order.id!,
+    order.companyId,
+  );
 
   if (!documentResponse.success) {
     return <p>No se encontro el documento</p>;
@@ -66,13 +72,20 @@ export default async function OrderData({ order }: { order: Order }) {
                 <FileCode />
               </a>
             )}
-            {differenceInHours(new Date(), order.createdAt!) < 168 &&
-              order.status === "completed" && (
+            {session.user &&
+              canCancelOrder({
+                hasPermission: hasPermission(
+                  session.user.role,
+                  "orders",
+                  "delete",
+                ),
+                orderStatus: order.status,
+                documentStatus: documentResponse.data.status,
+                orderCreatedAt: order.createdAt,
+              }) && (
                 <CancelOrderButton
-                  order={order}
-                  document={
-                    documentResponse.success ? documentResponse.data : undefined
-                  }
+                  orderId={order.id!}
+                  label={correlative(documentResponse.data)}
                 />
               )}
           </div>

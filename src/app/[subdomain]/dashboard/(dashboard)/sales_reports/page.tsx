@@ -16,6 +16,8 @@ import { PageHeader } from "@/shared/components/ui/page-header";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { hasPermission } from "@/authorization/helpers";
+import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,7 @@ type ReportParams = Record<string, string | string[] | undefined>;
 async function loadDocuments(
   query: SearchParams,
   countPromise: ReturnType<typeof getTotal>,
+  hasCancelPermission: boolean,
 ): Promise<SalesReportTableResult | null> {
   const [documentsResponse, countResponse] = await Promise.all([
     getMany(query),
@@ -33,7 +36,15 @@ async function loadDocuments(
   if (!documentsResponse.success || !countResponse.success) return null;
 
   return {
-    data: documentsResponse.data,
+    data: documentsResponse.data.map((document) => ({
+      ...document,
+      canCancel: canCancelOrder({
+        hasPermission: hasCancelPermission,
+        orderStatus: document.orderStatus,
+        documentStatus: document.status,
+        orderCreatedAt: document.orderCreatedAt,
+      }),
+    })),
     pageCount: Math.ceil(countResponse.data / (query.pageSize ?? 10)),
   };
 }
@@ -61,7 +72,11 @@ export default async function Page({
     session.user.companyId,
   );
   const countPromise = getTotal(query);
-  const documentsPromise = loadDocuments(query, countPromise);
+  const documentsPromise = loadDocuments(
+    query,
+    countPromise,
+    hasPermission(session.user.role, "orders", "delete"),
+  );
 
   return (
     <main className="flex min-w-0 flex-1 flex-col gap-8 p-4 pt-6 md:p-8">

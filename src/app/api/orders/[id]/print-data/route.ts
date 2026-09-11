@@ -28,7 +28,7 @@ export async function GET(
   const [companyResponse, orderResponse, documentResponse] = await Promise.all([
     getCompany(session.user.companyId),
     findReceiptPrintOrder(params.id, session.user.companyId),
-    findBillingDocumentFor(params.id),
+    findBillingDocumentFor(params.id, session.user.companyId),
   ]);
 
   if (!companyResponse.success) {

@@ -32,6 +32,9 @@ import { protectedAction } from "@/authorization/server";
 import prisma from "@/lib/prisma";
 import { isFeatureEnabled } from "@/feature-flags";
 import { resolveOrderSellerId } from "@/order/use-cases/resolve-order-seller-id";
+import { find as findOrder } from "@/order/db_repository";
+import { findBillingDocumentFor } from "@/document/db_repository";
+import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 
 async function findActiveSellerIdByCode(
   sellerCode: string,
@@ -202,10 +205,44 @@ export const getCompany = protectedAction(
 export const cancelOrder = protectedAction(
   { resource: "orders", action: "delete" },
   async (
-    _user,
-    order: Order,
+    user,
+    orderId: string,
     cancellationReason: string,
   ): Promise<response<Order>> => {
-    return cancel(order, cancellationReason);
+    const reason = cancellationReason.trim();
+    if (!reason) {
+      return { success: false, message: "Ingresa el motivo de la anulación" };
+    }
+
+    const [orderResponse, documentResponse] = await Promise.all([
+      findOrder(orderId, user.companyId),
+      findBillingDocumentFor(orderId, user.companyId),
+    ]);
+
+    if (!orderResponse.success || !documentResponse.success) {
+      return { success: false, message: "No se encontró la venta" };
+    }
+
+    if (
+      !canCancelOrder({
+        hasPermission: true,
+        orderStatus: orderResponse.data.status,
+        documentStatus: documentResponse.data.status,
+        orderCreatedAt: orderResponse.data.createdAt,
+      })
+    ) {
+      return { success: false, message: "Esta venta ya no puede anularse" };
+    }
+
+    const result = await cancel(
+      orderResponse.data,
+      documentResponse.data,
+      reason,
+    );
+    if (result.success) {
+      revalidatePath("/dashboard/sales_reports");
+      revalidatePath(`/dashboard/orders/${orderId}`);
+    }
+    return result;
   },
 );

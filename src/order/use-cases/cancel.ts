@@ -1,6 +1,7 @@
 "use server";
 
 import { Order } from "@/order/types";
+import type { Document } from "@/document/types";
 import { response } from "@/lib/types";
 import { getMany, rollbackStock, update } from "@/stock-transfer/db_repository";
 import { update as updateOrder } from "@/order/db_repository";
@@ -10,15 +11,14 @@ import { createDocument } from "@/document/use_cases/create-document";
 import billingDocumentGateway from "@/document/factpro/gateway";
 import {
   createDocument as saveDocument,
-  findDocument,
   getBillingCredentialsFor,
   update as updateDocument,
   getLatestDocumentNumber,
 } from "@/document/db_repository";
-import { getSession } from "@/lib/auth";
 
 const cancel = async (
   order: Order,
+  document: Document,
   cancellationReason: string,
 ): Promise<response<Order>> => {
   const stockTransfersResponse = await getMany({
@@ -54,12 +54,8 @@ const cancel = async (
     };
   }
 
-  const session = await getSession();
-  if (!session.user)
-    return { success: false, message: "No se encontró la sesión" };
-
   const billingCredentialsResponse = await getBillingCredentialsFor(
-    session.user.companyId,
+    order.companyId,
   );
   if (!billingCredentialsResponse.success) {
     return {
@@ -71,17 +67,8 @@ const cancel = async (
   const { billingToken } = billingCredentialsResponse.data;
   const { cancelDocument } = billingDocumentGateway({ billingToken });
 
-  const documentFound = await findDocument(order.id!);
-  if (!documentFound.success) {
-    log.error("document_not_found", { document });
-    return {
-      success: false,
-      message: documentFound.message,
-    };
-  }
-
   const cancelDocumentResponse = await cancelDocument(
-    documentFound.data,
+    document,
     cancellationReason,
   );
 

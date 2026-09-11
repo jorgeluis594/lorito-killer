@@ -31,7 +31,7 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
   const [companyResponse, orderResponse, documentResponse] = await Promise.all([
     getCompany(session.user.companyId),
     find(params.id, session.user.companyId),
-    findBillingDocumentFor(params.id),
+    findBillingDocumentFor(params.id, session.user.companyId),
   ]);
 
   if (!companyResponse.success) {

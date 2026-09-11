@@ -6,6 +6,7 @@ import {
   INVOICE,
   RECEIPT,
   Registered,
+  SalesReportDocument,
   SearchParams,
   StatusAttributes,
   TICKET,
@@ -17,6 +18,7 @@ import PrismaDocumentType = $Enums.DocumentType;
 import { errorResponse, isEmpty } from "@/lib/utils";
 import { log } from "@/lib/log";
 import { Customer } from "@/customer/types";
+import type { Status } from "@/order/types";
 import { findCustomer } from "@/customer/db_repository";
 import { isInvoice, isReceipt } from "@/document/utils";
 
@@ -168,22 +170,13 @@ export const createDocument = async (
   }
 };
 
-export const findDocument = async (id: string): Promise<response<Document>> => {
-  const document = await prisma().document.findFirst({
-    where: { orderId: id },
-  });
-
-  if (!document) {
-    return errorResponse("document not found");
-  }
-
-  return { success: true, data: prismaDocumentToDocument(document) };
-};
-
 export const findBillingDocumentFor = async (
   orderId: string,
+  companyId: string,
 ): Promise<response<Document>> => {
-  const document = await prisma().document.findFirst({ where: { orderId } });
+  const document = await prisma().document.findFirst({
+    where: { orderId, companyId },
+  });
 
   if (!document) {
     return errorResponse("document not found");
@@ -379,7 +372,7 @@ export const getMany = async ({
   sellerId,
   sellerMode,
   orderStatus,
-}: SearchParams): Promise<response<(Document & { customer?: Customer })[]>> => {
+}: SearchParams): Promise<response<SalesReportDocument[]>> => {
   log.info("get_many_documents", {
     startDate,
     endDate,
@@ -405,6 +398,7 @@ export const getMany = async ({
     skip: pageNumber && pageSize && (pageNumber - 1) * pageSize,
     take: pageSize,
     orderBy: { dateOfIssue: "desc" },
+    include: { order: { select: { status: true, createdAt: true } } },
   });
 
   const customerIds = prismaDocuments
@@ -424,7 +418,7 @@ export const getMany = async ({
   });
 
   const documents = prismaDocuments.map(
-    (prismaDocument): Document & { customer?: Customer } => {
+    (prismaDocument): SalesReportDocument => {
       const customerId = prismaDocument.customerId || undefined;
       const document: Document & { customer?: Customer } = {
         ...prismaDocumentToDocument(prismaDocument),
@@ -434,7 +428,11 @@ export const getMany = async ({
         document.customer = customersMap[customerId];
       }
 
-      return document;
+      return {
+        ...document,
+        orderStatus: prismaDocument.order.status.toLowerCase() as Status,
+        orderCreatedAt: prismaDocument.order.createdAt,
+      };
     },
   );
 
