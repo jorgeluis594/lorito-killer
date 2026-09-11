@@ -1,43 +1,59 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { Badge } from "@/shared/components/ui/badge";
+import type { TableColumn } from "@/shared/components/ui/data-table";
 import {
   AdjustmentStockTransfer,
   OrderStockTransferName,
   ProductMovementStockTransferName,
-  StockTransfer,
+  type StockTransfer,
 } from "@/stock-transfer/types";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
-const typeSpanishMapper = {
+const typeLabels = {
   [OrderStockTransferName]: "Venta POS",
   [AdjustmentStockTransfer]: "Ajuste de stock",
   [ProductMovementStockTransferName]: "Movimiento de producto",
 };
 
-export const columns: ColumnDef<StockTransfer & { productName: string }>[] = [
+export const columns: TableColumn<StockTransfer>[] = [
   {
-    accessorKey: "userName",
-    header: "USUARIO",
+    id: "productName",
+    header: "Producto",
+    cell: (transfer) => transfer.productName,
+    mobile: "title",
   },
   {
-    accessorKey: "productName",
-    header: "NOMBRE DE PRODUCTO",
+    id: "type",
+    header: "Tipo",
+    cell: (transfer) => (
+      <Badge variant="secondary">{typeLabels[transfer.type]}</Badge>
+    ),
+    mobile: "description",
   },
   {
-    accessorKey: "type",
-    header: "TIPO DE MOVIMIENTO DE STOCK",
-    cell: ({ row }) => typeSpanishMapper[row.original.type],
+    id: "value",
+    header: "Variación",
+    align: "right",
+    cell: (transfer) => (
+      <span className="font-semibold">
+        {transfer.value > 0 ? "+" : ""}
+        {transfer.value}
+      </span>
+    ),
+    mobile: "value",
   },
   {
-    accessorKey: "value",
-    header: "VALOR",
+    id: "userName",
+    header: "Usuario",
+    cell: (transfer) => transfer.userName || "—",
   },
   {
-    accessorKey: "createdAt",
-    header: "FECHA",
-    cell: ({ row }) =>
-      format(row.original.createdAt, "PPP h:mm a", { locale: es }),
+    id: "createdAt",
+    header: "Fecha",
+    cell: (transfer) =>
+      format(transfer.createdAt, "d MMM yyyy, h:mm a", { locale: es }),
+    mobile: "description",
   },
 ];
