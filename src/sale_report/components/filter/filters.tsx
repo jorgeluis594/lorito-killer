@@ -1,4 +1,3 @@
-import { getBillingCredentialsFor } from "@/document/db_repository";
 import { getSession } from "@/lib/auth";
 import { findCustomer } from "@/customer/db_repository";
 import { Customer } from "@/customer/types";
@@ -16,10 +15,6 @@ export default async function Filters({ searchParams }: ParamsProps) {
   if (!session.user) {
     return <SignOutRedirection />;
   }
-  const billingCredentialsResponse = await getBillingCredentialsFor(
-    session.user.companyId,
-  );
-
   let customer: Customer | undefined = undefined;
 
   if (searchParams && searchParams.customerId) {
@@ -33,13 +28,5 @@ export default async function Filters({ searchParams }: ParamsProps) {
     }
   }
 
-  if (!billingCredentialsResponse.success) {
-    return <div>Error cargando los filtros, comuniquese con soporte</div>;
-  }
-
-  return (
-    <div className="mt-6">
-      <FiltersWithHiddenButton billingCredentials={billingCredentialsResponse.data} customer={customer} />
-    </div>
-  );
+  return <FiltersWithHiddenButton customer={customer} />;
 }

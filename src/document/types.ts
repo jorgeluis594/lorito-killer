@@ -1,5 +1,5 @@
 import { Customer } from "@/customer/types";
-import {Status} from "@/order/types";
+import { Status } from "@/order/types";
 
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
@@ -10,14 +10,19 @@ export type TicketType = typeof TICKET;
 export type DocumentType = InvoiceType | ReceiptType | TicketType;
 
 // documentación como código
-export type DocumentStatus = "registered" | "cancelled" | "pending_cancellation";
+export type DocumentStatus =
+  | "registered"
+  | "cancelled"
+  | "pending_cancellation";
 
-export type StatusAttributes = {
-  status:  'registered' | 'pending_cancellation' // Omit<DocumentStatus, "cancelled">
-} | {
-  status: "cancelled",
-  cancellationReason: string,
-}
+export type StatusAttributes =
+  | {
+      status: "registered" | "pending_cancellation"; // Omit<DocumentStatus, "cancelled">
+    }
+  | {
+      status: "cancelled";
+      cancellationReason: string;
+    };
 
 type DocumentBase = {
   id: string;
@@ -83,6 +88,7 @@ export type InferDocumentType<T extends keyof DocumentMapper> =
 
 export type SearchParams = {
   companyId: string;
+  q?: string;
   pageNumber?: number;
   pageSize?: number;
   correlative?: { number: string; series: string };
@@ -100,8 +106,8 @@ export type SearchParams = {
 
 export type Registered<T extends Document> = T & { status: "registered" };
 
-export type RegisteredTicket = Registered<Ticket>
+export type RegisteredTicket = Registered<Ticket>;
 
-export type RegisteredReceipt = Registered<Receipt>
+export type RegisteredReceipt = Registered<Receipt>;
 
-export type RegisteredInvoince = Registered<Invoice>
+export type RegisteredInvoince = Registered<Invoice>;
