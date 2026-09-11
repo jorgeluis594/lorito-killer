@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { ReloadIcon } from "@radix-ui/react-icons";
 
 const buttonVariants = cva(
-  "inline-flex [&[role=combobox]]:h-[var(--field-height)] items-center justify-center whitespace-nowrap rounded-md text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex [&[role=combobox]]:h-[var(--field-height)] items-center justify-center whitespace-nowrap rounded-md border border-transparent text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {

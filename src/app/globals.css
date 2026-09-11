@@ -97,8 +97,8 @@
     caret-color: hsl(var(--primary));
   }
   :focus-visible {
-    outline: 2px solid hsl(var(--ring)) !important;
-    outline-offset: -2px;
+    border-color: hsl(var(--ring)) !important;
+    outline: none !important;
     --tw-ring-offset-shadow: 0 0 #0000 !important;
     --tw-ring-shadow: 0 0 #0000 !important;
   }
