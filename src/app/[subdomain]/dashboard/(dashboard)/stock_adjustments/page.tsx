@@ -12,8 +12,36 @@ import {
   StockTransfersDataTable,
   type StockTransfersTableResult,
 } from "@/stock-transfer/components/table/client";
-import { columns } from "@/stock-transfer/components/table/columns";
 import { getMany, total } from "@/stock-transfer/db_repository";
+
+const skeletonColumns = [
+  {
+    id: "productName",
+    header: "Producto",
+    cell: () => null,
+    mobile: "title",
+  },
+  {
+    id: "type",
+    header: "Tipo",
+    cell: () => null,
+    mobile: "description",
+  },
+  {
+    id: "value",
+    header: "Variación",
+    align: "right",
+    cell: () => null,
+    mobile: "value",
+  },
+  { id: "userName", header: "Usuario", cell: () => null },
+  {
+    id: "createdAt",
+    header: "Fecha",
+    cell: () => null,
+    mobile: "description",
+  },
+] as const;
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -106,7 +134,10 @@ export default async function Page({ searchParams }: PageProps) {
       </PageHeader>
       <Suspense
         fallback={
-          <DataTableSkeleton columns={columns} caption="Movimientos de stock" />
+          <DataTableSkeleton
+            columns={skeletonColumns}
+            caption="Movimientos de stock"
+          />
         }
       >
         <StockTransfersDataTable resultPromise={transfersPromise} />

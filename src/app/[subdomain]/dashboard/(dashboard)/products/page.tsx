@@ -1,7 +1,6 @@
 import { ProductFormStoreProvider } from "@/product/components/form/product-form-store-provider";
 import { PageHeader } from "@/shared/components/ui/page-header";
 import { DataTableSkeleton } from "@/shared/components/ui/data-table";
-import { columns } from "@/product/components/data-table/columns";
 import React, { Suspense } from "react";
 import { getMany, GetManyParams, getTotal } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
@@ -16,6 +15,44 @@ import {
 import ExportProductsButton from "@/product/components/export-products-button";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+
+const skeletonColumns = [
+  { id: "name", header: "Producto", cell: () => null, mobile: "title" },
+  {
+    id: "category",
+    header: "Categorías",
+    cell: () => null,
+    mobile: "description",
+  },
+  {
+    id: "status",
+    header: "Stock",
+    align: "right",
+    cell: () => null,
+    mobile: "description",
+  },
+  {
+    id: "price",
+    header: "Precio de venta",
+    align: "right",
+    cell: () => null,
+    mobile: "value",
+  },
+  {
+    id: "purchasePrice",
+    header: "Precio de compra",
+    align: "right",
+    cell: () => null,
+  },
+  { id: "sku", header: "Código", cell: () => null },
+  {
+    id: "actions",
+    header: "Acciones",
+    align: "right",
+    cell: () => null,
+    mobile: "actions",
+  },
+] as const;
 
 type PageProps = {
   searchParams: Promise<{
@@ -128,7 +165,7 @@ export default async function Page(props: PageProps) {
         <Suspense
           fallback={
             <DataTableSkeleton
-              columns={columns}
+              columns={skeletonColumns}
               caption="Productos del catálogo"
             />
           }
