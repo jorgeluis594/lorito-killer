@@ -15,7 +15,6 @@ import { createUser } from "@/user/actions";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import * as z from "zod";
 // import GoogleSignInButton from "../github-auth-button";
@@ -41,8 +40,6 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues,
   });
-  const router = useRouter();
-
   const onSubmit = async (data: UserFormValue) => {
     if (action === "signup") {
       const createUserResponse = await createUser(
@@ -79,16 +76,16 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
       }
 
       if (callbackUrl) {
-        window.location.href = callbackUrl;
+        window.location.assign(callbackUrl);
         return;
       }
 
       const session = await getSession();
       const role = (session?.user as any)?.role;
       if (role === "CASHIER") {
-        window.location.href = "/dashboard/orders/new";
+        window.location.assign("/dashboard/orders/new");
       } else {
-        window.location.href = "/dashboard";
+        window.location.assign("/dashboard");
       }
     }
   };
@@ -98,7 +95,7 @@ export default function UserAuthForm({ action }: UserAuthFormProps) {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-2 w-full"
+          className="flex flex-col gap-4 w-full"
         >
           <FormField
             control={form.control}

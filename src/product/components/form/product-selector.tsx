@@ -9,6 +9,7 @@ import {
 } from "@/shared/components/ui/popover";
 import { Button } from "@/shared/components/ui/button";
 import { CaretSortIcon } from "@radix-ui/react-icons";
+import { X } from "lucide-react";
 import { getMany, type GetManyParams } from "@/product/api_repository";
 
 import {
@@ -26,6 +27,7 @@ import * as React from "react";
 export interface ProductSelectorProps<T extends ProductType | undefined> {
   value?: InferProductType<T>;
   onSelect?: (product: InferProductType<T>) => void;
+  onClick?: () => void;
   skipProductIds?: string[];
   productType?: T;
 }
@@ -33,6 +35,7 @@ export interface ProductSelectorProps<T extends ProductType | undefined> {
 export default function ProductSelector<T extends ProductType | undefined>({
   value,
   onSelect,
+  onClick,
   productType,
   skipProductIds = [],
 }: ProductSelectorProps<T>) {
@@ -84,18 +87,38 @@ export default function ProductSelector<T extends ProductType | undefined>({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          type="button"
-          aria-expanded={open}
-          className="justify-between w-full"
-        >
-          {value ? value.name : "Seleccione un producto"}
-          <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
+      <div className="relative w-full">
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            type="button"
+            aria-expanded={open}
+            className={`w-full justify-between ${value && onClick ? "pr-10" : ""}`}
+          >
+            {value ? value.name : "Seleccione un producto"}
+            {value && onClick ? null : (
+              <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            )}
+          </Button>
+        </PopoverTrigger>
+        {value && onClick ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Limpiar producto seleccionado"
+            className="absolute right-1 top-1/2 size-8 -translate-y-1/2"
+            onClick={() => {
+              setOpen(false);
+              setSearch("");
+              onClick();
+            }}
+          >
+            <X aria-hidden="true" className="size-4" />
+          </Button>
+        ) : null}
+      </div>
       <PopoverContent>
         <Command shouldFilter={false}>
           <CommandInput

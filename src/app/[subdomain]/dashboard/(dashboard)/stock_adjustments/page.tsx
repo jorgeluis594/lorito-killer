@@ -1,63 +1,147 @@
-import BreadCrumb from "@/shared/breadcrumb";
-import { Heading } from "@/shared/components/ui/heading";
-import { Separator } from "@/shared/components/ui/separator";
-import { DataTable } from "@/stock-transfer/components/table/client";
-import { columns } from "@/stock-transfer/components/table/columns";
-import { getMany, total } from "@/stock-transfer/db_repository";
+import Link from "next/link";
+import { Suspense } from "react";
+import { ChevronRight } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import AddStockAdjustmentModal from "@/stock-transfer/components/add-stock-adjustment-modal";
+import { find as findProduct } from "@/product/db_repository";
+import { isSingleProduct } from "@/product/types";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
+import { DataTableSkeleton } from "@/shared/components/ui/data-table";
+import { PageHeader } from "@/shared/components/ui/page-header";
+import AddStockAdjustmentModal from "@/stock-transfer/components/add-stock-adjustment-modal";
+import {
+  StockTransfersDataTable,
+  type StockTransfersTableResult,
+} from "@/stock-transfer/components/table/client";
+import { getMany, total } from "@/stock-transfer/db_repository";
 
-const breadcrumbItems = [
-  { title: "Ajustes de stock", link: "/stock_adjustments" },
-];
+const skeletonColumns = [
+  {
+    id: "productName",
+    header: "Producto",
+    cell: () => null,
+    mobile: "title",
+  },
+  {
+    id: "type",
+    header: "Tipo",
+    cell: () => null,
+    mobile: "description",
+  },
+  {
+    id: "value",
+    header: "Variación",
+    align: "right",
+    cell: () => null,
+    mobile: "value",
+  },
+  { id: "userName", header: "Usuario", cell: () => null },
+  {
+    id: "createdAt",
+    header: "Fecha",
+    cell: () => null,
+    mobile: "description",
+  },
+] as const;
 
-type paramsProps = {
-  searchParams: Promise<{
-    [key: string]: string | string[] | undefined;
-  }>;
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function Page(props: paramsProps) {
-  const searchParams = await props.searchParams;
-  const page = Number(searchParams.page) || 1;
-  const pageLimit = Number(searchParams.limit) || 10;
+async function loadStockTransfers(
+  companyId: string,
+  page: number,
+  pageSize: number,
+  productId: string | undefined,
+  totalCountPromise: Promise<number>,
+): Promise<StockTransfersTableResult | null> {
+  const [transfersResponse, totalCount, productResponse] = await Promise.all([
+    getMany({ companyId, page, pageLimit: pageSize, productId }),
+    totalCountPromise,
+    productId ? findProduct(productId, companyId) : Promise.resolve(null),
+  ]);
+
+  if (!transfersResponse.success) return null;
+
+  return {
+    data: transfersResponse.data,
+    pageCount: Math.ceil(totalCount / pageSize),
+    selectedProduct:
+      productResponse?.success && isSingleProduct(productResponse.data)
+        ? productResponse.data
+        : undefined,
+  };
+}
+
+async function TransferCount({
+  countPromise,
+}: {
+  countPromise: Promise<number>;
+}) {
+  return <>{await countPromise}</>;
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 
-  const resultStockTransfers = await getMany({
-    companyId: session.user.companyId,
+  const page = Math.max(Number(params.page) || 1, 1);
+  const pageSize = 10;
+  const productId =
+    typeof params.productId === "string" ? params.productId : undefined;
+  const countPromise = total(session.user.companyId, productId);
+  const transfersPromise = loadStockTransfers(
+    session.user.companyId,
     page,
-    pageLimit,
-  });
-
-  if (!resultStockTransfers.success) {
-    return;
-  }
+    pageSize,
+    productId,
+    countPromise,
+  );
 
   return (
-    <div className="flex-1 space-y-4  p-4 md:p-8 pt-6">
-      <BreadCrumb items={breadcrumbItems} />
-
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-        <Heading
-          title="Movimientos de Stock"
-          description="Agrega o regulariza el stock de tus productos"
-        />
-        <div className="flex justify-center mt-4">
-          <AddStockAdjustmentModal />
-        </div>
-      </div>
-      <Separator />
-      <div className="flex flex-row space-x-12 space-y-0 mt-8">
-        <div className="flex-1 mt-6">
-          <DataTable
-            data={resultStockTransfers.data}
-            columns={columns}
-            pageCount={1}
+    <main className="flex min-w-0 flex-1 flex-col gap-8 p-4 pt-6 md:p-8">
+      <PageHeader>
+        <PageHeader.Navigation aria-label="Ruta de navegación">
+          <Link
+            href="/dashboard"
+            className="hover:text-foreground hover:underline"
+          >
+            Inicio
+          </Link>
+          <ChevronRight aria-hidden="true" className="size-4" />
+          <span aria-current="page" className="text-foreground">
+            Movimientos de stock
+          </span>
+        </PageHeader.Navigation>
+        <PageHeader.Main>
+          <PageHeader.Heading>
+            <PageHeader.Title>
+              Movimientos de stock
+              <span className="text-base font-normal tabular-nums text-muted-foreground">
+                <Suspense fallback="—">
+                  <TransferCount countPromise={countPromise} />
+                </Suspense>
+              </span>
+            </PageHeader.Title>
+            <PageHeader.Description>
+              Revisa y registra aumentos o disminuciones del inventario.
+            </PageHeader.Description>
+          </PageHeader.Heading>
+          <PageHeader.Actions>
+            <AddStockAdjustmentModal />
+          </PageHeader.Actions>
+        </PageHeader.Main>
+      </PageHeader>
+      <Suspense
+        fallback={
+          <DataTableSkeleton
+            columns={skeletonColumns}
+            caption="Movimientos de stock"
           />
-        </div>
-      </div>
-    </div>
+        }
+      >
+        <StockTransfersDataTable resultPromise={transfersPromise} />
+      </Suspense>
+    </main>
   );
 }

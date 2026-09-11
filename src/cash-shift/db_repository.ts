@@ -88,11 +88,14 @@ export const saveCashShift = async <T extends CashShift>(
 
 export const getManyCashShifts = async (
   companyId: string,
+  pagination?: { page: number; pageSize: number },
 ): Promise<response<CashShiftWithOutOrders[]>> => {
   const cashShifts = await prisma().cashShift.findMany({
     where: { companyId },
     include: { orders: true, expenses: true },
     orderBy: { openedAt: "desc" },
+    skip: pagination ? (pagination.page - 1) * pagination.pageSize : undefined,
+    take: pagination?.pageSize,
   });
 
   const users = await prisma().user.findMany({ where: { companyId } });
@@ -130,6 +133,9 @@ export const getManyCashShifts = async (
     })),
   };
 };
+
+export const countCashShifts = (companyId: string) =>
+  prisma().cashShift.count({ where: { companyId } });
 
 export const getLastOpenCashShift = async (
   userId: string,

@@ -109,7 +109,7 @@ const CategoriesSelector: React.FC<SelectCategoriesProps> = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="min-w-0 w-full">
       <MultipleSelector
         options={categories.map(categoryToOption)}
         value={value.map(categoryToOption)}

@@ -1,10 +1,13 @@
 import {
   BillingCredentials,
-  Document, DocumentStatus,
+  Document,
+  DocumentStatus,
   DocumentType,
   INVOICE,
-  RECEIPT, Registered,
-  SearchParams, StatusAttributes,
+  RECEIPT,
+  Registered,
+  SearchParams,
+  StatusAttributes,
   TICKET,
 } from "@/document/types";
 import { response } from "@/lib/types";
@@ -15,7 +18,7 @@ import { errorResponse, isEmpty } from "@/lib/utils";
 import { log } from "@/lib/log";
 import { Customer } from "@/customer/types";
 import { findCustomer } from "@/customer/db_repository";
-import {isInvoice, isReceipt} from "@/document/utils";
+import { isInvoice, isReceipt } from "@/document/utils";
 
 export const DocumentTypeToPrismaMapper: Record<
   DocumentType,
@@ -46,17 +49,22 @@ const PRISMA_TO_STATUS_MAPPER: Record<$Enums.DocumentStatus, DocumentStatus> = {
   PENDING_CANCELLATION: "pending_cancellation",
 };
 
-const statusAttributesForPrismaDocument = (prismaDocument: PrismaDocument): StatusAttributes => {
-  if (prismaDocument.status == 'CANCELLED') {
-    return { status: 'cancelled', cancellationReason: prismaDocument.cancellationReason! }
+const statusAttributesForPrismaDocument = (
+  prismaDocument: PrismaDocument,
+): StatusAttributes => {
+  if (prismaDocument.status == "CANCELLED") {
+    return {
+      status: "cancelled",
+      cancellationReason: prismaDocument.cancellationReason!,
+    };
   }
 
-  if (prismaDocument.status == 'PENDING_CANCELLATION') {
-    return { status: 'pending_cancellation' }
+  if (prismaDocument.status == "PENDING_CANCELLATION") {
+    return { status: "pending_cancellation" };
   }
 
-  return { status: "registered" }
-}
+  return { status: "registered" };
+};
 
 const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
   let document: Document;
@@ -76,7 +84,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       issuedAt: prismaDocument.issuedAt || undefined,
       taxTotal: 0,
       netTotal: +prismaDocument.netTotal,
-      ...statusAttributesForPrismaDocument(prismaDocument)
+      ...statusAttributesForPrismaDocument(prismaDocument),
     };
   } else if (prismaDocument.documentType == "RECEIPT") {
     document = {
@@ -97,7 +105,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       netTotal: +prismaDocument.netTotal,
       qr: prismaDocument.qr!,
       hash: prismaDocument.hash!,
-      ...statusAttributesForPrismaDocument(prismaDocument)
+      ...statusAttributesForPrismaDocument(prismaDocument),
     };
   } else {
     // invoice case
@@ -119,7 +127,7 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
       netTotal: +prismaDocument.netTotal,
       qr: prismaDocument.qr!,
       hash: prismaDocument.hash!,
-      ...statusAttributesForPrismaDocument(prismaDocument)
+      ...statusAttributesForPrismaDocument(prismaDocument),
     };
   }
 
@@ -161,7 +169,9 @@ export const createDocument = async (
 };
 
 export const findDocument = async (id: string): Promise<response<Document>> => {
-  const document = await prisma().document.findFirst({ where: { orderId: id } });
+  const document = await prisma().document.findFirst({
+    where: { orderId: id },
+  });
 
   if (!document) {
     return errorResponse("document not found");
@@ -230,6 +240,7 @@ export const getBillingCredentialsFor = async (
 
 const buildDocumentQuery = ({
   companyId,
+  q,
   correlative,
   startDate,
   endDate,
@@ -292,6 +303,16 @@ const buildDocumentQuery = ({
 
   return {
     companyId,
+    ...(q && {
+      customer: {
+        is: {
+          OR: [
+            { legalName: { contains: q, mode: "insensitive" as const } },
+            { documentNumber: { contains: q, mode: "insensitive" as const } },
+          ],
+        },
+      },
+    }),
     ...(correlative && { number: parseInt(correlative.number) }),
     ...(correlative && { series: correlative.series }),
     ...((startDate || endDate) && { dateOfIssue: dateFilter }),
@@ -304,6 +325,7 @@ const buildDocumentQuery = ({
 
 export const getTotal = async ({
   companyId,
+  q,
   correlative,
   startDate,
   endDate,
@@ -321,6 +343,7 @@ export const getTotal = async ({
     const total = await prisma().document.count({
       where: buildDocumentQuery({
         companyId,
+        q,
         correlative,
         startDate,
         endDate,
@@ -342,6 +365,7 @@ export const getTotal = async ({
 
 export const getMany = async ({
   companyId,
+  q,
   correlative,
   startDate,
   endDate,
@@ -365,6 +389,7 @@ export const getMany = async ({
   const prismaDocuments = await prisma().document.findMany({
     where: buildDocumentQuery({
       companyId,
+      q,
       correlative,
       startDate,
       endDate,
@@ -416,7 +441,9 @@ export const getMany = async ({
   return { success: true, data: documents };
 };
 
-export const update = async (document: Document): Promise<response<Document>> => {
+export const update = async (
+  document: Document,
+): Promise<response<Document>> => {
   try {
     const updatedDocument = await prisma().document.update({
       where: { id: document.id },
@@ -431,7 +458,8 @@ export const update = async (document: Document): Promise<response<Document>> =>
         series: document.series,
         number: parseInt(document.number),
         status: STATUS_TO_PRISMA_MAPPER[document.status],
-        cancellationReason: document.status === "cancelled" ? document.cancellationReason : "",
+        cancellationReason:
+          document.status === "cancelled" ? document.cancellationReason : "",
         dateOfIssue: document.dateOfIssue,
         qr: document.documentType == "ticket" ? undefined : document.qr,
         hash: document.documentType == "ticket" ? undefined : document.hash,
@@ -448,7 +476,7 @@ export const update = async (document: Document): Promise<response<Document>> =>
     });
     return { success: false, message: e.message };
   }
-}
+};
 
 export const updateDocument = async (
   documentId: string,
@@ -458,7 +486,7 @@ export const updateDocument = async (
     issuedAt?: Date;
     qr?: string;
     hash?: string;
-  }
+  },
 ): Promise<response<Document>> => {
   try {
     const updatedDocument = await prisma().document.update({
@@ -481,12 +509,14 @@ export const updateDocument = async (
     });
     return { success: false, message: e.message };
   }
-}
+};
 
-export const findDocumentById = async (documentId: string): Promise<response<Document>> => {
+export const findDocumentById = async (
+  documentId: string,
+): Promise<response<Document>> => {
   try {
-    const document = await prisma().document.findUnique({ 
-      where: { id: documentId } 
+    const document = await prisma().document.findUnique({
+      where: { id: documentId },
     });
 
     if (!document) {
@@ -501,4 +531,4 @@ export const findDocumentById = async (documentId: string): Promise<response<Doc
     });
     return { success: false, message: e.message };
   }
-}
+};

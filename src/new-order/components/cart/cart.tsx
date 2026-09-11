@@ -1,152 +1,323 @@
 "use client";
 
+import { useState } from "react";
+import { ArrowRight, Check, ShoppingBasket, Trash2 } from "lucide-react";
 import type { DocumentType } from "@/document/types";
-
-import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
   useOrderFormActions,
   useOrderFormStore,
 } from "@/new-order/order-form-provider";
 import { Button } from "@/shared/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/shared/components/ui/alert-dialog";
 import CustomerSelector from "@/customer/components/customer-selector";
 import NewCustomerModal from "@/customer/components/new-customer-modal";
-import { formatPrice } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import { fullName } from "@/customer/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import PaymentModal from "@/new-order/components/create-order-modal/payment-modal";
-import { useProductFormActions } from "@/new-order/components/products-view/product-searcher-form-provider";
 import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
-import { toast } from "@/shared/components/ui/use-toast";
+import AddExpense from "@/cash-shift/components/add_expense";
 import { useCompany } from "@/lib/use-company";
 import CartItem from "@/new-order/components/cart/cart-item";
+import ProductsSearcher from "@/new-order/components/products-view/products-searcher";
 
 export default function Cart() {
   const order = useOrderFormStore((state) => state.order);
-  const { setDocumentType } = useOrderFormActions();
-  const company = useCompany();
-
-  const cashShift = useCashShift();
-  const customer = useOrderFormStore((state) => state.order.customer);
-
-  const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const {
+    setDocumentType,
     increaseQuantity,
     decreaseQuantity,
     reset,
     removeOrderItem,
     setCustomer,
+    removeCustomer,
   } = useOrderFormActions();
-
-  const handleClickSell = () => {
-    if (order.documentType === "invoice" && order.customer !== undefined) {
-      setOpenPaymentModal(true);
-    } else if (
-      order.documentType === "receipt" ||
-      order.documentType === "ticket"
-    ) {
-      setOpenPaymentModal(true);
-    } else {
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: "Se necesita elegir un cliente",
-      });
-    }
-  };
-
-  const {
-    increaseQuantityProduct,
-    decreaseQuantityProduct,
-    restoreStockProduct,
-  } = useProductFormActions();
+  const company = useCompany();
+  const cashShift = useCashShift();
+  const [openPaymentModal, setOpenPaymentModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [mobileView, setMobileView] = useState<"products" | "cart">("products");
+  const needsCustomer = order.documentType === "invoice" && !order.customer;
 
   return (
-    <>
-      <div className="h-full md:border-l grid grid-rows-[min-content_min-content_min-content_1fr_min-content]">
-        <Tabs
-          value={order.documentType}
-          onValueChange={(value) => setDocumentType(value as DocumentType)}
+    <div className="mx-auto flex h-full max-w-[1600px] flex-col px-3 pt-3 sm:px-6">
+      <h1 className="sr-only">Nueva venta</h1>
+      <nav
+        aria-label="Vistas de venta"
+        className="mb-3 grid shrink-0 grid-cols-2 gap-2 lg:hidden"
+      >
+        <Button
+          variant={mobileView === "products" ? "secondary" : "outline"}
+          aria-pressed={mobileView === "products"}
+          onClick={() => setMobileView("products")}
         >
-          <TabsList className="grid w-full grid-cols-3 mt-7 md:mt-0">
-            <TabsTrigger value="ticket">Nota de Venta</TabsTrigger>
-            <TabsTrigger value="receipt" disabled={!company.isBillingActivated}>
-              Boleta
-            </TabsTrigger>
-            <TabsTrigger value="invoice" disabled={!company.isBillingActivated}>
-              Factura
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <div className="p-5 border-b flex justify-between">
-          {order.documentType === "ticket" ? (
-            <h2 className="text-xl font-semibold tracking-tight">Pedido</h2>
-          ) : order.documentType === "receipt" ? (
-            <h2 className="text-xl font-semibold tracking-tight">Boleta</h2>
-          ) : (
-            <h2 className="text-xl font-semibold tracking-tight">Factura</h2>
+          Productos
+        </Button>
+        <Button
+          variant={mobileView === "cart" ? "secondary" : "outline"}
+          aria-pressed={mobileView === "cart"}
+          onClick={() => setMobileView("cart")}
+        >
+          Venta · {order.orderItems.length} · {formatPrice(order.total)}
+        </Button>
+      </nav>
+      <div className="grid min-h-0 flex-1 gap-6 pb-3 lg:grid-cols-[minmax(360px,2fr)_minmax(0,3fr)]">
+        <div
+          className={cn(
+            "min-h-0 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground lg:flex",
+            mobileView === "cart" ? "flex" : "hidden",
           )}
-
-          <Button
-            variant="ghost_destructive"
-            type="button"
-            size="sm"
-            onClick={() => reset()}
+        >
+          <section
+            aria-label="Venta en curso"
+            className="flex min-h-0 flex-1 flex-col"
           >
-            Vaciar carrito
-          </Button>
-        </div>
-
-        <div className="p-5 border-b flex items-center space-x-4 w-full">
-          <div className="flex items-center justify-end w-full">
-            <h2 className="mr-4">Cliente:</h2>
-            <CustomerSelector
-              value={customer}
-              onSelect={(customer) => {
-                setCustomer(customer);
-              }}
-            />
-          </div>
-          <div>
-            <NewCustomerModal/>
-          </div>
-        </div>
-        <ScrollArea className="border-b">
-          <div className="py-3 h-[370px]">
-            <div>
-              {order.orderItems.map((item) => (
-                <CartItem
-                  key={item.productId}
-                  item={item}
-                  increaseQuantity={increaseQuantity}
-                  decreaseQuantity={decreaseQuantity}
-                  increaseQuantityProduct={increaseQuantityProduct}
-                  decreaseQuantityProduct={decreaseQuantityProduct}
-                  removeOrderItem={removeOrderItem}
-                  restoreStockProduct={restoreStockProduct}
-                />
-              ))}
+            <div className="flex shrink-0 flex-wrap items-center gap-3 border-b bg-secondary px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-bold">Venta actual</h2>
+                <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                  <span>
+                    {order.orderItems.length}{" "}
+                    {order.orderItems.length === 1 ? "producto" : "productos"}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Check className="size-3" aria-hidden="true" />
+                    Caja abierta
+                  </span>
+                </p>
+              </div>
+              {cashShift && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Gastos</span>
+                  <AddExpense />
+                </div>
+              )}
+              {order.orderItems.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Vaciar venta"
+                      title="Vaciar venta"
+                    >
+                      <Trash2 aria-hidden="true" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Vaciar esta venta?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Se quitarán todos los productos y descuentos de la venta
+                        en curso.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Conservar venta</AlertDialogCancel>
+                      <AlertDialogAction onClick={reset}>
+                        Vaciar venta
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
-          </div>
-        </ScrollArea>
-        <div className="p-5">
-          <Button
-            className="w-full"
-            onClick={handleClickSell}
-            disabled={!cashShift || order.orderItems.length === 0}
+            {order.orderItems.length === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 overflow-y-auto px-5 py-6 text-center">
+                <ShoppingBasket
+                  className="size-9 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <h3 className="text-lg font-semibold">Tu venta está vacía</h3>
+                <p className="max-w-sm text-sm text-muted-foreground">
+                  Agrega productos desde el catálogo. Aquí verás lo que tu
+                  cliente llevará.
+                </p>
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setMobileView("products");
+                    requestAnimationFrame(() =>
+                      document.getElementById("sale-product-search")?.focus(),
+                    );
+                  }}
+                >
+                  Buscar un producto
+                  <ArrowRight data-icon="inline-end" />
+                </Button>
+              </div>
+            ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3">
+                <ul aria-label="Productos de la venta" className="@container">
+                  {order.orderItems.map((item) => (
+                    <li key={item.id}>
+                      <CartItem
+                        item={item}
+                        increaseQuantity={increaseQuantity}
+                        decreaseQuantity={decreaseQuantity}
+                        removeOrderItem={removeOrderItem}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+          <section
+            aria-label="Cliente y comprobante"
+            className="flex max-h-[30dvh] shrink-0 flex-col gap-3 overflow-y-auto border-t px-4 py-3"
           >
-            <div className="flex justify-between w-full">
-              <p className="text-end text-xl font-bold">Vender!</p>
-              <p className="text-end text-xl font-bold">
-                Total: {formatPrice(order.netTotal)}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Cliente</span>
+                <Button
+                  variant="ghost"
+                  onClick={() => setEditingCustomer(!editingCustomer)}
+                  aria-expanded={editingCustomer || needsCustomer}
+                  className="max-w-full"
+                >
+                  <span className="truncate">
+                    {order.customer
+                      ? fullName(order.customer)
+                      : needsCustomer
+                        ? "Seleccionar cliente"
+                        : "Cliente general"}
+                  </span>
+                  <span className="ml-2 text-muted-foreground">Cambiar</span>
+                </Button>
+              </div>
+              <div className="flex items-center gap-3">
+                <label
+                  htmlFor="sale-document-type"
+                  className="text-sm text-muted-foreground"
+                >
+                  Comprobante
+                </label>
+                <Select
+                  value={order.documentType}
+                  onValueChange={(value) =>
+                    setDocumentType(value as DocumentType)
+                  }
+                >
+                  <SelectTrigger id="sale-document-type" className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="ticket">Nota de venta</SelectItem>
+                      <SelectItem
+                        value="receipt"
+                        disabled={!company.isBillingActivated}
+                      >
+                        Boleta
+                      </SelectItem>
+                      <SelectItem
+                        value="invoice"
+                        disabled={!company.isBillingActivated}
+                      >
+                        Factura
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {(editingCustomer || needsCustomer) && (
+              <div className="flex max-w-xl flex-col gap-2">
+                {needsCustomer && (
+                  <p className="text-sm text-muted-foreground">
+                    Selecciona o crea un cliente con RUC para emitir la factura.
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <CustomerSelector
+                    value={order.customer}
+                    onSelect={(customer) => {
+                      setCustomer(customer);
+                      setEditingCustomer(false);
+                    }}
+                  />
+                  <NewCustomerModal />
+                </div>
+                {order.customer && order.documentType !== "invoice" && (
+                  <Button
+                    variant="link"
+                    className="self-start"
+                    onClick={() => {
+                      removeCustomer();
+                      setEditingCustomer(false);
+                    }}
+                  >
+                    Usar cliente general
+                  </Button>
+                )}
+              </div>
+            )}
+          </section>
+          <footer className="flex shrink-0 flex-col gap-3 border-t px-4 py-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Total de la venta</p>
+              <p
+                className="text-3xl font-bold tracking-tight tabular-nums"
+                aria-live="polite"
+              >
+                {formatPrice(order.total)}
               </p>
             </div>
+            <Button
+              size="lg"
+              disabled={!cashShift || order.orderItems.length === 0}
+              onClick={() => {
+                if (needsCustomer) {
+                  setEditingCustomer(true);
+                  return;
+                }
+                setOpenPaymentModal(true);
+              }}
+            >
+              {needsCustomer ? "Completar cliente" : "Continuar al pago"}
+              <ArrowRight data-icon="inline-end" />
+            </Button>
+          </footer>
+        </div>
+        <div
+          className={cn(
+            "min-h-0 min-w-0 flex-col lg:flex",
+            mobileView === "products" ? "flex" : "hidden",
+          )}
+        >
+          <ProductsSearcher />
+          <Button
+            className="mt-3 shrink-0 lg:hidden"
+            onClick={() => setMobileView("cart")}
+          >
+            Ver venta · {order.orderItems.length} productos ·{" "}
+            {formatPrice(order.total)}
+            <ArrowRight data-icon="inline-end" />
           </Button>
         </div>
       </div>
       <PaymentModal
         isOpen={openPaymentModal}
-        onOpenChange={(open) => setOpenPaymentModal(open)}
+        onOpenChange={setOpenPaymentModal}
       />
-    </>
+    </div>
   );
 }

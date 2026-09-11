@@ -175,7 +175,7 @@ export function TableConfigForm({ tables, zones }: TableConfigFormProps) {
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="grid gap-1">
                 <Label htmlFor="table-number">Numero</Label>
                 <Input
                   id="table-number"
@@ -188,7 +188,7 @@ export function TableConfigForm({ tables, zones }: TableConfigFormProps) {
                   </p>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="grid gap-1">
                 <Label htmlFor="table-label">Etiqueta</Label>
                 <Input
                   id="table-label"
@@ -198,7 +198,7 @@ export function TableConfigForm({ tables, zones }: TableConfigFormProps) {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="grid gap-1">
                 <Label htmlFor="table-capacity">Capacidad</Label>
                 <Input
                   id="table-capacity"
@@ -211,7 +211,7 @@ export function TableConfigForm({ tables, zones }: TableConfigFormProps) {
                   </p>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="grid gap-1">
                 <Label>Zona</Label>
                 <Select
                   value={form.watch("zoneId")}

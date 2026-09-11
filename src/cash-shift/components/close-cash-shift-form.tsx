@@ -19,7 +19,7 @@ import {
 } from "@/shared/components/ui/form";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import * as z from "zod";
-import { FaCashRegister } from "react-icons/fa";
+import { CircleDollarSign } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { closeCashShift } from "@/cash-shift/components/actions";
@@ -103,8 +103,9 @@ export default function CloseCashShiftForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="text-xs md:text-sm">
-          <FaCashRegister className="w-4 h-4 mr-2" /> Cerrar caja
+        <Button>
+          <CircleDollarSign aria-hidden="true" data-icon="inline-start" />
+          Cerrar caja
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

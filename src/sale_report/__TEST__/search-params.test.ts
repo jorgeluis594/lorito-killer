@@ -26,9 +26,7 @@ describe("report search params", () => {
     const start = "2026-06-10T05:00:00.000Z";
     const end = "2026-06-12T04:59:59.999Z";
 
-    expect(
-      reportDateRangeFromSearchParams({ start, end }, now),
-    ).toEqual({
+    expect(reportDateRangeFromSearchParams({ start, end }, now)).toEqual({
       startDate: new Date(start),
       endDate: new Date(end),
     });
@@ -93,12 +91,21 @@ describe("report search params", () => {
     });
   });
 
-  test("can build an unpaginated export query", () => {
+  test("normalizes the customer search query", () => {
     const query = salesReportDocumentQueryFromSearchParams(
-      {},
+      { q: "  Ana  " },
       "company-1",
-      { now, withPagination: false },
+      { now },
     );
+
+    expect(query.q).toBe("Ana");
+  });
+
+  test("can build an unpaginated export query", () => {
+    const query = salesReportDocumentQueryFromSearchParams({}, "company-1", {
+      now,
+      withPagination: false,
+    });
 
     expect(query.pageNumber).toBeUndefined();
     expect(query.pageSize).toBeUndefined();

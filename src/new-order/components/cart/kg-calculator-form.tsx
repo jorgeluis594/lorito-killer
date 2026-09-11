@@ -29,6 +29,7 @@ interface KgStockSetterFormProps {
   onOpenChange: (open: boolean) => void;
   defaultValue: number;
   productPrice: number;
+  productName?: string;
   onSubmit: (kg: number) => void;
 }
 
@@ -46,6 +47,7 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
   onOpenChange,
   defaultValue,
   productPrice,
+  productName,
   onSubmit,
 }) => {
   const form = useForm<KgCalculatorFormValues>({
@@ -80,7 +82,7 @@ const KgCalculatorForm: React.FC<KgStockSetterFormProps> = ({
             <DialogHeader>
               <DialogTitle>Venta por KG</DialogTitle>
               <DialogDescription>
-                Cálcula el costo de tus productos por KG
+                {productName || "Calcula el costo de tus productos por kg"}
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-wrap gap-4 py-4 justify-between">

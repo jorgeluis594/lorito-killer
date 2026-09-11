@@ -1,57 +1,74 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+
 import { CellAction } from "./cell-action";
 import { CashShiftWithOutOrders, ClosedCashShift } from "@/cash-shift/types";
 import { format } from "date-fns";
+import { TableColumn } from "@/shared/components/ui/data-table";
+import { Badge } from "@/shared/components/ui/badge";
+import { formatPrice } from "@/lib/utils";
 
 const statusSpanishMapper = {
   open: "Abierto",
   closed: "Cerrado",
 };
 
-export const columns: ColumnDef<CashShiftWithOutOrders>[] = [
+export const columns: TableColumn<CashShiftWithOutOrders>[] = [
   {
-    accessorKey: "userName",
-    header: "VENDEDOR",
+    id: "userName",
+    header: "Vendedor",
+    cell: (cashShift) => cashShift.userName,
+    mobile: "title",
   },
   {
-    accessorKey: "openedAt",
-    header: "APERTURA",
-    cell: ({ row }) =>
-      format(new Date(row.original.openedAt), "dd/MM/yyyy hh:mm aa"),
+    id: "openedAt",
+    header: "Apertura",
+    cell: (cashShift) =>
+      format(new Date(cashShift.openedAt), "dd/MM/yyyy hh:mm aa"),
+    mobile: "description",
   },
   {
-    accessorKey: "closedAt",
-    header: "CIERRE",
-    cell: ({ row }) => {
-      const cashShift = row.original;
-      if (cashShift.status === "closed") {
-        const closedCashShift = cashShift as ClosedCashShift;
-        return format(
-          new Date(closedCashShift.closedAt),
-          "dd/MM/yyyy hh:mm aa",
-        );
-      } else {
-        return "-";
-      }
-    },
+    id: "closedAt",
+    header: "Cierre",
+    cell: (cashShift) =>
+      cashShift.status === "closed"
+        ? format(
+            new Date((cashShift as ClosedCashShift).closedAt),
+            "dd/MM/yyyy hh:mm aa",
+          )
+        : "—",
+    mobile: "description",
   },
   {
-    accessorKey: "initialAmount",
-    header: "SALDO INICIAL",
+    id: "initialAmount",
+    header: "Saldo inicial",
+    align: "right",
+    cell: (cashShift) => formatPrice(cashShift.initialAmount),
   },
   {
-    accessorKey: "finalAmount",
-    header: "SALDO FINAL",
+    id: "finalAmount",
+    header: "Saldo final",
+    align: "right",
+    cell: (cashShift) =>
+      cashShift.status === "closed"
+        ? formatPrice((cashShift as ClosedCashShift).finalAmount)
+        : "—",
+    mobile: "value",
   },
   {
-    accessorKey: "status",
-    header: "ESTADO",
-    cell: ({ row }) => statusSpanishMapper[row.original.status],
+    id: "status",
+    header: "Estado",
+    cell: (cashShift) => (
+      <Badge variant={cashShift.status === "open" ? "secondary" : "outline"}>
+        {statusSpanishMapper[cashShift.status]}
+      </Badge>
+    ),
+    mobile: "description",
   },
   {
     id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => <CellAction cashShift={row.original} />,
+    header: <span className="sr-only">Acciones</span>,
+    align: "right",
+    cell: (cashShift) => <CellAction cashShift={cashShift} />,
+    mobile: "actions",
   },
 ];

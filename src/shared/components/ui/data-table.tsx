@@ -1,199 +1,225 @@
-"use client";
-
-import React, { useState } from "react";
-
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  VisibilityState,
-} from "@tanstack/react-table";
-
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-
+import * as React from "react";
+import { Skeleton } from "./skeleton";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/ui/table";
-import { Input } from "./input";
-import { Button } from "./button";
-import { ScrollArea, ScrollBar } from "./scroll-area";
-import { Icons } from "@/shared/icons";
-import { Skeleton } from "@/shared/components/ui/skeleton";
-import CardResponsive from "@/shared/components/ui/card-responsive";
+} from "./table";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+export type TableColumn<T> = {
+  id: string;
+  header: React.ReactNode;
+  cell: (row: T) => React.ReactNode;
+  align?: "left" | "center" | "right";
+  className?: string;
+  mobile?: "title" | "value" | "description" | "actions";
+};
+
+type TableLayoutProps<T> = {
+  columns: readonly TableColumn<T>[];
+  caption: string;
+  className?: string;
+};
+
+type TableContentProps<T> = TableLayoutProps<T> & {
+  data: readonly T[];
+  getRowId: (row: T) => string;
+  getRowClassName?: (row: T) => string;
+  emptyMessage?: React.ReactNode;
   isLoading?: boolean;
-  searchKey?: string;
-}
+  skeletonRows?: number;
+};
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  isLoading,
-  searchKey,
-}: DataTableProps<TData, TValue>) {
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    autoResetPageIndex: true,
-    state: {
-      columnVisibility,
-    },
-  });
-
-  const DataTableSkeleton = () => (
-    <>
-      <TableRow>
-        <TableCell colSpan={columns.length}>
-          {Array(9)
-            .fill(0)
-            .map((_, index) => (
-              <Skeleton key={index} className="w-full h-[1.5rem] my-5" />
-            ))}
-        </TableCell>
-      </TableRow>
-    </>
+export type DataTableProps<T> = Omit<TableContentProps<T>, "data"> &
+  (
+    | { data: readonly T[]; loadData?: never }
+    | { data?: never; loadData: () => Promise<readonly T[]> }
   );
 
-  const ProductRows = () => (
-    <>
-      {table.getRowModel().rows?.length ? (
-        table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-            {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+const alignment = {
+  left: "text-left",
+  center: "text-center",
+  right: "text-right tabular-nums",
+};
+
+function TableLayout<T>({
+  columns,
+  caption,
+  children,
+  className,
+  isLoading = false,
+}: TableLayoutProps<T> & { children: React.ReactNode; isLoading?: boolean }) {
+  const hasMobileLayout = columns.some((column) => column.mobile);
+
+  if (process.env.NODE_ENV !== "production" && hasMobileLayout) {
+    const roles = columns.map((column) => column.mobile);
+    if (
+      roles.filter((role) => role === "title").length !== 1 ||
+      roles.filter((role) => role === "value").length > 1 ||
+      roles.filter((role) => role === "actions").length > 1
+    ) {
+      throw new Error(
+        'DataTable mobile layout requires one "title" and at most one "value" and "actions" column.',
+      );
+    }
+  }
+
+  return (
+    <div className="data-table-container min-w-0">
+      <div
+        className={cn("overflow-hidden rounded-xl border bg-card", className)}
+        data-mobile-table={hasMobileLayout || undefined}
+      >
+        {isLoading && (
+          <span role="status" className="sr-only">
+            Cargando {caption}…
+          </span>
+        )}
+        <Table role="table" aria-busy={isLoading}>
+          <TableCaption className="sr-only">{caption}</TableCaption>
+          <TableHeader role="rowgroup">
+            <TableRow role="row">
+              {columns.map((column) => (
+                <TableHead
+                  key={column.id}
+                  scope="col"
+                  role="columnheader"
+                  data-mobile-role={column.mobile}
+                  className={cn(
+                    alignment[column.align ?? "left"],
+                    column.className,
+                  )}
+                >
+                  {column.header}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody role="rowgroup">{children}</TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+export function DataTableSkeleton<T>({
+  columns,
+  caption,
+  className,
+  rows = 5,
+}: TableLayoutProps<T> & { rows?: number }) {
+  return (
+    <TableLayout
+      columns={columns}
+      caption={caption}
+      className={className}
+      isLoading
+    >
+      {Array.from({ length: rows }, (_, index) => (
+        <TableRow key={index} role="row" aria-hidden="true">
+          {columns.map((column) => (
+            <TableCell
+              key={column.id}
+              role="cell"
+              data-column={column.id}
+              data-mobile-role={column.mobile}
+              data-mobile-label={
+                typeof column.header === "string" ? column.header : undefined
+              }
+              className={column.className}
+            >
+              <Skeleton className="h-5 w-full min-w-12" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </TableLayout>
+  );
+}
+
+function TableContent<T>({
+  data,
+  columns,
+  caption,
+  getRowId,
+  className,
+  emptyMessage = "Sin resultados.",
+  getRowClassName,
+}: TableContentProps<T>) {
+  return (
+    <TableLayout columns={columns} caption={caption} className={className}>
+      {data.length ? (
+        data.map((row) => (
+          <TableRow
+            key={getRowId(row)}
+            role="row"
+            className={getRowClassName?.(row)}
+          >
+            {columns.map((column) => (
+              <TableCell
+                key={column.id}
+                role="cell"
+                data-column={column.id}
+                data-mobile-role={column.mobile}
+                data-mobile-label={
+                  typeof column.header === "string" ? column.header : undefined
+                }
+                className={cn(
+                  alignment[column.align ?? "left"],
+                  column.className,
+                )}
+              >
+                {column.cell(row)}
               </TableCell>
             ))}
           </TableRow>
         ))
       ) : (
-        <TableRow>
-          <TableCell colSpan={columns.length} className="h-24 text-center">
-            Sin resultados.
+        <TableRow role="row" data-mobile-empty>
+          <TableCell
+            role="cell"
+            colSpan={columns.length}
+            className="h-32 text-center text-muted-foreground"
+          >
+            {emptyMessage}
           </TableCell>
         </TableRow>
       )}
-    </>
+    </TableLayout>
   );
+}
 
-  return (
-    <>
-      <div className="flex justify-between">
-        {searchKey && (
-          <Input
-            placeholder={`Buscar por nombre...`}
-            value={
-              (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
-            }
-            onChange={(event) =>
-              table.getColumn(searchKey)?.setFilterValue(event.target.value)
-            }
-            className="w-full md:max-w-sm"
-          />
-        )}
+function PendingTable<T>({
+  promise,
+  ...props
+}: Omit<TableContentProps<T>, "data"> & { promise: Promise<readonly T[]> }) {
+  const data = React.use(promise);
+  return <TableContent {...props} data={data} />;
+}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger className="hidden md:flex" asChild>
-            <Button variant="outline" className="ml-auto">
-              <Icons.settings2 className="mr-2 h-4 w-4"/>
-              Columnas
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.columnDef.header as any}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className="hidden md:block">
-        <ScrollArea className="rounded-md border h-[calc(75vh-220px)]">
-          <Table className="relative">
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {isLoading ? <DataTableSkeleton/> : <ProductRows/>}
-            </TableBody>
-          </Table>
-          <ScrollBar orientation="horizontal"/>
-        </ScrollArea>
-      </div>
-
-      <CardResponsive table={table}/>
-
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Atras
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Siguiente
-          </Button>
-        </div>
-      </div>
-    </>
-  );
+/** Pass loadData from a Server Component; keep database queries on the server. */
+export function DataTable<T>({
+  data,
+  loadData,
+  isLoading,
+  skeletonRows = 5,
+  ...props
+}: DataTableProps<T>) {
+  const skeleton = <DataTableSkeleton {...props} rows={skeletonRows} />;
+  if (isLoading) return skeleton;
+  if (loadData) {
+    // Read the promise below Suspense; retries reuse it instead of querying again.
+    const promise = loadData();
+    return (
+      <React.Suspense fallback={skeleton}>
+        <PendingTable {...props} promise={promise} />
+      </React.Suspense>
+    );
+  }
+  return <TableContent {...props} data={data} />;
 }

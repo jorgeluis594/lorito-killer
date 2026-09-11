@@ -164,7 +164,7 @@ export function ZoneConfigForm({ zones }: ZoneConfigFormProps) {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
+            <div className="grid gap-1">
               <Label htmlFor="zone-name">Nombre</Label>
               <Input
                 id="zone-name"
@@ -177,7 +177,7 @@ export function ZoneConfigForm({ zones }: ZoneConfigFormProps) {
                 </p>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-1">
               <Label htmlFor="zone-order">Orden</Label>
               <Input
                 id="zone-order"

@@ -17,11 +17,7 @@ const validSellerStatuses = new Set<SellerReportStatus>([
   "all",
 ]);
 
-const validSellerModes = new Set<SellerMode>([
-  "all",
-  "specific",
-  "unassigned",
-]);
+const validSellerModes = new Set<SellerMode>(["all", "specific", "unassigned"]);
 
 export const DEFAULT_REPORT_DATE_RANGE_DAYS = 20;
 
@@ -135,6 +131,7 @@ export function salesReportDocumentQueryFromSearchParams(
 
   const params: DocumentSearchParams = {
     companyId,
+    q: searchParamAsString(searchParams.q)?.trim() || undefined,
     startDate,
     endDate,
     orderStatus: validSellerStatuses.has(status as SellerReportStatus)

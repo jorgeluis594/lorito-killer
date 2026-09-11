@@ -2,34 +2,29 @@
 
 ## Project Structure & Module Organization
 
-Lorito Killer is a multi-tenant POS app built with Next.js, TypeScript, Prisma, PostgreSQL, Redis, Tailwind CSS, and shadcn/Radix UI. Routes live in `src/app`, including tenant routing under `src/app/[subdomain]` and APIs under `src/app/api`.
+Lorito Killer is a Next.js 16, React 19, and TypeScript point-of-sale application. Routes live in `src/app`, including tenant dashboards under `[subdomain]`. Domain modules such as `src/product`, `src/order`, and `src/customer` own their components, schemas, types, repositories, actions, and `use-cases` where applicable. Keep domain logic within its feature; reuse UI from `src/shared/components/ui` and infrastructure from `src/lib`.
 
-Feature code is organized by domain in `src/{feature}` such as `product`, `order`, `customer`, `table`, `document`, and `cash-shift`. Common files include `components/`, `db_repository.ts`, `api_repository.ts`, `actions.ts`, `use-cases/`, and `types.ts` or `schemas/`. Shared utilities live in `src/lib`, shared components in `src/shared`, shadcn UI in `src/ui`, assets in `public`, schema and migrations in `prisma`, and docs in `docs`.
+Prisma schema and migrations live in `prisma/`; static assets belong in `public/`. Background processing starts at `src/worker.ts`. Design documentation lives in `docs/design`, with component stories beside UI components.
 
 ## Build, Test, and Development Commands
 
-- `npm install`: install locked dependencies.
-- `cp .env.example .env`: create local settings; configure database, Redis, auth, and provider secrets.
-- `npm run dev`: start the Next.js development server.
-- `npm run worker`: start the BullMQ worker from `src/worker.ts`.
-- `npm run build`: deploy migrations, generate Prisma client, and build production assets.
-- `npm run build:dev`: build without deploying migrations.
-- `npm run start`: run the production Next.js server.
-- `npm run prisma:deploy`: deploy migrations and generate Prisma client.
-- `npm run lint`: run ESLint across the repository.
+- `npm ci`: install locked dependencies; use the Node version in `.node-version`.
+- `docker compose up --build`: start the local application, PostgreSQL, Redis, and worker after creating `.env` from `.env.example`. Startup applies migrations automatically.
+- `npm run dev`: run the web development server with configured backing services.
+- `npm run build:dev`: build the application without deploying migrations.
+- `npm run build`: deploy Prisma migrations, generate the client, then build; verify the target database first.
+- `npm run lint`: run ESLint with Next.js Core Web Vitals rules.
+- `npm test`: run Vitest once.
+- `npm run storybook`: open component development on port 6006.
 
 ## Coding Style & Naming Conventions
 
-Use TypeScript with `strict` enabled and the `@/*` alias for `src/*`. Follow existing 2-space indentation, keep feature modules domain-focused, and prefer server components unless interactivity requires `"use client"`. Use kebab-case for most component filenames (`customer-selector.tsx`) and snake_case where the module already does (`department_selector.tsx`). Keep Prisma access in `db_repository.ts`, client network calls in `api_repository.ts`, and tenant data isolated by `companyId`.
+Use strict TypeScript, two-space indentation, semicolons, and double quotes, matching surrounding code. Prefer `@/` imports for `src/`. Use PascalCase component names, camelCase functions, and descriptive kebab-case filenames for new components and use-cases; preserve existing local conventions. Prettier is available for formatting. Keep changes focused and reuse existing helpers.
 
 ## Testing Guidelines
 
-No automated test script is currently configured. Before submitting changes, run `npm run lint` and, for behavior changes, `npm run build:dev`. If adding tests, place them near the feature they cover and use clear names such as `validate-table-action.test.ts`.
+Place feature tests in `src/<feature>/__TEST__/`, named `*.test.ts` or `*.test.tsx`; Vitest also accepts `*.spec.*`. Its default environment is Node. Run a focused test with `npm test -- src/order/__TEST__/calculate-order-item-totals.test.ts`. Cover changed behavior and relevant failure cases, especially money calculations and authorization. No coverage threshold is configured. CI runs `npm ci` and `npm test` for pull requests.
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short conventional-style prefixes such as `feat:`, `fix:`, `refactor:`, and `Chore:`. Keep subjects imperative and specific, for example `fix: preserve table session waiter`. Pull requests should include a concise description, affected areas, validation commands, linked issue when available, and screenshots for UI changes.
-
-## Security & Configuration Tips
-
-Do not commit `.env` or production secrets. After changing `prisma/schema.prisma`, generate a migration with `npx prisma migrate dev` and regenerate the Prisma client. Treat document generation, tax submission, payments, and tenant isolation as high-risk paths.
+Follow history's concise prefixes: `feat:`, `fix:`, and `docs:`. Describe the concrete change. Pull requests should explain the problem, resulting behavior, and validation; link relevant issues and include screenshots for visual changes. Call out migrations and configuration changes. Never commit credentials or `.env` contents.

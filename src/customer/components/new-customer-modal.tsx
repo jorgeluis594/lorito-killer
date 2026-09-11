@@ -242,35 +242,36 @@ export default function NewCustomerModal() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-rows-2 md:grid-rows-none md:grid-cols-2 md:gap-4">
-              <div className="flex items-center md:col-span-1">
-                <FormField
-                  control={form.control}
-                  name="documentNumber"
-                  render={({field}) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Numero de documento</FormLabel>
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="documentNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Numero de documento</FormLabel>
+                    <div className="flex gap-2">
                       <FormControl>
                         <Input autoComplete="off" {...field} />
                       </FormControl>
-                      <FormMessage/>
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="button"
-                  className="mt-8 md:h-10 md:w-14 flex md:mt-8 items-center md:px-4"
-                  onClick={handleSearch}
-                  disabled={selectedDocumentType === CARNET_EXTRANJERIA}
-                >
-                  <Search/>
-                </Button>
-              </div>
+                      <Button
+                        type="button"
+                        className="size-[var(--field-height)] shrink-0 p-0"
+                        aria-label="Buscar documento"
+                        onClick={handleSearch}
+                        disabled={selectedDocumentType === CARNET_EXTRANJERIA}
+                      >
+                        <Search />
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
                 <FormField
                   control={form.control}
                   name="documentType"
                   render={({field}) => (
-                    <FormItem className="col-span-1 mt-4">
+                    <FormItem className="col-span-1">
                       <FormLabel>Tipo de Documento</FormLabel>
                       <Select
                         onValueChange={field.onChange}

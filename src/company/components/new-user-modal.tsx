@@ -145,7 +145,7 @@ export default function NewUserModal() {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-2 w-full"
+            className="flex flex-col gap-4 w-full"
           >
             <FormField
               control={form.control}

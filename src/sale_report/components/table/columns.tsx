@@ -1,67 +1,78 @@
-"use client";
-
-import { ColumnDef } from "@tanstack/react-table";
-import { Document } from "@/document/types";
-import { Customer } from "@/customer/types";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { correlative } from "@/document/utils";
+import type { Customer } from "@/customer/types";
 import { fullName } from "@/customer/utils";
+import type { Document, DocumentType } from "@/document/types";
+import { correlative } from "@/document/utils";
 import { formatPrice } from "@/lib/utils";
 import ReceiptPrintButton from "@/printing/components/receipt-print-button";
 import { buttonVariants } from "@/shared/components/ui/button";
+import type { TableColumn } from "@/shared/components/ui/data-table";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { FileCode } from "lucide-react";
 
-export const columns: ColumnDef<Document & { customer?: Customer }>[] = [
+export type SalesReportDocument = Document & { customer?: Customer };
+
+const documentLabels: Record<DocumentType, string> = {
+  invoice: "Factura",
+  receipt: "Boleta",
+  ticket: "Nota de venta",
+};
+
+export const columns: TableColumn<SalesReportDocument>[] = [
   {
-    accessorKey: "serialNumber",
-    header: "CORRELATIVO",
-    cell: ({ row }) => correlative(row.original),
+    id: "correlative",
+    header: "Correlativo",
+    cell: correlative,
+    mobile: "title",
+    className: "font-medium",
   },
   {
-    accessorKey: "customerName",
-    header: "CLIENTE",
-    cell: ({ row }) =>
-      row.original.customer
-        ? fullName(row.original.customer)
-        : "Cliente general",
+    id: "customer",
+    header: "Cliente",
+    cell: (document) =>
+      document.customer ? fullName(document.customer) : "Cliente general",
+    mobile: "description",
   },
   {
-    accessorKey: "dateOfIssue",
-    header: "CREACIÓN",
-    cell: ({ row }) =>
-      format(row.original.dateOfIssue, "dd/MM/yyyy", { locale: es }),
+    id: "documentType",
+    header: "Tipo",
+    cell: (document) => documentLabels[document.documentType],
+    mobile: "description",
   },
   {
-    accessorKey: "total",
-    header: "TOTAL",
-    cell: ({ row }) => formatPrice(row.original.total),
+    id: "dateOfIssue",
+    header: "Emisión",
+    cell: (document) =>
+      format(document.dateOfIssue, "dd/MM/yyyy", { locale: es }),
+    mobile: "description",
   },
   {
-    accessorKey: "descarga",
-    header: "IMPRIMIR",
-    cell: ({ row }) => <ReceiptPrintButton orderId={row.original.orderId} />,
+    id: "total",
+    header: "Total",
+    cell: (document) => formatPrice(document.total),
+    align: "right",
+    mobile: "value",
   },
   {
-    accessorKey: "xml",
-    header: "XML",
-    cell: ({ row }) => {
-      if (
-        (row.original.documentType === "invoice" ||
-          row.original.documentType === "receipt") &&
-        row.original.xml
-      ) {
-        return (
+    id: "actions",
+    header: "Acciones",
+    align: "right",
+    mobile: "actions",
+    cell: (document) => (
+      <div className="flex items-center justify-end gap-1">
+        <ReceiptPrintButton orderId={document.orderId} />
+        {document.documentType !== "ticket" && document.xml ? (
           <a
             className={buttonVariants({ variant: "ghost", size: "icon" })}
-            href={`${row.original.xml}`}
+            href={document.xml}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={`Descargar XML de ${correlative(document)}`}
           >
-            <FileCode />
+            <FileCode aria-hidden="true" className="size-4" />
           </a>
-        );
-      }
-    },
+        ) : null}
+      </div>
+    ),
   },
 ];

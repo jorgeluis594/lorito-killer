@@ -3,7 +3,7 @@
 import {
   type ReactNode,
   createContext,
-  useRef,
+  useState,
   useContext,
   useEffect,
 } from "react";
@@ -53,13 +53,10 @@ const ProductsLoader = ({ children }: { children: ReactNode }) => {
 export const ProductsStoreProvider = ({
   children,
 }: ProductsStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<ProductsStore>>(undefined);
-  if (!storeRef.current) {
-    storeRef.current = createProductsStore();
-  }
+  const [store] = useState(createProductsStore);
 
   return (
-    <ProductsStoreContext.Provider value={storeRef.current}>
+    <ProductsStoreContext.Provider value={store}>
       <ProductsLoader>{children}</ProductsLoader>
     </ProductsStoreContext.Provider>
   );
