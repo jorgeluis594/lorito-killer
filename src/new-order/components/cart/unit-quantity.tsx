@@ -1,8 +1,8 @@
-import {Button} from "@/shared/components/ui/button";
-import {Minus, Plus} from "lucide-react";
-import {Input} from "@/shared/components/ui/input";
-import {useOrderFormActions} from "@/new-order/order-form-provider";
-import {OrderItem} from "@/order/types";
+import { Button } from "@/shared/components/ui/button";
+import { Minus, Plus } from "lucide-react";
+import { Input } from "@/shared/components/ui/input";
+import { useOrderFormActions } from "@/new-order/order-form-provider";
+import { OrderItem } from "@/order/types";
 
 interface UnitQuantityProps {
   item: OrderItem;
@@ -10,7 +10,11 @@ interface UnitQuantityProps {
   onDecreaseIncreaseQuantity: () => void;
 }
 
-export default function UnitQuantityComponent ({item, onIncreaseIncreaseQuantity, onDecreaseIncreaseQuantity}: UnitQuantityProps) {
+export default function UnitQuantityComponent({
+  item,
+  onIncreaseIncreaseQuantity,
+  onDecreaseIncreaseQuantity,
+}: UnitQuantityProps) {
   const { updateOrderItem } = useOrderFormActions();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,18 +28,32 @@ export default function UnitQuantityComponent ({item, onIncreaseIncreaseQuantity
   };
 
   return (
-    <div className="flex justify-around items-center">
-      <Button variant="secondary" onClick={onDecreaseIncreaseQuantity}>
-        <Minus className="h-2 w-2 cursor-pointer"/>
+    <div className="flex justify-center items-center gap-1">
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        aria-label={`Reducir cantidad de ${item.productName}`}
+        onClick={onDecreaseIncreaseQuantity}
+      >
+        <Minus aria-hidden="true" />
       </Button>
       <Input
         value={item.quantity || 0}
         onChange={handleChange}
-        className="text-small w-16 text-center border p-1"
+        aria-label={`Cantidad de ${item.productName}`}
+        inputMode="numeric"
+        className="w-16 text-center tabular-nums"
       />
-      <Button variant="secondary" onClick={onIncreaseIncreaseQuantity}>
-        <Plus className="h-2 w-2 cursor-pointer"/>
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        aria-label={`Aumentar cantidad de ${item.productName}`}
+        onClick={onIncreaseIncreaseQuantity}
+      >
+        <Plus aria-hidden="true" />
       </Button>
     </div>
-  )
+  );
 }

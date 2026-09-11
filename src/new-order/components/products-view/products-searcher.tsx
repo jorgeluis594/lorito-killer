@@ -1,202 +1,358 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Search, X, Plus } from "lucide-react";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import { Search } from "lucide-react";
-import { getMany, type GetManyParams } from "@/product/api_repository";
-import { useToast } from "@/shared/components/ui/use-toast";
-import ProductList from "@/new-order/components/products-view/product-list";
-import { debounce, isBarCodeValid } from "@/lib/utils";
-import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { useCategoryStore } from "@/category/components/category-store-provider";
-import { SortOptions } from "@/product/types";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { getMany, findProduct } from "@/product/api_repository";
+import { type Product, type SortKey, isSingleProduct } from "@/product/types";
 import { sortOptions } from "@/product/constants";
-import { findProduct } from "@/product/api_repository";
+import { useCategoryStore } from "@/category/components/category-store-provider";
 import { useOrderFormActions } from "@/new-order/order-form-provider";
-import {
-  useProductFormActions,
-  useProductFormStore,
-} from "@/new-order/components/products-view/product-searcher-form-provider";
-import AddExpense from "@/cash-shift/components/add_expense";
-import CartMobile from "@/new-order/components/cart/cart-mobile";
+import KgCalculatorForm from "@/new-order/components/cart/kg-calculator-form";
+import ProductThumbnail from "@/new-order/components/product-thumbnail";
+import { cn, formatPrice, plus } from "@/lib/utils";
 
 export default function ProductsSearcher() {
-  const { setProducts } = useProductFormActions();
-  const products = useProductFormStore((store) => store.products);
-  const [search, setSearch] = useState<string>("");
-  const [sortValue, setSortValue] = useState<keyof SortOptions>("created_desc");
-  const { categories } = useCategoryStore((store) => store);
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [skuValue, setSkuValue] = useState<string>("");
-  const { addProduct } = useOrderFormActions();
+  const [search, setSearch] = useState("");
+  const [categoryId, setCategoryId] = useState("all");
+  const [sortBy, setSortBy] = useState<SortKey>("name_asc");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [active, setActive] = useState(-1);
+  const [pendingWeights, setPendingWeights] = useState<
+    Array<{
+      product: Product;
+      id: string;
+      version: number;
+      resetSearch: boolean;
+    }>
+  >([]);
+  const weightSelection = pendingWeights[0];
+  const kgProduct = weightSelection?.product;
+  const [announcement, setAnnouncement] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const requestVersion = useRef(0);
+  const { categories } = useCategoryStore((state) => state);
+  const { addProduct, updateOrderItem, getOrderItemByProduct } =
+    useOrderFormActions();
 
-  const searchProduct = async () => {
-    const params: GetManyParams = { categoryId, sortBy: sortValue };
-    if (search.length || search !== "") {
-      params["q"] = search;
-    }
-    if (search.length === 0) {
-      params["limit"] = 20;
-    }
-    const response = await getMany(params);
-    if (params["q"] !== undefined && params["q"] !== search) return;
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    setActive(-1);
+    const timeout = setTimeout(async () => {
+      try {
+        const response = await getMany({
+          q: search.trim(),
+          categoryId: categoryId !== "all" ? categoryId : undefined,
+          sortBy,
+        });
+        if (cancelled) return;
+        if (response.success) setProducts(response.data);
+        else setError(response.message);
+      } catch {
+        if (!cancelled)
+          setError("No se pudieron cargar los productos. Intenta nuevamente.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [search, categoryId, sortBy, retry]);
 
-    if (!response.success) {
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: response.message,
-      });
+  useEffect(() => {
+    if (active >= 0)
+      document
+        .getElementById(`sale-result-${active}`)
+        ?.scrollIntoView({ block: "nearest" });
+  }, [active]);
+
+  function finishAdding(product: Product, resetSearch = true) {
+    setAnnouncement(`${product.name} agregado a la venta`);
+    if (!resetSearch) return;
+    setSearch("");
+    setActive(-1);
+    input.current?.focus();
+  }
+
+  function selectProduct(product: Product, resetSearch = true) {
+    if (isSingleProduct(product) && product.unitType === "kg") {
+      setPendingWeights((pending) => [
+        ...pending,
+        {
+          product,
+          id: crypto.randomUUID(),
+          version: requestVersion.current,
+          resetSearch,
+        },
+      ]);
       return;
     }
+    addProduct(product);
+    finishAdding(product, resetSearch);
+  }
 
-    setProducts(response.data);
-  };
-
-  const onSearchSubmit = debounce(searchProduct, 300);
-
-  const onSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
-
-  useEffect(() => {
-    onSearchSubmit();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, categoryId, sortValue]);
-
-  useEffect(() => {
-    searchProduct();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleCategoryChange = (categoryId: string) => {
-    if (categoryId === "all") {
-      setCategoryId("");
-    } else {
-      setCategoryId(categoryId);
+  async function submitSearch() {
+    if (!loading && !error && active >= 0 && products[active]) {
+      selectProduct(products[active]);
+      return;
     }
-  };
-
-  const handleSortChange = (sortKey: keyof SortOptions) => {
-    setSortValue(sortKey);
-  };
-
-  const barcodeInputRef = useRef<HTMLInputElement | null>(null);
-
-  const skuValueRef = useRef(skuValue);
-
-  useEffect(() => {
-    skuValueRef.current = skuValue;
-  }, [skuValue]);
-
-  useEffect(() => {
-    const currentElement = barcodeInputRef.current;
-    if (currentElement) {
-      const handleKeyDown = (ev: KeyboardEvent) => {
-        if (ev.keyCode === 13) {
-          findProduct(skuValueRef.current).then((response) => {
-            if (!response.success) {
-              toast({
-                title: "Error",
-                variant: "destructive",
-                description: `Producto con sku: ${skuValueRef.current} no encontrado`,
-              });
-              return;
-            }
-
-            addProduct(response.data);
-            setSkuValue("");
-          });
-
-          barcodeInputRef.current?.focus();
-        }
-      };
-      currentElement.addEventListener("keydown", handleKeyDown);
-      return () => {
-        currentElement.removeEventListener("keydown", handleKeyDown);
-      };
+    const query = search.trim();
+    if (!query) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const version = requestVersion.current;
+    try {
+      const response = await findProduct(encodeURIComponent(query));
+      if (response.success)
+        selectProduct(response.data, version === requestVersion.current);
+      else if (version === requestVersion.current) {
+        setAnnouncement(
+          "Selecciona un producto de los resultados con las flechas y Enter.",
+        );
+      }
+    } catch {
+      if (version === requestVersion.current)
+        setError("No se pudo buscar el código. Intenta nuevamente.");
+    }
+  }
+
   return (
-    <div className="h-screen w-100 p-5 pb-0 grid grid-rows-[7rem_1fr] relative">
-      <div className="w-full border-b">
-        <div className="w-full md:w-1/2 flex flex-cols-3 md:grid md:grid-cols-3 gap-4 mb-2">
-          <Select onValueChange={handleCategoryChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccione categoría"/>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem key="all" value="all">
-                Todos los productos
-              </SelectItem>
+    <section
+      aria-label="Buscar productos"
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      <h2 className="sr-only">Productos</h2>
+      <form
+        className="grid shrink-0 grid-cols-2 gap-2 lg:grid-cols-[minmax(0,1fr)_140px_140px]"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submitSearch();
+        }}
+      >
+        <div className="relative col-span-2 min-w-0 lg:col-span-1">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            id="sale-product-search"
+            ref={input}
+            autoFocus
+            autoComplete="off"
+            className="pl-9 pr-10"
+            placeholder="Nombre o código…"
+            aria-label="Buscar por nombre o código de barras"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={true}
+            aria-controls="sale-product-results"
+            aria-activedescendant={
+              active >= 0 ? `sale-result-${active}` : undefined
+            }
+            value={search}
+            onChange={(event) => {
+              requestVersion.current += 1;
+              setSearch(event.target.value);
+              setLoading(true);
+              setActive(-1);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && event.repeat) event.preventDefault();
+              if (event.key === "Escape") {
+                requestVersion.current += 1;
+                setSearch("");
+                setActive(-1);
+              }
+              if (
+                (event.key === "ArrowDown" || event.key === "ArrowUp") &&
+                !loading &&
+                products.length
+              ) {
+                event.preventDefault();
+                setActive((index) =>
+                  event.key === "ArrowDown"
+                    ? Math.min(index + 1, products.length - 1)
+                    : Math.max(index - 1, 0),
+                );
+              }
+            }}
+          />
+          {search && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-1/2 -translate-y-1/2"
+              aria-label="Limpiar búsqueda"
+              onClick={() => {
+                requestVersion.current += 1;
+                setSearch("");
+                setActive(-1);
+                input.current?.focus();
+              }}
+            >
+              <X aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+        <Select value={categoryId} onValueChange={setCategoryId}>
+          <SelectTrigger aria-label="Categoría" className="min-w-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">Categorías</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id!}>
                   {category.name}
                 </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-
-          <Select onValueChange={handleSortChange}>
-            <SelectTrigger className="w-1/5 md:w-full">
-              <SelectValue placeholder="Ordernar por"/>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(sortOptions).map(([key, {name}]) => (
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <Select
+          value={sortBy}
+          onValueChange={(value) => setSortBy(value as SortKey)}
+        >
+          <SelectTrigger aria-label="Ordenar productos" className="min-w-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {Object.entries(sortOptions).map(([key, option]) => (
                 <SelectItem key={key} value={key}>
-                  {name}
+                  {option.name}
                 </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-
-          <div className="md:absolute top-4 right-4">
-            <p>Gastos</p><AddExpense/>
-          </div>
-        </div>
-        <div className="flex w-full items-center space-x-2">
-          <Button type="button" onClick={onSearchSubmit}>
-            <Search className="h-4 w-5" />
-          </Button>
-          <div className="flex flex-cols-4 md:grid md:grid-cols-4 gap-3">
-            <Input
-              placeholder="Nombre del producto"
-              className="col-span-2"
-              onChange={onSearchChange}
-            />
-            <Input
-              placeholder="Código de barra"
-              className="col-span-1 w-1/3 md:w-full"
-              autoFocus={true}
-              value={skuValue}
-              onChange={(e) => setSkuValue(e.target.value)}
-              ref={barcodeInputRef}
-            />
-          </div>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </form>
+      <p className="sr-only" role="status">
+        {announcement}
+      </p>
+      <div className="mt-2 flex min-h-0 flex-1 flex-col">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          id="sale-product-results"
+          role="listbox"
+          aria-label="Productos"
+          aria-busy={loading}
+        >
+          {loading ? (
+            <div
+              className="flex flex-col gap-4 p-4"
+              role="status"
+              aria-label="Buscando productos"
+            >
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : error ? (
+            <div className="p-5" role="alert">
+              <p>{error}</p>
+              <Button
+                type="button"
+                variant="link"
+                onClick={() => setRetry((value) => value + 1)}
+              >
+                Reintentar
+              </Button>
+            </div>
+          ) : products.length === 0 ? (
+            <p className="p-6 text-sm text-muted-foreground">
+              No encontramos productos. Prueba otro nombre, escanea el código o
+              cambia la categoría.
+            </p>
+          ) : (
+            products.map((product, index) => (
+              <button
+                type="button"
+                role="option"
+                aria-selected={active === index}
+                id={`sale-result-${index}`}
+                key={product.id}
+                className={cn(
+                  "mb-2 flex min-h-20 w-full items-center gap-4 rounded-lg border border-transparent px-4 py-4 text-left hover:border-input hover:bg-accent focus-visible:bg-accent",
+                  active === index && "bg-accent",
+                )}
+                onClick={() => selectProduct(product)}
+              >
+                <ProductThumbnail
+                  src={product.photos?.[0]?.url}
+                  className="size-12 sm:size-20"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold">{product.name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {product.sku ? `${product.sku} · ` : ""}
+                    {isSingleProduct(product)
+                      ? `${product.stock} ${product.unitType === "kg" ? "kg" : "und"} en stock`
+                      : product.type === "ServiceProduct"
+                        ? "Servicio"
+                        : "Paquete"}
+                  </span>
+                </span>
+                <span className="shrink-0 text-right font-semibold tabular-nums">
+                  {formatPrice(product.price)}
+                  {isSingleProduct(product) && product.unitType === "kg" && (
+                    <span className="block text-xs font-normal">por kg</span>
+                  )}
+                </span>
+                <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-primary">
+                  <Plus className="size-4" aria-hidden="true" />
+                  Agregar
+                </span>
+              </button>
+            ))
+          )}
         </div>
       </div>
-
-
-      <div className="md:mt-2 overflow-hidden">
-        <div className="md:hidden flex justify-center mt-4">
-          <CartMobile />
-        </div>
-        <div className="md:h-full">
-            <ScrollArea className="md:h-full mt-2 md:mt-2">
-              <ProductList products={products} />
-            </ScrollArea>
-        </div>
-      </div>
-    </div>
+      {kgProduct && (
+        <KgCalculatorForm
+          key={weightSelection.id}
+          open
+          onOpenChange={(value) => {
+            if (!value) {
+              setPendingWeights((pending) => pending.slice(1));
+              if (pendingWeights.length === 1) input.current?.focus();
+            }
+          }}
+          defaultValue={1}
+          productPrice={kgProduct.price}
+          productName={kgProduct.name}
+          onSubmit={(kg) => {
+            const item = getOrderItemByProduct(kgProduct.id!);
+            if (item)
+              updateOrderItem({ ...item, quantity: plus(item.quantity)(kg) });
+            else addProduct(kgProduct, kg);
+            setPendingWeights((pending) => pending.slice(1));
+            finishAdding(
+              kgProduct,
+              pendingWeights.length === 1 &&
+                weightSelection.resetSearch &&
+                weightSelection.version === requestVersion.current,
+            );
+          }}
+        />
+      )}
+    </section>
   );
 }

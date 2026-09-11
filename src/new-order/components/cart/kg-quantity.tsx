@@ -35,16 +35,15 @@ const KgQuantity: React.FC<KgQuantityProps> = ({ orderItem }) => {
         productPrice={orderItem.productPrice}
         onSubmit={onKgCalculatorSubmit}
       />
-      <div className="flex justify-around items-center">
-        <p className="text-small group-hover:hidden">
-          {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
-        </p>
+      <div className="flex justify-center items-center">
         <Button
           variant="outline"
           onClick={() => setOpen(true)}
-          className="hidden group-hover:block"
+          aria-label={`Editar peso de ${orderItem.productName}`}
+          className="gap-2"
         >
-          <Pencil />
+          {orderItem.quantity} {UNIT_TYPE_MAPPER[orderItem.unitType]}
+          <Pencil data-icon="inline-end" aria-hidden="true" />
         </Button>
       </div>
     </>

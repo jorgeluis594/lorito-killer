@@ -212,6 +212,7 @@ export const useOrderFormActions = (): Actions => {
         id: orderItemId,
         productId: product.id!,
         productName: product.name,
+        productPhotoUrl: product.photos?.[0]?.url,
         productPrice: product.price,
         unitType:
           product.type == SingleProductType ? product.unitType : UNIT_UNIT_TYPE,
