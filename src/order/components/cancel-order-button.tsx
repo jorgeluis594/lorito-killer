@@ -1,12 +1,9 @@
 "use client";
 
-import { Order } from "@/order/types";
-import { Document } from "@/document/types";
 import { Button } from "@/shared/components/ui/button";
 import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -15,84 +12,93 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog";
-import { correlative } from "@/document/utils";
 import { cancelOrder } from "@/order/actions";
 import { useToast } from "@/shared/components/ui/use-toast";
-import {useState} from "react";
-import {log} from "@/lib/log";
-import {Textarea} from "@/shared/components/ui/textarea";
-import {Label} from "@/shared/components/ui/label";
+import { useState, useTransition } from "react";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
+import { useRouter } from "next/navigation";
 
 const CancelOrderButton = ({
-  order,
-  document,
+  orderId,
+  label,
 }: {
-  order: Order;
-  document?: Document;
+  orderId: string;
+  label: string;
 }) => {
   const { toast } = useToast();
-  const [cancellationReason, setCancellationReason] = useState<string>('');
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [isPending, startTransition] = useTransition();
 
-  const onClickHandle = async () => {
-    if (!cancellationReason) {
+  const onConfirm = () => {
+    startTransition(async () => {
+      const cancelResponse = await cancelOrder(orderId, cancellationReason);
+      if (!cancelResponse.success) {
+        toast({
+          title: "No se pudo anular la venta",
+          description: cancelResponse.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setOpen(false);
+      setCancellationReason("");
       toast({
-        title: "Error",
-        description: "Debe proporcionar una razón para la cancelación.",
-        variant: "destructive",
+        title: "Venta anulada",
+        description: `La venta ${label} ha sido anulada`,
       });
-      return;
-    }
-
-
-    const cancelResponse = await cancelOrder(order, cancellationReason);
-    if (!cancelResponse.success) {
-      toast({
-        title: "Error",
-        description: `No se pudo cancelar la venta. Comuniquese con soporte.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Venta anulada con éxito",
-      description: `La venta ${document ? correlative(document) : order.id} ha sido anulada`,
+      router.refresh();
     });
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger>
-        <Button variant="destructive" size="icon">
-          <Trash2 />
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost_destructive"
+          size="icon"
+          aria-label={`Anular venta ${label}`}
+        >
+          <Trash2 aria-hidden="true" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            ¿Estás seguro de cancelar la venta{" "}
-            {document ? correlative(document) : order.id}?
+            ¿Anular la venta {label}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             No se puede deshacer la cancelación de la venta.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div>
-          <Label htmlFor="cancellationReason">Razón de la cancelación:</Label>
+          <Label htmlFor={`cancellationReason-${orderId}`}>
+            Motivo de la anulación
+          </Label>
           <Textarea
-            id="cancellationReason"
+            id={`cancellationReason-${orderId}`}
             value={cancellationReason}
             onChange={(e) => setCancellationReason(e.target.value)}
-            placeholder="Ingrese una razón"
+            placeholder="Escribe el motivo"
             rows={4}
-            style={{ width: '100%' }}
+            required
+            disabled={isPending}
           />
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>No, regresar</AlertDialogCancel>
-          <AlertDialogAction onClick={onClickHandle}>
-            Sí, cancelar
-          </AlertDialogAction>
+          <AlertDialogCancel disabled={isPending}>Regresar</AlertDialogCancel>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={!cancellationReason.trim() || isPending}
+            onClick={onConfirm}
+          >
+            {isPending ? "Anulando…" : "Anular venta"}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

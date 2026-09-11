@@ -32,6 +32,7 @@ function NavLink({
   return (
     <Link
       href={item.disabled ? "/" : item.href!}
+      className="rounded-md border border-transparent focus-visible:border-primary"
       onClick={() => {
         if (setOpen) setOpen(false);
       }}

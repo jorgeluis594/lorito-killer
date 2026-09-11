@@ -3,7 +3,10 @@
 import { walletPaymentReference } from "@/order/wallet-payment";
 import type { Customer } from "@/customer/types";
 import { fullName } from "@/customer/utils";
-import type { Document, DocumentType } from "@/document/types";
+import type {
+  DocumentType,
+  SalesReportDocument as ReportDocument,
+} from "@/document/types";
 import { correlative } from "@/document/utils";
 import { formatPrice } from "@/lib/utils";
 import ReceiptPrintButton from "@/printing/components/receipt-print-button";
@@ -12,8 +15,9 @@ import type { TableColumn } from "@/shared/components/ui/data-table";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileCode } from "lucide-react";
+import CancelOrderButton from "@/order/components/cancel-order-button";
 
-export type SalesReportDocument = Document & { customer?: Customer };
+export type SalesReportDocument = ReportDocument & { canCancel: boolean };
 
 const documentLabels: Record<DocumentType, string> = {
   invoice: "Factura",
@@ -87,6 +91,12 @@ export const columns: TableColumn<SalesReportDocument>[] = [
           >
             <FileCode aria-hidden="true" className="size-4" />
           </a>
+        ) : null}
+        {document.canCancel ? (
+          <CancelOrderButton
+            orderId={document.orderId}
+            label={correlative(document)}
+          />
         ) : null}
       </div>
     ),

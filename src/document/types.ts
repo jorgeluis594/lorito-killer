@@ -105,6 +105,12 @@ export type SearchParams = {
   orderStatus?: "paid" | "cancelled" | "all";
 };
 
+export type SalesReportDocument = Document & {
+  customer?: Customer;
+  orderStatus: Status;
+  orderCreatedAt: Date;
+};
+
 export type Registered<T extends Document> = T & { status: "registered" };
 
 export type RegisteredTicket = Registered<Ticket>;

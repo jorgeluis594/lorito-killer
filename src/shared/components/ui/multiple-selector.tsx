@@ -349,7 +349,7 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
       >
         <div
           className={cn(
-            'group grid min-h-[var(--field-height)] items-center rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+            'group grid min-h-[var(--field-height)] items-center rounded-md border border-input px-3 py-2 text-sm focus-within:border-primary',
             className,
           )}
         >
