@@ -1,73 +1,38 @@
 "use client";
 
 import { columns } from "@/cash-shift/components/data-table/columns";
-import { InteractiveDataTable as DataTable } from "@/shared/components/ui/interactive-data-table";
-import { useState, useEffect, useCallback } from "react";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { use } from "react";
 import { CashShiftWithOutOrders } from "@/cash-shift/types";
-import { getManyCashShifts } from "@/cash-shift/api_repository";
-import { useToast } from "@/shared/components/ui/use-toast";
-import BreadCrumb from "@/shared/breadcrumb";
-import { Heading } from "@/shared/components/ui/heading";
-import OpenAndCloseButton from "@/cash-shift/components/open_and_close_button";
-import { Separator } from "@/shared/components/ui/separator";
+import { response } from "@/lib/types";
+import { RefreshButton } from "@/dashboard/components/refresh-button";
 
-export default function TableClient() {
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const [cashShifts, setCashShifts] = useState<CashShiftWithOutOrders[]>([]);
+type TableClientProps = {
+  cashShiftsPromise: Promise<response<CashShiftWithOutOrders[]>>;
+};
 
-  const fetchData = useCallback(async () => {
-    const response = await getManyCashShifts();
-    setLoading(false);
+export default function TableClient({ cashShiftsPromise }: TableClientProps) {
+  const cashShiftsResponse = use(cashShiftsPromise);
 
-    if (!response.success) {
-      toast({
-        title: "Error",
-        description:
-          "Ocurrió un error al cargar las cajas: " + response.message,
-        variant: "destructive",
-      });
-      return;
-    } else {
-      setCashShifts(response.data);
-    }
-
-  }, [toast]);
-
-  useEffect(() => {
-    let ignore = false;
-
-    getManyCashShifts().then((response) => {
-      if (ignore) return;
-
-      setLoading(false);
-
-      if (!response.success) {
-        toast({
-          title: "Error",
-          description:
-            "Ocurrió un error al cargar las cajas: " + response.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setCashShifts(response.data);
-    });
-
-    return () => {
-      ignore = true;
-    };
-  }, [toast]);
+  if (!cashShiftsResponse.success) {
+    return (
+      <div className="flex flex-col items-start gap-3 rounded-lg border bg-card p-5">
+        <p className="font-bold">No pudimos cargar las cajas.</p>
+        <p className="text-sm text-muted-foreground">
+          Intenta nuevamente. Si el problema continúa, comunícate con soporte.
+        </p>
+        <RefreshButton />
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="flex items-start justify-between">
-        <Heading title="Caja chica" description="Gestiona tus cajas chicas!" />
-        <OpenAndCloseButton onActionPerform={fetchData} />
-      </div>
-      <Separator />
-      <DataTable columns={columns} data={cashShifts} isLoading={loading} />;
-    </>
+    <DataTable
+      data={cashShiftsResponse.data}
+      columns={columns}
+      caption="Historial de cajas"
+      getRowId={(cashShift) => cashShift.id}
+      emptyMessage="Aún no hay cajas registradas. Abre una caja para comenzar."
+    />
   );
 }
