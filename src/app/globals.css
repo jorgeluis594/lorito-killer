@@ -96,10 +96,11 @@
   textarea {
     caret-color: hsl(var(--primary));
   }
-  a:focus-visible,
-  button:focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring)) !important;
+    outline-offset: -2px;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
   }
   td {
     font-variant-numeric: tabular-nums;
