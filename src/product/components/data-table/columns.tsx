@@ -1,9 +1,9 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
 import { CellAction } from "./cell-action";
 import { Product, SingleProductType } from "@/product/types";
 import { formatPrice } from "@/lib/utils";
 import { UNIT_TYPE_MAPPER } from "@/product/constants";
+import { TableColumn } from "@/shared/components/ui/data-table";
 import {
   Tooltip,
   TooltipContent,
@@ -36,63 +36,79 @@ const HiddenProductNameCell = ({ product }: { product: Product }) => {
   );
 };
 
-export const columns: ColumnDef<Product>[] = [
+export const columns: TableColumn<Product>[] = [
   {
-    accessorKey: "name",
-    header: "NOMBRE",
-    cell: ({ row }) => <HiddenProductNameCell product={row.original} />,
+    id: "name",
+    header: "Producto",
+    cell: (product) => <HiddenProductNameCell product={product} />,
+    mobile: "title",
   },
   {
-    accessorKey: "categories",
-    header: "CATEGORÍAS",
-    cell: ({ row }) => (
-      <span className={row.original.hidden ? "text-muted-foreground" : ""}>
-        {row.original.categories.map((category) => category.name).join(", ") ||
+    id: "category",
+    header: "Categorías",
+    cell: (product) => (
+      <span className={product.hidden ? "text-muted-foreground" : ""}>
+        {product.categories.map((category) => category.name).join(", ") ||
           "---"}
       </span>
     ),
+    mobile: "description",
   },
   {
-    accessorKey: "stock",
-    header: "CANTIDAD",
-    cell: ({ row }) => (
-      <span className={row.original.hidden ? "text-muted-foreground" : ""}>
-        {row.original.type === SingleProductType &&
-          `${row.original.stock} ${UNIT_TYPE_MAPPER[row.original.unitType]}`}
+    id: "status",
+    header: "Stock",
+    align: "right",
+    cell: (product) =>
+      product.type === SingleProductType ? (
+        <Badge
+          variant={product.stock <= 0 ? "destructive" : "outline"}
+        >
+          {product.stock <= 0
+            ? "Sin stock"
+            : `${product.stock} ${UNIT_TYPE_MAPPER[product.unitType]}`}
+        </Badge>
+      ) : (
+        "—"
+      ),
+    mobile: "description",
+  },
+  {
+    id: "price",
+    header: "Precio de venta",
+    align: "right",
+    cell: (product) => (
+      <span className={product.hidden ? "text-muted-foreground" : ""}>
+        {formatPrice(product.price)}
+      </span>
+    ),
+    mobile: "value",
+  },
+  {
+    id: "purchasePrice",
+    header: "Precio de compra",
+    align: "right",
+    cell: (product) => (
+      <span className={product.hidden ? "text-muted-foreground" : ""}>
+        {product.type === SingleProductType
+          ? formatPrice(product.purchasePrice)
+          : "—"}
       </span>
     ),
   },
   {
-    accessorKey: "purchasePrice",
-    header: "PRECIO DE VENTA",
-    cell: ({ row }) => (
-      <span className={row.original.hidden ? "text-muted-foreground" : ""}>
-        {formatPrice(row.original.price)}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "price",
-    header: "PRECIO DE COMPRA",
-    cell: ({ row }) => (
-      <span className={row.original.hidden ? "text-muted-foreground" : ""}>
-        {row.original.type === SingleProductType &&
-          formatPrice(row.original.purchasePrice)}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "sku",
-    header: "CÓDIGO",
-    cell: ({ row }) => (
-      <span className={row.original.hidden ? "text-muted-foreground" : ""}>
-        {row.original.sku || "---"}
+    id: "sku",
+    header: "Código",
+    cell: (product) => (
+      <span className={product.hidden ? "text-muted-foreground" : ""}>
+        {product.sku || "—"}
       </span>
     ),
   },
   {
     id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => <CellAction product={row.original} />,
+    header: <span className="sr-only">Acciones</span>,
+    align: "right",
+    cell: (product) => <CellAction product={product} />,
+    mobile: "actions",
   },
 ];

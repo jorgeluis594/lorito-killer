@@ -40,7 +40,6 @@ export function ProductsTableFilters() {
   const filterCount = [categoryId !== "all", showHidden, withoutStock].filter(
     Boolean,
   ).length;
-  const hasFilters = Boolean(query || filterCount);
 
   const onCategoryChange = (value: string) => {
     updateRoute({ categoryId: value === "all" ? null : value, page: null });
@@ -58,17 +57,6 @@ export function ProductsTableFilters() {
       () => updateRoute({ q: value.trim() || null, page: null }),
       350,
     );
-  };
-
-  const clearFilters = () => {
-    window.clearTimeout(searchTimeout.current);
-    updateRoute({
-      q: null,
-      categoryId: null,
-      showHidden: null,
-      stock: null,
-      page: null,
-    });
   };
 
   return (
@@ -145,11 +133,6 @@ export function ProductsTableFilters() {
               </Label>
             </div>
             <SheetFooter className="mt-auto gap-2">
-              {hasFilters ? (
-                <Button type="button" variant="ghost" onClick={clearFilters}>
-                  Limpiar filtros
-                </Button>
-              ) : null}
               <SheetClose asChild>
                 <Button type="button">Listo</Button>
               </SheetClose>

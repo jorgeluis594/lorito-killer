@@ -1,21 +1,21 @@
-import BreadCrumb from "@/shared/breadcrumb";
 import { ProductFormStoreProvider } from "@/product/components/form/product-form-store-provider";
-import { Heading } from "@/shared/components/ui/heading";
-import { Separator } from "@/shared/components/ui/separator";
-import DataTable from "@/sale_report/components/table/client";
+import { PageHeader } from "@/shared/components/ui/page-header";
+import { DataTableSkeleton } from "@/shared/components/ui/data-table";
 import { columns } from "@/product/components/data-table/columns";
 import React, { Suspense } from "react";
 import { getMany, GetManyParams, getTotal } from "@/product/db_repository";
 import { getSession } from "@/lib/auth";
 import ProductModalForm from "@/product/components/form/product-modal-form";
 import AddProductButtons from "@/product/components/add-single-product-button";
-import AddServiceProductButton from "@/product/components/add-service-product-button";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
 import { ProductsTableFilters } from "@/product/components/data-table/products-table-filters";
-import { ProductsDataTable } from "@/product/components/data-table/products-data-table";
+import {
+  ProductsDataTable,
+  type ProductsTableResult,
+} from "@/product/components/data-table/products-data-table";
 import ExportProductsButton from "@/product/components/export-products-button";
-
-const breadcrumbItems = [{ title: "Productos", link: "/products" }];
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 type PageProps = {
   searchParams: Promise<{
@@ -23,23 +23,18 @@ type PageProps = {
   }>;
 };
 
-type ResolvedSearchParams = {
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
-async function ProductsWithSuspense({ searchParams }: ResolvedSearchParams) {
-  const session = await getSession();
-  if (!session.user) return <SignOutRedirection />;
-
-  const q =
-    typeof searchParams.q === "string" ? searchParams.q : undefined;
+async function loadProducts(
+  companyId: string,
+  searchParams: { [key: string]: string | string[] | undefined },
+): Promise<ProductsTableResult | null> {
+  const q = typeof searchParams.q === "string" ? searchParams.q : undefined;
   const categoryId =
     typeof searchParams.categoryId === "string"
       ? searchParams.categoryId
       : undefined;
 
   const params: GetManyParams = {
-    companyId: session.user.companyId,
+    companyId,
     pageNumber: Number(searchParams.page) || 1,
     limit: Number(searchParams.size) || 10,
     categoryId,
@@ -54,7 +49,7 @@ async function ProductsWithSuspense({ searchParams }: ResolvedSearchParams) {
   const [productsResponse, productsCountResponse] = await Promise.all([
     getMany(params),
     getTotal({
-      companyId: session.user.companyId,
+      companyId,
       q,
       categoryId,
       includeHidden: searchParams.showHidden === "true",
@@ -63,20 +58,24 @@ async function ProductsWithSuspense({ searchParams }: ResolvedSearchParams) {
   ]);
 
   if (!productsResponse.success || !productsCountResponse.success) {
-    return <p>Error cargando los documentos, comuniquese con soporte</p>;
+    return null;
   }
 
-  return (
-    <>
-      <ProductsTableFilters />
-      <ProductsDataTable
-        data={productsResponse.data}
-        pageCount={Math.ceil(
-          productsCountResponse.data / (Number(searchParams.size) || 10),
-        )}
-      />
-    </>
-  );
+  return {
+    data: productsResponse.data,
+    pageCount: Math.ceil(
+      productsCountResponse.data / (Number(searchParams.size) || 10),
+    ),
+  };
+}
+
+async function ProductCount({
+  totalPromise,
+}: {
+  totalPromise: ReturnType<typeof getTotal>;
+}) {
+  const totalResponse = await totalPromise;
+  return totalResponse.success ? totalResponse.data : "—";
 }
 
 export default async function Page(props: PageProps) {
@@ -84,31 +83,59 @@ export default async function Page(props: PageProps) {
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 
-  const totalResponse = await getTotal({ companyId: session.user.companyId });
+  const totalPromise = getTotal({ companyId: session.user.companyId });
+  const productsPromise = loadProducts(session.user.companyId, searchParams);
 
   return (
     <ProductFormStoreProvider>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <BreadCrumb items={breadcrumbItems}/>
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start">
-          <Heading
-            title={`Productos (${totalResponse.success ? totalResponse.data : "-"})`}
-            description="Gestiona tus productos!"
-          />
-          <div className="flex gap-2 mt-4 md:mt-0">
-            <ExportProductsButton />
-            <AddProductButtons />
-            <AddServiceProductButton />
-          </div>
-        </div>
-        <Separator/>
-        <ProductModalForm/>
+      <main className="flex min-w-0 flex-1 flex-col gap-8 p-4 pt-6 md:p-8">
+        <PageHeader>
+          <PageHeader.Navigation aria-label="Ruta de navegación">
+            <Link
+              href="/dashboard"
+              className="hover:text-foreground hover:underline"
+            >
+              Inicio
+            </Link>
+            <ChevronRight aria-hidden="true" className="size-4" />
+            <span aria-current="page" className="text-foreground">
+              Productos
+            </span>
+          </PageHeader.Navigation>
+          <PageHeader.Main>
+            <PageHeader.Heading>
+              <PageHeader.Title>
+                Productos
+                <span className="text-base font-normal tabular-nums text-muted-foreground">
+                  <Suspense fallback="—">
+                    <ProductCount totalPromise={totalPromise} />
+                  </Suspense>
+                </span>
+              </PageHeader.Title>
+              <PageHeader.Description>
+                Administra el catálogo, precios y disponibilidad del punto de
+                venta.
+              </PageHeader.Description>
+            </PageHeader.Heading>
+            <PageHeader.Actions>
+              <ExportProductsButton />
+              <AddProductButtons />
+            </PageHeader.Actions>
+          </PageHeader.Main>
+        </PageHeader>
+        <ProductModalForm />
+        <ProductsTableFilters />
         <Suspense
-          fallback={<DataTable loading columns={columns} pageCount={1}/>}
+          fallback={
+            <DataTableSkeleton
+              columns={columns}
+              caption="Productos del catálogo"
+            />
+          }
         >
-          <ProductsWithSuspense searchParams={searchParams}/>
+          <ProductsDataTable resultPromise={productsPromise} />
         </Suspense>
-      </div>
+      </main>
     </ProductFormStoreProvider>
-);
+  );
 }
