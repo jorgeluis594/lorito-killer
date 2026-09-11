@@ -103,7 +103,7 @@ export default function AddExpense() {
           <Form {...form}>
             <form
               id="expense-form"
-              className="mt-8 space-y-6"
+              className="mt-4 flex flex-col gap-4"
               onSubmit={form.handleSubmit(onSubmit)}
             >
               <FormField

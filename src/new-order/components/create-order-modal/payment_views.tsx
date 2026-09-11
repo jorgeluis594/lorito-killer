@@ -150,7 +150,7 @@ export const CashPayment: React.FC = () => {
 
   return (
     <div className="mt-4">
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Monto recibido</Label>
         <MoneyInput
           placeholder="Ingrese monto"
@@ -241,7 +241,7 @@ export const WalletPayment: React.FC = () => {
 
   return (
     <div className="mt-4">
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Monto recibido</Label>
         <MoneyInput type="number" value={orderTotal} disabled />
       </div>
@@ -276,7 +276,7 @@ export const CardPayment: React.FC = () => {
 
   return (
     <div className="mt-4">
-      <div className="my-3">
+      <div className="my-4 grid gap-1">
         <Label>Monto recibido</Label>
         <MoneyInput
           placeholder="Ingrese monto"

@@ -17,7 +17,7 @@ import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Separator } from "@/shared/components/ui/separator";
 import StockAdjustmentFields from "@/stock-transfer/components/form/stock-adjustment-fields";
-import { Button } from "@/shared/components/ui/button";
+import { LoadingButton } from "@/shared/components/ui/button";
 import { Save } from "lucide-react";
 import {
   type TypeAdjustmentStockTransfer,
@@ -167,9 +167,9 @@ export default function StockAdjustmentForm({
         />
         {adjustments.length > 0 && (
           <div className="flex justify-center mr-5 md:justify-end">
-            <Button>
+            <LoadingButton type="submit" loading={form.formState.isSubmitting}>
               <Save className="h-4 w-4 mr-2" /> Guardar
-            </Button>
+            </LoadingButton>
           </div>
         )}
       </form>

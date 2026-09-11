@@ -263,11 +263,13 @@ export const getMany = async ({
   page,
   pageLimit,
   orderId,
+  productId,
 }: {
   companyId: string;
   page?: number;
   pageLimit?: number;
   orderId?: string;
+  productId?: string;
 }): Promise<response<StockTransfer[]>> => {
   try {
     let orderItemsIds: string[] = [];
@@ -287,6 +289,7 @@ export const getMany = async ({
     const result = await prisma().stockTransfer.findMany({
       where: {
         companyId,
+        productId,
         OR: orderItemsIds.length ? extraConditions : undefined,
       },
       skip: page && pageLimit ? (page - 1) * pageLimit : undefined,
@@ -356,6 +359,9 @@ export const getMany = async ({
   }
 };
 
-export const total = async (companyId: string): Promise<number> => {
-  return prisma().stockTransfer.count({ where: { companyId } });
+export const total = async (
+  companyId: string,
+  productId?: string,
+): Promise<number> => {
+  return prisma().stockTransfer.count({ where: { companyId, productId } });
 };

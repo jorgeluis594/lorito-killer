@@ -52,7 +52,11 @@ export function AddDiscountModal({ orderItem }: { orderItem: OrderItem }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Descuento de ${orderItem.productName}`}
+        >
           <MdOutlineDiscount className="h-5 w-5" />
         </Button>
       </DialogTrigger>

@@ -17,6 +17,7 @@ import {
   UNIT_UNIT_TYPE,
 } from "./types";
 import { response } from "@/lib/types";
+import { log } from "@/lib/log";
 import {
   $Enums,
   Category as PrismaCategory,
@@ -28,6 +29,14 @@ interface searchParams {
   q: string;
   categoryId?: string | null;
 }
+
+const photoToPrisma = ({ name, size, key, type, url }: Photo) => ({
+  name,
+  size,
+  key,
+  type,
+  url,
+});
 
 export const UNIT_TYPE_MAPPER: Record<
   $Enums.UnitType,
@@ -70,12 +79,17 @@ const singleProductToPrisma = (
 const createSingleProduct = async (
   product: SingleProduct,
 ): Promise<response<SingleProduct>> => {
+  let productId: string | undefined;
+  let stage = "create_product";
+
   try {
     const { photos, categories, ...productData } = product;
 
     const createdResponse = await prisma().product.create({
       data: singleProductToPrisma(product),
     });
+    productId = createdResponse.id;
+    stage = "load_categories";
     const purchasePrice = !!createdResponse.purchasePrice
       ? createdResponse.purchasePrice.toNumber()
       : 0;
@@ -102,8 +116,24 @@ const createSingleProduct = async (
     };
 
     return { success: true, data: createdProduct };
-  } catch (error: any) {
-    return { success: false, message: error.message };
+  } catch (err) {
+    log.error(
+      productId ? "create_product_relations_failed" : "create_product_failed",
+      {
+        companyId: product.companyId,
+        productId,
+        productType: product.type,
+        imageCount: product.photos?.length ?? 0,
+        stage,
+        err,
+      },
+    );
+    return {
+      success: false,
+      message: productId
+        ? "El producto se creó, pero no se pudieron guardar sus imágenes. Recarga la lista antes de volver a intentarlo."
+        : "Ocurrió un error interno. Inténtalo nuevamente.",
+    };
   }
 };
 
@@ -145,12 +175,17 @@ const serviceProductToPrisma = (
 const createServiceProduct = async (
   product: ProductService,
 ): Promise<response<ProductService>> => {
+  let productId: string | undefined;
+  let stage = "create_product";
+
   try {
     const { photos, categories, ...productData } = product;
 
     const createdResponse = await prisma().product.create({
       data: serviceProductToPrisma(product),
     });
+    productId = createdResponse.id;
+    stage = "load_categories";
 
     const productCategories = await prisma().category.findMany({
       where: { id: { in: categories.map((c) => c.id!) } },
@@ -169,20 +204,41 @@ const createServiceProduct = async (
     };
 
     return { success: true, data: createdProduct };
-  } catch (error: any) {
-    return { success: false, message: error.message };
+  } catch (err) {
+    log.error(
+      productId ? "create_product_relations_failed" : "create_product_failed",
+      {
+        companyId: product.companyId,
+        productId,
+        productType: product.type,
+        imageCount: product.photos?.length ?? 0,
+        stage,
+        err,
+      },
+    );
+    return {
+      success: false,
+      message: productId
+        ? "El producto se creó, pero no se pudieron guardar sus imágenes. Recarga la lista antes de volver a intentarlo."
+        : "Ocurrió un error interno. Inténtalo nuevamente.",
+    };
   }
 };
 
 const createPackageProduct = async (
   product: PackageProduct,
 ): Promise<response<PackageProduct>> => {
+  let productId: string | undefined;
+  let stage = "create_product";
+
   try {
     const { photos, categories, ...productData } = product;
 
     const createdResponse = await prisma().product.create({
       data: packageProductToPrisma(product),
     });
+    productId = createdResponse.id;
+    stage = "create_package_items";
 
     const packageItems = await Promise.all(
       product.productItems.map((item) =>
@@ -197,6 +253,7 @@ const createPackageProduct = async (
       ),
     );
 
+    stage = "load_categories";
     const productCategories = await prisma().category.findMany({
       where: { id: { in: categories.map((c) => c.id!) } },
     });
@@ -215,8 +272,24 @@ const createPackageProduct = async (
     };
 
     return { success: true, data: createdProduct };
-  } catch (error: any) {
-    return { success: false, message: error.message };
+  } catch (err) {
+    log.error(
+      productId ? "create_product_relations_failed" : "create_product_failed",
+      {
+        companyId: product.companyId,
+        productId,
+        productType: product.type,
+        imageCount: product.photos?.length ?? 0,
+        stage,
+        err,
+      },
+    );
+    return {
+      success: false,
+      message: productId
+        ? "El producto se creó, pero no se pudieron guardar sus imágenes. Recarga la lista antes de volver a intentarlo."
+        : "Ocurrió un error interno. Inténtalo nuevamente.",
+    };
   }
 };
 
@@ -235,15 +308,33 @@ export const create = async (product: Product): Promise<response<Product>> => {
 
   if (!response.success) return response;
 
-  await prisma().product.update({
-    where: { id: response.data.id },
-    data: {
-      photos: product.photos ? { create: product.photos } : undefined,
-      categories: product.categories
-        ? { connect: product.categories.map((c) => ({ id: c.id })) }
-        : undefined,
-    },
-  });
+  try {
+    await prisma().product.update({
+      where: { id: response.data.id },
+      data: {
+        photos: product.photos
+          ? { create: product.photos.map(photoToPrisma) }
+          : undefined,
+        categories: product.categories
+          ? { connect: product.categories.map((c) => ({ id: c.id })) }
+          : undefined,
+      },
+    });
+  } catch (err) {
+    log.error("create_product_relations_failed", {
+      companyId: product.companyId,
+      productId: response.data.id,
+      productType: product.type,
+      imageCount: product.photos?.length ?? 0,
+      stage: "store_photos_and_categories",
+      err,
+    });
+    return {
+      success: false,
+      message:
+        "El producto se creó, pero no se pudieron guardar sus imágenes. Recarga la lista antes de volver a intentarlo.",
+    };
+  }
 
   return { success: true, data: { ...response.data, ...product } };
 };
@@ -903,8 +994,19 @@ export const storePhotos = async (
 ): Promise<response<Photo[]>> => {
   const productPhotosResponse = await getPhotos(productId);
 
-  if (!productPhotosResponse.success)
-    return { success: false, message: productPhotosResponse.message };
+  if (!productPhotosResponse.success) {
+    log.error("store_product_photos_failed", {
+      productId,
+      productType: undefined,
+      imageCount: photos.length,
+      stage: "load_existing_photos",
+      err: new Error(productPhotosResponse.message),
+    });
+    return {
+      success: false,
+      message: "No se pudo guardar la imagen del producto. Inténtalo nuevamente.",
+    };
+  }
 
   const photosToStore = photos.filter(
     (photo) =>
@@ -915,15 +1017,25 @@ export const storePhotos = async (
       photosToStore.map((photo) =>
         prisma().photo.create({
           data: {
-            ...photo,
+            ...photoToPrisma(photo),
             productId,
           },
         }),
       ),
     );
     return { success: true, data: createdPhotos };
-  } catch (error: any) {
-    return { success: false, message: error.message };
+  } catch (err) {
+    log.error("store_product_photos_failed", {
+      productId,
+      productType: undefined,
+      imageCount: photos.length,
+      stage: "store_photos",
+      err,
+    });
+    return {
+      success: false,
+      message: "No se pudo guardar la imagen del producto. Inténtalo nuevamente.",
+    };
   }
 };
 

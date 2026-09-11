@@ -69,7 +69,7 @@ export type OperationalAlert = {
   title: string;
   value: string;
   description: string;
-  href: string;
+  href?: string;
   severity: OperationalAlertSeverity;
 };
 

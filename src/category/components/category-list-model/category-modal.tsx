@@ -1,68 +1,78 @@
-"use client"
+"use client";
 
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import CategoryContent from "./category-content";
-import { ScrollArea } from '@/shared/components/ui/scroll-area';
-import NewCategoryDialog from "@/product/components/category/new-category-dialog";
-import {Category} from "@/category/types";
-import React from "react";
-import { List } from 'lucide-react';
+import NewCategoryForm from "@/product/components/category/new-category-dialog";
+import { Category } from "@/category/types";
+import { List } from "lucide-react";
 
-interface NewSectionDialogProps {
+interface CategoriesModalProps {
   addCategory: (category: Category) => void;
 }
 
-export default function CategoriesModal({
-  addCategory,
-}: NewSectionDialogProps) {
+export default function CategoriesModal({ addCategory }: CategoriesModalProps) {
   const categories = useCategoryStore((store) => store.categories);
   const updateCategory = useCategoryStore((store) => store.updateCategory);
+  const isLoading = useCategoryStore((store) => store.isLoading);
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           size="icon"
-          className="mb-2"
+          className="size-[var(--field-height)] shrink-0"
+          aria-label="Administrar categorías"
         >
-          <List />
+          <List aria-hidden="true" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-96 sm:h-[429.5] w-full flex flex-col items-center p-0">
-        <DialogTitle className="sr-only">Categorías</DialogTitle>
-        <table className="min-w-96 rounded-2xl">
-          <thead>
-          <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-            <th className="py-3 px-6 text-left">Categoria</th>
-          </tr>
-          </thead>
-          <tbody className="text-sm">
-          <ScrollArea className="h-96">
-            {categories.length ? (
-              categories.map(category => (
-                <CategoryContent key={category.id} category={category}
-                                 onCategoryUpdated={(category) => updateCategory(category)}/>
-              ))
-            ) : (
-              <tr className=" text-black">
-                <td className="h-96">
-                  <div className="flex items-center justify-center h-full">No hay categorias</div>
-                </td>
-              </tr>
-            )}
-          </ScrollArea>
-          </tbody>
-        </table>
-        <NewCategoryDialog addCategory={addCategory}/>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] gap-5 overflow-y-auto sm:max-w-lg">
+        <DialogHeader className="pr-6 text-left">
+          <DialogTitle>Categorías</DialogTitle>
+          <DialogDescription>
+            Organiza las categorías de tu catálogo.
+          </DialogDescription>
+        </DialogHeader>
+        {isLoading ? (
+          <p role="status" className="py-4 text-sm text-muted-foreground">
+            Cargando categorías…
+          </p>
+        ) : categories.length ? (
+          <ul
+            aria-label="Categorías del catálogo"
+            className="max-h-64 overflow-y-auto divide-y"
+          >
+            {categories.map((category) => (
+              <CategoryContent
+                key={category.id}
+                category={category}
+                onCategoryUpdated={updateCategory}
+              />
+            ))}
+          </ul>
+        ) : (
+          <div className="py-4 text-sm">
+            <p className="font-semibold">Aún no hay categorías</p>
+            <p className="mt-1 text-muted-foreground">
+              Crea la primera para agrupar tus productos.
+            </p>
+          </div>
+        )}
+        <div className="border-t pt-5">
+          <NewCategoryForm addCategory={addCategory} />
+        </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

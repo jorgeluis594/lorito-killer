@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, createContext, useRef, useContext } from "react";
+import { type ReactNode, createContext, useState, useContext } from "react";
 import { type StoreApi, useStore } from "zustand";
 
 import {
@@ -19,13 +19,12 @@ export interface CategoryStoreProviderProps {
 export const CategoryStoreProvider = ({
   children,
 }: CategoryStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<CategoryStore>>(undefined);
-  if (!storeRef.current) {
-    storeRef.current = createCategoryStore(iniCategoriesParams());
-  }
+  const [store] = useState(() =>
+    createCategoryStore(iniCategoriesParams()),
+  );
 
   return (
-    <CategoryStoreContext.Provider value={storeRef.current}>
+    <CategoryStoreContext.Provider value={store}>
       {children}
     </CategoryStoreContext.Provider>
   );

@@ -14,6 +14,7 @@ export type OrderItem = {
   productId: string;
   productSku?: string; // TODO: add orderCode to db repository
   productName: string;
+  productPhotoUrl?: string;
   productPrice: number;
   quantity: number;
   unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;

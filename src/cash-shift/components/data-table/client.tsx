@@ -2,49 +2,86 @@
 
 import { columns } from "@/cash-shift/components/data-table/columns";
 import { DataTable } from "@/shared/components/ui/data-table";
-import { useState, useEffect, useCallback } from "react";
+import { use } from "react";
 import { CashShiftWithOutOrders } from "@/cash-shift/types";
-import { getManyCashShifts } from "@/cash-shift/api_repository";
-import { useToast } from "@/shared/components/ui/use-toast";
-import BreadCrumb from "@/shared/breadcrumb";
-import { Heading } from "@/shared/components/ui/heading";
-import OpenAndCloseButton from "@/cash-shift/components/open_and_close_button";
-import { Separator } from "@/shared/components/ui/separator";
+import { RefreshButton } from "@/dashboard/components/refresh-button";
+import { Button } from "@/shared/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import useUpdateQueryString from "@/lib/use-update-query-string";
 
-export default function TableClient() {
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const [cashShifts, setCashShifts] = useState<CashShiftWithOutOrders[]>([]);
+export type CashShiftsTableResult = {
+  data: CashShiftWithOutOrders[];
+  pageCount: number;
+};
 
-  const fetchData = useCallback(async () => {
-    const response = await getManyCashShifts();
-    if (!response.success) {
-      toast({
-        title: "Error",
-        description:
-          "Ocurrió un error al cargar las cajas: " + response.message,
-        variant: "destructive",
-      });
-      return;
-    } else {
-      setCashShifts(response.data);
-    }
+type TableClientProps = {
+  cashShiftsPromise: Promise<CashShiftsTableResult | null>;
+};
 
-    setLoading(false);
-  }, [toast]);
+export default function TableClient({ cashShiftsPromise }: TableClientProps) {
+  const result = use(cashShiftsPromise);
+  const searchParams = useSearchParams();
+  const updateRoute = useUpdateQueryString();
+  const requestedPage = Number(searchParams.get("page"));
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  if (!result) {
+    return (
+      <div className="flex flex-col items-start gap-3 rounded-lg border bg-card p-5">
+        <p className="font-bold">No pudimos cargar las cajas.</p>
+        <p className="text-sm text-muted-foreground">
+          Intenta nuevamente. Si el problema continúa, comunícate con soporte.
+        </p>
+        <RefreshButton />
+      </div>
+    );
+  }
+
+  const { data, pageCount } = result;
 
   return (
-    <>
-      <div className="flex items-start justify-between">
-        <Heading title="Caja chica" description="Gestiona tus cajas chicas!" />
-        <OpenAndCloseButton onActionPerform={fetchData} />
-      </div>
-      <Separator />
-      <DataTable columns={columns} data={cashShifts} isLoading={loading} />;
-    </>
+    <div className="flex min-w-0 flex-col gap-4">
+      <DataTable
+        data={data}
+        columns={columns}
+        caption="Historial de cajas"
+        getRowId={(cashShift) => cashShift.id}
+        emptyMessage="Aún no hay cajas registradas. Abre una caja para comenzar."
+      />
+      {pageCount > 1 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>
+            {data.length} {data.length === 1 ? "caja" : "cajas"} en esta página
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="mr-2 tabular-nums">
+              Página {page} de {pageCount}
+            </span>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              aria-label="Página anterior"
+              disabled={page <= 1}
+              onClick={() => updateRoute({ page: page - 1 })}
+            >
+              <ChevronLeft aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              aria-label="Página siguiente"
+              disabled={page >= pageCount}
+              onClick={() => updateRoute({ page: page + 1 })}
+            >
+              <ChevronRight aria-hidden="true" />
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

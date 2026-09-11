@@ -1,328 +1,109 @@
 "use client";
 
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  PaginationState,
-  useReactTable,
-} from "@tanstack/react-table";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
-import { Input } from "@/shared/components/ui/input";
-import { ScrollArea, ScrollBar } from "@/shared/components/ui/scroll-area";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
+import { use } from "react";
+import { useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { RefreshButton } from "@/dashboard/components/refresh-button";
+import useUpdateQueryString from "@/lib/use-update-query-string";
+import ProductSelector from "@/product/components/form/product-selector";
+import { SingleProductType, type SingleProduct } from "@/product/types";
 import { Button } from "@/shared/components/ui/button";
-import {
-  ChevronRightIcon,
-  DoubleArrowLeftIcon,
-  ChevronLeftIcon,
-  DoubleArrowRightIcon,
-} from "@radix-ui/react-icons";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { FilterBar } from "@/shared/components/ui/filter-bar";
+import { columns } from "@/stock-transfer/components/table/columns";
+import type { StockTransfer } from "@/stock-transfer/types";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  searchKey?: string;
-  pageSizeOptions?: number[];
+export type StockTransfersTableResult = {
+  data: StockTransfer[];
   pageCount: number;
-  searchParams?: {
-    [key: string]: string | string[] | undefined;
-  };
-}
+  selectedProduct?: SingleProduct;
+};
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  searchKey,
-  pageSizeOptions = [10, 20, 30, 40, 50],
-  pageCount,
-}: DataTableProps<TData, TValue>) {
-  const router = useRouter();
-  const pathName = usePathname();
+export function StockTransfersDataTable({
+  resultPromise,
+}: {
+  resultPromise: Promise<StockTransfersTableResult | null>;
+}) {
+  const result = use(resultPromise);
   const searchParams = useSearchParams();
+  const updateRoute = useUpdateQueryString();
+  const page = Math.max(Number(searchParams.get("page")) || 1, 1);
 
-  // Search params
-  const page = searchParams?.get("page") ?? "1";
-  const pageAsNumber = Number(page);
-  const fallbackPage =
-    isNaN(pageAsNumber) || pageAsNumber < 1 ? 1 : pageAsNumber;
-  const perPage = searchParams?.get("limit") ?? "10";
-  const perPageAsNumber = Number(perPage);
-  const fallbackPerPage = isNaN(perPageAsNumber) ? 10 : perPageAsNumber;
-
-  const createQueryString = useCallback(
-    (params: Record<string, string | number | null>) => {
-      const newSearchParams = new URLSearchParams(searchParams?.toString());
-
-      for (const [key, value] of Object.entries(params)) {
-        if (value === null) {
-          newSearchParams.delete(key);
-        } else {
-          newSearchParams.set(key, String(value));
-        }
-      }
-
-      return newSearchParams.toString();
-    },
-    [searchParams],
-  );
-
-  // Handle server-side pagination
-  const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
-    pageIndex: fallbackPage - 1,
-    pageSize: fallbackPerPage,
-  });
-
-  useEffect(() => {
-    router.push(
-      `${pathName}?${createQueryString({
-        page: pageIndex + 1,
-        limit: pageSize,
-      })}`,
-      {
-        scroll: false,
-      },
+  if (!result) {
+    return (
+      <div className="flex flex-col items-start gap-3 rounded-lg border bg-card p-5">
+        <p className="font-bold">No pudimos cargar los movimientos.</p>
+        <p className="text-sm text-muted-foreground">
+          Intenta nuevamente. Si el problema continúa, comunícate con soporte.
+        </p>
+        <RefreshButton />
+      </div>
     );
+  }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex, pageSize]);
-
-  const table = useReactTable({
-    data,
-    columns,
-    pageCount: pageCount ?? -1,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      pagination: { pageIndex, pageSize },
-    },
-    onPaginationChange: setPagination,
-    getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: true,
-    manualFiltering: true,
-  });
-
-  const searchValue =
-    searchKey && (table.getColumn(searchKey)?.getFilterValue() as string);
-
-  useEffect(() => {
-    if (!searchValue) return;
-
-    if (searchValue?.length > 0) {
-      router.push(
-        `${pathName}?${createQueryString({
-          page: null,
-          limit: null,
-          search: searchValue,
-        })}`,
-        {
-          scroll: false,
-        },
-      );
-    }
-    if (searchValue?.length === 0) {
-      router.push(
-        `${pathName}?${createQueryString({
-          page: null,
-          limit: null,
-          search: null,
-        })}`,
-        {
-          scroll: false,
-        },
-      );
-    }
-
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchValue]);
+  const { data, pageCount } = result;
+  const productId = searchParams.get("productId");
 
   return (
-    <>
-      {searchKey && (
-        <Input
-          placeholder={`Search ${searchKey}...`}
-          value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(searchKey)?.setFilterValue(event.target.value)
-          }
-          className="w-full md:max-w-sm"
-        />
-      )}
-      <div className="hidden md:block">
-        <ScrollArea className="h-[calc(80vh-220px)] rounded-md border">
-          <Table className="relative">
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No hay resultados.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          <ScrollBar orientation="horizontal"/>
-        </ScrollArea>
-      </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
-          {table.getRowModel().rows.map((row) => (
-            <div
-              key={row.id}
-              className="bg-white space-y-3 p-4 rounded-lg shadow relative w-full max-w-sm"
+    <div className="flex min-w-0 flex-col gap-4">
+      <FilterBar
+        role="group"
+        aria-label="Filtros de movimientos de stock"
+        control={
+          <ProductSelector
+            value={result.selectedProduct}
+            productType={SingleProductType}
+            onSelect={(product) =>
+              updateRoute({ productId: product.id!, page: null })
+            }
+            onClick={() => updateRoute({ productId: null, page: null })}
+          />
+        }
+      />
+      <DataTable
+        data={data}
+        columns={columns}
+        caption="Movimientos de stock"
+        getRowId={(transfer) => transfer.id}
+        emptyMessage={
+          productId
+            ? "No hay movimientos para el producto seleccionado."
+            : "Aún no hay movimientos de stock. Registra el primero con Nuevo ajuste."
+        }
+      />
+      {pageCount > 1 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>
+            {data.length} {data.length === 1 ? "movimiento" : "movimientos"} en
+            esta página
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="mr-2 tabular-nums">
+              Página {page} de {pageCount}
+            </span>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              aria-label="Página anterior"
+              disabled={page <= 1}
+              onClick={() => updateRoute({ page: page - 1 })}
             >
-              {row.getVisibleCells().map((cell) => (
-                <div
-                  key={cell.id}
-                  className=""
-                >
-                  <p className="text-xs text-gray-500 font-medium">
-                    {typeof cell.column.columnDef.header === 'string'
-                      ? cell.column.columnDef.header
-                      : ''}
-                  </p>
-                  <p className="text-sm text-gray-900 font-semibold">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-col items-center justify-end gap-2 space-x-2 py-4 sm:flex-row">
-          <div className="flex w-full items-center justify-between">
-            <div className="flex-1 text-sm text-muted-foreground">
-              {table.getFilteredSelectedRowModel().rows.length} of{" "}
-              {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
-            </div>
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-              <div className="flex items-center space-x-2">
-                <p className="whitespace-nowrap text-sm font-medium">
-                  Filas por página
-                </p>
-                <Select
-                  value={`${table.getState().pagination.pageSize}`}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value));
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[70px]">
-                    <SelectValue
-                      placeholder={table.getState().pagination.pageSize}
-                    />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {pageSizeOptions.map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`}>
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <div className="flex w-full items-center justify-between gap-2 sm:justify-end">
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Página {table.getState().pagination.pageIndex + 1} de{" "}
-              {table.getPageCount()}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <DoubleArrowLeftIcon className="h-4 w-4" aria-hidden="true"/>
-              </Button>
-              <Button
-                aria-label="Go to previous page"
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <ChevronLeftIcon className="h-4 w-4" aria-hidden="true"/>
-              </Button>
-              <Button
-                aria-label="Go to next page"
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <ChevronRightIcon className="h-4 w-4" aria-hidden="true"/>
-              </Button>
-              <Button
-                aria-label="Go to last page"
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <DoubleArrowRightIcon className="h-4 w-4" aria-hidden="true"/>
-              </Button>
-            </div>
+              <ChevronLeft aria-hidden="true" />
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              aria-label="Página siguiente"
+              disabled={page >= pageCount}
+              onClick={() => updateRoute({ page: page + 1 })}
+            >
+              <ChevronRight aria-hidden="true" />
+            </Button>
           </div>
         </div>
-      </>
-      );
-      }
+      ) : null}
+    </div>
+  );
+}

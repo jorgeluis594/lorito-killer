@@ -34,19 +34,14 @@ export function buildQuickActions(restaurantsEnabled: boolean): QuickAction[] {
       href: "/dashboard/orders/new",
     },
     {
-      title: "Reporte de ventas",
-      description: "Ver comprobantes y ventas",
+      title: "Ventas",
+      description: "Consultar tus ventas",
       href: "/dashboard/sales_reports",
     },
     {
       title: "Caja chica",
       description: "Controlar turnos y efectivo",
       href: "/dashboard/cash_shifts",
-    },
-    {
-      title: "Comprobantes",
-      description: "Revisar ventas emitidas",
-      href: "/dashboard/orders",
     },
     {
       title: "Productos",

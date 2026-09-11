@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Jade · Sistema de diseño de Lorito Killer</title>
+  <link rel="stylesheet" href="jade.css">
+  <script src="jade.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#contenido">Ir al contenido</a>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H15v-7H9v7H3Z"/></symbol>
+    <symbol id="activity" viewBox="0 0 24 24"><path d="M4 20V10h4v10Zm6 0V4h4v16Zm6 0V7h4v13Z"/></symbol>
+    <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3ZM16 4a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v3"/></symbol>
+    <symbol id="settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="16" cy="17" r="3"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="file" viewBox="0 0 24 24"><path d="M5 3h9l5 5v13H5Zm9 0v6h5M9 13h6m-6 4h6"/></symbol>
+    <symbol id="alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2Zm0 6v5m0 3v1"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/></symbol>
+  </svg>
+  <header class="topbar"><a href="#contenido" class="wordmark">Lorito Killer <span>/</span> Diseño</a><a class="reference" href="jade-reference.png" target="_blank" rel="noopener">Ver concepto aprobado <svg><use href="#arrow"/></svg></a></header>
+  <main id="contenido">
+    <header class="intro"><div><h1>Jade<span>.</span></h1><p>Color presente. Atención selectiva.</p></div><div class="intro-note"><span class="version">Muestra interactiva</span><p>Una identidad cercana.<br>Un lugar claro para empezar.</p></div></header>
+    <div class="board">
+      <aside class="foundations" aria-label="Fundamentos del sistema">
+        <section id="paleta"><div class="section-title"><h2>Paleta de color</h2><span>Haz clic para copiar</span></div>
+          <div class="swatches">
+            <button class="swatch" data-color="#087F68"><span class="paint jade"></span><strong>Jade</strong><small>#087F68</small></button>
+            <button class="swatch" data-color="#D8F3EC"><span class="paint water"></span><strong>Agua</strong><small>#D8F3EC</small></button>
+            <button class="swatch" data-color="#F8FAF7"><span class="paint ground"></span><strong>Fondo</strong><small>#F8FAF7</small></button>
+            <button class="swatch" data-color="#DDD7F5"><span class="paint lavender"></span><strong>Lavanda</strong><small>#DDD7F5</small></button>
+            <button class="swatch" data-color="#173B33"><span class="paint ink"></span><strong>Tinta</strong><small>#173B33</small></button>
+          </div><p class="hint">Intensidad para actuar. Tonos suaves para acompañar.</p>
+        </section>
+        <section id="tipografia"><div class="section-title"><h2>Tipografía</h2><span>Manrope</span></div><p class="type-title">Claridad para<br>empezar.</p><p class="type-body">Cada acción tiene su lugar.</p><div class="number-sample"><span>Importes y cantidades</span><p>S/ 1,280.00</p><small>Texto 15 · Títulos 18 · Cifras tabulares</small></div></section>
+        <section id="navegacion"><div class="section-title"><h2>Navegación</h2><span>Selección suave</span></div><nav class="sample-nav" aria-label="Ejemplo de navegación">
+          <button aria-current="page"><svg><use href="#home"/></svg>Inicio</button><button><svg><use href="#activity"/></svg>Actividad</button><button><svg><use href="#users"/></svg>Equipo</button><button><svg><use href="#settings"/></svg>Configuración</button>
+        </nav><p class="hint" id="nav-feedback" aria-live="polite">Inicio seleccionado en esta muestra.</p></section>
+        <div class="principle"><svg><use href="#arrow"/></svg><p><strong>El foco se gana.</strong><br>Lo importante destaca.<br>Lo demás acompaña.</p></div>
+      </aside>
+      <div class="components">
+        <section id="acciones"><div class="section-title"><h2>Acciones</h2><span>Una prioridad por contexto</span></div>
+          <form id="example-form" novalidate>
+            <div class="action-row"><button class="button primary" id="save" type="submit"><svg><use href="#check"/></svg><span>Guardar cambios</span></button><button class="button secondary" type="reset">Restablecer</button><button class="button quiet" id="details" type="button">Ver detalles <svg><use href="#arrow"/></svg></button></div>
+            <div class="options"><label class="check-label"><input type="checkbox" name="notices" checked> Recibir avisos</label><label class="check-label"><input class="switch" type="checkbox" role="switch" name="active" checked><span>Activo</span></label><button class="button secondary" disabled type="button">No disponible</button></div>
+            <div class="field-section"><div class="section-title"><h2>Campos</h2><span>Etiquetas siempre visibles</span></div><div class="fields"><label>Nombre<input id="name" name="name" value="Local principal" autocomplete="off" maxlength="80" aria-describedby="name-help name-error" required><small id="name-help">Prueba a guardar con el campo vacío.</small><small class="field-error" id="name-error" hidden>Escribe un nombre para continuar.</small></label><label>Correo electrónico <span class="optional">(opcional)</span><input id="email" name="email" type="email" placeholder="nombre@ejemplo.com" aria-describedby="email-error" autocomplete="off"><small class="field-error" id="email-error" hidden>Revisa el correo. Ejemplo: nombre@ejemplo.com.</small></label></div></div>
+          </form>
+        </section>
+        <section id="tabla"><div class="section-title"><h2>Lista de ejemplo</h2><span id="result-count" aria-live="polite">3 registros</span></div>
+          <div class="table-toolbar"><label class="search"><span class="sr-only">Buscar registros</span><svg><use href="#search"/></svg><input id="search-input" type="search" placeholder="Buscar por nombre…"></label><fieldset class="segments"><legend class="sr-only">Filtrar por estado</legend><label><input type="radio" name="filter" value="all" checked><span>Todos</span></label><label><input type="radio" name="filter" value="Completado"><span>Completados</span></label><label><input type="radio" name="filter" value="Pendiente"><span>Pendientes</span></label></fieldset></div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Registros de ejemplo"><table><thead><tr><th scope="col">Nombre</th><th scope="col">Estado</th><th scope="col">Importe</th></tr></thead><tbody>
+            <tr data-state="Completado"><td>Registro 001</td><td><span class="status success"><svg><use href="#check"/></svg>Completado</span></td><td>S/ 240.00</td></tr>
+            <tr data-state="Pendiente"><td>Registro 002</td><td><span class="status warning"><svg><use href="#clock"/></svg>Pendiente</span></td><td>S/ 180.00</td></tr>
+            <tr data-state="Borrador"><td>Registro 003</td><td><span class="status draft"><svg><use href="#file"/></svg>Borrador</span></td><td>S/ 95.00</td></tr>
+          </tbody></table></div><div class="empty" id="empty" hidden><svg><use href="#search"/></svg><strong>No encontramos registros</strong><p>Prueba otro nombre o elimina los filtros.</p><button class="button secondary" id="clear-filters">Limpiar filtros</button></div>
+        </section>
+        <section id="estados"><div class="section-title"><h2>Mensajes de estado</h2><span>Color + icono + texto</span></div><div class="messages"><div class="message success"><svg><use href="#check"/></svg><span>Cambios guardados</span></div><div class="message warning"><svg><use href="#alert"/></svg><span>Revisa los datos</span></div><div class="message error"><svg><use href="#close"/></svg><span>No se pudo guardar</span></div></div><p class="hint">Ejemplos visuales. El formulario confirma sus cambios en esta página.</p></section>
+      </div>
+    </div>
+    <footer><span>Jade · Lorito Killer</span><span>Datos de ejemplo. Los cambios duran hasta recargar.</span><a href="#contenido">Volver arriba <svg><use href="#arrow"/></svg></a></footer>
+  </main>
+  <div class="toast" role="status" aria-live="polite" aria-atomic="true" id="toast"></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description"><div class="dialog-heading"><h2 id="dialog-title">Un sistema, distintas prioridades</h2><button class="icon-button" id="close-dialog" aria-label="Cerrar detalles"><svg><use href="#close"/></svg></button></div><p id="dialog-description">El jade señala la acción principal. Agua acompaña las selecciones y lavanda introduce un acento sin competir por atención.</p><dl><div><dt>Nombre de ejemplo</dt><dd id="saved-name">Local principal</dd></div><div><dt>Tipografía</dt><dd>Manrope</dd></div><div><dt>Esquinas</dt><dd>8 px en controles</dd></div></dl><p class="hint">Prueba Tab para recorrer los controles y Escape para cerrar.</p><button class="button primary" id="understood">Entendido</button></dialog>
+</body>
+</html>

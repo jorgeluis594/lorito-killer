@@ -2,21 +2,22 @@
 
 import { PreparationStationField } from "./preparation-station-field";
 
-import {Button} from "@/shared/components/ui/button";
-import {Input, MoneyInput} from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { Input, MoneyInput } from "@/shared/components/ui/input";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/shared/components/ui/dialog";
-import {ScrollArea} from "@/shared/components/ui/scroll-area";
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetTitle,
+  SheetHeader,
+  SheetDescription,
+} from "@/shared/components/ui/sheet";
 import * as z from "zod";
 
-import React, {useEffect, useState} from "react";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useForm} from "react-hook-form";
+import React, { useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   KG_UNIT_TYPE,
   Photo,
@@ -25,9 +26,8 @@ import {
   SingleProductType,
   UNIT_UNIT_TYPE,
 } from "@/product/types";
-import {EMPTY_SINGLE_PRODUCT} from "@/product/constants";
+import { EMPTY_SINGLE_PRODUCT } from "@/product/constants";
 import * as repository from "@/product/api_repository";
-import {findProduct} from "@/product/api_repository";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
   Form,
@@ -37,21 +37,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/components/ui/form";
-import {Heading} from "@/shared/components/ui/heading";
-import {SingleProductSchema} from "@/product/schema";
+import { SingleProductSchema } from "@/product/schema";
 import CategoriesSelector from "@/product/components/category/categories-selector";
-import {useToast} from "@/shared/components/ui/use-toast";
-import NewCategoryDialog from "@/product/components/category/new-category-dialog";
-import {Category} from "@/category/types";
+import { useToast } from "@/shared/components/ui/use-toast";
+import { Category } from "@/category/types";
 import {
   addCategoryToProduct as attachCategoryToProduct,
   removeCategoryFromProduct,
 } from "@/category/actions";
-import {Textarea} from "@/shared/components/ui/textarea";
-import {useProductFormStore} from "@/product/components/form/product-form-store-provider";
-import {ReloadIcon} from "@radix-ui/react-icons";
-import {debounce} from "@/lib/utils";
-import {useUserSession} from "@/lib/use-user-session";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { debounce } from "@/lib/utils";
+import { useUserSession } from "@/lib/use-user-session";
 import {
   Select,
   SelectContent,
@@ -59,16 +57,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import ProductSelector from "@/product/components/form/product-selector";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
-import {Switch} from "@/shared/components/ui/switch";
-import {HelpTooltip} from "@/shared/components/ui/help-tooltip";
+import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
 
 type ProductFormValues = z.infer<typeof SingleProductSchema>;
 
-const getEmptyProductFormValues = (
-  companyId?: string,
-): ProductFormValues => ({
+const getEmptyProductFormValues = (companyId?: string): ProductFormValues => ({
   ...EMPTY_SINGLE_PRODUCT,
   companyId: companyId || "",
 });
@@ -108,9 +102,8 @@ interface ProductFormProps {
 }
 
 const SingleProductModalForm: React.FC<ProductFormProps> = ({
-                                                              onActionPerformed,
-                                                            }) => {
-  const [showTransferProduct, setShowTransferProduct] = useState(false);
+  onActionPerformed,
+}) => {
   const formStore = useProductFormStore((store) => store);
   const user = useUserSession();
   const title = formStore.isNew ? "Agregar producto" : "Editar producto";
@@ -118,17 +111,13 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     ? "Registra un nuevo producto"
     : "Editar producto.";
 
-  const [targetMovementProduct, setTargetMovementProduct] = useState<
-    SingleProduct | undefined
-  >();
-
   const action = formStore.isNew ? "Agregar Producto" : "Guardar cambios";
 
-  const {toast} = useToast();
+  const { toast } = useToast();
 
   // The createdAt and updatedAt fields are not part of the form
-  const {createdAt, updatedAt, ...productData} =
-  (formStore.product as SingleProduct) || {};
+  const { createdAt, updatedAt, ...productData } =
+    (formStore.product as SingleProduct) || {};
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(SingleProductSchema),
@@ -139,8 +128,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
 
   const resetForm = () => {
     form.reset(getEmptyProductFormValues(user?.companyId));
-    setShowTransferProduct(false);
-    setTargetMovementProduct(undefined);
   };
 
   const productSku = form.watch("sku");
@@ -183,15 +170,6 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         targetMovementProductQuantity:
           productData.stockConfig && productData.stockConfig.quantity,
       });
-      const targetMovementProductId = form.getValues("targetMovementProductId");
-
-      if (targetMovementProductId) {
-        findProduct(targetMovementProductId).then((response) => {
-          if (response.success && response.data.type === SingleProductType) {
-            setTargetMovementProduct(response.data);
-          }
-        });
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formStore.open, formStore.isNew, formStore.product, user?.companyId]);
@@ -365,12 +343,8 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleSwitchChange = () => {
-    setShowTransferProduct((prev) => !prev);
-  };
-
   return (
-    <Dialog
+    <Sheet
       open={formStore.open}
       onOpenChange={(val) => {
         if (!val) {
@@ -381,30 +355,25 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
         formStore.setOpen(true);
       }}
     >
-      <DialogContent className="w-full h-full sm:max-w-[750px] sm:h-[750px] flex flex-col justify-center items-center p-0">
-        <DialogTitle className="sr-only">{title}</DialogTitle>
-        <ScrollArea className="p-6 w-full">
-          <div className="flex items-center justify-between">
-            <Heading title={title}/>
-            {!formStore.isNew && (
-              <div className="flex items-center space-x-1 mr-8">
-                <label className="text-sm">Transformar producto</label>
-                <Switch onCheckedChange={handleSwitchChange}/>
-                <HelpTooltip text="Activa para poder traspasar stock"/>
-              </div>
-            )}
-          </div>
+      <SheetContent className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl [&>button]:flex [&>button]:size-11 [&>button]:items-center [&>button]:justify-center">
+        <SheetHeader className="shrink-0 border-b bg-card px-6 py-4 pr-16 text-left sm:px-8 sm:pr-20">
+          <SheetTitle className="text-2xl font-bold tracking-tight">
+            {title}
+          </SheetTitle>
+          <SheetDescription>{description}</SheetDescription>
+        </SheetHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="mx-auto space-y-8"
+              className="flex flex-col gap-6"
             >
-              <div className="space-y-4 p-2">
-                <PreparationStationField />
+              <div className="border-b pb-5">
+                <h3 className="mb-3 text-base font-bold">Imágenes</h3>
                 <FormField
                   control={form.control}
                   name="photos"
-                  render={({field}) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormControl>
                         <FileUpload
@@ -412,29 +381,57 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                           value={field.value || []}
                         />
                       </FormControl>
-                      <FormMessage/>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({field}) => (
-                    <FormItem>
-                      <FormLabel>Nombre</FormLabel>
-                      <FormControl>
-                        <Input autoComplete="off" {...field} />
-                      </FormControl>
-                      <FormMessage/>
-                    </FormItem>
-                  )}
-                />
+              </div>
+              <div className="flex flex-col gap-4">
+                <h3 className="text-base font-bold">Datos generales</h3>
+                <PreparationStationField />
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="min-w-0">
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                          <Input autoComplete="off" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="categories"
+                    render={({ field }) => (
+                      <FormItem className="min-w-0">
+                        <FormLabel>Categoría</FormLabel>
+                        <div className="flex min-w-0 items-start gap-2">
+                          <CategoriesSelector
+                            value={field.value || []}
+                            onChange={handleCategoriesUpdated}
+                          />
+                          <div className="flex h-[var(--field-height)] shrink-0 items-center gap-2">
+                            <CategoriesModal
+                              addCategory={addCategoryToProduct}
+                            />
+                            <HelpTooltip text="Categorias del Producto" />
+                          </div>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <div className="grid grid-cols-12 gap-4">
                   <FormField
                     control={form.control}
                     name="sku"
-                    render={({field}) => (
-                      <FormItem className="col-span-6">
+                    render={({ field }) => (
+                      <FormItem className="col-span-12 sm:col-span-6">
                         <FormLabel>Código de barras</FormLabel>
                         <FormControl>
                           <Input
@@ -443,15 +440,15 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage/>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
                     name="stock"
-                    render={({field}) => (
-                      <FormItem className="col-span-4">
+                    render={({ field }) => (
+                      <FormItem className="col-span-7 sm:col-span-4">
                         <FormLabel>Cantidad</FormLabel>
                         <FormControl>
                           <Input
@@ -463,24 +460,24 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage/>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
                     name="unitType"
-                    render={({field}) => (
-                      <FormItem className="col-span-2">
+                    render={({ field }) => (
+                      <FormItem className="col-span-5 sm:col-span-2">
                         <FormLabel>Unidad</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          disabled={!showTransferProduct}
+                          disabled={!formStore.isNew}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Seleccione unidad"/>
+                              <SelectValue placeholder="Seleccione unidad" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -488,18 +485,35 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                             <SelectItem value={KG_UNIT_TYPE}>kg</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormMessage/>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Escribe la descripción del producto aqui."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <h3 className="border-t pt-5 text-base font-bold">Precios</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="purchasePrice"
-                    render={({field}) => (
+                    render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Precio Compra</FormLabel>
+                        <FormLabel>Precio de compra</FormLabel>
                         <FormControl>
                           <MoneyInput
                             autoComplete="off"
@@ -508,14 +522,14 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage/>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
                     name="price"
-                    render={({field}) => (
+                    render={({ field }) => (
                       <FormItem>
                         <FormLabel>Precio de venta</FormLabel>
                         <FormControl>
@@ -526,128 +540,38 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage/>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="categories"
-                  render={({field}) => (
-                    <FormItem>
-                      <FormLabel>Categoría</FormLabel>
-                      <div className="flex justify-between items-center gap-4">
-                        <CategoriesSelector
-                          value={field.value || []}
-                          onChange={handleCategoriesUpdated}
-                        />
-                        <div className="flex items-center gap-2">
-                          <CategoriesModal addCategory={addCategoryToProduct}/>
-                          <HelpTooltip text="Categorias del Producto"/>
-                        </div>
-                      </div>
-                      <FormMessage/>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({field}) => (
-                    <FormItem>
-                      <FormLabel>Descripción</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          rows={4}
-                          placeholder="Escribe la descripción del producto aqui."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage/>
-                    </FormItem>
-                  )}
-                />
-                {!formStore.isNew && (
-                  showTransferProduct && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        name="targetMovementProductId"
-                        control={form.control}
-                        render={({field}) => (
-                          <FormItem>
-                            <div className="flex items-center">
-                              <FormLabel>Producto de traspaso de stock</FormLabel>
-                              <HelpTooltip text="Elige un producto para transformarlo en un paquete"/>
-                            </div>
-                            <FormControl>
-                              <ProductSelector
-                                value={targetMovementProduct}
-                                onSelect={(product) => {
-                                  setTargetMovementProduct(product);
-                                  form.setValue(
-                                    "targetMovementProductId",
-                                    product.id!,
-                                  );
-                                }}
-                                productType="SingleProduct"
-                                skipProductIds={
-                                  !formStore.isNew
-                                    ? [formStore.product.id!]
-                                    : undefined
-                                }
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        name="targetMovementProductQuantity"
-                        control={form.control}
-                        render={({field}) => (
-                          <FormItem>
-                            <div className="flex items-center mt-0.5">
-                              <FormLabel>Cantidad a traspasar</FormLabel>
-                            </div>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="Ingrese cantidad"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage/>
-                          </FormItem>
-                          )}
-                        />
-                    </div>
-                  )
-                )}
               </div>
             </form>
           </Form>
-          <DialogFooter className="sm:justify-start">
-            <DialogClose asChild>
-              <Button type="button" variant="secondary">
-                Cerrar
-              </Button>
-            </DialogClose>
-            <Button
-              className="btn-success"
-              type="button"
-              disabled={formStore.performingAction}
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              {formStore.performingAction ? (
-                <ReloadIcon className="mr-2 h-4 w-4 animate-spin"/>
-              ) : (
-                action
-              )}
+        </div>
+        <SheetFooter className="shrink-0 flex-row items-center justify-end gap-3 border-t bg-card px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8 sm:space-x-0">
+          <SheetClose asChild>
+            <Button type="button" variant="outline">
+              Cancelar
             </Button>
-          </DialogFooter>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+          </SheetClose>
+          <Button
+            className="sm:min-w-40"
+            type="button"
+            disabled={formStore.performingAction}
+            onClick={form.handleSubmit(onSubmit)}
+          >
+            {formStore.performingAction && (
+              <ReloadIcon
+                aria-hidden="true"
+                className="mr-2 h-4 w-4 animate-spin"
+              />
+            )}
+            {action}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -1,22 +1,19 @@
 "use client";
 
-import {UploadDropzone} from "@/shared/uploadthing";
-import {Trash} from "lucide-react";
+import { UploadDropzone } from "@/shared/uploadthing";
+import { Trash } from "lucide-react";
 import Image from "next/image";
-import {IMG_MAX_LIMIT} from "@/product/constants";
-import {Button} from "../../../shared/components/ui/button";
-import {useToast} from "../../../shared/components/ui/use-toast";
-import {Photo} from "@/product/types";
+import { IMG_MAX_LIMIT } from "@/product/constants";
+import { Button } from "../../../shared/components/ui/button";
+import { useToast } from "../../../shared/components/ui/use-toast";
+import { Photo } from "@/product/types";
 
 interface ImageUploadProps {
   onChange: (value: Photo[]) => void;
   value: Photo[];
 }
 
-export default function FileUpload({
-                                     onChange,
-                                     value,
-                                   }: ImageUploadProps) {
+export default function FileUpload({ onChange, value }: ImageUploadProps) {
   const { toast } = useToast();
 
   const onDeleteFile = (key: string) => {
@@ -33,23 +30,32 @@ export default function FileUpload({
       <div>
         {value.length < IMG_MAX_LIMIT && (
           <UploadDropzone
-            className="dark:bg-zinc-800 py-2 ut-label:text-sm ut-allowed-content:ut-uploading:text-red-300"
+            className="!m-0 !gap-1 !outline-primary ut-label:focus-within:!ring-ring ut-button:focus-within:!ring-ring !border-input !bg-card !p-4 ut-upload-icon:!size-7 ut-upload-icon:!text-primary ut-label:!mt-1 ut-label:!w-auto ut-label:!max-w-full ut-label:!text-sm ut-label:!text-foreground ut-allowed-content:!h-auto ut-allowed-content:!text-muted-foreground ut-button:!mt-2 ut-button:!h-11 ut-button:!w-auto ut-button:!px-4 ut-button:!text-sm ut-button:!bg-primary ut-button:after:!bg-primary-hover sm:!grid sm:!grid-cols-[auto_minmax(0,1fr)_auto] sm:!gap-x-4 sm:!text-left sm:ut-upload-icon:!row-span-2 sm:ut-label:!m-0 sm:ut-label:!justify-start sm:ut-allowed-content:!col-start-2 sm:ut-button:!col-start-3 sm:ut-button:!row-start-1 sm:ut-button:!row-span-2 sm:ut-button:!m-0"
             endpoint="imageUploader"
-            config={{mode: "auto"}}
+            config={{ mode: "auto" }}
             content={{
-              allowedContent({isUploading}) {
-                return isUploading ? "Subiendo imagen" : "Máximo imagenes de 4mb"
+              button({ isUploading, uploadProgress }) {
+                return isUploading
+                  ? `Subiendo ${uploadProgress}%`
+                  : "Elegir imagen";
+              },
+              allowedContent({ isUploading }) {
+                return isUploading
+                  ? "Subiendo imagen"
+                  : "Máximo 4 MB por imagen";
               },
               label() {
-                return "Arrastra y suelta o haz clic para subir";
-              }
+                return "Arrastra una imagen aquí o selecciónala";
+              },
             }}
             onClientUploadComplete={(res: any[] | undefined) => {
               if (res) {
-                onUpdateFile(res.map((item) => {
-                  const { serverData, customId, ...photo } = item
-                  return photo
-                }));
+                onUpdateFile(
+                  res.map((item) => {
+                    const { serverData, customId, ...photo } = item;
+                    return photo;
+                  }),
+                );
               }
             }}
             onUploadError={(error: Error) => {
@@ -59,33 +65,34 @@ export default function FileUpload({
                 description: error.message,
               });
             }}
-            onUploadBegin={(name: string) => {
-            }}
+            onUploadBegin={(name: string) => {}}
           />
         )}
       </div>
-      <div className="my-4 flex items-center justify-center gap-4">
+      <div className="flex flex-wrap gap-3">
         {!!value.length &&
           value?.map((item) => (
             <div
               key={item.key}
-              className="relative w-[180px] h-[180px] rounded-md overflow-hidden"
+              className="relative size-28 rounded-md overflow-hidden"
             >
               <div className="z-10 absolute top-2 right-2">
                 <Button
                   type="button"
                   onClick={() => onDeleteFile(item.key)}
                   variant="destructive"
-                  size="sm"
+                  size="icon"
+                  aria-label="Eliminar imagen"
                 >
-                  <Trash className="h-4 w-4"/>
+                  <Trash className="h-4 w-4" />
                 </Button>
               </div>
               <div>
                 <Image
                   fill
                   className="object-cover item"
-                  alt="Image"
+                  alt="Imagen del producto"
+                  sizes="112px"
                   src={item.url || ""}
                 />
               </div>

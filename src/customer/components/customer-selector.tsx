@@ -36,6 +36,7 @@ export interface CustomerSelectorProps<T extends CustomerType | undefined> {
   skipCustomerIds?: string[];
   placeHolder?: string;
   customerType?: T;
+  showAll?: boolean;
 }
 
 export default function CustomerSelector<T extends CustomerType | undefined>({
@@ -43,6 +44,7 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
   onSelect,
   customerType,
   placeHolder,
+  showAll = false,
 }: CustomerSelectorProps<T>) {
   const order = useOrderFormStore((state) => state.order);
   const [open, setOpen] = useState(false);
@@ -100,10 +102,12 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
         >
           {value
             ? fullName(value)
-            : order.documentType === "ticket" ||
-                order.documentType === "receipt"
-              ? placeHolder || "Cliente General"
-              : "Seleccione un Cliente "}
+            : showAll
+              ? placeHolder || "Seleccione un cliente"
+              : order.documentType === "ticket" ||
+                  order.documentType === "receipt"
+                ? placeHolder || "Cliente General"
+                : "Seleccione un Cliente "}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -117,9 +121,8 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
           <CommandList>
             <CommandEmpty>No se encontro ningun cliente</CommandEmpty>
             <CommandGroup>
-              {order.documentType === "ticket" ||
-              order.documentType === "receipt"
-                ? naturalCustomer.map((customer) => (
+              {showAll
+                ? customers.map((customer) => (
                     <CommandItem
                       key={customer.id}
                       value={customer.id}
@@ -128,15 +131,26 @@ export default function CustomerSelector<T extends CustomerType | undefined>({
                       <span>{fullName(customer)}</span>
                     </CommandItem>
                   ))
-                : businessCustomer.map((customer) => (
-                    <CommandItem
-                      key={customer.id}
-                      value={customer.id}
-                      onSelect={onCustomerSelect}
-                    >
-                      <span>{fullName(customer)}</span>
-                    </CommandItem>
-                  ))}
+                : order.documentType === "ticket" ||
+                    order.documentType === "receipt"
+                  ? naturalCustomer.map((customer) => (
+                      <CommandItem
+                        key={customer.id}
+                        value={customer.id}
+                        onSelect={onCustomerSelect}
+                      >
+                        <span>{fullName(customer)}</span>
+                      </CommandItem>
+                    ))
+                  : businessCustomer.map((customer) => (
+                      <CommandItem
+                        key={customer.id}
+                        value={customer.id}
+                        onSelect={onCustomerSelect}
+                      >
+                        <span>{fullName(customer)}</span>
+                      </CommandItem>
+                    ))}
             </CommandGroup>
           </CommandList>
         </Command>

@@ -3,7 +3,7 @@
 import {
   type ReactNode,
   createContext,
-  useRef,
+  useState,
   useContext,
   useEffect,
 } from "react";
@@ -63,14 +63,12 @@ const CashShiftLoader = ({ children }: { children: ReactNode }) => {
 export const CashShiftStoreProvider = ({
   children,
 }: CashShiftStoreProviderProps) => {
-  const storeRef = useRef<StoreApi<CashShiftStore>>(undefined);
-
-  if (!storeRef.current) {
-    storeRef.current = createCashShiftStore({ ...defaultInitState });
-  }
+  const [store] = useState(() =>
+    createCashShiftStore({ ...defaultInitState }),
+  );
 
   return (
-    <CashShiftStoreContext.Provider value={storeRef.current}>
+    <CashShiftStoreContext.Provider value={store}>
       <CashShiftLoader>{children}</CashShiftLoader>
     </CashShiftStoreContext.Provider>
   );

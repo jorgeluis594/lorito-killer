@@ -16,17 +16,10 @@ export const navItems: NavItem[] = [
     permission: { resource: "orders", action: "create" },
   },
   {
-    title: "Comprobantes de venta",
-    href: "/dashboard/orders",
-    icon: "receipt",
-    label: "pedidos",
-    permission: { resource: "orders", action: "read" },
-  },
-  {
-    title: "Reporte de ventas",
+    title: "Ventas",
     href: "/dashboard/sales_reports",
-    icon: "salesReports",
-    label: "reporte de ventas",
+    icon: "receipt",
+    label: "ventas",
     permission: { resource: "reports", action: "read" },
   },
   {

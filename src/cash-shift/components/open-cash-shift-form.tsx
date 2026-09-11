@@ -97,8 +97,9 @@ export default function OpenCashShiftForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="text-xs md:text-sm">
-          <BadgeDollarSign className="w-4 h-4 mr-2" /> Abrir caja
+        <Button>
+          <BadgeDollarSign aria-hidden="true" data-icon="inline-start" />
+          Abrir caja
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

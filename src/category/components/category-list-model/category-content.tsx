@@ -13,14 +13,10 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormMessage,
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+import { Button } from "@/shared/components/ui/button";
 import * as z from "zod";
 
 type CategoryFormValues = z.infer<typeof CategorySchema>;
@@ -35,7 +31,6 @@ export default function CategoryContent({
   onCategoryUpdated,
 }: CategoryContentProps) {
   const user = useUserSession();
-  const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<CategoryFormValues>({
@@ -50,111 +45,96 @@ export default function CategoryContent({
   }, [user, form]);
 
   const onSubmit = async (data: CategoryFormValues) => {
-    const res = await updateCategory(data);
-    if (res.success) {
-      toast({
-        description: "Categoría actualizada con exito",
-      });
-      setOpen(false);
-      onCategoryUpdated(res.data);
-    } else {
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: "Error al actualizar el producto, " + res.message,
+    try {
+      const res = await updateCategory(data);
+      if (res.success) {
+        toast({
+          description: "Categoría actualizada con exito",
+        });
+        setIsEditing(false);
+        onCategoryUpdated(res.data);
+      } else {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: "Error al actualizar el producto, " + res.message,
+        });
+      }
+    } catch {
+      form.setError("name", {
+        message: "No se pudo guardar. Inténtalo de nuevo.",
       });
     }
-    setIsEditing(false);
   };
 
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
   return (
-    <>
-      <tr key={category.id} className=" text-black hover:bg-gray-100">
-        <td className="py-3 px-6 text-left whitespace-nowrap">
-          {isEditing ? (
-            <div className="flex justify-between items-center">
-              <div className="flex text-left">
-                <Form {...form}>
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Input
-                              id="category"
-                              placeholder="Nombre de categoría..."
-                              className="col-span-4 -ml-2"
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </Form>
-              </div>
-              <div className="flex justify-center space-x-4 pr-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Save
-                        type="button"
-                        className="text-gray-600"
-                        size={16}
-                        onClick={form.handleSubmit(onSubmit)}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Guardar cambio</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Ban
-                        type="button"
-                        color="red"
-                        size={16}
-                        onClick={() => setIsEditing(false)}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Cancelar</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex justify-between items-center">
-                <div className="flex text-left">{category.name}</div>
-                <div className="flex justify-center space-x-4">
-                  <div onClick={handleEditClick} className="cursor-pointer">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Edit className="h-4 w-4 text-gray-600" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Editar</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <DeleteCategoryModal category={category} />
-                </div>
-              </div>
-            </>
-          )}
-        </td>
-      </tr>
-    </>
+    <li className="flex min-w-0 items-center gap-2 py-2">
+      {isEditing ? (
+        <Form {...form}>
+          <form
+            className="flex min-w-0 flex-1 items-start gap-2"
+            onSubmit={(event) => {
+              event.stopPropagation();
+              void form.handleSubmit(onSubmit)(event);
+            }}
+          >
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="min-w-0 flex-1">
+                  <FormControl>
+                    <Input
+                      aria-label="Nombre de la categoría"
+                      autoFocus
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon"
+              aria-label="Guardar categoría"
+              disabled={form.formState.isSubmitting}
+            >
+              <Save className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Cancelar edición"
+              disabled={form.formState.isSubmitting}
+              onClick={() => {
+                form.reset(category);
+                setIsEditing(false);
+              }}
+            >
+              <Ban className="size-4" />
+            </Button>
+          </form>
+        </Form>
+      ) : (
+        <>
+          <span className="min-w-0 flex-1 break-words text-sm">
+            {category.name}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Editar ${category.name}`}
+            onClick={() => setIsEditing(true)}
+          >
+            <Edit className="size-4" />
+          </Button>
+          <DeleteCategoryModal category={category} />
+        </>
+      )}
+    </li>
   );
 }
