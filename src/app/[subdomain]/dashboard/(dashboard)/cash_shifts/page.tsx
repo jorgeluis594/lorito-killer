@@ -1,6 +1,8 @@
-import CashShiftClientTable from "@/cash-shift/components/data-table/client";
+import CashShiftClientTable, {
+  type CashShiftsTableResult,
+} from "@/cash-shift/components/data-table/client";
 import OpenAndCloseButton from "@/cash-shift/components/open_and_close_button";
-import { getManyCashShifts } from "@/cash-shift/db_repository";
+import { countCashShifts, getManyCashShifts } from "@/cash-shift/db_repository";
 import { getSession } from "@/lib/auth";
 import SignOutRedirection from "@/shared/components/sign-out-redirection";
 import { DataTableSkeleton } from "@/shared/components/ui/data-table";
@@ -39,20 +41,50 @@ const skeletonColumns = [
   { id: "actions", header: "Acciones", cell: () => null, mobile: "actions" },
 ] as const;
 
-async function CashShiftCount({
-  cashShiftsPromise,
-}: {
-  cashShiftsPromise: ReturnType<typeof getManyCashShifts>;
-}) {
-  const response = await cashShiftsPromise;
-  return response.success ? response.data.length : "—";
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+async function loadCashShifts(
+  companyId: string,
+  page: number,
+  pageSize: number,
+  countPromise: Promise<number>,
+): Promise<CashShiftsTableResult | null> {
+  const [response, count] = await Promise.all([
+    getManyCashShifts(companyId, { page, pageSize }),
+    countPromise,
+  ]);
+
+  return response.success
+    ? { data: response.data, pageCount: Math.ceil(count / pageSize) }
+    : null;
 }
 
-export default async function Page() {
+async function CashShiftCount({
+  countPromise,
+}: {
+  countPromise: Promise<number>;
+}) {
+  return <>{await countPromise}</>;
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await getSession();
   if (!session.user) return <SignOutRedirection />;
 
-  const cashShiftsPromise = getManyCashShifts(session.user.companyId);
+  const requestedPage = Number(params.page);
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = 10;
+  const countPromise = countCashShifts(session.user.companyId);
+  const cashShiftsPromise = loadCashShifts(
+    session.user.companyId,
+    page,
+    pageSize,
+    countPromise,
+  );
 
   return (
     <main className="flex min-w-0 flex-1 flex-col gap-8 p-4 pt-6 md:p-8">
@@ -75,7 +107,7 @@ export default async function Page() {
               Caja chica
               <span className="text-base font-normal tabular-nums text-muted-foreground">
                 <Suspense fallback="—">
-                  <CashShiftCount cashShiftsPromise={cashShiftsPromise} />
+                  <CashShiftCount countPromise={countPromise} />
                 </Suspense>
               </span>
             </PageHeader.Title>
