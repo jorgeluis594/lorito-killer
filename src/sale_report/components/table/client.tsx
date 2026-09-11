@@ -39,7 +39,7 @@ export default function SalesReportDataTable({
   if (!result) {
     return (
       <div className="flex flex-col items-start gap-3 rounded-lg border bg-card p-5">
-        <p className="font-bold">No pudimos cargar el reporte de ventas.</p>
+        <p className="font-bold">No pudimos cargar tus ventas.</p>
         <p className="text-sm text-muted-foreground">
           Intenta nuevamente. Si el problema continúa, comunícate con soporte.
         </p>

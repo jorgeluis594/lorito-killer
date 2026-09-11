@@ -71,7 +71,7 @@ export default function FiltersWithHiddenButton({
   return (
     <FilterBar
       role="group"
-      aria-label="Filtros del reporte de ventas"
+      aria-label="Filtros de ventas"
       control={
         <Input
           key={query}

@@ -75,13 +75,13 @@ export default async function Page({
           </Link>
           <ChevronRight aria-hidden="true" className="size-4" />
           <span aria-current="page" className="text-foreground">
-            Reporte de ventas
+            Ventas
           </span>
         </PageHeader.Navigation>
         <PageHeader.Main>
           <PageHeader.Heading>
             <PageHeader.Title>
-              Reporte de ventas
+              Ventas
               <span className="text-base font-normal tabular-nums text-muted-foreground">
                 <Suspense fallback="—">
                   <SalesCount countPromise={countPromise} />
@@ -89,7 +89,7 @@ export default async function Page({
               </span>
             </PageHeader.Title>
             <PageHeader.Description>
-              Consulta, filtra y exporta los comprobantes emitidos.
+              Consulta, filtra y exporta tus ventas.
             </PageHeader.Description>
           </PageHeader.Heading>
           <PageHeader.Actions>

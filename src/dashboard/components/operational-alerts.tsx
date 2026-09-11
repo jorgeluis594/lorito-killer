@@ -32,14 +32,13 @@ const severityIcon = {
 function AlertItem({ alert }: { alert: OperationalAlert }) {
   const Icon = severityIcon[alert.severity];
 
-  return (
-    <Link
-      href={alert.href}
-      className={cn(
-        "block rounded-md border p-4 transition-colors hover:bg-muted/70",
-        severityClasses[alert.severity],
-      )}
-    >
+  const className = cn(
+    "block rounded-md border p-4",
+    alert.href && "transition-colors hover:bg-muted/70",
+    severityClasses[alert.severity],
+  );
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium">{alert.title}</p>
@@ -48,7 +47,15 @@ function AlertItem({ alert }: { alert: OperationalAlert }) {
         <Icon className="h-5 w-5 shrink-0" />
       </div>
       <p className="mt-2 text-xs opacity-80">{alert.description}</p>
+    </>
+  );
+
+  return alert.href ? (
+    <Link href={alert.href} className={className}>
+      {content}
     </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 

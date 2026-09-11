@@ -621,7 +621,7 @@ export async function findOperationalAlerts(
     const operationCount = restaurantsEnabled ? activeTables : openOrders;
     const operationHref = restaurantsEnabled
       ? "/dashboard/tables"
-      : "/dashboard/orders?status=pending";
+      : undefined;
     const discountTotal =
       numberFromDecimal(orderDiscounts._sum.discountAmount) +
       numberFromDecimal(itemDiscounts._sum.discountAmount);
