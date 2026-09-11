@@ -44,6 +44,7 @@ export default function FiltersWithHiddenButton({
   const searchParams = useSearchParams();
   const updateRoute = useUpdateQueryString();
   const timeout = useRef<number | undefined>(undefined);
+  const queryInput = useRef<HTMLInputElement>(null);
   const availableTypes: DocumentType[] = ["invoice", "receipt", "ticket"];
   const selectedTypes = availableTypes.filter(
     (type) => searchParams.get(type) === "true",
@@ -60,6 +61,12 @@ export default function FiltersWithHiddenButton({
 
   useEffect(() => () => window.clearTimeout(timeout.current), []);
 
+  useEffect(() => {
+    if (queryInput.current && document.activeElement !== queryInput.current) {
+      queryInput.current.value = query;
+    }
+  }, [query]);
+
   const updateTypes = (types: string[]) =>
     updateRoute({
       invoice: types.includes("invoice") ? "true" : null,
@@ -74,7 +81,7 @@ export default function FiltersWithHiddenButton({
       aria-label="Filtros de ventas"
       control={
         <Input
-          key={query}
+          ref={queryInput}
           type="search"
           aria-label="Buscar por cliente o documento"
           placeholder="Buscar por cliente o documento…"
@@ -86,6 +93,9 @@ export default function FiltersWithHiddenButton({
               () => updateRoute({ q: value.trim() || null, page: null }),
               350,
             );
+          }}
+          onBlur={(event) => {
+            event.currentTarget.value = query;
           }}
         />
       }

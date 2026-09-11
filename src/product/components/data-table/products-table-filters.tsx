@@ -37,6 +37,7 @@ export function ProductsTableFilters() {
   const withoutStock = searchParams.get("stock") === "zero";
   const query = searchParams.get("q") ?? "";
   const searchTimeout = useRef<number | undefined>(undefined);
+  const queryInput = useRef<HTMLInputElement>(null);
   const filterCount = [categoryId !== "all", showHidden, withoutStock].filter(
     Boolean,
   ).length;
@@ -50,6 +51,12 @@ export function ProductsTableFilters() {
   };
 
   useEffect(() => () => window.clearTimeout(searchTimeout.current), []);
+
+  useEffect(() => {
+    if (queryInput.current && document.activeElement !== queryInput.current) {
+      queryInput.current.value = query;
+    }
+  }, [query]);
 
   const onQueryChange = (value: string) => {
     window.clearTimeout(searchTimeout.current);
@@ -65,12 +72,15 @@ export function ProductsTableFilters() {
       aria-label="Filtros de productos"
       control={
         <Input
+          ref={queryInput}
           type="search"
-          key={query}
           aria-label="Buscar productos"
           placeholder="Buscar por nombre o código…"
           defaultValue={query}
           onChange={(event) => onQueryChange(event.target.value)}
+          onBlur={(event) => {
+            event.currentTarget.value = query;
+          }}
         />
       }
       action={
