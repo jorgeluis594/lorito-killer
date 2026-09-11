@@ -20,8 +20,14 @@ async function addOrderItem(
   orderId: string,
   orderItem: OrderItem,
 ): Promise<response<OrderItem>> {
-  const { productName, productSku, unitType, discount, ...orderItemData } =
-    orderItem;
+  const {
+    productName,
+    productSku,
+    productPhotoUrl,
+    unitType,
+    discount,
+    ...orderItemData
+  } = orderItem;
 
   try {
     const persistedOrderItem = await prisma().orderItem.create({
