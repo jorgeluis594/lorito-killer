@@ -25,6 +25,7 @@ import {
 } from "@/shared/components/ui/toggle-group";
 import { cn, formatPrice } from "@/lib/utils";
 import {
+  tableReceiptsEqual,
   TableReceiptSchema,
   type TablePaymentInput,
   type TableReceiptInput,
@@ -140,14 +141,26 @@ export function TablePaymentView({
         return false;
       }
       const latest = response.data;
+      const receiptChanged = !tableReceiptsEqual(
+        current.receipt,
+        latest.receipt,
+      );
       if (latest.result) setResult(latest.result);
       if (
         latest.orderVersion !== current.orderVersion ||
         latest.revision !== current.revision ||
-        latest.cashShift?.id !== current.cashShift?.id
+        latest.cashShift?.id !== current.cashShift?.id ||
+        receiptChanged
       ) {
         setChanged(true);
         setMethod("");
+      }
+      if (receiptChanged) {
+        setReceipt(latest.receipt);
+        setCustomer(latest.receipt.customer ?? emptyCustomer);
+        setIncludeCustomer(!!latest.receipt.customer);
+        setError("");
+        setFieldErrors({});
       }
       setData(latest);
       setUncertain(false);

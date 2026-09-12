@@ -86,3 +86,18 @@ export const TablePaymentSchema = z
 
 export type TablePaymentInput = z.infer<typeof TablePaymentSchema>;
 export type TableReceiptInput = z.infer<typeof TableReceiptSchema>;
+
+export function tableReceiptsEqual(
+  left: TableReceiptInput,
+  right: TableReceiptInput,
+) {
+  if (left.documentType !== right.documentType) return false;
+  if (!left.customer || !right.customer)
+    return left.customer === right.customer;
+  return (
+    left.customer.documentType === right.customer.documentType &&
+    left.customer.documentNumber === right.customer.documentNumber &&
+    left.customer.legalName === right.customer.legalName &&
+    left.customer.address === right.customer.address
+  );
+}

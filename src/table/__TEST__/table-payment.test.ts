@@ -1,7 +1,11 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { Prisma } from "@prisma/client";
 import type { AuthorizedUser } from "@/authorization/server";
-import { TablePaymentSchema, type TablePaymentInput } from "../payment-schema";
+import {
+  tableReceiptsEqual,
+  TablePaymentSchema,
+  type TablePaymentInput,
+} from "../payment-schema";
 
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
@@ -54,6 +58,31 @@ const input: TablePaymentInput = {
   cashShiftId: "09408274-0732-4a8d-8ee7-b659e41a96b5",
   receipt: { documentType: "ticket" },
 };
+test("detects a remotely replaced ticket with invoice customer data", () => {
+  expect(
+    tableReceiptsEqual(input.receipt, {
+      documentType: "invoice",
+      customer: {
+        documentType: "RUC",
+        documentNumber: "12345678901",
+        legalName: "Empresa",
+        address: "Dirección fiscal",
+      },
+    }),
+  ).toBe(false);
+});
+test("treats structurally equivalent receipts as unchanged", () => {
+  const receipt: TablePaymentInput["receipt"] = {
+    documentType: "receipt",
+    customer: {
+      documentType: "DNI",
+      documentNumber: "12345678",
+      legalName: "Cliente Prueba",
+      address: "",
+    },
+  };
+  expect(tableReceiptsEqual(receipt, structuredClone(receipt))).toBe(true);
+});
 function session() {
   return {
     id: input.sessionId,
