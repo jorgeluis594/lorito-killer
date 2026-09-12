@@ -1,246 +1,305 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRight, MoreVertical, Trash2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { PageHeader } from "@/shared/components/ui/page-header";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-import { useToast } from "@/shared/components/ui/use-toast";
-import type { Zone, TableWithSession } from "../types";
-import { TableFormSchema, type TableFormValues } from "../schemas";
-import {
-  createTableAction,
-  updateTableAction,
-  deleteTableAction,
-} from "../actions";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/shared/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { createTablesAction, deleteTableAction } from "../actions";
+import { CreateTablesSchema } from "../schemas";
+import type { TableConfiguration } from "../types";
 
 interface TableConfigFormProps {
-  tables: TableWithSession[];
-  zones: Zone[];
+  configuration: TableConfiguration;
+  canDelete: boolean;
 }
 
-export function TableConfigForm({ tables, zones }: TableConfigFormProps) {
-  const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [editingTable, setEditingTable] = useState<TableWithSession | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const form = useForm<TableFormValues>({
-    resolver: zodResolver(TableFormSchema),
-    defaultValues: { number: 1, label: "", capacity: 4, zoneId: "" },
+export function TableConfigForm({
+  configuration,
+  canDelete,
+}: TableConfigFormProps) {
+  const { tables, nextNumber } = configuration;
+  const firstUse = tables.length === 0;
+  const router = useRouter();
+  const [quantity, setQuantity] = useState("");
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [removing, setRemoving] = useState<
+    TableConfiguration["tables"][number] | null
+  >(null);
+  const [removeError, setRemoveError] = useState("");
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const parsed = CreateTablesSchema.safeParse({
+    quantity: Number(quantity),
+    startNumber: nextNumber,
   });
+  const count = parsed.success ? parsed.data.quantity : 0;
+  const lastNumber = nextNumber + count - 1;
+  const actionText = firstUse ? "Crear" : "Agregar";
+  const rangeText =
+    count === 1
+      ? `Se creará la mesa ${nextNumber}.`
+      : `Se crearán las mesas del ${nextNumber} al ${lastNumber}.`;
 
-  const handleOpenCreate = () => {
-    setEditingTable(null);
-    const maxNumber = tables.length > 0
-      ? Math.max(...tables.map((t) => t.number))
-      : 0;
-    form.reset({
-      number: maxNumber + 1,
-      label: "",
-      capacity: 4,
-      zoneId: zones[0]?.id || "",
-    });
-    setOpen(true);
-  };
-
-  const handleOpenEdit = (table: TableWithSession) => {
-    setEditingTable(table);
-    form.reset({
-      number: table.number,
-      label: table.label || "",
-      capacity: table.capacity,
-      zoneId: table.zoneId,
-    });
-    setOpen(true);
-  };
-
-  const onSubmit = async (values: TableFormValues) => {
-    setLoading(true);
-    const result = editingTable
-      ? await updateTableAction(editingTable.id, values)
-      : await createTableAction(values);
-    setLoading(false);
-
-    if (result.success) {
-      toast({ title: editingTable ? "Mesa actualizada" : "Mesa creada" });
-      setOpen(false);
-    } else {
-      toast({ title: "Error", description: result.message, variant: "destructive" });
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (pending) return;
+    if (!parsed.success) {
+      setError(parsed.error.errors[0].message);
+      return;
     }
+    setError("");
+    setNotice("");
+    startTransition(async () => {
+      try {
+        const result = await createTablesAction(parsed.data);
+        if (!result.success) {
+          setError(result.message);
+          return;
+        }
+        setQuantity("");
+        setNotice(
+          count === 1
+            ? `Mesa ${result.data.firstNumber} creada.`
+            : `Mesas del ${result.data.firstNumber} al ${result.data.lastNumber} creadas.`,
+        );
+        router.refresh();
+        headingRef.current?.focus();
+      } catch {
+        setError(
+          "No pudimos confirmar la creación. Actualiza la página para revisar tus mesas antes de intentar de nuevo.",
+        );
+      }
+    });
   };
 
-  const handleDelete = async (table: TableWithSession) => {
-    setLoading(true);
-    const result = await deleteTableAction(table.id);
-    setLoading(false);
-    if (result.success) {
-      toast({ title: "Mesa eliminada" });
-    } else {
-      toast({ title: "Error", description: result.message, variant: "destructive" });
-    }
+  const remove = () => {
+    if (!removing || pending) return;
+    setRemoveError("");
+    startTransition(async () => {
+      try {
+        const result = await deleteTableAction(removing.id);
+        if (!result.success) {
+          setRemoveError(result.message);
+          return;
+        }
+        setNotice(
+          `Mesa ${removing.number} retirada. Su historial se conserva.`,
+        );
+        setRemoving(null);
+        router.refresh();
+      } catch {
+        setRemoveError(
+          "No pudimos confirmar el cambio. Actualiza la página para revisar la mesa.",
+        );
+      }
+    });
   };
-
-  const getZoneName = (zoneId: string) =>
-    zones.find((z) => z.id === zoneId)?.name || "Sin zona";
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Mesas</h3>
-        <Button
-          size="sm"
-          className="gap-1"
-          onClick={handleOpenCreate}
-          disabled={zones.length === 0}
-        >
-          <Plus className="h-4 w-4" />
-          Nueva mesa
-        </Button>
-      </div>
-
-      {zones.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Primero crea una zona para poder agregar mesas.
-        </p>
-      )}
-
-      {tables.length === 0 && zones.length > 0 && (
-        <p className="text-sm text-muted-foreground">No hay mesas creadas.</p>
-      )}
-
-      {tables.length > 0 && (
-        <div className="space-y-2">
-          {tables.map((table) => (
-            <div
-              key={table.id}
-              className="flex items-center justify-between rounded-lg border p-3"
+    <section
+      aria-labelledby="table-config-title"
+      className="flex min-w-0 flex-col gap-8"
+    >
+      <PageHeader>
+        <PageHeader.Main>
+          <PageHeader.Heading>
+            <PageHeader.Title
+              id="table-config-title"
+              ref={headingRef}
+              tabIndex={-1}
             >
-              <div>
-                <p className="font-medium">
-                  Mesa {table.number}
-                  {table.label && (
-                    <span className="ml-1 text-muted-foreground">
-                      ({table.label})
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {getZoneName(table.zoneId)} · Capacidad: {table.capacity}
-                </p>
-              </div>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleOpenEdit(table)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(table)}
-                  disabled={loading}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
+              Configurar mesas
+            </PageHeader.Title>
+            <PageHeader.Description>
+              {firstUse
+                ? "Indica cuántas mesas tienes y las numeraremos por ti."
+                : `${tables.length} ${tables.length === 1 ? "mesa configurada" : "mesas configuradas"}.`}
+            </PageHeader.Description>
+          </PageHeader.Heading>
+          {!firstUse ? (
+            <PageHeader.Actions>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/tables">
+                  Ir a atender mesas{" "}
+                  <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            </PageHeader.Actions>
+          ) : null}
+        </PageHeader.Main>
+      </PageHeader>
+      <p
+        role="status"
+        className={cn("text-sm text-primary", !notice && "sr-only")}
+      >
+        {notice}
+      </p>
+      <div className="flex w-full max-w-2xl flex-col gap-6">
+        {!firstUse ? (
+          <ul
+            aria-label="Mesas configuradas"
+            className="order-2 divide-y rounded-md border bg-card"
+          >
+            {tables.map((table) => (
+              <li
+                key={table.id}
+                className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold">Mesa {table.number}</p>
+                  {table.label ? (
+                    <p className="break-words text-sm text-muted-foreground">
+                      {table.label}
+                    </p>
+                  ) : null}
+                  {table.inService ? (
+                    <p className="text-sm text-muted-foreground">En atención</p>
+                  ) : null}
+                </div>
+                {canDelete ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Opciones de mesa ${table.number}`}
+                        disabled={pending}
+                      >
+                        <MoreVertical className="size-4" aria-hidden="true" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem
+                          disabled={table.inService}
+                          onSelect={() => {
+                            setRemoving(table);
+                            setRemoveError("");
+                          }}
+                        >
+                          <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                          {table.inService
+                            ? "En atención: no se puede retirar"
+                            : "Retirar mesa"}
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <form
+          onSubmit={submit}
+          noValidate
+          aria-busy={pending}
+          className="order-1 flex flex-col gap-4"
+        >
+          {!firstUse ? (
+            <h2 className="text-lg font-medium">Agregar mesas</h2>
+          ) : null}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="table-quantity">Cantidad de mesas</Label>
+            <div className="flex flex-wrap items-center gap-3">
+              <Input
+                className="w-20 shrink-0 tabular-nums"
+                id="table-quantity"
+                name="quantity"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={100}
+                step={1}
+                placeholder={firstUse ? "Ej. 12" : "Ej. 4"}
+                value={quantity}
+                onChange={(event) => {
+                  setQuantity(event.target.value);
+                  setError("");
+                }}
+                disabled={pending}
+                required
+                aria-invalid={!!error}
+                aria-describedby="table-quantity-help table-quantity-error"
+              />
+              <Button type="submit" disabled={pending}>
+                {pending
+                  ? "Guardando…"
+                  : count
+                    ? `${actionText} ${count} ${count === 1 ? "mesa" : "mesas"}`
+                    : `${actionText} mesas`}
+              </Button>
             </div>
-          ))}
-        </div>
-      )}
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingTable ? "Editar mesa" : "Nueva mesa"}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-1">
-                <Label htmlFor="table-number">Numero</Label>
-                <Input
-                  id="table-number"
-                  type="number"
-                  {...form.register("number")}
-                />
-                {form.formState.errors.number && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.number.message}
-                  </p>
-                )}
-              </div>
-              <div className="grid gap-1">
-                <Label htmlFor="table-label">Etiqueta</Label>
-                <Input
-                  id="table-label"
-                  placeholder="Ej: VIP-1"
-                  {...form.register("label")}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-1">
-                <Label htmlFor="table-capacity">Capacidad</Label>
-                <Input
-                  id="table-capacity"
-                  type="number"
-                  {...form.register("capacity")}
-                />
-                {form.formState.errors.capacity && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.capacity.message}
-                  </p>
-                )}
-              </div>
-              <div className="grid gap-1">
-                <Label>Zona</Label>
-                <Select
-                  value={form.watch("zoneId")}
-                  onValueChange={(v: string) => form.setValue("zoneId", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar zona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {zones.map((zone) => (
-                      <SelectItem key={zone.id} value={zone.id}>
-                        {zone.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.zoneId && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.zoneId.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {editingTable ? "Guardar cambios" : "Crear mesa"}
+            <p
+              id="table-quantity-help"
+              aria-live="polite"
+              className="min-h-6 text-sm text-muted-foreground"
+            >
+              {count ? rangeText : "Ingresa cuántas mesas quieres agregar."}
+            </p>
+            <p
+              id="table-quantity-error"
+              role="alert"
+              className={cn("text-sm text-destructive", !error && "sr-only")}
+            >
+              {error}
+            </p>
+          </div>
+        </form>
+      </div>
+      <AlertDialog
+        open={!!removing}
+        onOpenChange={(open) => {
+          if (!open && !pending) setRemoving(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Retirar la mesa {removing?.number}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Dejará de aparecer en el salón. Su historial de atención se
+              conserva y las demás mesas mantienen su número.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {removeError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {removeError}
+            </p>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>
+              Conservar mesa
+            </AlertDialogCancel>
+            <Button variant="destructive" disabled={pending} onClick={remove}>
+              {pending ? "Retirando…" : "Retirar mesa"}
             </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
   );
 }

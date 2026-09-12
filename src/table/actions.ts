@@ -2,6 +2,7 @@
 
 import { response } from "@/lib/types";
 import { protectedAction } from "@/authorization/server";
+import { requireFeature } from "@/feature-flags/server";
 import { revalidatePath } from "next/cache";
 import { broadcast } from "@/lib/realtime/broadcast";
 import type { Zone, Table, TableSession, TableWithSession } from "./types";
@@ -14,6 +15,7 @@ import {
   findTables,
   findTable,
   createTable as dbCreateTable,
+  createTables as dbCreateTables,
   updateTable as dbUpdateTable,
   deleteTable as dbDeleteTable,
   getWaiters,
@@ -162,6 +164,20 @@ export const createTableAction = protectedAction(
   },
 );
 
+export const createTablesAction = protectedAction(
+  { resource: "tables", action: "create" },
+  async (user, data: { quantity: number; startNumber: number }) => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    const result = await dbCreateTables(user.companyId, data);
+    if (result.success) {
+      revalidatePath("/[subdomain]/dashboard/tables", "layout");
+      revalidatePath("/dashboard/settings/tables");
+    }
+    return result;
+  },
+);
+
 export const updateTableAction = protectedAction(
   { resource: "tables", action: "update" },
   async (
@@ -198,6 +214,8 @@ export const updateTableAction = protectedAction(
 export const deleteTableAction = protectedAction(
   { resource: "tables", action: "delete" },
   async (user, id: string): Promise<response<void>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
     const parsed = DeleteTableSchema.safeParse({ id });
     if (!parsed.success) {
       return {
@@ -208,6 +226,7 @@ export const deleteTableAction = protectedAction(
 
     const result = await dbDeleteTable(parsed.data.id, user.companyId);
     if (result.success) {
+      revalidatePath("/[subdomain]/dashboard/tables", "layout");
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
     }

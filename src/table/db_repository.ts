@@ -1,9 +1,16 @@
 import type { PreparationStation } from "@/product/types";
 import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
-import type { Zone, Table, TableSession, TableWithSession } from "./types";
+import type {
+  Zone,
+  Table,
+  TableSession,
+  TableWithSession,
+  TableConfiguration,
+} from "./types";
 import { $Enums } from "@prisma/client";
 import { countReadyRounds } from "./use-cases/count-ready-rounds";
+import { CreateTablesSchema } from "./schemas";
 
 // -- Mapper types --
 
@@ -260,6 +267,109 @@ export async function deleteZone(
 }
 
 // -- Table CRUD --
+
+export async function findTableConfiguration(
+  companyId: string,
+): Promise<response<TableConfiguration>> {
+  try {
+    const [tables, highest] = await Promise.all([
+      prisma().table.findMany({
+        where: { companyId, active: true },
+        orderBy: { number: "asc" },
+        select: {
+          id: true,
+          number: true,
+          label: true,
+          sessions: { where: { current: true }, select: { id: true } },
+        },
+      }),
+      prisma().table.aggregate({
+        where: { companyId },
+        _max: { number: true },
+      }),
+    ]);
+    return {
+      success: true,
+      data: {
+        tables: tables.map(({ sessions, ...table }) => ({
+          ...table,
+          inService: sessions.length > 0,
+        })),
+        nextNumber: (highest._max.number ?? 0) + 1,
+      },
+    };
+  } catch (error) {
+    console.error("findTableConfiguration error:", error);
+    return {
+      success: false,
+      message: "No se pudieron cargar las mesas. Vuelve a intentarlo.",
+    };
+  }
+}
+
+export async function createTables(
+  companyId: string,
+  data: { quantity: number; startNumber: number },
+): Promise<response<{ firstNumber: number; lastNumber: number }>> {
+  const parsed = CreateTablesSchema.safeParse(data);
+  if (!parsed.success)
+    return { success: false, message: parsed.error.errors[0].message };
+  const { quantity, startNumber } = parsed.data;
+
+  try {
+    return await prisma().$transaction(
+      async (tx) => {
+        const highest = await tx.table.aggregate({
+          where: { companyId },
+          _max: { number: true },
+        });
+        if ((highest._max.number ?? 0) + 1 !== startNumber) {
+          return {
+            success: false as const,
+            message:
+              "Las mesas cambiaron. Actualiza la página y revisa la nueva numeración antes de agregar.",
+          };
+        }
+        const zone =
+          (await tx.zone.findFirst({
+            where: { companyId, active: true },
+            orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+          })) ?? (await tx.zone.create({ data: { companyId, name: "Salón" } }));
+
+        await tx.table.createMany({
+          data: Array.from({ length: quantity }, (_, index) => ({
+            companyId,
+            zoneId: zone.id,
+            number: startNumber + index,
+          })),
+        });
+        return {
+          success: true as const,
+          data: {
+            firstNumber: startNumber,
+            lastNumber: startNumber + quantity - 1,
+          },
+        };
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === "P2002" || code === "P2034") {
+      return {
+        success: false,
+        message:
+          "Las mesas cambiaron. Actualiza la página y revisa la numeración antes de intentar de nuevo.",
+      };
+    }
+    console.error("createTables error:", error);
+    return {
+      success: false,
+      message:
+        "No se pudieron crear las mesas. Actualiza la página antes de volver a intentarlo.",
+    };
+  }
+}
 
 export async function findTables(
   companyId: string,
@@ -748,7 +858,16 @@ export async function getWaiters(
 export async function findProductsByIds(
   productIds: string[],
   companyId: string,
-): Promise<response<Array<{ id: string; price: number; name: string; preparationStation: PreparationStation | null }>>> {
+): Promise<
+  response<
+    Array<{
+      id: string;
+      price: number;
+      name: string;
+      preparationStation: PreparationStation | null;
+    }>
+  >
+> {
   try {
     const products = await prisma().product.findMany({
       where: { id: { in: productIds }, companyId, hidden: false },

@@ -87,6 +87,13 @@ export type TableWithSession = Table & {
   activeSession: TableSession | null;
 };
 
+export type TableConfiguration = {
+  tables: Array<
+    Pick<Table, "id" | "number" | "label"> & { inService: boolean }
+  >;
+  nextNumber: number;
+};
+
 export function getTableDerivedStatus(table: Table): TableDerivedStatus {
   if (!table.activeSession) return "AVAILABLE";
   if (table.activeSession.status === "BILL_REQUESTED") return "BILL_REQUESTED";

@@ -129,6 +129,15 @@ export const CreateTableSchema = z.object({
   zoneId: z.string().min(1, "La zona es requerida"),
 });
 
+export const CreateTablesSchema = z.object({
+  quantity: z
+    .number()
+    .int("Ingresa una cantidad entera")
+    .min(1, "Agrega al menos una mesa")
+    .max(100, "Puedes agregar hasta 100 mesas a la vez"),
+  startNumber: z.number().int().min(1).max(2147483548),
+});
+
 export const UpdateTableSchema = z.object({
   id: z.string().min(1, "El ID de mesa es requerido"),
   data: z.object({

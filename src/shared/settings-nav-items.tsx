@@ -15,9 +15,10 @@ const items = [
 export default function NavItems({ isAdmin }: { isAdmin: boolean }) {
   const path = usePathname();
   const restaurantsEnabled = useFeatureEnabled("restaurants");
-  const visibleItems = isAdmin && restaurantsEnabled
-    ? [...items, { title: "Mesas y zonas", href: "/dashboard/settings/tables" }]
-    : items;
+  const visibleItems =
+    isAdmin && restaurantsEnabled
+      ? [...items, { title: "Mesas", href: "/dashboard/tables/configure" }]
+      : items;
 
   return (
     <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
