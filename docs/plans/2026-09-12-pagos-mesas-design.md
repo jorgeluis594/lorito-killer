@@ -10,6 +10,7 @@ Estas decisiones actualizan el alcance de cobro descrito en `2026-09-11-atencion
 
 - Mozo: confirma el total de la cuenta mediante tarjeta o billetera, después de verificar que recibió el pago. No ingresa montos, nombre de billetera ni código de operación.
 - Caja: cobra efectivo y pagos combinados. Se mantiene una cuenta completa, sin división por comensales o productos.
+- Los cobros del mozo se contabilizan en la caja compartida abierta del restaurante. El pago se asocia al mozo que lo confirma, no al usuario que abrió la caja; el mozo no necesita una caja propia. La caja receptora y la identidad del mozo son asociaciones distintas.
 - Seleccionar un medio no verifica una transferencia ni ejecuta un cargo bancario; la confirmación registra el pago verificado por el operador.
 
 ## Flujo
@@ -39,10 +40,9 @@ Estas decisiones actualizan el alcance de cobro descrito en `2026-09-11-atencion
 
 ## Decisiones pendientes
 
-- Caja compartida o caja propia para contabilizar pagos registrados por el mozo. La implementación actual exige caja del usuario que cobra.
 - Cómo solicitar comprobante y datos del cliente manteniendo al mozo sin teclado; no se ha aprobado aún la derivación de estos casos.
 - Tratamiento de productos todavía en preparación al iniciar el cobro.
 
 ## Validación prevista
 
-Recorrer tarjeta y billetera sin teclado en celular y tablet; verificar que efectivo y combinado se deriven a caja. Comprobar fallos, reintentos, concurrencia entre dispositivos, total actualizado y liberación de mesa solo tras el cobro exitoso.
+Recorrer tarjeta y billetera sin teclado en celular y tablet; verificar que efectivo y combinado se deriven a caja. Verificar que un pago confirmado por un mozo ingrese a la caja compartida abierta por otra persona y conserve al mozo como autor del pago. Comprobar fallos, reintentos, concurrencia entre dispositivos, total actualizado y liberación de mesa solo tras el cobro exitoso.
