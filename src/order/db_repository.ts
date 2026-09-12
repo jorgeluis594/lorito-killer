@@ -167,7 +167,7 @@ const toOrderDocumentType = (
   return documentType ?? "ticket";
 };
 
-const mapReceiptPrintOrderItem = (
+export const mapReceiptPrintOrderItem = (
   orderItem: PrismaOrderItem & { product: PrismaProduct },
 ): OrderItem => {
   const discount = toOrderDiscount(
@@ -201,7 +201,7 @@ const mapReceiptPrintOrder = async (
   cashShiftId: prismaOrder.cashShiftId,
   companyId: prismaOrder.companyId || "some_company_id",
   customerId: prismaOrder.customerId || undefined,
-  orderItems: prismaOrder.orderItems.map(mapReceiptPrintOrderItem),
+  orderItems: prismaOrder.orderItems.filter((item) => item.kitchenStatus !== "CANCELLED").map(mapReceiptPrintOrderItem),
   netTotal: prismaOrder.netTotal.toNumber(),
   discountAmount: prismaOrder.discountAmount.toNumber(),
   total: prismaOrder.total.toNumber(),
@@ -363,7 +363,7 @@ export async function transformOrdersData(
   prismaOrders: PrismaOrder[],
 ): Promise<Order[]> {
   const prismaOrderItems = await prisma().orderItem.findMany({
-    where: { orderId: { in: prismaOrders.map((order) => order.id) } },
+    where: { orderId: { in: prismaOrders.map((order) => order.id) }, kitchenStatus: { not: "CANCELLED" } },
   });
 
   const prismaOrderItemsMap = prismaOrderItems.reduce(

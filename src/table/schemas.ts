@@ -151,3 +151,9 @@ export const UpdateTableSchema = z.object({
 export const DeleteTableSchema = z.object({
   id: z.string().min(1, "El ID de mesa es requerido"),
 });
+
+export const TableDraftSchema = z.object({
+  sessionId: z.string().uuid(),
+  revision: z.number().int().nonnegative(),
+  items: z.array(AddRoundSchema.shape.items.element).max(100).optional(),
+});

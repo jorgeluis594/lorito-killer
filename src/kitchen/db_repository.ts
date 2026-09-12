@@ -11,6 +11,22 @@ function stationFilter(role: UserRole): Prisma.OrderItemWhereInput {
   return { id: { in: [] } };
 }
 
+function activeKitchenOrder(companyId: string): Prisma.OrderWhereInput {
+  return {
+    companyId,
+    OR: [
+      {
+        status: "PENDING",
+        tableSession: {
+          current: true,
+          status: { in: ["OPEN", "BILL_REQUESTED"] },
+        },
+      },
+      { status: "COMPLETED", tableSession: { status: "CLOSED" } },
+    ],
+  };
+}
+
 export async function findKitchenItems(
   companyId: string,
   role: UserRole,
@@ -19,13 +35,10 @@ export async function findKitchenItems(
     const items = await prisma().orderItem.findMany({
       where: {
         ...stationFilter(role),
-        order: {
-          companyId,
-          status: "PENDING",
-          tableSession: {
-            current: true,
-            status: { in: ["OPEN", "BILL_REQUESTED"] },
-          },
+        order: activeKitchenOrder(companyId),
+        NOT: {
+          kitchenStatus: { in: ["SERVED", "CANCELLED"] },
+          order: { status: "COMPLETED" },
         },
       },
       include: {
@@ -39,6 +52,7 @@ export async function findKitchenItems(
       success: true,
       data: items.map((item) => ({
         id: item.id,
+        paid: item.order.status === "COMPLETED",
         preparationStation: item.preparationStation,
         productName: item.product.name,
         quantity: Number(item.quantity),
@@ -71,14 +85,7 @@ export async function takePendingOrderItem(input: {
         id: input.orderItemId,
         AND: stationFilter(input.role),
         kitchenStatus: "PENDING",
-        order: {
-          companyId: input.companyId,
-          status: "PENDING",
-          tableSession: {
-            current: true,
-            status: { in: ["OPEN", "BILL_REQUESTED"] },
-          },
-        },
+        order: activeKitchenOrder(input.companyId),
       },
       data: {
         kitchenStatus: "PREPARING",
@@ -108,14 +115,7 @@ export async function markPreparingOrderItemReady(input: {
         id: input.orderItemId,
         AND: stationFilter(input.role),
         kitchenStatus: "PREPARING",
-        order: {
-          companyId: input.companyId,
-          status: "PENDING",
-          tableSession: {
-            current: true,
-            status: { in: ["OPEN", "BILL_REQUESTED"] },
-          },
-        },
+        order: activeKitchenOrder(input.companyId),
       },
       data: {
         kitchenStatus: "READY",
@@ -126,7 +126,10 @@ export async function markPreparingOrderItemReady(input: {
 
     return result.count === 1
       ? { success: true, data: undefined }
-      : { success: false, message: "Solo un producto en preparacion puede marcarse listo" };
+      : {
+          success: false,
+          message: "Solo un producto en preparacion puede marcarse listo",
+        };
   } catch (error) {
     console.error("markPreparingOrderItemReady error:", error);
     return { success: false, message: "Error interno del servidor" };
@@ -168,7 +171,10 @@ export async function serveReadyRound(input: {
         order.orderItems.length === 0 ||
         !order.orderItems.every((item) => item.kitchenStatus === "READY")
       ) {
-        return { success: false, message: "Solo una comanda lista puede marcarse servida" };
+        return {
+          success: false,
+          message: "Solo una comanda lista puede marcarse servida",
+        };
       }
 
       const served = await tx.orderItem.updateMany({
@@ -192,4 +198,35 @@ export async function serveReadyRound(input: {
     console.error("serveReadyRound error:", error);
     return { success: false, message: "Error interno del servidor" };
   }
+}
+
+export async function servePaidKitchenItem(input: {
+  orderItemId: string;
+  companyId: string;
+  userId: string;
+  role: UserRole;
+}): Promise<response<void>> {
+  const result = await prisma().orderItem.updateMany({
+    where: {
+      id: input.orderItemId,
+      AND: stationFilter(input.role),
+      kitchenStatus: "READY",
+      order: {
+        companyId: input.companyId,
+        status: "COMPLETED",
+        tableSession: { status: "CLOSED" },
+      },
+    },
+    data: {
+      kitchenStatus: "SERVED",
+      servedAt: new Date(),
+      servedById: input.userId,
+    },
+  });
+  return result.count === 1
+    ? { success: true, data: undefined }
+    : {
+        success: false,
+        message: "El producto ya no está listo para entregar.",
+      };
 }

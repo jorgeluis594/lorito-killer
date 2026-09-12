@@ -15,6 +15,8 @@ import { CreateTablesSchema } from "./schemas";
 // -- Mapper types --
 
 type PrismaSessionResult = {
+  draft?: unknown;
+  draftRevision?: number;
   id: string;
   companyId: string;
   tableId: string;
@@ -97,6 +99,10 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
   const readyKitchenTickets = countReadyRounds(orderItems);
 
   return {
+    draft: Array.isArray(s.draft)
+      ? (s.draft as import("./types").TableDraftItem[])
+      : [],
+    draftRevision: s.draftRevision ?? 0,
     id: s.id,
     companyId: s.companyId,
     tableId: s.tableId,
@@ -621,7 +627,15 @@ export async function updateSessionStatus(
     if (!existing) return { success: false, message: "Sesion no encontrada" };
     const isClosed = status === "CLOSED" || status === "CANCELLED";
     const session = await prisma().tableSession.update({
-      where: { id: sessionId },
+      where: {
+        id: sessionId,
+        companyId,
+        current: true,
+        status: existing.status,
+        ...(status === "CLOSED" ? { order: { status: "COMPLETED", payments: { some: {} }, documents: { some: {} } } }
+          : { OR: [{ order: null }, { order: { status: "PENDING", payments: { none: {} }, documents: { none: {} } } }] }),
+        ...(status === "BILL_REQUESTED" ? { draft: { equals: [] } } : {}),
+      },
       data: {
         status,
         current: isClosed ? null : true,
@@ -789,6 +803,12 @@ export async function cancelPendingOrderItem(input: {
 }): Promise<response<void>> {
   try {
     return await prisma().$transaction(async (tx) => {
+      // Serialize cancellation with payment before changing either items or totals.
+      await tx.$queryRaw`SELECT s.id FROM "TableSession" s
+        JOIN "Order" o ON o."tableSessionId" = s.id
+        JOIN "OrderItem" i ON i."orderId" = o.id
+        WHERE i.id = ${input.orderItemId} AND s."companyId" = ${input.companyId}
+        FOR UPDATE OF s, o`;
       const cancelled = await tx.orderItem.updateMany({
         where: {
           id: input.orderItemId,

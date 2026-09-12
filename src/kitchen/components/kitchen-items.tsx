@@ -7,7 +7,11 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { useToast } from "@/shared/components/ui/use-toast";
 import type { KitchenItem } from "../types";
-import { markOrderItemReadyAction, takeOrderItemAction } from "../actions";
+import {
+  markOrderItemReadyAction,
+  takeOrderItemAction,
+  servePaidKitchenItemAction,
+} from "../actions";
 import { useRealtime } from "@/lib/realtime/hooks/use-realtime";
 
 const statusLabel = {
@@ -29,6 +33,7 @@ export function KitchenItems({
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const realtime = useRealtime<{
+    "table-session-changed": { sessionId: string };
     "order-item-taken": { orderItemId: string };
     "kitchen-item-ready": { orderItemId: string };
     "table-round-added": { tableId: string };
@@ -40,6 +45,7 @@ export function KitchenItems({
     const refresh = () => router.refresh();
     const unsubscribes = [
       realtime.on("table-round-added", refresh),
+      realtime.on("table-session-changed", refresh),
       realtime.on("order-item-taken", refresh),
       realtime.on("kitchen-item-ready", refresh),
       realtime.on("order-item-cancelled", refresh),
@@ -141,6 +147,7 @@ export function KitchenItems({
                 </p>
                 <p className="font-medium break-words">
                   Mesa {item.tableLabel} · Ronda {item.round}
+                  {item.paid ? " · Cuenta pagada" : ""}
                 </p>
                 <p className="break-words">
                   {item.quantity} × {item.productName}
@@ -171,6 +178,25 @@ export function KitchenItems({
                   <Button onClick={() => markReady(item.id)} disabled={pending}>
                     <Check data-icon="inline-start" />
                     Marcar listo
+                  </Button>
+                ) : item.status === "READY" && item.paid ? (
+                  <Button
+                    disabled={pending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const result = await servePaidKitchenItemAction(
+                          item.id,
+                        );
+                        if (!result.success)
+                          toast({
+                            title: result.message,
+                            variant: "destructive",
+                          });
+                        router.refresh();
+                      })
+                    }
+                  >
+                    Marcar entregado
                   </Button>
                 ) : null}
               </div>

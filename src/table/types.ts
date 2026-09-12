@@ -62,6 +62,8 @@ export type Table = {
 };
 
 export type TableSession = {
+  draft?: TableDraftItem[];
+  draftRevision?: number;
   id: string;
   companyId: string;
   tableId: string;
@@ -81,6 +83,14 @@ export type TableSession = {
   closedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type TableDraftItem = {
+  productId: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  notes?: string;
 };
 
 export type TableWithSession = Table & {

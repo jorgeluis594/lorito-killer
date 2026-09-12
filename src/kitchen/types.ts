@@ -3,6 +3,7 @@ import type { OrderItemKitchenStatus } from "@/table/types";
 
 export type KitchenItem = {
   id: string;
+  paid?: boolean;
   preparationStation: PreparationStation | null;
   productName: string;
   quantity: number;

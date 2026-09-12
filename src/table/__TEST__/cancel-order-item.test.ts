@@ -64,6 +64,7 @@ describe("cancelPendingOrderItem", () => {
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
     const updateOrder = vi.fn().mockResolvedValue({});
     const tx = {
+      $queryRaw: vi.fn(),
       orderItem: {
         updateMany,
         findUnique: vi.fn().mockResolvedValue({ orderId: "order-1" }),
@@ -73,7 +74,9 @@ describe("cancelPendingOrderItem", () => {
       },
       order: { update: updateOrder },
     };
-    setPrismaClient({ $transaction: (callback: (client: typeof tx) => unknown) => callback(tx) } as never);
+    setPrismaClient({
+      $transaction: (callback: (client: typeof tx) => unknown) => callback(tx),
+    } as never);
 
     const result = await cancelPendingOrderItem({
       orderItemId: "item-1",
@@ -105,6 +108,7 @@ describe("cancelPendingOrderItem", () => {
   test("does not recalculate twice when a concurrent cancellation loses", async () => {
     const updateOrder = vi.fn();
     const tx = {
+      $queryRaw: vi.fn(),
       orderItem: {
         updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         findUnique: vi.fn(),
@@ -112,7 +116,9 @@ describe("cancelPendingOrderItem", () => {
       },
       order: { update: updateOrder },
     };
-    setPrismaClient({ $transaction: (callback: (client: typeof tx) => unknown) => callback(tx) } as never);
+    setPrismaClient({
+      $transaction: (callback: (client: typeof tx) => unknown) => callback(tx),
+    } as never);
 
     const result = await cancelPendingOrderItem({
       orderItemId: "item-1",

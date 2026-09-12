@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Button } from "@/shared/components/ui/button";
 import { hasPermission } from "@/authorization/helpers";
 import { requirePermission } from "@/authorization/server";
-import { findTables, findZones, getWaiters } from "@/table/db_repository";
+import { findTables, findZones } from "@/table/db_repository";
+import { ArrowLeft, Settings2 } from "lucide-react";
 import { TableGrid } from "@/table/components/table-grid";
 import { TableGridSkeleton } from "@/table/components/table-grid-skeleton";
 
@@ -17,10 +18,9 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
     return <p className="p-4 text-destructive">{auth.message}</p>;
   }
 
-  const [tablesRes, zonesRes, waitersRes] = await Promise.all([
+  const [tablesRes, zonesRes] = await Promise.all([
     findTables(auth.data.companyId),
     findZones(auth.data.companyId),
-    getWaiters(auth.data.companyId),
   ]);
 
   if (!tablesRes.success || !zonesRes.success) {
@@ -33,7 +33,6 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
   }
   const tables = tablesRes.data;
   const zones = zonesRes.data;
-  const waiters = waitersRes.success ? waitersRes.data : [];
   const canConfigure = hasPermission(auth.data.role, "tables", "create");
 
   if (tables.length === 0) {
@@ -57,15 +56,21 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
   return (
     <div className="flex flex-col gap-4">
       {canConfigure ? (
-        <Button variant="outline" asChild className="self-end">
-          <Link href="/dashboard/tables/configure">Configurar mesas</Link>
-        </Button>
+        <details className="relative self-end">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg px-3 text-sm hover:bg-accent">
+            <Settings2 className="size-4" aria-hidden /> Opciones
+          </summary>
+          <div className="absolute right-0 z-10 mt-2 min-w-48 rounded-lg border bg-popover p-2">
+            <Button variant="ghost" asChild>
+              <Link href="/dashboard/tables/configure">Configurar mesas</Link>
+            </Button>
+          </div>
+        </details>
       ) : null}
       <TableGrid
         tables={tables}
         zones={zones}
-        waiters={waiters}
-        subdomain={subdomain}
+        canAttend={hasPermission(auth.data.role, "tables", "update")}
       />
     </div>
   );
@@ -74,13 +79,23 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
 export default async function TablesPage(props: PageProps) {
   const params = await props.params;
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Mesas</h2>
-      </div>
+    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col gap-4 px-4 py-5 md:px-8 md:py-8">
+      <header className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/dashboard" aria-label="Volver al dashboard">
+            <ArrowLeft aria-hidden />
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Mesas</h1>
+          <p className="text-sm text-muted-foreground">
+            Toca una mesa para atender
+          </p>
+        </div>
+      </header>
       <Suspense fallback={<TableGridSkeleton />}>
         <TablesContent subdomain={params.subdomain} />
       </Suspense>
-    </div>
+    </main>
   );
 }

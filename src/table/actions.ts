@@ -21,7 +21,6 @@ import {
   getWaiters,
   cancelPendingOrderItem,
 } from "./db_repository";
-import { openTableSession } from "./use-cases/open-table-session";
 import { closeTableSession } from "./use-cases/close-table-session";
 import { requestBill } from "./use-cases/request-bill";
 import { addRound, type RoundItem } from "./use-cases/add-round";
@@ -44,8 +43,91 @@ import {
 } from "./schemas";
 import { cancelOrderItem } from "./use-cases/cancel-order-item";
 import { serveReadyRound } from "@/kitchen/db_repository";
+import { TableDraftSchema } from "./schemas";
+import { openTableForService, updateTableDraft } from "./draft-repository";
 
 // -- Zone Actions --
+
+export const saveTableDraft = protectedAction(
+  { resource: "tables", action: "update" },
+  async (
+    user,
+    input: { sessionId: string; revision: number; items: RoundItem[] },
+  ) => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    const parsed = TableDraftSchema.required({ items: true }).safeParse(input);
+    if (!parsed.success)
+      return {
+        success: false,
+        message: "Revisa los productos, cantidades y notas del pedido.",
+      };
+    const result = await updateTableDraft({
+      ...parsed.data,
+      companyId: user.companyId,
+      userId: user.id,
+      operation: "save",
+    });
+    if (result.success) {
+      revalidatePath("/[subdomain]/dashboard/tables", "layout");
+      await broadcast(user.companyId, "tables", "table-draft-changed", {
+        tableId: result.data.tableId,
+      }).catch(() => console.warn("Table draft notification failed"));
+    }
+    return result;
+  },
+);
+
+export const sendTableDraft = protectedAction(
+  { resource: "tables", action: "update" },
+  async (user, sessionId: string, revision: number) => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    const parsed = TableDraftSchema.safeParse({ sessionId, revision });
+    if (!parsed.success)
+      return { success: false, message: "El pedido no es válido." };
+    const result = await updateTableDraft({
+      ...parsed.data,
+      companyId: user.companyId,
+      userId: user.id,
+      operation: "send",
+    });
+    if (result.success) {
+      revalidatePath("/[subdomain]/dashboard/tables", "layout");
+      await broadcast(user.companyId, "tables", "table-draft-changed", {
+        tableId: result.data.tableId,
+      }).catch(() => console.warn("Table draft notification failed"));
+      await broadcast(user.companyId, "tables", "table-round-added", {
+        tableId: result.data.tableId,
+      }).catch(() => console.warn("Table round notification failed"));
+    }
+    return result;
+  },
+);
+
+export const leaveEmptyTable = protectedAction(
+  { resource: "tables", action: "update" },
+  async (user, sessionId: string, revision: number) => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    const parsed = TableDraftSchema.safeParse({ sessionId, revision });
+    if (!parsed.success)
+      return { success: false, message: "La mesa no es válida." };
+    const result = await updateTableDraft({
+      ...parsed.data,
+      companyId: user.companyId,
+      userId: user.id,
+      operation: "leave",
+    });
+    if (result.success) {
+      revalidatePath("/[subdomain]/dashboard/tables", "layout");
+      await broadcast(user.companyId, "tables", "table-session-changed", {
+        tableId: result.data.tableId,
+      }).catch(() => console.warn("Table session notification failed"));
+    }
+    return result;
+  },
+);
 
 export const getZones = protectedAction(
   { resource: "tables", action: "read" },
@@ -244,6 +326,8 @@ export const openTable = protectedAction(
     guestCount?: number,
     notes?: string,
   ): Promise<response<TableSession>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
     const parsed = OpenTableSchema.safeParse({ tableId, guestCount, notes });
     if (!parsed.success) {
       return {
@@ -252,14 +336,10 @@ export const openTable = protectedAction(
       };
     }
 
-    const result = await withinTransaction(async () => {
-      return openTableSession(
-        user.companyId,
-        parsed.data.tableId,
-        user.id,
-        parsed.data.guestCount,
-        parsed.data.notes,
-      );
+    const result = await openTableForService({
+      ...parsed.data,
+      companyId: user.companyId,
+      waiterId: user.id,
     });
 
     if (result.success) {
@@ -267,7 +347,7 @@ export const openTable = protectedAction(
       await broadcast(user.companyId, "tables", "table-session-changed", {
         tableId: parsed.data.tableId,
         sessionStatus: "OPEN",
-      });
+      }).catch(() => console.warn("Table session notification failed"));
     }
     return result;
   },
@@ -403,11 +483,7 @@ export const cancelOrderItemAction = protectedAction(
 
 export const serveKitchenRoundAction = protectedAction(
   { resource: "tables", action: "update" },
-  async (
-    user,
-    tableId: string,
-    round: number,
-  ): Promise<response<void>> => {
+  async (user, tableId: string, round: number): Promise<response<void>> => {
     const parsed = ServeKitchenRoundSchema.safeParse({ tableId, round });
     if (!parsed.success) {
       return {

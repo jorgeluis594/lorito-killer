@@ -516,6 +516,7 @@ export const update = async (product: Product): Promise<response<Product>> => {
 
 const prismaToProduct = async (
   prismaProduct: PrismaProduct & { categories: PrismaCategory[] },
+  db: Prisma.TransactionClient = prisma(),
 ): Promise<Product> => {
   if (prismaProduct.productType === "SERVICE_PRODUCT") {
     return {
@@ -530,7 +531,7 @@ const prismaToProduct = async (
       })),
     };
   } else if (prismaProduct.productType === "PACKAGE_PRODUCT") {
-    const productItems = await prisma().packageItem.findMany({
+    const productItems = await db.packageItem.findMany({
       where: { parentProductId: prismaProduct.id },
       include: { parentProduct: true },
     });
@@ -860,7 +861,7 @@ export const getMany = async ({
           includeHidden,
           stock,
         });
-        const products = await Promise.all(result.map(prismaToProduct));
+        const products = await Promise.all(result.map((product) => prismaToProduct(product)));
 
         return { success: true, data: products };
       }
@@ -876,7 +877,7 @@ export const getMany = async ({
         const product = productById.get(id);
         return product ? [product] : [];
       });
-      const products = await Promise.all(orderedResult.map(prismaToProduct));
+      const products = await Promise.all(orderedResult.map((product) => prismaToProduct(product)));
 
       return { success: true, data: products };
     }
@@ -898,7 +899,7 @@ export const getMany = async ({
       ...query,
       include: { photos: true, categories: true },
     });
-    const products = await Promise.all(result.map(prismaToProduct));
+    const products = await Promise.all(result.map((product) => prismaToProduct(product)));
 
     return { success: true, data: products };
   } catch (error: any) {
@@ -909,15 +910,16 @@ export const getMany = async ({
 export const find = async (
   id: string,
   companyId?: string,
+  db: Prisma.TransactionClient = prisma(),
 ): Promise<response<Product>> => {
   try {
-    const product = await prisma().product.findUnique({
+    const product = await db.product.findUnique({
       where: { id, companyId },
       include: { photos: true, categories: true },
     });
 
     if (product) {
-      return { success: true, data: await prismaToProduct(product) };
+      return { success: true, data: await prismaToProduct(product, db) };
     } else {
       return { success: false, message: "Product not found" };
     }
@@ -1074,7 +1076,7 @@ export const search = async ({
 
     return {
       success: true,
-      data: await Promise.all(result.map(prismaToProduct)),
+      data: await Promise.all(result.map((product) => prismaToProduct(product))),
     };
   } catch (error: any) {
     return { success: false, message: error.message } as response;

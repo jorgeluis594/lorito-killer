@@ -513,6 +513,8 @@ model TableSession {
   table              Table              @relation(fields: [tableId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   waiterId           String
   waiter             User               @relation("WaiterSessions", fields: [waiterId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  draft              Json               @default("[]")
+  draftRevision      Int                @default(0)
   status             TableSessionStatus @default(OPEN)
   current            Boolean?           @default(true)
   guestCount         Int?
