@@ -211,7 +211,7 @@ export function TableOrderView({
   }
 
   return (
-    <main className="mx-auto flex h-dvh max-w-[1440px] flex-col">
+    <main className="flex h-dvh flex-col">
       <TableRealtimeListener onEvent={refresh} />
       <header className="flex shrink-0 items-center justify-between gap-3 border-b bg-card px-3 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
