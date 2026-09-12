@@ -1,7 +1,11 @@
 import type { PrismaClient } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import prisma, { setPrismaClient } from "@/lib/prisma";
-import { countCashShifts, getManyCashShifts } from "@/cash-shift/db_repository";
+import {
+  countCashShifts,
+  findOrderItems,
+  getManyCashShifts,
+} from "@/cash-shift/db_repository";
 
 const originalPrisma = prisma();
 
@@ -28,6 +32,31 @@ describe("cash shift pagination", () => {
     });
     expect(count).toHaveBeenCalledWith({
       where: { companyId: "company-1" },
+    });
+  });
+});
+
+describe("findOrderItems", () => {
+  test("excludes cancelled order items", async () => {
+    const findUnique = vi.fn().mockResolvedValue({ orders: [] });
+    setPrismaClient({
+      cashShift: { findUnique },
+    } as unknown as PrismaClient);
+
+    await findOrderItems("cash-shift-1");
+
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { id: "cash-shift-1" },
+      include: {
+        orders: {
+          include: {
+            orderItems: {
+              where: { kitchenStatus: { not: "CANCELLED" } },
+              include: { product: true },
+            },
+          },
+        },
+      },
     });
   });
 });

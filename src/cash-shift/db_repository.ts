@@ -350,6 +350,7 @@ export const findOrderItems = async (
       orders: {
         include: {
           orderItems: {
+            where: { kitchenStatus: { not: "CANCELLED" } },
             include: {
               product: true,
             },
