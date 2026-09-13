@@ -11,13 +11,10 @@ export const walletPaymentDetailsSchema = z.object({
     .min(1, "Ingrese la billetera")
     .max(80, "La billetera admite hasta 80 caracteres"),
   operationCode: z
-    .string({
-      required_error: "Ingrese el código de operación",
-      invalid_type_error: "Ingrese el código de operación",
-    })
+    .string()
     .trim()
-    .min(1, "Ingrese el código de operación")
-    .max(100, "El código de operación admite hasta 100 caracteres"),
+    .max(100, "El código de operación admite hasta 100 caracteres")
+    .optional(),
 });
 
 export function walletPaymentReference(payment: Payment): string {

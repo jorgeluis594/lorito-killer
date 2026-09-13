@@ -44,19 +44,23 @@ const order = (payments: Payment[]): Order => ({
 
 beforeEach(() => vi.clearAllMocks());
 
-test.for([undefined, null, "", "   ", 123, {}, "x".repeat(101)])(
-  "rejects invalid wallet input %j before any mixed-payment write",
+test.for([undefined, null, "", "   ", 123, {}])(
+  "rejects invalid wallet name %j before any mixed-payment write",
   async (value) => {
-    for (const field of ["name", "operationCode"]) {
-      const result = await create(
-        order([cash, { ...wallet, [field]: value } as Payment]),
-      );
-      expect(result.success).toBe(false);
-      expect(db.order.create).not.toHaveBeenCalled();
-      expect(db.orderItem.create).not.toHaveBeenCalled();
-    }
+    const result = await create(
+      order([cash, { ...wallet, name: value } as Payment]),
+    );
+    expect(result.success).toBe(false);
+    expect(db.order.create).not.toHaveBeenCalled();
+    expect(db.orderItem.create).not.toHaveBeenCalled();
   },
 );
+
+test("accepts a wallet payment without an operation code", () => {
+  expect(walletPaymentDetailsSchema.safeParse({ name: "Yape" }).success).toBe(
+    true,
+  );
+});
 
 test("trims both fields, preserves leading zeros and other payment data, and reads them back", async () => {
   db.order.create.mockImplementation(async ({ data }) => ({

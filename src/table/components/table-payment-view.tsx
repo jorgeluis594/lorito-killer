@@ -819,14 +819,14 @@ export function TablePaymentView({
                   {(
                     [
                       ["name", "Billetera"],
-                      ["operationCode", "Código de operación"],
+                      ["operationCode", "Código de operación (opcional)"],
                     ] as const
                   ).map(([key, label]) => (
                     <div key={key} className="flex flex-col gap-2">
                       <Label htmlFor={`wallet-${key}`}>{label}</Label>
                       <Input
                         id={`wallet-${key}`}
-                        required
+                        required={key === "name"}
                         value={wallet[key]}
                         maxLength={key === "name" ? 80 : 100}
                         onChange={(event) =>

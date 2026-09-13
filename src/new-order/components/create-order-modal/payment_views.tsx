@@ -205,14 +205,13 @@ const WalletDetails = ({
     </div>
     <div>
       <Label htmlFor={`wallet-operation-code${idSuffix}`}>
-        Código de operación (obligatorio)
+        Código de operación (opcional)
       </Label>
       <Input
         id={`wallet-operation-code${idSuffix}`}
         placeholder="Código del pago recibido"
         value={operationCode}
         maxLength={100}
-        required
         onChange={(event) => onOperationCodeChange(event.target.value)}
       />
     </div>
