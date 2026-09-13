@@ -25,11 +25,17 @@ enum ProductType {
   SERVICE_PRODUCT
 }
 
+enum PreparationStation {
+  KITCHEN
+  BAR
+}
+
 model Product {
-  id                         String          @id @default(uuid())
+  id                         String                   @id @default(uuid())
   companyId                  String?
-  company                    Company?        @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  company                    Company?                 @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   name                       String
+  preparationStation         PreparationStation?
   price                      Decimal
   sku                        String?
   stock                      Decimal?
@@ -38,14 +44,14 @@ model Product {
   targetMovementProductId    String?
   targetMovementProductStock Decimal?
   description                String
-  createdAt                  DateTime        @default(now())
-  updatedAt                  DateTime        @updatedAt
-  productType                ProductType     @default(SINGLE_PRODUCT)
-  hidden                     Boolean         @default(false)
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  productType                ProductType              @default(SINGLE_PRODUCT)
+  hidden                     Boolean                  @default(false)
   searchVector               Unsupported("tsvector")?
   photos                     Photo[]
-  childPackageItems          PackageItem[]   @relation("ChildProducts")
-  parentPackageItems         PackageItem[]   @relation("ParentProducts")
+  childPackageItems          PackageItem[]            @relation("ChildProducts")
+  parentPackageItems         PackageItem[]            @relation("ParentProducts")
   stockTransfers             StockTransfer[]
   categories                 Category[]
   orderItems                 OrderItem[]
@@ -158,22 +164,47 @@ model CashShift {
 }
 
 model OrderItem {
-  id             String        @id @default(uuid())
-  quantity       Decimal
-  discountAmount Decimal
-  discountType   DiscountType?
-  discountValue  Decimal?
-  netTotal       Decimal
-  total          Decimal
-  productId      String
-  orderId        String
-  productPrice   Decimal
-  notes          String?
-  round          Int           @default(1)
-  product        Product       @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                 String                 @id @default(uuid())
+  quantity           Decimal
+  discountAmount     Decimal
+  discountType       DiscountType?
+  discountValue      Decimal?
+  netTotal           Decimal
+  total              Decimal
+  productId          String
+  orderId            String
+  productPrice       Decimal
+  notes              String?
+  preparationStation PreparationStation?
+  round              Int                    @default(1)
+  kitchenStatus      OrderItemKitchenStatus @default(PENDING)
+  kitchenTakenAt     DateTime?
+  kitchenTakenById   String?
+  kitchenReadyAt     DateTime?
+  kitchenReadyById   String?
+  servedAt           DateTime?
+  servedById         String?
+  cancellationReason String?
+  cancelledAt        DateTime?
+  cancelledById      String?
+  product            Product                @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  kitchenTakenBy     User?                  @relation("KitchenTakenOrderItems", fields: [kitchenTakenById], references: [id], onDelete: SetNull)
+  kitchenReadyBy     User?                  @relation("KitchenReadyOrderItems", fields: [kitchenReadyById], references: [id], onDelete: SetNull)
+  servedBy           User?                  @relation("ServedOrderItems", fields: [servedById], references: [id], onDelete: SetNull)
+  cancelledBy        User?                  @relation("CancelledOrderItems", fields: [cancelledById], references: [id], onDelete: SetNull)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([kitchenStatus])
+}
+
+enum OrderItemKitchenStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
 }
 
 enum DiscountType {
@@ -374,22 +405,26 @@ model Logo {
 }
 
 model User {
-  id             String          @id @default(uuid())
-  companyId      String?
-  company        Company?        @relation(fields: [companyId], references: [id])
-  email          String          @unique
-  password       String
-  name           String?
-  role           UserRole        @default(ADMIN)
-  active         Boolean         @default(true)
-  sellerCode     String?
-  pin            String?
-  cashShifts     CashShift[]
-  stockTransfers StockTransfer[]
-  waiterSessions TableSession[]  @relation("WaiterSessions")
-  soldOrders     Order[]         @relation("SellerOrders")
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id                     String          @id @default(uuid())
+  companyId              String?
+  company                Company?        @relation(fields: [companyId], references: [id])
+  email                  String          @unique
+  password               String
+  name                   String?
+  role                   UserRole        @default(ADMIN)
+  active                 Boolean         @default(true)
+  sellerCode             String?
+  pin                    String?
+  cashShifts             CashShift[]
+  stockTransfers         StockTransfer[]
+  waiterSessions         TableSession[]  @relation("WaiterSessions")
+  soldOrders             Order[]         @relation("SellerOrders")
+  kitchenTakenOrderItems OrderItem[]     @relation("KitchenTakenOrderItems")
+  kitchenReadyOrderItems OrderItem[]     @relation("KitchenReadyOrderItems")
+  servedOrderItems       OrderItem[]     @relation("ServedOrderItems")
+  cancelledOrderItems    OrderItem[]     @relation("CancelledOrderItems")
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
   @@unique([companyId, sellerCode])
   @@index([companyId, role])
@@ -471,22 +506,25 @@ model Table {
 }
 
 model TableSession {
-  id         String             @id @default(uuid())
-  companyId  String
-  company    Company            @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  tableId    String
-  table      Table              @relation(fields: [tableId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  waiterId   String
-  waiter     User               @relation("WaiterSessions", fields: [waiterId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  status     TableSessionStatus @default(OPEN)
-  current    Boolean?           @default(true)
-  guestCount Int?
-  notes      String?
-  order      Order?
-  openedAt   DateTime           @default(now())
-  closedAt   DateTime?
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  id                 String             @id @default(uuid())
+  companyId          String
+  company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tableId            String
+  table              Table              @relation(fields: [tableId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  waiterId           String
+  waiter             User               @relation("WaiterSessions", fields: [waiterId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  draft              Json               @default("[]")
+  draftRevision      Int                @default(0)
+  status             TableSessionStatus @default(OPEN)
+  current            Boolean?           @default(true)
+  guestCount         Int?
+  notes              String?
+  order              Order?
+  openedAt           DateTime           @default(now())
+  closedAt           DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  cancellationReason String?
 
   @@unique([tableId, current])
   @@index([companyId, status])

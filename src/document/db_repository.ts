@@ -1,3 +1,4 @@
+import { mapPrismaPaymentToPayment } from "@/order/db_repository";
 import {
   BillingCredentials,
   Document,
@@ -138,9 +139,10 @@ const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
 
 export const createDocument = async (
   document: Document,
+  db: Prisma.TransactionClient = prisma(),
 ): Promise<response<Document>> => {
   try {
-    const createdDocument = await prisma().document.create({
+    const createdDocument = await db.document.create({
       data: {
         orderId: document.orderId!,
         companyId: document.companyId,
@@ -188,9 +190,10 @@ export const findBillingDocumentFor = async (
 export const getLatestDocumentNumber = async (
   companyId: string,
   serialNumber: string,
+  db: Prisma.TransactionClient = prisma(),
 ): Promise<response<number | undefined>> => {
   try {
-    const document = await prisma().document.findFirst({
+    const document = await db.document.findFirst({
       where: { series: serialNumber, companyId: companyId },
       orderBy: { number: "desc" },
     });
@@ -398,7 +401,9 @@ export const getMany = async ({
     skip: pageNumber && pageSize && (pageNumber - 1) * pageSize,
     take: pageSize,
     orderBy: { dateOfIssue: "desc" },
-    include: { order: { select: { status: true, createdAt: true } } },
+    include: {
+      order: { select: { status: true, createdAt: true, payments: true } },
+    },
   });
 
   const customerIds = prismaDocuments
@@ -422,6 +427,7 @@ export const getMany = async ({
       const customerId = prismaDocument.customerId || undefined;
       const document: Document & { customer?: Customer } = {
         ...prismaDocumentToDocument(prismaDocument),
+        payments: prismaDocument.order.payments.map(mapPrismaPaymentToPayment),
       };
 
       if (customerId) {

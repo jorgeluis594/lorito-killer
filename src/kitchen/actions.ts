@@ -1,0 +1,90 @@
+"use server";
+
+import { protectedAction } from "@/authorization/server";
+import type { response } from "@/lib/types";
+import { broadcast } from "@/lib/realtime/broadcast";
+import { revalidatePath } from "next/cache";
+import { ReadyOrderItemSchema, TakeOrderItemSchema } from "@/table/schemas";
+import {
+  markPreparingOrderItemReady,
+  takePendingOrderItem,
+  servePaidKitchenItem,
+} from "./db_repository";
+
+export const takeOrderItemAction = protectedAction(
+  { resource: "kitchen", action: "update" },
+  async (user, orderItemId: string): Promise<response<void>> => {
+    const parsed = TakeOrderItemSchema.safeParse({ orderItemId });
+    if (!parsed.success) {
+      return {
+        success: false,
+        message: parsed.error.errors[0]?.message ?? "Datos invalidos",
+      };
+    }
+
+    const result = await takePendingOrderItem({
+      orderItemId: parsed.data.orderItemId,
+      companyId: user.companyId,
+      userId: user.id,
+      role: user.role,
+    });
+    if (result.success) {
+      revalidatePath("/dashboard/kitchen");
+      revalidatePath("/dashboard/tables");
+      await broadcast(user.companyId, "tables", "order-item-taken", {
+        orderItemId: parsed.data.orderItemId,
+      });
+    }
+    return result;
+  },
+);
+
+export const markOrderItemReadyAction = protectedAction(
+  { resource: "kitchen", action: "update" },
+  async (user, orderItemId: string): Promise<response<void>> => {
+    const parsed = ReadyOrderItemSchema.safeParse({ orderItemId });
+    if (!parsed.success) {
+      return {
+        success: false,
+        message: parsed.error.errors[0]?.message ?? "Datos invalidos",
+      };
+    }
+
+    const result = await markPreparingOrderItemReady({
+      orderItemId: parsed.data.orderItemId,
+      companyId: user.companyId,
+      userId: user.id,
+      role: user.role,
+    });
+    if (result.success) {
+      revalidatePath("/dashboard/kitchen");
+      revalidatePath("/dashboard/tables");
+      await broadcast(user.companyId, "tables", "kitchen-item-ready", {
+        orderItemId: parsed.data.orderItemId,
+      });
+    }
+    return result;
+  },
+);
+
+export const servePaidKitchenItemAction = protectedAction(
+  { resource: "kitchen", action: "update" },
+  async (user, orderItemId: string): Promise<response<void>> => {
+    const parsed = ReadyOrderItemSchema.safeParse({ orderItemId });
+    if (!parsed.success)
+      return { success: false, message: "Producto no válido" };
+    const result = await servePaidKitchenItem({
+      ...parsed.data,
+      companyId: user.companyId,
+      userId: user.id,
+      role: user.role,
+    });
+    if (result.success) {
+      revalidatePath("/dashboard/kitchen");
+      await broadcast(user.companyId, "tables", "kitchen-item-ready", {
+        orderItemId,
+      }).catch(() => console.warn("Kitchen notification failed"));
+    }
+    return result;
+  },
+);

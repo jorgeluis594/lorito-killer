@@ -1,3 +1,4 @@
+import { walletPaymentReference } from "@/order/wallet-payment";
 /* eslint-disable jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop */
 import {
   Page,
@@ -492,7 +493,7 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
               </Text>
               {order.payments.map((payment) => (
                 <Text style={styles.text} key={payment.id}>
-                  {`• ${paymentMethodToText(payment.method)} - ${formatPrice(payment.amount)}`}
+                  {`• ${paymentMethodToText(payment.method)} - ${formatPrice(payment.amount)} ${walletPaymentReference(payment)}`}
                 </Text>
               ))}
             </>

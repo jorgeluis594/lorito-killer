@@ -19,9 +19,12 @@ export async function requestBill(
     };
   }
 
-  // Validate order has at least one item using currentRound from session
-  if (session.currentRound === 0) {
-    return { success: false, message: "La orden no tiene items. Agrega al menos un producto antes de pedir la cuenta." };
+  if (!session.order?.orderItems.some((item) => item.kitchenStatus !== "CANCELLED")) {
+    return {
+      success: false,
+      message:
+        "La orden no tiene items. Agrega al menos un producto antes de pedir la cuenta.",
+    };
   }
 
   return updateSessionStatus(session.id, companyId, "BILL_REQUESTED");

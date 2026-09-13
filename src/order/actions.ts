@@ -32,6 +32,7 @@ import { protectedAction } from "@/authorization/server";
 import prisma from "@/lib/prisma";
 import { isFeatureEnabled } from "@/feature-flags";
 import { resolveOrderSellerId } from "@/order/use-cases/resolve-order-seller-id";
+import { validatePayments } from "@/order/use-cases/split-payments";
 import { find as findOrder } from "@/order/db_repository";
 import { findBillingDocumentFor } from "@/document/db_repository";
 import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
@@ -118,6 +119,12 @@ export const create = protectedAction(
     if (!discountResponse.success) {
       return { success: false, message: "Error generando descuento" };
     }
+
+    const paymentsResponse = validatePayments(
+      discountResponse.data.total,
+      discountResponse.data.payments,
+    );
+    if (!paymentsResponse.success) return paymentsResponse;
 
     const orderToCreate: Order = {
       ...discountResponse.data,

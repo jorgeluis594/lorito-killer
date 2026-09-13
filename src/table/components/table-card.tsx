@@ -15,6 +15,7 @@ import {
 import { differenceInMinutes } from "date-fns";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { Badge } from "@/shared/components/ui/badge";
 
 interface TableCardProps {
   table: TableWithSession;
@@ -22,7 +23,11 @@ interface TableCardProps {
   isOpening?: boolean;
 }
 
-export const TableCard = memo(function TableCard({ table, onClick, isOpening }: TableCardProps) {
+export const TableCard = memo(function TableCard({
+  table,
+  onClick,
+  isOpening,
+}: TableCardProps) {
   const status = getTableDerivedStatus(table);
   const session = table.activeSession;
 
@@ -30,7 +35,10 @@ export const TableCard = memo(function TableCard({ table, onClick, isOpening }: 
     if (!session) return { elapsed: 0, timeAgo: "" };
     return {
       elapsed: differenceInMinutes(new Date(), new Date(session.openedAt)),
-      timeAgo: formatDistanceToNow(new Date(session.openedAt), { addSuffix: false, locale: es }),
+      timeAgo: formatDistanceToNow(new Date(session.openedAt), {
+        addSuffix: false,
+        locale: es,
+      }),
     };
   }, [session]);
 
@@ -60,9 +68,11 @@ export const TableCard = memo(function TableCard({ table, onClick, isOpening }: 
           <span
             className={cn(
               "h-2 w-2 rounded-full",
-              status === "AVAILABLE" && "bg-emerald-500 motion-safe:animate-pulse",
+              status === "AVAILABLE" &&
+                "bg-emerald-500 motion-safe:animate-pulse",
               status === "OCCUPIED" && "bg-red-500",
-              status === "BILL_REQUESTED" && "bg-amber-500 motion-safe:animate-pulse",
+              status === "BILL_REQUESTED" &&
+                "bg-amber-500 motion-safe:animate-pulse",
             )}
           />
         )}
@@ -79,11 +89,16 @@ export const TableCard = memo(function TableCard({ table, onClick, isOpening }: 
       {session && (
         <div className="mt-2 flex items-center gap-1 text-xs">
           <Clock className="h-3 w-3 shrink-0" />
-          <span className={cn(getTimeUrgencyClass(elapsed))}>
-            {timeAgo}
-          </span>
+          <span className={cn(getTimeUrgencyClass(elapsed))}>{timeAgo}</span>
         </div>
       )}
+
+      {(session?.readyKitchenTickets ?? 0) > 0 ? (
+        <Badge className="mt-2">
+          {session!.readyKitchenTickets} lista
+          {session!.readyKitchenTickets === 1 ? "" : "s"}
+        </Badge>
+      ) : null}
 
       <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
         {session?.waiter?.name && (

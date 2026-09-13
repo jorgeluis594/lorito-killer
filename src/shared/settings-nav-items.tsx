@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { useFeatureEnabled } from "@/feature-flags/client";
 
 const items = [
   { title: "Perfil", href: "/dashboard/settings" },
@@ -11,15 +12,20 @@ const items = [
   { title: "Sellers", href: "/dashboard/settings/sellers" },
 ];
 
-export default function NavItems() {
+export default function NavItems({ isAdmin }: { isAdmin: boolean }) {
   const path = usePathname();
+  const restaurantsEnabled = useFeatureEnabled("restaurants");
+  const visibleItems =
+    isAdmin && restaurantsEnabled
+      ? [...items, { title: "Mesas", href: "/dashboard/tables/configure" }]
+      : items;
 
   return (
     <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
-      {items.map((item, index) => {
+      {visibleItems.map((item) => {
         return (
           item.href && (
-            <Link key={index} href={item.href}>
+            <Link key={item.href} href={item.href}>
               <span
                 className={cn(
                   "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",

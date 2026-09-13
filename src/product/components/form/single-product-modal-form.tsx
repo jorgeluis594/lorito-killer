@@ -1,5 +1,7 @@
 "use client";
 
+import { PreparationStationField } from "./preparation-station-field";
+
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import {
@@ -386,6 +388,7 @@ const SingleProductModalForm: React.FC<ProductFormProps> = ({
               </div>
               <div className="flex flex-col gap-4">
                 <h3 className="text-base font-bold">Datos generales</h3>
+                <PreparationStationField />
                 <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}

@@ -15,7 +15,11 @@ export const TableFormSchema = z.object({
     .number()
     .int("El numero debe ser entero")
     .min(1, "El numero debe ser mayor a 0"),
-  label: z.string().max(20, "La etiqueta no puede exceder 20 caracteres").optional().or(z.literal("")),
+  label: z
+    .string()
+    .max(20, "La etiqueta no puede exceder 20 caracteres")
+    .optional()
+    .or(z.literal("")),
   capacity: z.coerce
     .number()
     .int("La capacidad debe ser un numero entero")
@@ -49,13 +53,48 @@ export const AddRoundSchema = z.object({
     .min(1, "Debes agregar al menos un producto"),
 });
 
-export const CloseTableSchema = z.object({
-  tableId: z.string().min(1, "El ID de mesa es requerido"),
-  cancelled: z.boolean().default(false),
-});
+export const CloseTableSchema = z
+  .object({
+    tableId: z.string().min(1, "El ID de mesa es requerido"),
+    cancelled: z.boolean().default(false),
+    cancellationReason: z
+      .string()
+      .trim()
+      .max(500, "El motivo no puede exceder 500 caracteres")
+      .optional(),
+  })
+  .superRefine(({ cancelled, cancellationReason }, ctx) => {
+    if (cancelled && !cancellationReason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cancellationReason"],
+        message: "El motivo de cancelacion es requerido",
+      });
+    }
+  });
 
 export const RequestBillSchema = z.object({
   tableId: z.string().min(1, "El ID de mesa es requerido"),
+});
+
+export const CancelOrderItemSchema = z.object({
+  orderItemId: z.string().uuid("El producto no es valido"),
+  reason: z
+    .string()
+    .trim()
+    .min(1, "El motivo de cancelacion es requerido")
+    .max(500, "El motivo no puede exceder 500 caracteres"),
+});
+
+export const TakeOrderItemSchema = z.object({
+  orderItemId: z.string().uuid("El producto no es valido"),
+});
+
+export const ReadyOrderItemSchema = TakeOrderItemSchema;
+
+export const ServeKitchenRoundSchema = z.object({
+  tableId: z.string().uuid("La mesa no es valida"),
+  round: z.number().int().min(1, "La ronda no es valida"),
 });
 
 export const TransferTableSchema = z.object({
@@ -90,6 +129,15 @@ export const CreateTableSchema = z.object({
   zoneId: z.string().min(1, "La zona es requerida"),
 });
 
+export const CreateTablesSchema = z.object({
+  quantity: z
+    .number()
+    .int("Ingresa una cantidad entera")
+    .min(1, "Agrega al menos una mesa")
+    .max(100, "Puedes agregar hasta 100 mesas a la vez"),
+  startNumber: z.number().int().min(1).max(2147483548),
+});
+
 export const UpdateTableSchema = z.object({
   id: z.string().min(1, "El ID de mesa es requerido"),
   data: z.object({
@@ -102,4 +150,10 @@ export const UpdateTableSchema = z.object({
 
 export const DeleteTableSchema = z.object({
   id: z.string().min(1, "El ID de mesa es requerido"),
+});
+
+export const TableDraftSchema = z.object({
+  sessionId: z.string().uuid(),
+  revision: z.number().int().nonnegative(),
+  items: z.array(AddRoundSchema.shape.items.element).max(100).optional(),
 });

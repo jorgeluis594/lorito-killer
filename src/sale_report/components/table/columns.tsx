@@ -1,3 +1,7 @@
+"use client";
+
+import { walletPaymentReference } from "@/order/wallet-payment";
+import type { Customer } from "@/customer/types";
 import { fullName } from "@/customer/utils";
 import type {
   DocumentType,
@@ -47,6 +51,19 @@ export const columns: TableColumn<SalesReportDocument>[] = [
     header: "Emisión",
     cell: (document) =>
       format(document.dateOfIssue, "dd/MM/yyyy", { locale: es }),
+    mobile: "description",
+  },
+  {
+    id: "walletReference",
+    header: "Billetera / operación",
+    cell: (document) => (
+      <span className="whitespace-normal break-words">
+        {document.payments
+          ?.map(walletPaymentReference)
+          .filter(Boolean)
+          .join("; ") || "—"}
+      </span>
+    ),
     mobile: "description",
   },
   {

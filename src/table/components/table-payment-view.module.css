@@ -1,0 +1,6 @@
+/* Let the page scroll naturally while the touch keyboard is editing a field. */
+@media (pointer: coarse), (max-width: 767px) {
+  .form:has(input:focus, select:focus) .footer {
+    position: static;
+  }
+}

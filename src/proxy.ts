@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { getDefaultRouteForRole } from "@/authorization/default-route";
 import { hasPermission } from "@/authorization/helpers";
 import type { UserRole, Resource, Action } from "@/authorization/types";
 
@@ -43,19 +44,6 @@ const routePermissions: Array<{ path: string; permission: RoutePermission }> = [
     permission: { resource: "company", action: "read" },
   },
 ];
-
-function getDefaultRoute(role: UserRole): string {
-  switch (role) {
-    case "ADMIN":
-      return "/dashboard";
-    case "CASHIER":
-    case "SELLER":
-    case "WAITER":
-      return "/dashboard/orders/new";
-    default:
-      return "/login";
-  }
-}
 
 function getRoutePermission(pathname: string): RoutePermission | null {
   // Check most specific routes first (longer paths first)
@@ -119,7 +107,7 @@ export default async function proxy(req: NextRequest) {
     if (role) {
       const permission = getRoutePermission(url.pathname);
       if (permission && !hasPermission(role, permission.resource, permission.action)) {
-        const defaultRoute = getDefaultRoute(role);
+        const defaultRoute = getDefaultRouteForRole(role);
         if (defaultRoute === "/login") {
           return NextResponse.redirect(new URL("/login", req.url));
         }

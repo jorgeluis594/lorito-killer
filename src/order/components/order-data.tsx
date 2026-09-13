@@ -1,3 +1,4 @@
+import { walletPaymentReference } from "@/order/wallet-payment";
 import { Order } from "@/order/types";
 import {
   Card,
@@ -194,6 +195,7 @@ export default async function OrderData({ order }: { order: Order }) {
                   <tr key={payment.id}>
                     <td className="pl-2 border py-1">
                       {paymentMethodToText(payment.method)}
+                      {walletPaymentReference(payment) && <p className="text-sm break-all">{walletPaymentReference(payment)}</p>}
                     </td>
                     <td className="pl-2 border py-1">
                       {formatPrice(payment.amount)}

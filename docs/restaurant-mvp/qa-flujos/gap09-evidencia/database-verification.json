@@ -1,0 +1,77 @@
+{
+  "products": [
+    {
+      "name": "GAP09 Plato",
+      "productType": "SINGLE_PRODUCT",
+      "preparationStation": "BAR"
+    },
+    {
+      "name": "GAP09 Bebida",
+      "productType": "SERVICE_PRODUCT",
+      "preparationStation": "KITCHEN"
+    },
+    {
+      "name": "GAP09 Pendiente",
+      "productType": "PACKAGE_PRODUCT",
+      "preparationStation": "BAR"
+    }
+  ],
+  "items": [
+    {
+      "round": 1,
+      "preparationStation": "KITCHEN",
+      "kitchenStatus": "SERVED",
+      "servedAt": "2026-09-10T04:52:53.899Z",
+      "servedBy": {
+        "role": "WAITER",
+        "name": "QA WAITER"
+      },
+      "product": {
+        "name": "GAP09 Plato",
+        "preparationStation": "BAR"
+      }
+    },
+    {
+      "round": 1,
+      "preparationStation": "BAR",
+      "kitchenStatus": "SERVED",
+      "servedAt": "2026-09-10T04:52:53.899Z",
+      "servedBy": {
+        "role": "WAITER",
+        "name": "QA WAITER"
+      },
+      "product": {
+        "name": "GAP09 Bebida",
+        "preparationStation": "KITCHEN"
+      }
+    },
+    {
+      "round": 1,
+      "preparationStation": null,
+      "kitchenStatus": "SERVED",
+      "servedAt": "2026-09-10T04:52:53.899Z",
+      "servedBy": {
+        "role": "WAITER",
+        "name": "QA WAITER"
+      },
+      "product": {
+        "name": "GAP09 Pendiente",
+        "preparationStation": "BAR"
+      }
+    },
+    {
+      "round": 2,
+      "preparationStation": "BAR",
+      "kitchenStatus": "SERVED",
+      "servedAt": "2026-09-10T04:53:08.254Z",
+      "servedBy": {
+        "role": "WAITER",
+        "name": "QA WAITER"
+      },
+      "product": {
+        "name": "GAP09 Plato",
+        "preparationStation": "BAR"
+      }
+    }
+  ]
+}

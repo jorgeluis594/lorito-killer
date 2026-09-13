@@ -1,8 +1,40 @@
-import type { Order } from "@/order/types";
-
-export type TableSessionStatus = "OPEN" | "BILL_REQUESTED" | "CLOSED" | "CANCELLED";
+export type TableSessionStatus =
+  | "OPEN"
+  | "BILL_REQUESTED"
+  | "CLOSED"
+  | "CANCELLED";
 export type TableDerivedStatus = "AVAILABLE" | "OCCUPIED" | "BILL_REQUESTED";
 export type OrderType = "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
+export type OrderItemKitchenStatus =
+  | "PENDING"
+  | "PREPARING"
+  | "READY"
+  | "SERVED"
+  | "CANCELLED";
+
+export type TableOrderItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  total: number;
+  notes?: string | null;
+  round: number;
+  kitchenStatus: OrderItemKitchenStatus;
+  kitchenTakenAt?: Date | null;
+  kitchenReadyAt?: Date | null;
+  servedAt?: Date | null;
+  servedBy?: { id: string; name?: string | null } | null;
+  cancellationReason?: string | null;
+  cancelledAt?: Date | null;
+  cancelledBy?: { id: string; name?: string | null } | null;
+};
+
+export type TableOrder = {
+  id: string;
+  orderItems: TableOrderItem[];
+};
 
 export type Zone = {
   id: string;
@@ -30,6 +62,8 @@ export type Table = {
 };
 
 export type TableSession = {
+  draft?: TableDraftItem[];
+  draftRevision?: number;
   id: string;
   companyId: string;
   tableId: string;
@@ -40,17 +74,34 @@ export type TableSession = {
   current: boolean | null;
   guestCount?: number | null;
   notes?: string | null;
-  order?: Order | null;
+  cancellationReason?: string | null;
+  order?: TableOrder | null;
   orderId?: string | null;
   currentRound: number;
+  readyKitchenTickets: number;
   openedAt: Date;
   closedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
+export type TableDraftItem = {
+  productId: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  notes?: string;
+};
+
 export type TableWithSession = Table & {
   activeSession: TableSession | null;
+};
+
+export type TableConfiguration = {
+  tables: Array<
+    Pick<Table, "id" | "number" | "label"> & { inService: boolean }
+  >;
+  nextNumber: number;
 };
 
 export function getTableDerivedStatus(table: Table): TableDerivedStatus {

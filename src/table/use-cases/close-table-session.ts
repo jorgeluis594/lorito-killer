@@ -7,6 +7,7 @@ export async function closeTableSession(
   companyId: string,
   tableId: string,
   cancelled: boolean = false,
+  cancellationReason?: string,
 ): Promise<response<TableSession>> {
   const sessionResponse = await findActiveSession(tableId, companyId);
   if (!sessionResponse.success) return sessionResponse;
@@ -21,5 +22,10 @@ export async function closeTableSession(
     };
   }
 
-  return updateSessionStatus(session.id, companyId, targetStatus);
+  return updateSessionStatus(
+    session.id,
+    companyId,
+    targetStatus,
+    cancellationReason,
+  );
 }

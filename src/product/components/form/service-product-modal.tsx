@@ -1,5 +1,7 @@
 "use client";
 
+import { PreparationStationField } from "./preparation-station-field";
+
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
 import {
@@ -17,6 +19,7 @@ import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { ProductService, ServiceProductType, Photo } from "@/product/types";
+import { update } from "@/product/api_repository";
 import { createServiceProduct } from "@/product/actions";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
@@ -51,12 +54,14 @@ const transformToProduct = (data: ServiceProductFormValues): ProductService => {
 };
 
 interface ServiceProductModalProps {
+  product?: ProductService;
   open: boolean;
   onClose: () => void;
   onActionPerformed: () => void;
 }
 
 export default function ServiceProductModal({
+  product: existingProduct,
   open,
   onClose,
   onActionPerformed,
@@ -66,15 +71,17 @@ export default function ServiceProductModal({
 
   const form = useForm<ServiceProductFormValues>({
     resolver: zodResolver(ServiceProductSchema),
-    defaultValues: {
-      companyId: "",
-      name: "",
-      price: 0,
-      description: "",
-      sku: "",
-      categories: [],
-      photos: [],
-    },
+    defaultValues: existingProduct
+      ? { ...existingProduct, createdAt: undefined, updatedAt: undefined }
+      : {
+          companyId: "",
+          name: "",
+          price: 0,
+          description: "",
+          sku: "",
+          categories: [],
+          photos: [],
+        },
   });
 
   useEffect(() => {
@@ -90,14 +97,23 @@ export default function ServiceProductModal({
     setPerformingAction(true);
     try {
       const product = transformToProduct(data);
-      const response = await createServiceProduct(product);
+      const response = existingProduct
+        ? await update({
+            ...product,
+            id: existingProduct.id,
+            hidden: existingProduct.hidden,
+          })
+        : await createServiceProduct(product);
 
       if (response.success) {
         toast({
-          description: "Servicio creado con éxito",
+          description: existingProduct
+            ? "Servicio actualizado con éxito"
+            : "Servicio creado con éxito",
         });
         onActionPerformed();
         form.reset({
+          preparationStation: null,
           companyId: data.companyId,
           name: "",
           price: 0,
@@ -143,6 +159,7 @@ export default function ServiceProductModal({
   const handleSheetChange = (isOpen: boolean) => {
     if (!isOpen) {
       form.reset({
+        preparationStation: null,
         companyId: form.getValues("companyId"),
         name: "",
         price: 0,
@@ -160,10 +177,12 @@ export default function ServiceProductModal({
       <SheetContent className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl [&>button]:flex [&>button]:size-11 [&>button]:items-center [&>button]:justify-center">
         <SheetHeader className="shrink-0 border-b bg-card px-6 py-4 pr-16 text-left sm:px-8 sm:pr-20">
           <SheetTitle className="text-2xl font-bold tracking-tight">
-            {"Agregar servicio"}
+            {existingProduct ? "Editar servicio" : "Agregar servicio"}
           </SheetTitle>
           <SheetDescription>
-            Registra los datos y el precio del servicio.
+            {existingProduct
+              ? "Actualiza los datos y el precio del servicio."
+              : "Registra los datos y el precio del servicio."}
           </SheetDescription>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8">
@@ -174,6 +193,7 @@ export default function ServiceProductModal({
             >
               <div className="flex flex-col gap-4">
                 <h3 className="text-base font-bold">Datos generales</h3>
+                <PreparationStationField />
                 <FormField
                   control={form.control}
                   name="name"
@@ -304,7 +324,7 @@ export default function ServiceProductModal({
                 className="mr-2 h-4 w-4 animate-spin"
               />
             )}
-            Agregar servicio
+            {existingProduct ? "Guardar cambios" : "Agregar servicio"}
           </Button>
         </SheetFooter>
       </SheetContent>
