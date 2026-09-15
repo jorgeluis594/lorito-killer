@@ -26,6 +26,8 @@ import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 import DeliveryActions from "@/delivery/components/delivery-actions";
 import { findFulfillmentCashShift } from "@/order/fulfillment-payment-repository";
 import { getDeliveryDetails } from "@/delivery/db_repository";
+import { findOrderRounds } from "@/order/rounds/db_repository";
+import { CancelOrderItemDialog } from "@/table/components/cancel-order-item-dialog";
 
 export default async function OrderData({ order }: { order: Order }) {
   const session = await getSession();
@@ -56,6 +58,9 @@ export default async function OrderData({ order }: { order: Order }) {
           }) ?? null,
       }
     : null;
+  const rounds = fulfillment
+    ? await findOrderRounds(order.id!, order.companyId)
+    : [];
 
   const hasADiscount = order.orderItems.some(
     (orderItem) => orderItem.discountAmount > 0,
@@ -224,6 +229,46 @@ export default async function OrderData({ order }: { order: Order }) {
               </tbody>
             </table>
           </div>
+          {fulfillment && rounds.length > 0 && (
+            <section className="mt-8 space-y-4" aria-label="Rondas enviadas">
+              <h4 className="text-lg font-semibold">Rondas y comandas</h4>
+              {rounds.map((round) => (
+                <div key={round.id} className="rounded-lg border p-4">
+                  <p className="mb-2 font-medium">
+                    Ronda {round.number} ·{" "}
+                    {round.responsible.name ?? "Responsable"}
+                  </p>
+                  <ul className="space-y-2">
+                    {round.items.map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex flex-wrap items-center gap-2 text-sm"
+                      >
+                        <span className="min-w-0 flex-1">
+                          {item.currentQuantity} × {item.productName}
+                          {item.kitchen
+                            ? ` · ${item.kitchen.name}`
+                            : " · Sin Kitchen"}
+                          {item.notes ? ` · ${item.notes}` : ""}
+                          {item.cancelledQuantity > 0
+                            ? ` · ${item.cancelledQuantity} cancelado(s)`
+                            : ""}
+                        </span>
+                        {order.paymentStatus === "pending" &&
+                          item.currentQuantity > 0 && (
+                            <CancelOrderItemDialog
+                              channel="fulfillment"
+                              orderRoundItemId={item.id}
+                              availableQuantity={item.currentQuantity}
+                            />
+                          )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </section>
+          )}
           <div className="w-full flex justify-between mt-8">
             <table className="table-auto border w-64">
               <thead>

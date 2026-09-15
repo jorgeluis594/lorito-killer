@@ -19,13 +19,16 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { cancelRoundItemAction } from "../actions";
+import { cancelFulfillmentRoundItem } from "@/order/rounds/fulfillment-actions";
 
 export function CancelOrderItemDialog({
   orderRoundItemId,
   availableQuantity,
+  channel = "table",
 }: {
   orderRoundItemId?: string;
   availableQuantity: number;
+  channel?: "table" | "fulfillment";
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -39,7 +42,9 @@ export function CancelOrderItemDialog({
     if (!orderRoundItemId) return;
 
     setPending(true);
-    const result = await cancelRoundItemAction({
+    const result = await (
+      channel === "table" ? cancelRoundItemAction : cancelFulfillmentRoundItem
+    )({
       cancellationId: cancellationId.current,
       orderRoundItemId,
       quantity,
