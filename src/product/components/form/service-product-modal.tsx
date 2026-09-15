@@ -236,7 +236,7 @@ export default function ServiceProductModal({
                     name="kitchenId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Kitchen</FormLabel>
+                        <FormLabel>Destino de preparación</FormLabel>
                         <Select
                           value={field.value || "none"}
                           onValueChange={(value) =>
@@ -245,12 +245,12 @@ export default function ServiceProductModal({
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Sin Kitchen" />
+                              <SelectValue placeholder="Sin destino" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectGroup>
-                              <SelectItem value="none">Sin Kitchen</SelectItem>
+                              <SelectItem value="none">Sin destino</SelectItem>
                               {kitchens.map((kitchen) => (
                                 <SelectItem key={kitchen.id} value={kitchen.id}>
                                   {kitchen.name}

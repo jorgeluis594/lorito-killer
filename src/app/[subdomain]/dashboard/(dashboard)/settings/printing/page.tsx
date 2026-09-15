@@ -19,7 +19,7 @@ export default async function PrintingSettingsPage() {
 
   return (
     <div>
-      <h3 className="text-lg font-medium">Clientes de impresión</h3>
+      <h3 className="text-lg font-medium">Impresión de comandas</h3>
       <p className="text-sm text-muted-foreground">
         Vincula las instalaciones que envían comandas a las impresoras del
         local.

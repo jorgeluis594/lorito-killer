@@ -62,7 +62,7 @@ function KitchenForm({
           setPrinterId(kitchen.printerId ?? "none");
         }
         toast({
-          title: "No se pudo guardar la Kitchen",
+          title: "No se pudo guardar el destino",
           description: result.message,
           variant: "destructive",
         });
@@ -123,7 +123,7 @@ function KitchenForm({
         </Select>
       ) : null}
       <Button onClick={save} disabled={pending || name.trim().length < 2}>
-        {pending ? "Guardando..." : kitchen ? "Guardar" : "Crear Kitchen"}
+        {pending ? "Guardando..." : kitchen ? "Guardar" : "Crear destino"}
       </Button>
     </div>
   );
@@ -148,28 +148,30 @@ export function KitchenSettings({
           Destinos de preparación
         </h4>
         <p className="text-sm text-muted-foreground">
-          Asigna una impresora opcional a cada Kitchen.
+          Asigna una impresora opcional a cada destino de preparación.
         </p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Nueva Kitchen</CardTitle>
+          <CardTitle className="text-base">Nuevo destino</CardTitle>
         </CardHeader>
         <CardContent>
           <KitchenForm printers={printers} usedPrinterIds={usedPrinterIds} />
         </CardContent>
       </Card>
-      {kitchens.map((kitchen) => (
-        <Card key={kitchen.id}>
-          <CardContent className="pt-6">
-            <KitchenForm
-              kitchen={kitchen}
-              printers={printers}
-              usedPrinterIds={usedPrinterIds}
-            />
-          </CardContent>
-        </Card>
-      ))}
+      {kitchens.length > 0 ? (
+        <div className="divide-y rounded-lg border bg-card">
+          {kitchens.map((kitchen) => (
+            <div key={kitchen.id} className="p-4">
+              <KitchenForm
+                kitchen={kitchen}
+                printers={printers}
+                usedPrinterIds={usedPrinterIds}
+              />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
