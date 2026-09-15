@@ -11,6 +11,7 @@ import {
   dispatchDelivery,
 } from "../actions";
 import FulfillmentPaymentButton from "@/order/components/fulfillment-payment-button";
+import { Badge } from "@/shared/components/ui/badge";
 
 export default function DeliveryActions({
   orderId,
@@ -19,6 +20,7 @@ export default function DeliveryActions({
   orderVersion,
   total,
   cashShiftId,
+  delivery,
 }: {
   orderId: string;
   orderType: "TAKE_AWAY" | "DELIVERY";
@@ -26,6 +28,13 @@ export default function DeliveryActions({
   orderVersion: string;
   total: number;
   cashShiftId?: string;
+  delivery?: {
+    status: "PENDING" | "DISPATCHED" | "DELIVERED";
+    dispatchedAt: Date | null;
+    deliveredAt: Date | null;
+    dispatchedBy: { name: string | null } | null;
+    deliveredBy: { name: string | null } | null;
+  } | null;
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -45,49 +54,84 @@ export default function DeliveryActions({
     });
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {paymentStatus === "pending" && (
-        <>
-          <Button asChild variant="outline">
-            <a
-              href={`/dashboard/orders/fulfillment?orderId=${orderId}&type=${orderType}`}
+    <div className="space-y-3">
+      {delivery && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <Badge variant="secondary">
+            {delivery.status === "PENDING"
+              ? "Pendiente"
+              : delivery.status === "DISPATCHED"
+                ? "Despachado"
+                : "Entregado"}
+          </Badge>
+          {delivery.dispatchedAt && (
+            <span>
+              Despachado por {delivery.dispatchedBy?.name ?? "usuario"} ·{" "}
+              {delivery.dispatchedAt.toLocaleString("es-PE")}
+            </span>
+          )}
+          {delivery.deliveredAt && (
+            <span>
+              Entregado por {delivery.deliveredBy?.name ?? "usuario"} ·{" "}
+              {delivery.deliveredAt.toLocaleString("es-PE")}
+            </span>
+          )}
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {paymentStatus === "pending" && (
+          <>
+            <Button asChild variant="outline">
+              <a
+                href={`/dashboard/orders/fulfillment?orderId=${orderId}&type=${orderType}`}
+              >
+                Enviar adicionales
+              </a>
+            </Button>
+            <FulfillmentPaymentButton
+              orderId={orderId}
+              orderVersion={orderVersion}
+              total={total}
+              cashShiftId={cashShiftId}
+            />
+          </>
+        )}
+        {orderType === "DELIVERY" && delivery?.status !== "DELIVERED" && (
+          <>
+            {delivery?.status === "PENDING" && (
+              <Button disabled={pending} onClick={() => run(dispatchDelivery)}>
+                Registrar despacho
+              </Button>
+            )}
+            <Button
+              disabled={
+                pending ||
+                paymentStatus !== "paid" ||
+                delivery?.status !== "DISPATCHED"
+              }
+              onClick={() => run(deliverDelivery)}
             >
-              Enviar adicionales
-            </a>
+              Confirmar entrega
+            </Button>
+          </>
+        )}
+        {orderType === "TAKE_AWAY" && paymentStatus === "paid" && (
+          <Button disabled={pending} onClick={() => run(deliverTakeAway)}>
+            Registrar entrega
           </Button>
-          <FulfillmentPaymentButton
-            orderId={orderId}
-            orderVersion={orderVersion}
-            total={total}
-            cashShiftId={cashShiftId}
-          />
-        </>
-      )}
-      {orderType === "DELIVERY" && (
-        <>
-          <Button disabled={pending} onClick={() => run(dispatchDelivery)}>
-            Registrar despacho
-          </Button>
-          <Button
-            disabled={pending || paymentStatus !== "paid"}
-            onClick={() => run(deliverDelivery)}
-          >
-            Confirmar entrega
-          </Button>
-        </>
-      )}
-      {orderType === "TAKE_AWAY" && paymentStatus === "paid" && (
-        <Button disabled={pending} onClick={() => run(deliverTakeAway)}>
-          Registrar entrega
+        )}
+        <Button
+          disabled={
+            pending ||
+            paymentStatus !== "pending" ||
+            delivery?.status === "DELIVERED"
+          }
+          variant="destructive"
+          onClick={() => run(cancelFulfillment)}
+        >
+          Cancelar pedido
         </Button>
-      )}
-      <Button
-        disabled={pending || paymentStatus !== "pending"}
-        variant="destructive"
-        onClick={() => run(cancelFulfillment)}
-      >
-        Cancelar pedido
-      </Button>
+      </div>
     </div>
   );
 }
