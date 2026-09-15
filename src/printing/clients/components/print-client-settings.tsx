@@ -3,7 +3,18 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
+import { Button, buttonVariants } from "@/shared/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/components/ui/alert-dialog";
 import {
   Card,
   CardContent,
@@ -156,13 +167,33 @@ export function PrintClientSettings({ clients }: { clients: Client[] }) {
               </CardContent>
               {!client.revokedAt && (
                 <CardFooter>
-                  <Button
-                    variant="destructive"
-                    onClick={() => revoke(client.id)}
-                    disabled={pending}
-                  >
-                    Revocar instalación
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={pending}>
+                        Revocar instalación
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          ¿Revocar {client.machineName}?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta instalación dejará de registrar impresoras y no
+                          podrá ejecutar operaciones de impresión autenticadas.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          className={buttonVariants({ variant: "destructive" })}
+                          onClick={() => revoke(client.id)}
+                        >
+                          Revocar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardFooter>
               )}
             </Card>
