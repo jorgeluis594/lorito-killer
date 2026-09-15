@@ -27,3 +27,37 @@ export type Kitchen = {
 };
 
 export type KitchenOption = Pick<Kitchen, "id" | "name">;
+
+export type PrintJobStatus = "PENDING" | "PROCESSING" | "DELIVERED" | "FAILED";
+
+export type PrintJob = {
+  id: string;
+  companyId: string;
+  kitchenTicketId: string;
+  printerId: string;
+  printClientId: string;
+  printerLocalName: string;
+  content: Uint8Array;
+  status: PrintJobStatus;
+  attempts: number;
+  nextAttemptAt: Date | null;
+  claimRequestedAt: Date | null;
+  processingStartedAt: Date | null;
+};
+
+export type PrintRecoveryPolicy = {
+  timeoutMs: number;
+  maxAttempts: number;
+  retryDelaysMs: number[];
+};
+
+export type PrintAttempt = {
+  jobId: string;
+  attemptNumber: number;
+  printerId: string;
+  printerLocalName: string;
+  content: Uint8Array;
+  timeoutMs: number;
+};
+
+export type PrintResult = "DELIVERED" | "RETRYABLE_FAILURE" | "FAILED";

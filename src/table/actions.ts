@@ -49,16 +49,6 @@ import {
 } from "@/order/rounds/db_repository";
 import { getOrderRounds } from "@/order/rounds/use-cases/get-order-rounds";
 
-const notifyPrintJobs = async (companyId: string, printJobIds: string[]) => {
-  await Promise.all(
-    printJobIds.map((jobId) =>
-      broadcast(companyId, "printing", "print-job-pending", { jobId }).catch(
-        () => console.warn("Print job notification failed"),
-      ),
-    ),
-  );
-};
-
 // -- Zone Actions --
 
 export const saveTableDraft = protectedAction(
@@ -119,7 +109,6 @@ export const sendTableDraft = protectedAction(
       items: draft.data.items ?? [],
     });
     if (result.success) {
-      await notifyPrintJobs(user.companyId, result.data.printJobIds);
       revalidatePath("/[subdomain]/dashboard/tables", "layout");
       await broadcast(user.companyId, "tables", "table-draft-changed", {
         tableId: result.data.tableId,
@@ -462,7 +451,6 @@ export const addRoundAction = protectedAction(
     });
 
     if (result.success) {
-      await notifyPrintJobs(user.companyId, result.data.printJobIds);
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "table-round-added", {
         tableId: parsed.data.tableId,

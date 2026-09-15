@@ -21,3 +21,9 @@ export const UpdatePrinterSchema = z.object({
   cutEnabled: z.boolean(),
   feedBeforeCut: z.coerce.number().int().nonnegative(),
 });
+
+export const PrintJobResultSchema = z.object({
+  attemptNumber: z.number().int().positive(),
+  result: z.enum(["DELIVERED", "RETRYABLE_FAILURE", "FAILED"]),
+  error: z.string().trim().max(1000).optional(),
+});

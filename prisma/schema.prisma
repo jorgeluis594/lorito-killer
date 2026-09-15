@@ -608,6 +608,9 @@ model KitchetTicketPrintJob {
   updatedAt           DateTime                    @updatedAt
 
   @@index([companyId, status, nextAttemptAt])
+  @@index([status, nextAttemptAt])
+  @@index([status, claimRequestedAt])
+  @@index([status, processingStartedAt])
   @@index([kitchenTicketId, createdAt])
 }
 

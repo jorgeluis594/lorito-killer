@@ -5,6 +5,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import express from "express";
+import { processPrintJobs } from "@/kitchen/process-print-jobs";
 
 log.info("worker_starting", { pid: process.pid });
 
@@ -45,6 +46,25 @@ const taxDispatchReconcileInterval = setInterval(
   TAX_DISPATCH_RECONCILE_INTERVAL_MS,
 );
 
+const PRINT_JOB_PROCESS_INTERVAL_MS = 1000;
+let printJobProcessing = false;
+async function reconcilePrintJobs() {
+  if (printJobProcessing) return;
+  printJobProcessing = true;
+  try {
+    await processPrintJobs();
+  } catch (error) {
+    log.error("print_job_processing_failed", { error });
+  } finally {
+    printJobProcessing = false;
+  }
+}
+void reconcilePrintJobs();
+const printJobProcessInterval = setInterval(
+  reconcilePrintJobs,
+  PRINT_JOB_PROCESS_INTERVAL_MS,
+);
+
 // Bull Board dashboard
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/");
@@ -67,6 +87,7 @@ app.listen(BOARD_PORT, () => {
 async function shutdown(signal: string) {
   log.info("worker_shutdown", { signal });
   clearInterval(taxDispatchReconcileInterval);
+  clearInterval(printJobProcessInterval);
   await Promise.all(workers.map((worker) => worker.close()));
   process.exit(0);
 }
