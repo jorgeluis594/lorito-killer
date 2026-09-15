@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import prisma from "@/lib/prisma";
 import { submitFulfillmentRound } from "@/order/rounds/fulfillment-repository";
-import { transitionDelivery } from "@/delivery/db_repository";
+import { completeTakeAway, transitionDelivery } from "@/delivery/db_repository";
 import { payFulfillmentOrder } from "@/order/fulfillment-payment-repository";
 
 const suffix = randomUUID();
@@ -295,5 +295,59 @@ describe("fulfillment orders PostgreSQL integration", () => {
       (await prisma().order.findUniqueOrThrow({ where: { id: orderId } }))
         .status,
     ).toBe("COMPLETED");
+  });
+
+  test("confirms, charges and delivers takeaway without duplicating stock", async () => {
+    const confirmed = await submitFulfillmentRound(ids.company, ids.user, {
+      roundId: randomUUID(),
+      orderType: "TAKE_AWAY",
+      items: [{ productId: ids.stockProduct, quantity: 1 }],
+    });
+    expect(confirmed.success).toBe(true);
+    if (!confirmed.success) return;
+    orderIds.push(confirmed.data.orderId);
+    const order = await prisma().order.findUniqueOrThrow({
+      where: { id: confirmed.data.orderId },
+      include: { delivery: true },
+    });
+    expect(order).toMatchObject({
+      orderType: "TAKE_AWAY",
+      status: "PENDING",
+      paymentStatus: "PENDING",
+      delivery: null,
+    });
+    expect(
+      await completeTakeAway(ids.company, confirmed.data.orderId),
+    ).toMatchObject({ success: false });
+
+    const paid = await payFulfillmentOrder(
+      {
+        id: ids.user,
+        companyId: ids.company,
+        email: `fulfillment-${suffix}@example.test`,
+        name: "Ana",
+        role: "ADMIN",
+        active: true,
+      },
+      {
+        orderId: order.id,
+        orderVersion: order.updatedAt.toISOString(),
+        expectedTotal: order.total.toNumber(),
+        cashShiftId: ids.cashShift,
+        method: "debit_card",
+        receipt: { documentType: "ticket" },
+      },
+    );
+    expect(paid.success).toBe(true);
+    expect(
+      await completeTakeAway(ids.company, confirmed.data.orderId),
+    ).toMatchObject({ success: true, data: { status: "COMPLETED" } });
+    expect(
+      (
+        await prisma().product.findUniqueOrThrow({
+          where: { id: ids.stockProduct },
+        })
+      ).stock?.toNumber(),
+    ).toBe(7);
   });
 });
