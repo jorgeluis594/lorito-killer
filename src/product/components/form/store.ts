@@ -7,6 +7,8 @@ import {
   type SingleProduct,
   SingleProductType,
   ServiceProductType,
+  type DishProduct,
+  DishProductType,
 } from "@/product/types";
 
 type ProductFormStateBase = {
@@ -50,18 +52,36 @@ type NewServiceProductFormState = ProductFormStateBase & {
   isNew: true;
 };
 
+type DishProductFormState = ProductFormStateBase & {
+  product: DishProduct;
+  productType: typeof DishProductType;
+  isNew: false;
+};
+
+type NewDishProductFormState = ProductFormStateBase & {
+  product: null;
+  productType: typeof DishProductType;
+  isNew: true;
+};
+
 export type ProductFormState =
   | SingleProductFormState
   | NewSingleProductFormState
   | PackageProductFormState
   | NewPackageProductFormState
   | ServiceProductFormState
-  | NewServiceProductFormState;
+  | NewServiceProductFormState
+  | DishProductFormState
+  | NewDishProductFormState;
 
 export type ProductFormActions = {
   setProduct: (product: Product) => void;
   resetProduct: (
-    productType: typeof SingleProductType | typeof PackageProductType | typeof ServiceProductType,
+    productType:
+      | typeof SingleProductType
+      | typeof PackageProductType
+      | typeof ServiceProductType
+      | typeof DishProductType,
   ) => void;
   setOpen: (open: boolean) => void;
   setPerformingAction: (performingAction: boolean) => void;
@@ -93,20 +113,28 @@ export const createProductFormStore = (
               productType: product.type,
             }
           : product.type === PackageProductType
-          ? {
-              product,
-              isNew: false,
-              open: true,
-              performingAction: false,
-              productType: product.type,
-            }
-          : {
-              product,
-              isNew: false,
-              open: true,
-              performingAction: false,
-              productType: product.type,
-            },
+            ? {
+                product,
+                isNew: false,
+                open: true,
+                performingAction: false,
+                productType: product.type,
+              }
+            : product.type === ServiceProductType
+              ? {
+                  product,
+                  isNew: false,
+                  open: true,
+                  performingAction: false,
+                  productType: product.type,
+                }
+              : {
+                  product,
+                  isNew: false,
+                  open: true,
+                  performingAction: false,
+                  productType: DishProductType,
+                },
       ),
     resetProduct: (productType) =>
       set(
@@ -118,13 +146,29 @@ export const createProductFormStore = (
               open: false,
               performingAction: false,
             }
-          : {
-              product: null,
-              productType: PackageProductType,
-              isNew: true,
-              open: false,
-              performingAction: false,
-            },
+          : productType === PackageProductType
+            ? {
+                product: null,
+                productType: PackageProductType,
+                isNew: true,
+                open: false,
+                performingAction: false,
+              }
+            : productType === ServiceProductType
+              ? {
+                  product: null,
+                  productType: ServiceProductType,
+                  isNew: true,
+                  open: false,
+                  performingAction: false,
+                }
+              : {
+                  product: null,
+                  productType: DishProductType,
+                  isNew: true,
+                  open: false,
+                  performingAction: false,
+                },
       ),
     setOpen: (open) => set({ open }),
     setPerformingAction: (performingAction: boolean) =>

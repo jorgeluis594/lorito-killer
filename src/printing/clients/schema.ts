@@ -11,3 +11,13 @@ export const PrinterInventorySchema = z.object({
     .array(z.object({ localName: z.string().trim().min(1).max(260) }))
     .max(200),
 });
+
+export const UpdatePrinterSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+  paperWidth: z.enum(["MM58", "MM80"]),
+  columns: z.coerce.number().int().positive(),
+  codepageMapping: z.literal("epson"),
+  cutEnabled: z.boolean(),
+  feedBeforeCut: z.coerce.number().int().nonnegative(),
+});

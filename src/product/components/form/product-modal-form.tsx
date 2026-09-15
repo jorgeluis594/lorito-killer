@@ -3,7 +3,11 @@
 import SingleProductModalForm from "@/product/components/form/single-product-modal-form";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
 import ServiceProductModal from "./service-product-modal";
-import { ServiceProductType, SingleProductType } from "@/product/types";
+import {
+  DishProductType,
+  ServiceProductType,
+  SingleProductType,
+} from "@/product/types";
 import PackageProductModalForm from "@/product/components/form/package-product-modal-form";
 import { useRouter } from "next/navigation";
 
@@ -17,7 +21,28 @@ export default function ProductModalForm() {
   };
 
   if (store.productType === ServiceProductType) {
-    return <ServiceProductModal key={`${store.product?.id}-${store.open}`} product={store.product ?? undefined} open={store.open} onClose={() => store.setOpen(false)} onActionPerformed={onActionPerformed} />;
+    return (
+      <ServiceProductModal
+        key={`${store.product?.id}-${store.open}`}
+        product={store.product ?? undefined}
+        open={store.open}
+        onClose={() => store.setOpen(false)}
+        onActionPerformed={onActionPerformed}
+      />
+    );
+  }
+
+  if (store.productType === DishProductType) {
+    return (
+      <ServiceProductModal
+        kind="dish"
+        key={`${store.product?.id}-${store.open}`}
+        product={store.product ?? undefined}
+        open={store.open}
+        onClose={() => store.setOpen(false)}
+        onActionPerformed={onActionPerformed}
+      />
+    );
   }
 
   return productType === SingleProductType ? (

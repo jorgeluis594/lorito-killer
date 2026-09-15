@@ -23,6 +23,12 @@ enum ProductType {
   SINGLE_PRODUCT
   PACKAGE_PRODUCT
   SERVICE_PRODUCT
+  DISH
+}
+
+enum KitchenStatus {
+  ACTIVE
+  INACTIVE
 }
 
 enum PreparationStation {
@@ -57,6 +63,8 @@ model Product {
   createdAt                  DateTime                 @default(now())
   updatedAt                  DateTime                 @updatedAt
   productType                ProductType              @default(SINGLE_PRODUCT)
+  kitchenId                  String?
+  kitchen                    Kitchen?                 @relation(fields: [kitchenId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   hidden                     Boolean                  @default(false)
   searchVector               Unsupported("tsvector")?
   photos                     Photo[]
@@ -67,6 +75,7 @@ model Product {
   orderItems                 OrderItem[]
 
   @@index([productType])
+  @@index([kitchenId])
 }
 
 model PackageItem {
@@ -384,6 +393,7 @@ model Company {
   printClientLinkCodes  PrintClientLinkCode[]
   printClients          PrintClient[]
   printers              Printer[]
+  kitchens              Kitchen[]
   subdomain             String?               @unique
   billingCredentials    Json?
   active                Boolean               @default(true)
@@ -491,8 +501,24 @@ model Printer {
   feedBeforeCut   Int               @default(3)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  kitchen         Kitchen?
 
   @@unique([printClientId, localName])
+  @@index([companyId])
+}
+
+model Kitchen {
+  id        String        @id @default(uuid())
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  name      String
+  status    KitchenStatus @default(ACTIVE)
+  printerId String?       @unique
+  printer   Printer?      @relation(fields: [printerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  products  Product[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
   @@index([companyId])
 }
 

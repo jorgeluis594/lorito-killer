@@ -6,6 +6,9 @@ import { revalidatePath } from "next/cache";
 import { generateLinkCode, hashLinkCode } from "./crypto";
 import * as repository from "./db_repository";
 import { createPrintClientLinkCode } from "./use-cases/create-print-client-link-code";
+import { UpdatePrinterSchema } from "./schema";
+import { updatePrinter } from "./use-cases/update-printer";
+import type { PrinterProfile } from "./types";
 
 export const createLinkCode = protectedAction(
   { roles: ["ADMIN"] },
@@ -28,5 +31,24 @@ export const revokeClient = protectedAction(
     if (!revoked) return { success: false, message: "Cliente no encontrado" };
     revalidatePath("/dashboard/settings/printing");
     return { success: true, data: { id } };
+  },
+);
+
+export const updatePrinterAction = protectedAction(
+  { roles: ["ADMIN"] },
+  async (user, input: unknown): Promise<response<PrinterProfile>> => {
+    const parsed = UpdatePrinterSchema.safeParse(input);
+    if (!parsed.success)
+      return {
+        success: false,
+        message: parsed.error.errors[0]?.message ?? "Perfil inválido",
+      };
+    const result = await updatePrinter(
+      repository.updatePrinterProfile,
+      user.companyId,
+      parsed.data,
+    );
+    if (result.success) revalidatePath("/dashboard/settings/printing");
+    return result;
   },
 );

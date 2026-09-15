@@ -1,8 +1,126 @@
 import prisma from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import type { UserRole } from "@/authorization/types";
 import type { response } from "@/lib/types";
 import type { KitchenItem } from "./types";
+import type { Kitchen, KitchenOption } from "./types";
+import type { KitchenInput } from "./use-cases/configure-kitchens";
+
+const configurationError = (error: unknown) => {
+  const code = (error as { code?: string }).code;
+  if (code === "P2002" || code === "P2034") {
+    return "La impresora ya está asignada a otra Kitchen";
+  }
+  return error instanceof Error ? error.message : "Error interno del servidor";
+};
+
+export const listKitchens = async (
+  companyId: string,
+  activeOnly: boolean,
+): Promise<Kitchen[] | KitchenOption[]> =>
+  activeOnly
+    ? prisma().kitchen.findMany({
+        where: { companyId, status: "ACTIVE" },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      })
+    : prisma().kitchen.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          printerId: true,
+          printer: { select: { id: true, localName: true, status: true } },
+        },
+        orderBy: { name: "asc" },
+      });
+
+const assertAssignablePrinter = async (
+  db: Prisma.TransactionClient,
+  companyId: string,
+  printerId?: string | null,
+) => {
+  if (!printerId) return;
+  await db.$queryRaw`SELECT id FROM "Printer" WHERE id = ${printerId} FOR UPDATE`;
+  const printer = await db.printer.findFirst({
+    where: { id: printerId, companyId, status: "ACTIVE" },
+    select: { id: true },
+  });
+  if (!printer)
+    throw new Error("La impresora no está activa o pertenece a otra empresa");
+};
+
+export const createKitchenConfiguration = async (
+  companyId: string,
+  input: KitchenInput,
+) => {
+  try {
+    const kitchen = await prisma().$transaction(
+      async (db) => {
+        await assertAssignablePrinter(db, companyId, input.printerId);
+        return db.kitchen.create({
+          data: { companyId, ...input, printerId: input.printerId || null },
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            printerId: true,
+            printer: { select: { id: true, localName: true, status: true } },
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+    return { success: true as const, data: kitchen };
+  } catch (error) {
+    return { success: false as const, message: configurationError(error) };
+  }
+};
+
+export const updateKitchenConfiguration = async (
+  companyId: string,
+  kitchenId: string,
+  input: KitchenInput,
+) => {
+  try {
+    const kitchen = await prisma().$transaction(
+      async (db) => {
+        await db.$queryRaw`SELECT id FROM "Kitchen" WHERE id = ${kitchenId} FOR UPDATE`;
+        const current = await db.kitchen.findFirst({
+          where: { id: kitchenId, companyId },
+          select: { id: true },
+        });
+        if (!current) throw new Error("Kitchen no encontrada");
+        await assertAssignablePrinter(db, companyId, input.printerId);
+        if (input.status === "INACTIVE") {
+          const activeProducts = await db.product.count({
+            where: { kitchenId, companyId, hidden: false },
+          });
+          if (activeProducts > 0)
+            throw new Error(
+              "Oculta o reasigna los productos activos antes de desactivar la Kitchen",
+            );
+        }
+        return db.kitchen.update({
+          where: { id: kitchenId },
+          data: { ...input, printerId: input.printerId || null },
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            printerId: true,
+            printer: { select: { id: true, localName: true, status: true } },
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+    return { success: true as const, data: kitchen };
+  } catch (error) {
+    return { success: false as const, message: configurationError(error) };
+  }
+};
 
 function stationFilter(role: UserRole): Prisma.OrderItemWhereInput {
   if (role === "ADMIN") return {};

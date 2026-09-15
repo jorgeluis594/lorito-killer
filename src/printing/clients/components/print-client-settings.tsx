@@ -25,6 +25,7 @@ import {
 } from "@/shared/components/ui/card";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { createLinkCode, revokeClient } from "../actions";
+import { PrinterProfileForm } from "./printer-profile-form";
 
 type Client = {
   id: string;
@@ -37,6 +38,11 @@ type Client = {
     localName: string;
     status: "ACTIVE" | "INACTIVE";
     lastDetectedAt: Date;
+    paperWidth: "MM58" | "MM80";
+    columns: number;
+    codepageMapping: string;
+    cutEnabled: boolean;
+    feedBeforeCut: number;
   }[];
 };
 
@@ -154,12 +160,19 @@ export function PrintClientSettings({ clients }: { clients: Client[] }) {
                     {client.printers.map((printer) => (
                       <li
                         key={printer.id}
-                        className="flex items-center justify-between gap-3 border-b py-2 last:border-0"
+                        className="flex flex-col gap-2 border-b py-3 last:border-0"
                       >
-                        <span className="text-sm">{printer.localName}</span>
-                        <Badge variant="outline">
-                          {printer.status === "ACTIVE" ? "Activa" : "Inactiva"}
-                        </Badge>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm">{printer.localName}</span>
+                          <Badge variant="outline">
+                            {printer.status === "ACTIVE"
+                              ? "Activa"
+                              : "Inactiva"}
+                          </Badge>
+                        </div>
+                        <PrinterProfileForm
+                          printer={{ ...printer, codepageMapping: "epson" }}
+                        />
                       </li>
                     ))}
                   </ul>

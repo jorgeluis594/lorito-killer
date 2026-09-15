@@ -156,7 +156,7 @@ export default async function Page(props: PageProps) {
             </PageHeader.Heading>
             <PageHeader.Actions>
               <ExportProductsButton />
-              <AddProductButtons />
+              <AddProductButtons isAdmin={session.user.role === "ADMIN"} />
             </PageHeader.Actions>
           </PageHeader.Main>
         </PageHeader>

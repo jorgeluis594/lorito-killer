@@ -8,6 +8,7 @@ import {
   SortKey,
   TypePackageProductType,
   TypeSingleProductType,
+  DishProductType,
 } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
@@ -24,6 +25,18 @@ export const POST = protectedRoute(
       ...data,
       companyId: user.companyId,
     };
+    if (
+      user.role !== "ADMIN" &&
+      (product.type === DishProductType || Boolean(product.kitchenId))
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Solo un administrador puede configurar platos",
+        },
+        { status: 403 },
+      );
+    }
 
     const response = await productCreator({ create, findBy }, product);
     if (response.success) {

@@ -15,3 +15,15 @@ export type KitchenItem = {
   kitchenReadyAt?: Date | null;
   createdAt: Date;
 };
+
+export type KitchenStatus = "ACTIVE" | "INACTIVE";
+
+export type Kitchen = {
+  id: string;
+  name: string;
+  status: KitchenStatus;
+  printerId: string | null;
+  printer: { id: string; localName: string; status: KitchenStatus } | null;
+};
+
+export type KitchenOption = Pick<Kitchen, "id" | "name">;

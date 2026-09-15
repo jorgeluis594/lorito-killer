@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type { PrintClientIdentity } from "./types";
+import type { PrinterProfile } from "./types";
 
 export const createCode = async (input: {
   companyId: string;
@@ -90,16 +91,16 @@ export const registerInventory = async (
     await Promise.all(
       localNames.map((localName) =>
         db.printer.upsert({
-        where: {
-          printClientId_localName: { printClientId: client.id, localName },
-        },
-        update: { lastDetectedAt: now },
-        create: {
-          companyId: client.companyId,
-          printClientId: client.id,
-          localName,
-          lastDetectedAt: now,
-        },
+          where: {
+            printClientId_localName: { printClientId: client.id, localName },
+          },
+          update: { lastDetectedAt: now },
+          create: {
+            companyId: client.companyId,
+            printClientId: client.id,
+            localName,
+            lastDetectedAt: now,
+          },
         }),
       ),
     );
@@ -122,6 +123,11 @@ export const getPrintClients = (companyId: string) =>
           localName: true,
           status: true,
           lastDetectedAt: true,
+          paperWidth: true,
+          columns: true,
+          codepageMapping: true,
+          cutEnabled: true,
+          feedBeforeCut: true,
         },
         orderBy: { localName: "asc" },
       },
@@ -135,4 +141,53 @@ export const revokePrintClient = async (companyId: string, id: string) => {
     data: { revokedAt: new Date() },
   });
   return result.count === 1;
+};
+
+export const updatePrinterProfile = async (
+  companyId: string,
+  input: PrinterProfile,
+) => {
+  try {
+    const printer = await prisma().$transaction(
+      async (db) => {
+        await db.$queryRaw`SELECT id FROM "Printer" WHERE id = ${input.id} FOR UPDATE`;
+        const current = await db.printer.findFirst({
+          where: { id: input.id, companyId },
+          select: { id: true, kitchen: { select: { id: true } } },
+        });
+        if (!current)
+          return {
+            success: false as const,
+            message: "Impresora no encontrada",
+          };
+        if (input.status === "INACTIVE" && current.kitchen)
+          return {
+            success: false as const,
+            message: "Retira la impresora de su Kitchen antes de desactivarla",
+          };
+        const updated = await db.printer.update({
+          where: { id: input.id },
+          data: input,
+          select: {
+            id: true,
+            status: true,
+            paperWidth: true,
+            columns: true,
+            codepageMapping: true,
+            cutEnabled: true,
+            feedBeforeCut: true,
+          },
+        });
+        return { success: true as const, data: updated as PrinterProfile };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+    return printer;
+  } catch (error) {
+    return {
+      success: false as const,
+      message:
+        error instanceof Error ? error.message : "Error interno del servidor",
+    };
+  }
 };
