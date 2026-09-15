@@ -30,6 +30,16 @@ enum PreparationStation {
   BAR
 }
 
+enum PrinterStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PrinterPaperWidth {
+  MM58
+  MM80
+}
+
 model Product {
   id                         String                   @id @default(uuid())
   companyId                  String?
@@ -371,6 +381,9 @@ model Company {
   tables                Table[]
   tableSessions         TableSession[]
   features              CompanyFeature[]
+  printClientLinkCodes  PrintClientLinkCode[]
+  printClients          PrintClient[]
+  printers              Printer[]
   subdomain             String?               @unique
   billingCredentials    Json?
   active                Boolean               @default(true)
@@ -405,30 +418,82 @@ model Logo {
 }
 
 model User {
-  id                     String          @id @default(uuid())
+  id                     String                @id @default(uuid())
   companyId              String?
-  company                Company?        @relation(fields: [companyId], references: [id])
-  email                  String          @unique
+  company                Company?              @relation(fields: [companyId], references: [id])
+  email                  String                @unique
   password               String
   name                   String?
-  role                   UserRole        @default(ADMIN)
-  active                 Boolean         @default(true)
+  role                   UserRole              @default(ADMIN)
+  active                 Boolean               @default(true)
   sellerCode             String?
   pin                    String?
   cashShifts             CashShift[]
   stockTransfers         StockTransfer[]
-  waiterSessions         TableSession[]  @relation("WaiterSessions")
-  soldOrders             Order[]         @relation("SellerOrders")
-  kitchenTakenOrderItems OrderItem[]     @relation("KitchenTakenOrderItems")
-  kitchenReadyOrderItems OrderItem[]     @relation("KitchenReadyOrderItems")
-  servedOrderItems       OrderItem[]     @relation("ServedOrderItems")
-  cancelledOrderItems    OrderItem[]     @relation("CancelledOrderItems")
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
+  waiterSessions         TableSession[]        @relation("WaiterSessions")
+  soldOrders             Order[]               @relation("SellerOrders")
+  kitchenTakenOrderItems OrderItem[]           @relation("KitchenTakenOrderItems")
+  kitchenReadyOrderItems OrderItem[]           @relation("KitchenReadyOrderItems")
+  servedOrderItems       OrderItem[]           @relation("ServedOrderItems")
+  cancelledOrderItems    OrderItem[]           @relation("CancelledOrderItems")
+  printClientLinkCodes   PrintClientLinkCode[]
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
 
   @@unique([companyId, sellerCode])
   @@index([companyId, role])
   @@index([companyId, active])
+}
+
+model PrintClientLinkCode {
+  id          String   @id @default(uuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  codeHash    String   @unique
+  expiresAt   DateTime
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([companyId])
+}
+
+model PrintClient {
+  id              String    @id @default(uuid())
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  machineName     String
+  credentialHash  String    @unique
+  revokedAt       DateTime?
+  lastSeenAt      DateTime
+  lastInventoryAt DateTime?
+  printers        Printer[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([companyId])
+}
+
+model Printer {
+  id              String            @id @default(uuid())
+  companyId       String
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  printClientId   String
+  printClient     PrintClient       @relation(fields: [printClientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  localName       String
+  status          PrinterStatus     @default(ACTIVE)
+  lastDetectedAt  DateTime
+  paperWidth      PrinterPaperWidth @default(MM58)
+  columns         Int               @default(32)
+  codepageMapping String            @default("epson")
+  cutEnabled      Boolean           @default(true)
+  feedBeforeCut   Int               @default(3)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([printClientId, localName])
+  @@index([companyId])
 }
 
 enum PaymentMethod {

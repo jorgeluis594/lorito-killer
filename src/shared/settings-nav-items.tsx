@@ -17,7 +17,11 @@ export default function NavItems({ isAdmin }: { isAdmin: boolean }) {
   const restaurantsEnabled = useFeatureEnabled("restaurants");
   const visibleItems =
     isAdmin && restaurantsEnabled
-      ? [...items, { title: "Mesas", href: "/dashboard/tables/configure" }]
+      ? [
+          ...items,
+          { title: "Mesas", href: "/dashboard/tables/configure" },
+          { title: "Impresión", href: "/dashboard/settings/printing" },
+        ]
       : items;
 
   return (
