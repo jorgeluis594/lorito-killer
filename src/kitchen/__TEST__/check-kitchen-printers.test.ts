@@ -79,4 +79,30 @@ describe("checkKitchenPrinters", () => {
 
     expect(result.map(({ id }) => id)).toEqual(["unknown"]);
   });
+
+  test("keeps the warning visible when Realtime cannot request inventory", async () => {
+    const find = vi.fn().mockResolvedValue([
+      {
+        id: "missing",
+        name: "Cocina",
+        printClientId: "client-1",
+        lastDetectedAt: null,
+        lastInventoryAt: null,
+        lastDeliveredAt: null,
+      },
+    ]);
+
+    const result = await checkKitchenPrinters(
+      { companyId: "company-1", now, staleAfterMs: 300000 },
+      find,
+      vi.fn().mockRejectedValue(new Error("Realtime unavailable")),
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: "missing",
+        reason: "MISSING_FROM_INVENTORY",
+      }),
+    ]);
+  });
 });

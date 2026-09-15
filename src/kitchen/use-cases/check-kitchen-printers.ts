@@ -35,7 +35,7 @@ export async function checkKitchenPrinters(
       } satisfies KitchenPrinterAttention,
     ];
   });
-  await Promise.all(
+  await Promise.allSettled(
     [...new Set(attention.map(({ printClientId }) => printClientId))].map(
       (printClientId) => requestInventory(printClientId),
     ),
