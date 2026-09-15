@@ -114,7 +114,7 @@ export function PrintClientSettings({ clients }: { clients: Client[] }) {
         ) : (
           clients.map((client) => (
             <Card key={client.id}>
-              <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <CardHeader className="flex flex-col items-start justify-between gap-4 sm:flex-row">
                 <div className="flex flex-col gap-1">
                   <CardTitle className="text-base">
                     {client.machineName}
@@ -126,7 +126,10 @@ export function PrintClientSettings({ clients }: { clients: Client[] }) {
                     })}
                   </CardDescription>
                 </div>
-                <Badge variant={client.revokedAt ? "destructive" : "secondary"}>
+                <Badge
+                  className="shrink-0"
+                  variant={client.revokedAt ? "destructive" : "secondary"}
+                >
                   {client.revokedAt ? "Revocada" : "Activa"}
                 </Badge>
               </CardHeader>
