@@ -43,6 +43,19 @@ export default async function OrderData({ order }: { order: Order }) {
     order.orderType === "DELIVERY"
       ? await getDeliveryDetails(order.companyId, order.id!)
       : null;
+  const deliveryView = delivery
+    ? {
+        ...delivery,
+        dispatchedAt:
+          delivery.dispatchedAt?.toLocaleString("es-PE", {
+            timeZone: "America/Lima",
+          }) ?? null,
+        deliveredAt:
+          delivery.deliveredAt?.toLocaleString("es-PE", {
+            timeZone: "America/Lima",
+          }) ?? null,
+      }
+    : null;
 
   const hasADiscount = order.orderItems.some(
     (orderItem) => orderItem.discountAmount > 0,
@@ -91,6 +104,7 @@ export default async function OrderData({ order }: { order: Order }) {
               )}
             {documentResponse.success &&
               session.user &&
+              order.paymentStatus !== "paid" &&
               canCancelOrder({
                 hasPermission: hasPermission(
                   session.user.role,
@@ -120,7 +134,7 @@ export default async function OrderData({ order }: { order: Order }) {
                 ).toISOString()}
                 total={order.total}
                 cashShiftId={cashShift?.id}
-                delivery={delivery}
+                delivery={deliveryView}
               />
             </div>
           )}

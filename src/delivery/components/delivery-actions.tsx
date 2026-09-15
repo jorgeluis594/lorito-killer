@@ -30,8 +30,8 @@ export default function DeliveryActions({
   cashShiftId?: string;
   delivery?: {
     status: "PENDING" | "DISPATCHED" | "DELIVERED";
-    dispatchedAt: Date | null;
-    deliveredAt: Date | null;
+    dispatchedAt: string | null;
+    deliveredAt: string | null;
     dispatchedBy: { name: string | null } | null;
     deliveredBy: { name: string | null } | null;
   } | null;
@@ -67,13 +67,13 @@ export default function DeliveryActions({
           {delivery.dispatchedAt && (
             <span>
               Despachado por {delivery.dispatchedBy?.name ?? "usuario"} ·{" "}
-              {delivery.dispatchedAt.toLocaleString("es-PE")}
+              {delivery.dispatchedAt}
             </span>
           )}
           {delivery.deliveredAt && (
             <span>
               Entregado por {delivery.deliveredBy?.name ?? "usuario"} ·{" "}
-              {delivery.deliveredAt.toLocaleString("es-PE")}
+              {delivery.deliveredAt}
             </span>
           )}
         </div>
