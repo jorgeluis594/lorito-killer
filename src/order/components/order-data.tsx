@@ -24,6 +24,7 @@ import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/authorization/helpers";
 import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 import DeliveryActions from "@/delivery/components/delivery-actions";
+import { findFulfillmentCashShift } from "@/order/fulfillment-payment-repository";
 
 export default async function OrderData({ order }: { order: Order }) {
   const session = await getSession();
@@ -34,6 +35,9 @@ export default async function OrderData({ order }: { order: Order }) {
 
   const fulfillment =
     order.orderType === "TAKE_AWAY" || order.orderType === "DELIVERY";
+  const cashShift = fulfillment
+    ? await findFulfillmentCashShift(order.companyId)
+    : null;
 
   const hasADiscount = order.orderItems.some(
     (orderItem) => orderItem.discountAmount > 0,
@@ -110,6 +114,7 @@ export default async function OrderData({ order }: { order: Order }) {
                   order.updatedAt ?? order.createdAt
                 ).toISOString()}
                 total={order.total}
+                cashShiftId={cashShift?.id}
               />
             </div>
           )}

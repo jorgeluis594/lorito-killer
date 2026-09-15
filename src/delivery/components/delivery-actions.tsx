@@ -18,12 +18,14 @@ export default function DeliveryActions({
   paymentStatus,
   orderVersion,
   total,
+  cashShiftId,
 }: {
   orderId: string;
   orderType: "TAKE_AWAY" | "DELIVERY";
   paymentStatus: "pending" | "paid";
   orderVersion: string;
   total: number;
+  cashShiftId?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -57,6 +59,7 @@ export default function DeliveryActions({
             orderId={orderId}
             orderVersion={orderVersion}
             total={total}
+            cashShiftId={cashShiftId}
           />
         </>
       )}

@@ -21,6 +21,18 @@ export type FulfillmentPaymentResult = {
   paymentStatus: "PAID";
 };
 
+export async function findFulfillmentCashShift(companyId: string) {
+  return prisma().cashShift.findFirst({
+    where: {
+      companyId,
+      status: "OPEN",
+      user: { role: { in: ["ADMIN", "CASHIER"] }, active: true },
+    },
+    orderBy: [{ openedAt: "desc" }, { id: "asc" }],
+    select: { id: true },
+  });
+}
+
 const reject = (message: string): never => {
   throw new Error(message);
 };

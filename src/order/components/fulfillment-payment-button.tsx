@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useCashShift } from "@/cash-shift/components/cash-shift-provider";
 import { confirmFulfillmentPayment } from "@/order/fulfillment-payment-actions";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -28,12 +27,13 @@ export default function FulfillmentPaymentButton({
   orderId,
   orderVersion,
   total,
+  cashShiftId,
 }: {
   orderId: string;
   orderVersion: string;
   total: number;
+  cashShiftId?: string;
 }) {
-  const cashShift = useCashShift();
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<"cash" | "debit_card" | "credit_card">(
     "cash",
@@ -44,13 +44,13 @@ export default function FulfillmentPaymentButton({
   const { toast } = useToast();
 
   function pay() {
-    if (!cashShift) return;
+    if (!cashShiftId) return;
     startTransition(async () => {
       const result = await confirmFulfillmentPayment({
         orderId,
         orderVersion,
         expectedTotal: total,
-        cashShiftId: cashShift.id,
+        cashShiftId,
         method,
         receipt: { documentType: "ticket" },
         ...(method === "cash" ? { cashReceived } : {}),
@@ -101,7 +101,7 @@ export default function FulfillmentPaymentButton({
           />
         )}
         <DialogFooter>
-          <Button disabled={!cashShift || pending} onClick={pay}>
+          <Button disabled={!cashShiftId || pending} onClick={pay}>
             {pending ? "Cobrando…" : "Confirmar pago"}
           </Button>
         </DialogFooter>
