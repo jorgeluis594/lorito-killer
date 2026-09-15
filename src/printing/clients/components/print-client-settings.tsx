@@ -82,6 +82,7 @@ export function PrintClientSettings({ clients }: { clients: Client[] }) {
                 {new Date(linkCode.expiresAt).toLocaleTimeString("es-PE", {
                   hour: "2-digit",
                   minute: "2-digit",
+                  timeZone: "America/Lima",
                 })}
               </span>
             </div>
@@ -120,7 +121,9 @@ export function PrintClientSettings({ clients }: { clients: Client[] }) {
                   </CardTitle>
                   <CardDescription>
                     Última actividad:{" "}
-                    {new Date(client.lastSeenAt).toLocaleString("es-PE")}
+                    {new Date(client.lastSeenAt).toLocaleString("es-PE", {
+                      timeZone: "America/Lima",
+                    })}
                   </CardDescription>
                 </div>
                 <Badge variant={client.revokedAt ? "destructive" : "secondary"}>
