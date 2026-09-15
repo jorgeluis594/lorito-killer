@@ -23,6 +23,7 @@ import ReceiptPrintButton from "@/printing/components/receipt-print-button";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/authorization/helpers";
 import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
+import DeliveryActions from "@/delivery/components/delivery-actions";
 
 export default async function OrderData({ order }: { order: Order }) {
   const session = await getSession();
@@ -31,9 +32,8 @@ export default async function OrderData({ order }: { order: Order }) {
     order.companyId,
   );
 
-  if (!documentResponse.success) {
-    return <p>No se encontro el documento</p>;
-  }
+  const fulfillment =
+    order.orderType === "TAKE_AWAY" || order.orderType === "DELIVERY";
 
   const hasADiscount = order.orderItems.some(
     (orderItem) => orderItem.discountAmount > 0,
@@ -52,7 +52,11 @@ export default async function OrderData({ order }: { order: Order }) {
                   : "Nota de venta"}{" "}
               {documentResponse.success
                 ? correlative(documentResponse.data)
-                : "documento no encontrado"}
+                : fulfillment
+                  ? order.orderType === "DELIVERY"
+                    ? "Pedido Delivery"
+                    : "Pedido para llevar"
+                  : "documento no encontrado"}
             </span>
             {order.status === "cancelled" && (
               <Badge variant="destructive" className="mt-2">
@@ -61,19 +65,23 @@ export default async function OrderData({ order }: { order: Order }) {
             )}
           </CardTitle>
           <div className="flex space-x-2">
-            <ReceiptPrintButton orderId={order.id!} />
-            {(documentResponse.data.documentType === "invoice" ||
-              documentResponse.data.documentType === "receipt") && (
-              <a
-                className={buttonVariants({ variant: "ghost", size: "icon" })}
-                href={`${documentResponse.data.xml}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileCode />
-              </a>
+            {documentResponse.success && (
+              <ReceiptPrintButton orderId={order.id!} />
             )}
-            {session.user &&
+            {documentResponse.success &&
+              (documentResponse.data.documentType === "invoice" ||
+                documentResponse.data.documentType === "receipt") && (
+                <a
+                  className={buttonVariants({ variant: "ghost", size: "icon" })}
+                  href={`${documentResponse.data.xml}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FileCode />
+                </a>
+              )}
+            {documentResponse.success &&
+              session.user &&
               canCancelOrder({
                 hasPermission: hasPermission(
                   session.user.role,
@@ -92,6 +100,19 @@ export default async function OrderData({ order }: { order: Order }) {
           </div>
         </CardHeader>
         <CardContent>
+          {fulfillment && (
+            <div className="mb-6">
+              <DeliveryActions
+                orderId={order.id!}
+                orderType={order.orderType as "TAKE_AWAY" | "DELIVERY"}
+                paymentStatus={order.paymentStatus ?? "pending"}
+                orderVersion={(
+                  order.updatedAt ?? order.createdAt
+                ).toISOString()}
+                total={order.total}
+              />
+            </div>
+          )}
           <table className="table-auto border w-full">
             <tbody>
               <tr>
@@ -195,7 +216,11 @@ export default async function OrderData({ order }: { order: Order }) {
                   <tr key={payment.id}>
                     <td className="pl-2 border py-1">
                       {paymentMethodToText(payment.method)}
-                      {walletPaymentReference(payment) && <p className="text-sm break-all">{walletPaymentReference(payment)}</p>}
+                      {walletPaymentReference(payment) && (
+                        <p className="text-sm break-all">
+                          {walletPaymentReference(payment)}
+                        </p>
+                      )}
                     </td>
                     <td className="pl-2 border py-1">
                       {formatPrice(payment.amount)}

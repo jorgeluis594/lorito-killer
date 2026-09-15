@@ -258,6 +258,12 @@ enum OrderType {
   DELIVERY
 }
 
+enum DeliveryStatus {
+  PENDING
+  DISPATCHED
+  DELIVERED
+}
+
 model Order {
   id                 String             @id @default(uuid())
   cashShiftId        String?
@@ -286,8 +292,26 @@ model Order {
   updatedAt          DateTime           @updatedAt
   orderItems         OrderItem[]
   rounds             OrderRound[]
+  delivery           Delivery?
 
   @@index([companyId, sellerId])
+  @@index([companyId, orderType, createdAt])
+}
+
+model Delivery {
+  orderId        String         @id
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  status         DeliveryStatus @default(PENDING)
+  createdById    String
+  createdBy      User           @relation("DeliveryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  dispatchedAt   DateTime?
+  dispatchedById String?
+  dispatchedBy   User?          @relation("DeliveryDispatchedBy", fields: [dispatchedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deliveredAt    DateTime?
+  deliveredById  String?
+  deliveredBy    User?          @relation("DeliveryDeliveredBy", fields: [deliveredById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 enum DocumentType {
@@ -460,6 +484,9 @@ model User {
   orderRounds            OrderRound[]            @relation("OrderRoundResponsible")
   kitchenTicketPrintJobs KitchetTicketPrintJob[] @relation("KitchenTicketPrintRequester")
   orderItemCancellations OrderItemCancellation[]
+  deliveriesCreated      Delivery[]              @relation("DeliveryCreatedBy")
+  deliveriesDispatched   Delivery[]              @relation("DeliveryDispatchedBy")
+  deliveriesDelivered    Delivery[]              @relation("DeliveryDeliveredBy")
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
 

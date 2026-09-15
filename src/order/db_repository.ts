@@ -189,6 +189,7 @@ export const mapReceiptPrintOrderItem = (
       ? UNIT_TYPE_MAPPER[orderItem.product.unitType]
       : "unit",
     quantity: orderItem.quantity.toNumber(),
+    notes: orderItem.notes ?? undefined,
     discount,
     netTotal: orderItem.netTotal.toNumber(),
     discountAmount: orderItem.discountAmount.toNumber(),
@@ -213,6 +214,7 @@ const mapReceiptPrintOrder = async (
   total: prismaOrder.total.toNumber(),
   cancellationReason: prismaOrder.cancellationReason || "",
   status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
+  orderType: prismaOrder.orderType,
   payments: prismaOrder.payments.map(mapPrismaPaymentToPayment),
   discount: toOrderDiscount(
     prismaOrder.discountType,
@@ -472,6 +474,7 @@ export async function transformOrdersData(
       status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
       paymentStatus:
         prismaOrder.paymentStatus.toLowerCase() as Order["paymentStatus"],
+      orderType: prismaOrder.orderType,
       companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(

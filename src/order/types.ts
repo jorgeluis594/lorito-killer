@@ -17,6 +17,7 @@ export type OrderItem = {
   productPhotoUrl?: string;
   productPrice: number;
   quantity: number;
+  notes?: string | null;
   unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
   netTotal: number;
   total: number;
@@ -60,6 +61,7 @@ export type Order = {
   cancellationReason?: string;
   status: Status;
   paymentStatus?: PaymentStatus;
+  orderType?: "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
   payments: Payment[];
   discount?: Discount;
   documentType: DocumentType;
