@@ -74,8 +74,12 @@ const buildOrderWhere = (
   ...(query.sellerId ? { sellerId: query.sellerId } : {}),
 });
 
-const buildCompletedOrderWhere = (query: DashboardQuery) =>
-  buildOrderWhere(query, "COMPLETED");
+const buildCompletedOrderWhere = (
+  query: DashboardQuery,
+): Prisma.OrderWhereInput => ({
+  ...buildOrderWhere(query),
+  paymentStatus: "PAID",
+});
 
 const buildSalesReportHref = (
   query: DashboardQuery,
@@ -149,7 +153,7 @@ const fillSalesTrendBuckets = (
 const buildOrderSqlFilters = (query: DashboardQuery) => {
   const filters = [
     Prisma.sql`o."companyId" = ${query.companyId}`,
-    Prisma.sql`o."status"::text = 'COMPLETED'`,
+    Prisma.sql`o."paymentStatus"::text = 'PAID'`,
     Prisma.sql`o."createdAt" >= ${query.startDate}`,
     Prisma.sql`o."createdAt" <= ${query.endDate}`,
   ];
@@ -488,6 +492,7 @@ export async function findRecentSales(
         createdAt: true,
         total: true,
         status: true,
+        paymentStatus: true,
         seller: { select: { name: true, email: true } },
         payments: { select: { method: true } },
         documents: {
@@ -505,7 +510,7 @@ export async function findRecentSales(
       data: orders.map((order) => {
         const document = order.documents[0];
         const status =
-          order.status === "COMPLETED"
+          order.paymentStatus === "PAID"
             ? "completed"
             : order.status === "CANCELLED"
               ? "cancelled"
@@ -604,7 +609,7 @@ export async function findOperationalAlerts(
       }),
       prisma().order.count({
         where: {
-          ...buildOrderWhere(query, "COMPLETED"),
+          ...buildCompletedOrderWhere(query),
           OR: [
             { discountAmount: { gt: 0 } },
             { orderItems: { some: { discountAmount: { gt: 0 } } } },
@@ -613,7 +618,7 @@ export async function findOperationalAlerts(
       }),
       prisma().order.aggregate({
         where: {
-          ...buildOrderWhere(query, "COMPLETED"),
+          ...buildCompletedOrderWhere(query),
           discountAmount: { gt: 0 },
         },
         _sum: { discountAmount: true },

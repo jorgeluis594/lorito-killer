@@ -3,6 +3,7 @@ import type { DashboardKpis } from "@/dashboard/types";
 
 export type DashboardOrderFact = {
   status: "COMPLETED" | "PENDING" | "CANCELLED";
+  paymentStatus: "PENDING" | "PAID";
   total: number;
   discountAmount?: number;
 };
@@ -26,7 +27,7 @@ export function calculateAverageTicket(total: number, count: number) {
 export function calculatePaidSalesKpis(
   facts: DashboardOrderFact[],
 ): Pick<DashboardKpis, "paidSalesTotal" | "paidSalesCount" | "averageTicket"> {
-  const completed = facts.filter((fact) => fact.status === "COMPLETED");
+  const completed = facts.filter((fact) => fact.paymentStatus === "PAID");
   const paidSalesTotal = completed.reduce(
     (total, fact) => add(total, fact.total),
     0,

@@ -855,7 +855,7 @@ export async function addOrderItems(
 
     // Update order totals using aggregate
     const { _sum } = await prisma().orderItem.aggregate({
-      where: { orderId, kitchenStatus: { not: "CANCELLED" } },
+      where: { orderId, quantity: { gt: 0 } },
       _sum: { total: true },
     });
     const total = _sum.total?.toNumber() ?? 0;

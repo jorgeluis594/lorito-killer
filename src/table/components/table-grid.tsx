@@ -92,7 +92,7 @@ export function TableGrid({
               const session = table.activeSession!;
               const total =
                 (session.order?.orderItems ?? [])
-                  .filter((item) => item.kitchenStatus !== "CANCELLED")
+                  .filter((item) => item.quantity > 0)
                   .reduce(
                     (sum, item) => sum + Math.round(item.total * 100),
                     0,

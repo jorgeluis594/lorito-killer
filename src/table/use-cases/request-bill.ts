@@ -19,7 +19,7 @@ export async function requestBill(
     };
   }
 
-  if (!session.order?.orderItems.some((item) => item.kitchenStatus !== "CANCELLED")) {
+  if (!session.order?.orderItems.some((item) => item.quantity > 0)) {
     return {
       success: false,
       message:

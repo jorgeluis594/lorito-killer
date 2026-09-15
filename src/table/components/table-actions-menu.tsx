@@ -75,7 +75,7 @@ function OrderSummary({
 }) {
   const items = session.order?.orderItems ?? [];
   const total = items
-    .filter((item) => item.kitchenStatus !== "CANCELLED")
+    .filter((item) => item.quantity > 0)
     .reduce((sum, item) => sum + item.total, 0);
 
   if (items.length === 0) return null;
@@ -95,9 +95,7 @@ function OrderSummary({
               </p>
             </div>
             <span className="shrink-0 font-medium tabular-nums">
-              {item.kitchenStatus === "CANCELLED"
-                ? "Cancelado"
-                : formatPrice(item.total)}
+              {item.quantity === 0 ? "Cancelado" : formatPrice(item.total)}
             </span>
           </div>
           {item.notes ? (
@@ -153,9 +151,7 @@ export function TableActionsMenu({
   const [showOrder, setShowOrder] = useState(false);
 
   const hasOrderItems =
-    session?.order?.orderItems.some(
-      (item) => item.kitchenStatus !== "CANCELLED",
-    ) ?? false;
+    session?.order?.orderItems.some((item) => item.quantity > 0) ?? false;
   const elapsedMinutes = session
     ? differenceInMinutes(new Date(), new Date(session.openedAt))
     : 0;
