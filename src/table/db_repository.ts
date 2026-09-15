@@ -134,10 +134,10 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
             number: round.number,
             createdAt: round.createdAt,
             responsible: round.responsibleUser,
-            items: round.items.map((item) => ({
+            items: round.items.map(({ cancellations, ...item }) => ({
               ...item,
               quantity: Number(item.quantity),
-              cancelledQuantity: item.cancellations.reduce(
+              cancelledQuantity: cancellations.reduce(
                 (sum, cancellation) => sum + Number(cancellation.quantity),
                 0,
               ),

@@ -17,7 +17,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice, shortLocalizeDate } from "@/lib/utils";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { getMany } from "@/product/api_repository";
 import { isDishProduct, type Product } from "@/product/types";
@@ -555,7 +555,7 @@ export function TableOrderView({
                       <p className="text-xs text-muted-foreground">
                         Pedido {round}
                         {roundDetails
-                          ? ` · ${roundDetails.responsible.name || "Sin nombre"} · ${new Intl.DateTimeFormat("es-PE", { dateStyle: "short", timeStyle: "short" }).format(new Date(roundDetails.createdAt))}`
+                          ? ` · ${roundDetails.responsible.name || "Sin nombre"} · ${shortLocalizeDate(new Date(roundDetails.createdAt))}`
                           : ""}
                       </p>
                       {items.map((item) => (
