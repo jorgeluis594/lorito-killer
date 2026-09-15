@@ -31,8 +31,9 @@ import type { KitchenPrinterAttention, KitchenTicketView } from "../types";
 type KitchenEvents = {
   "printer-inventory-updated": Record<string, never>;
   "print-job-changed": Record<string, never>;
-  "print-job-failed": { jobId: string; responsibleUserId: string };
 };
+
+type KitchenAlertEvents = { "print-job-failed": Record<string, never> };
 
 type TableEvents = {
   "table-session-changed": { tableId: string; sessionStatus: string };
@@ -55,6 +56,9 @@ export function KitchenAttentionPanel({
 }) {
   const canReadTickets = role === "ADMIN" || role === "WAITER";
   const realtime = useRealtime<KitchenEvents>("kitchen");
+  const alertRealtime = useRealtime<KitchenAlertEvents>(
+    role === "ADMIN" ? "kitchen-admin" : `kitchen-user-${userId}`,
+  );
   const tableRealtime = useRealtime<TableEvents>("tables");
   const { toast } = useToast();
   const [printers, setPrinters] = useState<KitchenPrinterAttention[]>([]);
@@ -85,8 +89,7 @@ export function KitchenAttentionPanel({
   useEffect(() => {
     const inventory = realtime.on("printer-inventory-updated", refreshPrinters);
     const changed = realtime.on("print-job-changed", refreshTickets);
-    const failed = realtime.on("print-job-failed", (event) => {
-      if (role !== "ADMIN" && event.responsibleUserId !== userId) return;
+    const failed = alertRealtime.on("print-job-failed", () => {
       toast({
         title: "Una comanda requiere atención",
         description: "Abre impresiones pendientes para revisarla.",
@@ -108,12 +111,11 @@ export function KitchenAttentionPanel({
     };
   }, [
     realtime,
+    alertRealtime,
     refreshPrinters,
     refreshTickets,
-    role,
     tableRealtime,
     toast,
-    userId,
   ]);
 
   async function requestPrint(ticket: KitchenTicketView) {

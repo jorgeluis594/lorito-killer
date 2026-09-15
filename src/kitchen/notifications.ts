@@ -15,10 +15,15 @@ export const notifyPrintJobAvailable = async (
 export const notifyPrintJobFailed = async (jobId: string) => {
   const audience = await findPrintJobFailureAudience(jobId);
   if (!audience) return;
-  await broadcast(audience.companyId, "kitchen", "print-job-failed", {
-    jobId,
-    responsibleUserId: audience.kitchenTicket.orderRound.responsibleUserId,
-  });
+  await Promise.all([
+    broadcast(audience.companyId, "kitchen-admin", "print-job-failed", {}),
+    broadcast(
+      audience.companyId,
+      `kitchen-user-${audience.kitchenTicket.orderRound.responsibleUserId}`,
+      "print-job-failed",
+      {},
+    ),
+  ]);
 };
 
 export const requestPrinterInventory = async (printClientId: string) =>
