@@ -8,13 +8,20 @@ const mocks = vi.hoisted(() => ({
   jobCreate: vi.fn(),
   ticketFindFirst: vi.fn(),
   ticketFind: vi.fn(),
+  ticketList: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
-  default: () => ({ $transaction: mocks.transaction }),
+  default: () => ({
+    $transaction: mocks.transaction,
+    kitchenTicket: { findMany: mocks.ticketList },
+  }),
 }));
 
-import { createManualKitchenTicketPrintJob } from "../db_repository";
+import {
+  createManualKitchenTicketPrintJob,
+  findKitchenTickets,
+} from "../db_repository";
 
 const input = {
   companyId: "company-1",
@@ -176,6 +183,19 @@ describe("createManualKitchenTicketPrintJob", () => {
     });
   });
 
+  test("rejects a first print when every current quantity is zero", async () => {
+    mocks.ticketFind.mockResolvedValue({
+      ...ticket(),
+      orderRound: { ...ticket().orderRound, items: [item(0, 3)] },
+    });
+    const result = await createManualKitchenTicketPrintJob(input, vi.fn());
+    expect(result).toEqual({
+      success: false,
+      message: "La comanda no tiene platos vigentes para imprimir.",
+    });
+    expect(mocks.jobCreate).not.toHaveBeenCalled();
+  });
+
   test("recovers the same job id without regenerating immutable bytes", async () => {
     mocks.jobFind.mockResolvedValue({
       id: "job-1",
@@ -223,5 +243,60 @@ describe("createManualKitchenTicketPrintJob", () => {
     const result = await createManualKitchenTicketPrintJob(input, vi.fn());
     expect(result.success && result.data.id).toBe("job-1");
     expect(mocks.transaction).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("findKitchenTickets", () => {
+  test("derives missing-printer and ready-to-print reasons without persisting state", async () => {
+    const base = {
+      id: "ticket-1",
+      createdAt: new Date("2026-09-15T12:00:00Z"),
+      kitchen: {
+        id: "kitchen-1",
+        name: "Cocina",
+        status: "ACTIVE",
+        printer: null,
+      },
+      orderRound: {
+        number: 1,
+        responsibleUserId: "waiter-1",
+        items: [
+          {
+            kitchenId: "kitchen-1",
+            orderItem: { quantity: new Prisma.Decimal(2) },
+          },
+        ],
+      },
+      printJobs: [],
+    };
+    mocks.ticketList.mockResolvedValueOnce([base]);
+    const missing = await findKitchenTickets({
+      companyId: "company-1",
+      orderId: "order-1",
+    });
+    expect(missing[0]).toMatchObject({
+      attentionReason: "NO_PRINTER_CONFIGURED",
+      canPrint: false,
+      canReprint: false,
+    });
+
+    mocks.ticketList.mockResolvedValueOnce([
+      {
+        ...base,
+        kitchen: {
+          ...base.kitchen,
+          printer: { companyId: "company-1", status: "ACTIVE" },
+        },
+      },
+    ]);
+    const ready = await findKitchenTickets({
+      companyId: "company-1",
+      orderId: "order-1",
+    });
+    expect(ready[0]).toMatchObject({
+      attentionReason: "NOT_PRINTED",
+      canPrint: true,
+      canReprint: false,
+    });
   });
 });
