@@ -23,6 +23,7 @@ export async function persistRoundItemCancellation(
     userId: string;
     isAdmin: boolean;
   },
+  attempt = 0,
 ): Promise<response<OrderItemCancellationResult>> {
   try {
     return await prisma().$transaction(
@@ -82,6 +83,29 @@ export async function persistRoundItemCancellation(
         });
         if (!locked)
           return { success: false, message: "El plato enviado no existe." };
+        const recovered = await db.orderItemCancellation.findUnique({
+          where: { id: input.cancellationId },
+        });
+        if (recovered) {
+          const same =
+            recovered.orderRoundItemId === input.orderRoundItemId &&
+            recovered.quantity.equals(input.quantity) &&
+            (recovered.reason ?? "") === (input.reason ?? "");
+          return same
+            ? {
+                success: true,
+                data: {
+                  id: recovered.id,
+                  orderRoundItemId: recovered.orderRoundItemId,
+                  quantity: recovered.quantity.toNumber(),
+                  reason: recovered.reason,
+                },
+              }
+            : {
+                success: false,
+                message: "El identificador de cancelación ya fue utilizado.",
+              };
+        }
         if (
           !input.isAdmin &&
           locked.orderRound.responsibleUserId !== input.userId
@@ -174,10 +198,37 @@ export async function persistRoundItemCancellation(
       { isolationLevel: "Serializable" },
     );
   } catch (error) {
+    const code = (error as { code?: string }).code;
+    if ((code === "P2034" || code === "P2010") && attempt < 2)
+      return persistRoundItemCancellation(input, attempt + 1);
+    if (code === "P2002") {
+      const recovered = await prisma().orderItemCancellation.findFirst({
+        where: {
+          id: input.cancellationId,
+          orderRoundItem: {
+            orderRound: { order: { companyId: input.companyId } },
+          },
+        },
+      });
+      if (
+        recovered?.orderRoundItemId === input.orderRoundItemId &&
+        recovered.quantity.equals(input.quantity) &&
+        (recovered.reason ?? "") === (input.reason ?? "")
+      )
+        return {
+          success: true,
+          data: {
+            id: recovered.id,
+            orderRoundItemId: recovered.orderRoundItemId,
+            quantity: recovered.quantity.toNumber(),
+            reason: recovered.reason,
+          },
+        };
+    }
     return {
       success: false,
       message:
-        (error as { code?: string }).code === "P2034"
+        code === "P2034"
           ? "El pedido cambió. Revisa las cantidades e inténtalo otra vez."
           : "No se pudo cancelar el plato.",
     };

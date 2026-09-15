@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import prisma from "@/lib/prisma";
 import { submitOrderRound } from "@/order/rounds/db_repository";
+import { persistRoundItemCancellation } from "@/order/rounds/db_repository";
 
 const suffix = randomUUID();
 const ids = {
@@ -119,6 +120,9 @@ afterAll(async () => {
   await db.kitchenTicket.deleteMany({
     where: { orderRound: { orderId: ids.order } },
   });
+  await db.orderItemCancellation.deleteMany({
+    where: { orderRoundItem: { orderRound: { orderId: ids.order } } },
+  });
   await db.orderRoundItem.deleteMany({
     where: { orderRound: { orderId: ids.order } },
   });
@@ -205,5 +209,59 @@ describe("submitOrderRound PostgreSQL integration", () => {
     expect(
       results.map((result) => (result.success ? result.data.number : 0)).sort(),
     ).toEqual([2, 3]);
+  });
+
+  test("serializes concurrent cancellations and recovers the same id", async () => {
+    const roundId = randomUUID();
+    const sent = await submitOrderRound({
+      companyId: ids.company,
+      userId: ids.user,
+      tableId: ids.table,
+      roundId,
+      items: [{ productId: ids.service, quantity: 3 }],
+    });
+    expect(sent.success).toBe(true);
+    const item = await prisma().orderRoundItem.findFirstOrThrow({
+      where: { orderRoundId: roundId },
+    });
+    const cancellationId = randomUUID();
+    const request = {
+      cancellationId,
+      orderRoundItemId: item.id,
+      quantity: 1,
+      reason: "",
+      companyId: ids.company,
+      userId: ids.user,
+      isAdmin: false,
+    };
+    const duplicate = await Promise.all([
+      persistRoundItemCancellation(request),
+      persistRoundItemCancellation(request),
+    ]);
+    expect(
+      duplicate.every((result) => result.success),
+      JSON.stringify(duplicate),
+    ).toBe(true);
+
+    const competing = await Promise.all([
+      persistRoundItemCancellation({
+        ...request,
+        cancellationId: randomUUID(),
+        quantity: 2,
+      }),
+      persistRoundItemCancellation({
+        ...request,
+        cancellationId: randomUUID(),
+        quantity: 2,
+      }),
+    ]);
+    expect(competing.filter((result) => result.success)).toHaveLength(1);
+    expect(
+      (
+        await prisma().orderItem.findUniqueOrThrow({
+          where: { id: item.orderItemId },
+        })
+      ).quantity.toNumber(),
+    ).toBe(0);
   });
 });
