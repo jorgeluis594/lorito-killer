@@ -34,7 +34,10 @@ export async function authorizePrintAttempt(
     return { success: false, message: "Trabajo no disponible" };
 
   if (job.status === "PROCESSING" && job.processingStartedAt)
-    return { success: true, data: attempt(job, policy.timeoutMs) };
+    return job.processingStartedAt.getTime() + policy.timeoutMs >
+      input.now.getTime()
+      ? { success: true, data: attempt(job, policy.timeoutMs) }
+      : { success: false, message: "Trabajo no disponible" };
   if (
     job.status !== "PENDING" ||
     !job.claimRequestedAt ||

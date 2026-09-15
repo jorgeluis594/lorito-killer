@@ -5,7 +5,7 @@ Fecha: 2026-09-15
 ## Validación automatizada
 
 - ESLint focalizado: aprobado.
-- Vitest focalizado: 19 pruebas aprobadas en 5 archivos.
+- Vitest focalizado: 22 pruebas aprobadas en 5 archivos.
 - Integración PostgreSQL: reserva concurrente por impresora, trabajo activo único por comanda, claim, reintento y conservación de bytes aprobados.
 - TypeScript global: KIT-04 sin errores. El repositorio conserva tres errores previos ajenos en `.next/dev/types/validator.ts`, `src/lib/realtime/__TEST__/supabase-provider.test.ts` y `src/table/__TEST__/cancel-table-session.test.ts`.
 

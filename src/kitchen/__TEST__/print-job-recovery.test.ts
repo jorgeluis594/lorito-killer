@@ -87,6 +87,26 @@ describe("authorizePrintAttempt", () => {
     ).toEqual({ success: false, message: "Trabajo no disponible" });
     expect(authorize).not.toHaveBeenCalled();
   });
+
+  test("does not return an in-flight attempt after its result timeout", async () => {
+    const authorize = vi.fn();
+    expect(
+      await authorizePrintAttempt(
+        {
+          findJob: async () =>
+            job({
+              status: "PROCESSING",
+              attempts: 1,
+              claimRequestedAt: null,
+              processingStartedAt: new Date(now.getTime() - 10000),
+            }),
+          authorize,
+        },
+        { jobId: "job-1", clientId: "client-1", companyId: "company-1", now },
+        policy,
+      ),
+    ).toEqual({ success: false, message: "Trabajo no disponible" });
+  });
 });
 
 describe("recordPrintResult", () => {
@@ -191,19 +211,70 @@ describe("recordPrintResult", () => {
       ),
     ).toEqual({ success: false, message: "Intento desactualizado" });
   });
+
+  test("fails the fourth safe failure and rejects a late result", async () => {
+    const record = vi
+      .fn()
+      .mockImplementation(async (input) =>
+        job({ status: input.status, attempts: 4 }),
+      );
+    const exhausted = await recordPrintResult(
+      {
+        findJob: async () =>
+          job({ status: "PROCESSING", attempts: 4, processingStartedAt: now }),
+        record,
+      },
+      {
+        jobId: "job-1",
+        clientId: "client-1",
+        companyId: "company-1",
+        attemptNumber: 4,
+        result: "RETRYABLE_FAILURE",
+        now,
+      },
+      policy,
+    );
+    expect(exhausted.success && exhausted.data.status).toBe("FAILED");
+
+    expect(
+      await recordPrintResult(
+        {
+          findJob: async () =>
+            job({
+              status: "PROCESSING",
+              attempts: 1,
+              processingStartedAt: new Date(now.getTime() - 10000),
+            }),
+          record,
+        },
+        {
+          jobId: "job-1",
+          clientId: "client-1",
+          companyId: "company-1",
+          attemptNumber: 1,
+          result: "DELIVERED",
+          now,
+        },
+        policy,
+      ),
+    ).toEqual({ success: false, message: "Intento no disponible" });
+  });
 });
 
 describe("recordPrintTimeout", () => {
-  test("fails only the same expired persisted window", async () => {
-    const failTimedOut = vi.fn().mockResolvedValue(job({ status: "FAILED" }));
-    const observedAt = new Date(now.getTime() - 10000);
-    const result = await recordPrintTimeout(
-      { failTimedOut },
-      { jobId: "job-1", status: "PENDING", observedAt, now, timeoutMs: 10000 },
-    );
-    expect(result.success && result.data?.status).toBe("FAILED");
-    expect(failTimedOut).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: "job-1", observedAt }),
-    );
-  });
+  test.each(["PENDING", "PROCESSING"] as const)(
+    "fails only the same expired %s window",
+    async (status) => {
+      const failTimedOut = vi.fn().mockResolvedValue(job({ status: "FAILED" }));
+      const observedAt = new Date(now.getTime() - 10000);
+      const result = await recordPrintTimeout(
+        { failTimedOut },
+        { jobId: "job-1", status, observedAt, now, timeoutMs: 10000 },
+      );
+      expect(result.success && result.data?.status).toBe("FAILED");
+      expect(failTimedOut).toHaveBeenCalledWith(
+        expect.objectContaining({ jobId: "job-1", observedAt }),
+      );
+    },
+  );
 });

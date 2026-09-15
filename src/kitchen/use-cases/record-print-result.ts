@@ -36,6 +36,12 @@ export async function recordPrintResult(
 
   if (job.attempts !== input.attemptNumber)
     return { success: false, message: "Intento desactualizado" };
+  if (
+    job.status === "PROCESSING" &&
+    job.processingStartedAt &&
+    job.processingStartedAt.getTime() + policy.timeoutMs <= input.now.getTime()
+  )
+    return { success: false, message: "Intento no disponible" };
   if (job.status !== "PROCESSING")
     return job.status === "PENDING" ||
       job.status === "DELIVERED" ||
