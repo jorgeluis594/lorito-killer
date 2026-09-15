@@ -25,7 +25,7 @@ export default function NavItems({ isAdmin }: { isAdmin: boolean }) {
       : items;
 
   return (
-    <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
+    <nav className="flex flex-wrap gap-2 lg:flex-col lg:flex-nowrap">
       {visibleItems.map((item) => {
         return (
           item.href && (
