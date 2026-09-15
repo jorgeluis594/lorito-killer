@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import type { response } from "@/lib/types";
 import type { RoundItem } from "./use-cases/add-round";
 import { findActiveSession } from "./db_repository";
@@ -58,9 +57,11 @@ export async function updateTableDraft(input: {
   userId: string;
   sessionId: string;
   revision: number;
-  operation: "save" | "send" | "leave";
+  operation: "save" | "read" | "leave";
   items?: RoundItem[];
-}): Promise<response<{ revision: number; tableId: string }>> {
+}): Promise<
+  response<{ revision: number; tableId: string; items?: RoundItem[] }>
+> {
   try {
     return await prisma().$transaction(
       async (tx) => {
@@ -95,6 +96,16 @@ export async function updateTableDraft(input: {
         }
         const stored = session.draft as unknown as RoundItem[];
         const items = input.operation === "save" ? input.items ?? [] : stored;
+        if (input.operation === "read") {
+          return {
+            success: true,
+            data: {
+              revision: session.draftRevision,
+              tableId: session.tableId,
+              items: stored,
+            },
+          };
+        }
         // Leaving an established or non-empty session never releases the table.
         if (
           input.operation === "leave" &&
@@ -105,12 +116,6 @@ export async function updateTableDraft(input: {
           return {
             success: true,
             data: { revision: session.draftRevision, tableId: session.tableId },
-          };
-        }
-        if (input.operation === "send" && !items.length) {
-          return {
-            success: false,
-            message: "Agrega productos antes de enviar el pedido.",
           };
         }
         const products = await tx.product.findMany({
@@ -165,38 +170,6 @@ export async function updateTableDraft(input: {
           },
         });
         if (updated.count !== 1) return { success: false, message: changed };
-        if (input.operation === "send") {
-          const round =
-            Math.max(0, ...order.orderItems.map((item) => item.round)) + 1;
-          await tx.orderItem.createMany({
-            data: draft.map((item) => ({
-              orderId: order.id,
-              productId: item.productId,
-              productPrice: item.productPrice,
-              quantity: item.quantity,
-              preparationStation: productMap.get(item.productId)!
-                .preparationStation,
-              notes: item.notes,
-              round,
-              discountAmount: 0,
-              netTotal: new Prisma.Decimal(item.productPrice).mul(
-                item.quantity,
-              ),
-              total: new Prisma.Decimal(item.productPrice).mul(item.quantity),
-            })),
-          });
-          const totals = await tx.orderItem.aggregate({
-            where: { orderId: order.id, kitchenStatus: { not: "CANCELLED" } },
-            _sum: { total: true, netTotal: true },
-          });
-          await tx.order.update({
-            where: { id: order.id },
-            data: {
-              total: totals._sum.total ?? 0,
-              netTotal: totals._sum.netTotal ?? 0,
-            },
-          });
-        }
         if (input.operation === "leave") {
           await tx.order.update({
             where: { id: order.id },

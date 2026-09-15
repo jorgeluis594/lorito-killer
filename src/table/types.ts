@@ -34,6 +34,16 @@ export type TableOrderItem = {
 export type TableOrder = {
   id: string;
   orderItems: TableOrderItem[];
+  rounds?: Array<{
+    id: string;
+    number: number;
+    createdAt: Date;
+    responsible: { id: string; name?: string | null };
+    items: Array<{
+      orderItemId: string;
+      kitchen: { id: string; name: string } | null;
+    }>;
+  }>;
 };
 
 export type Zone = {

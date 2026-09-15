@@ -41,6 +41,7 @@ export type OpenTableValues = z.infer<typeof OpenTableSchema>;
 // -- Server action validation schemas --
 
 export const AddRoundSchema = z.object({
+  roundId: z.string().uuid("La ronda no es válida"),
   tableId: z.string().min(1, "El ID de mesa es requerido"),
   items: z
     .array(
@@ -156,4 +157,8 @@ export const TableDraftSchema = z.object({
   sessionId: z.string().uuid(),
   revision: z.number().int().nonnegative(),
   items: z.array(AddRoundSchema.shape.items.element).max(100).optional(),
+});
+
+export const SendTableDraftSchema = TableDraftSchema.extend({
+  roundId: z.string().uuid("La ronda no es válida"),
 });

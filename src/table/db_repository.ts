@@ -33,6 +33,16 @@ type PrismaSessionResult = {
   waiter?: { id: string; name: string | null } | null;
   order?: {
     id: string;
+    rounds?: Array<{
+      id: string;
+      number: number;
+      createdAt: Date;
+      responsibleUser: { id: string; name: string | null };
+      items: Array<{
+        orderItemId: string;
+        kitchen: { id: string; name: string } | null;
+      }>;
+    }>;
     orderItems: Array<{
       id: string;
       productId: string;
@@ -116,6 +126,13 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
     order: s.order
       ? {
           id: s.order.id,
+          rounds: s.order.rounds?.map((round) => ({
+            id: round.id,
+            number: round.number,
+            createdAt: round.createdAt,
+            responsible: round.responsibleUser,
+            items: round.items,
+          })),
           orderItems: s.order.orderItems.map((item) => ({
             id: item.id,
             productId: item.productId,
@@ -396,6 +413,18 @@ export async function findTables(
             waiter: { select: { id: true, name: true } },
             order: {
               include: {
+                rounds: {
+                  include: {
+                    responsibleUser: { select: { id: true, name: true } },
+                    items: {
+                      select: {
+                        orderItemId: true,
+                        kitchen: { select: { id: true, name: true } },
+                      },
+                    },
+                  },
+                  orderBy: { number: "asc" },
+                },
                 orderItems: {
                   include: {
                     product: { select: { name: true } },
@@ -433,6 +462,18 @@ export async function findTable(
             waiter: { select: { id: true, name: true } },
             order: {
               include: {
+                rounds: {
+                  include: {
+                    responsibleUser: { select: { id: true, name: true } },
+                    items: {
+                      select: {
+                        orderItemId: true,
+                        kitchen: { select: { id: true, name: true } },
+                      },
+                    },
+                  },
+                  orderBy: { number: "asc" },
+                },
                 orderItems: {
                   include: {
                     product: { include: { photos: true } },
@@ -632,8 +673,26 @@ export async function updateSessionStatus(
         companyId,
         current: true,
         status: existing.status,
-        ...(status === "CLOSED" ? { order: { status: "COMPLETED", payments: { some: {} }, documents: { some: {} } } }
-          : { OR: [{ order: null }, { order: { status: "PENDING", payments: { none: {} }, documents: { none: {} } } }] }),
+        ...(status === "CLOSED"
+          ? {
+              order: {
+                status: "COMPLETED",
+                payments: { some: {} },
+                documents: { some: {} },
+              },
+            }
+          : {
+              OR: [
+                { order: null },
+                {
+                  order: {
+                    status: "PENDING",
+                    payments: { none: {} },
+                    documents: { none: {} },
+                  },
+                },
+              ],
+            }),
         ...(status === "BILL_REQUESTED" ? { draft: { equals: [] } } : {}),
       },
       data: {

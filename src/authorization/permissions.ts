@@ -47,10 +47,10 @@ export const permissions = {
   },
 
   KITCHEN: {
-    kitchen: ["read", "update"],
+    tables: ["read"],
   },
 
   BARTENDER: {
-    kitchen: ["read", "update"],
+    tables: ["read"],
   },
 } as const satisfies PermissionMap;

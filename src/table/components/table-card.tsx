@@ -15,7 +15,6 @@ import {
 import { differenceInMinutes } from "date-fns";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { Badge } from "@/shared/components/ui/badge";
 
 interface TableCardProps {
   table: TableWithSession;
@@ -92,13 +91,6 @@ export const TableCard = memo(function TableCard({
           <span className={cn(getTimeUrgencyClass(elapsed))}>{timeAgo}</span>
         </div>
       )}
-
-      {(session?.readyKitchenTickets ?? 0) > 0 ? (
-        <Badge className="mt-2">
-          {session!.readyKitchenTickets} lista
-          {session!.readyKitchenTickets === 1 ? "" : "s"}
-        </Badge>
-      ) : null}
 
       <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
         {session?.waiter?.name && (

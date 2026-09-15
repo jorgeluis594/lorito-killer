@@ -55,7 +55,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { getMany } from "@/product/api_repository";
-import type { Product } from "@/product/types";
+import { isDishProduct, type Product } from "@/product/types";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { differenceInMinutes } from "date-fns";
@@ -142,6 +142,7 @@ export function TableActionsMenu({
   const [products, setProducts] = useState<Product[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const roundIdRef = useRef<string | null>(null);
 
   // Cart state
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -208,8 +209,11 @@ export function TableActionsMenu({
   }, [open]);
 
   const addToCart = useCallback((product: Product) => {
+    roundIdRef.current = null;
     setCart((prev) => {
-      const existing = prev.find((item) => item.productId === product.id!);
+      const existing = isDishProduct(product)
+        ? undefined
+        : prev.find((item) => item.productId === product.id!);
       if (existing) {
         return prev.map((item) =>
           item.productId === product.id!
@@ -230,11 +234,12 @@ export function TableActionsMenu({
     });
   }, []);
 
-  const updateCartQuantity = useCallback((productId: string, delta: number) => {
+  const updateCartQuantity = useCallback((index: number, delta: number) => {
+    roundIdRef.current = null;
     setCart((prev) => {
       return prev
-        .map((item) =>
-          item.productId === productId
+        .map((item, itemIndex) =>
+          itemIndex === index
             ? { ...item, quantity: item.quantity + delta }
             : item,
         )
@@ -242,10 +247,11 @@ export function TableActionsMenu({
     });
   }, []);
 
-  const updateCartNotes = useCallback((productId: string, notes: string) => {
+  const updateCartNotes = useCallback((index: number, notes: string) => {
+    roundIdRef.current = null;
     setCart((prev) =>
-      prev.map((item) =>
-        item.productId === productId ? { ...item, notes } : item,
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, notes } : item,
       ),
     );
   }, []);
@@ -258,8 +264,9 @@ export function TableActionsMenu({
 
   const getCartQuantity = useCallback(
     (productId: string) => {
-      const item = cart.find((c) => c.productId === productId);
-      return item?.quantity || 0;
+      return cart
+        .filter((item) => item.productId === productId)
+        .reduce((total, item) => total + item.quantity, 0);
     },
     [cart],
   );
@@ -274,10 +281,15 @@ export function TableActionsMenu({
         productPrice: item.productPrice,
         notes: item.notes.trim() || undefined,
       }));
-      const result = await addRoundAction(table.id, items);
+      const result = await addRoundAction(
+        table.id,
+        items,
+        (roundIdRef.current ??= crypto.randomUUID()),
+      );
       if (result.success) {
+        roundIdRef.current = null;
         toast({
-          title: `Ronda ${result.data.round} enviada`,
+          title: `Ronda ${result.data.number} enviada`,
           description: `${cartCount} items agregados`,
           duration: 2000,
         });
@@ -416,14 +428,6 @@ export function TableActionsMenu({
             )}
           </div>
         )}
-        {(session?.readyKitchenTickets ?? 0) > 0 ? (
-          <p className="text-sm font-medium">
-            {session!.readyKitchenTickets} comanda
-            {session!.readyKitchenTickets === 1 ? "" : "s"} lista
-            {session!.readyKitchenTickets === 1 ? "" : "s"} para servir
-          </p>
-        ) : null}
-
         {/* ===== OCCUPIED TABLE: Mini-POS ===== */}
         {status === "OCCUPIED" && (
           <div className="flex flex-col flex-1 min-h-0 mt-3 gap-3">
@@ -487,9 +491,9 @@ export function TableActionsMenu({
                   {cart.length > 0 ? (
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Ronda actual</p>
-                      {cart.map((item) => (
+                      {cart.map((item, index) => (
                         <div
-                          key={item.productId}
+                          key={`${item.productId}-${index}`}
                           className="flex items-center justify-between rounded-lg border p-2"
                         >
                           <div className="flex-1 min-w-0">
@@ -502,10 +506,7 @@ export function TableActionsMenu({
                             <Input
                               value={item.notes}
                               onChange={(event) =>
-                                updateCartNotes(
-                                  item.productId,
-                                  event.target.value,
-                                )
+                                updateCartNotes(index, event.target.value)
                               }
                               maxLength={200}
                               placeholder="Observación (opcional)"
@@ -515,9 +516,7 @@ export function TableActionsMenu({
                           </div>
                           <div className="flex items-center gap-1.5 ml-2">
                             <button
-                              onClick={() =>
-                                updateCartQuantity(item.productId, -1)
-                              }
+                              onClick={() => updateCartQuantity(index, -1)}
                               className="flex h-7 w-7 items-center justify-center rounded-md border hover:bg-accent"
                             >
                               <Minus className="h-3 w-3" />
@@ -526,9 +525,7 @@ export function TableActionsMenu({
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() =>
-                                updateCartQuantity(item.productId, 1)
-                              }
+                              onClick={() => updateCartQuantity(index, 1)}
                               className="flex h-7 w-7 items-center justify-center rounded-md border hover:bg-accent"
                             >
                               <Plus className="h-3 w-3" />

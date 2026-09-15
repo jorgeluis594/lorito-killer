@@ -44,9 +44,11 @@ export function TableGrid({
           return;
         }
       }
-      router.push(table.activeSession?.status === "BILL_REQUESTED"
-        ? `/dashboard/tables/${table.id}/payment?session=${table.activeSession.id}`
-        : `/dashboard/tables/${table.id}/order`);
+      router.push(
+        table.activeSession?.status === "BILL_REQUESTED"
+          ? `/dashboard/tables/${table.id}/payment?session=${table.activeSession.id}`
+          : `/dashboard/tables/${table.id}/order`,
+      );
     } catch {
       setError("No se pudo abrir la mesa. Vuelve a intentarlo.");
     } finally {
@@ -103,7 +105,7 @@ export function TableGrid({
                   key={table.id}
                   onClick={() => attend(table)}
                   disabled={!!opening}
-                  aria-label={`Atender mesa ${table.label || table.number}, número ${table.number}, ${session.status === "BILL_REQUESTED" ? "cuenta pedida" : "en atención"}, ${formatPrice(total)}${draftCount ? `, pedido sin enviar: ${draftCount} productos` : ""}${session.readyKitchenTickets ? `, ${session.readyKitchenTickets} comandas listas` : ""}`}
+                  aria-label={`Atender mesa ${table.label || table.number}, número ${table.number}, ${session.status === "BILL_REQUESTED" ? "cuenta pedida" : "en atención"}, ${formatPrice(total)}${draftCount ? `, pedido sin enviar: ${draftCount} productos` : ""}`}
                   className="flex min-h-28 w-full items-center gap-4 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:gap-6 sm:p-5"
                 >
                   <span className="min-w-10 text-center text-3xl font-bold tabular-nums">
@@ -123,13 +125,6 @@ export function TableGrid({
                     {draftCount ? (
                       <span className="w-fit rounded-md bg-secondary px-2 py-1 text-xs font-bold text-secondary-foreground">
                         Pedido sin enviar · {draftCount}
-                      </span>
-                    ) : null}
-                    {session.readyKitchenTickets > 0 ? (
-                      <span className="text-xs font-bold text-primary">
-                        {session.readyKitchenTickets} comanda
-                        {session.readyKitchenTickets === 1 ? "" : "s"} lista
-                        {session.readyKitchenTickets === 1 ? "" : "s"}
                       </span>
                     ) : null}
                   </span>

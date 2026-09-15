@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
-  CheckCheck,
   ChevronRight,
   Loader2,
   Minus,
@@ -21,13 +20,9 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { cn, formatPrice } from "@/lib/utils";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { getMany } from "@/product/api_repository";
-import type { Product } from "@/product/types";
+import { isDishProduct, type Product } from "@/product/types";
 import type { TableWithSession } from "../types";
-import {
-  leaveEmptyTable,
-  sendTableDraft,
-  serveKitchenRoundAction,
-} from "../actions";
+import { leaveEmptyTable, sendTableDraft } from "../actions";
 import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
@@ -59,6 +54,7 @@ export function TableOrderView({
   );
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
+  const roundIdRef = useRef<string | null>(null);
   const [error, setError] = useState("");
   const editable = canEdit && session.status === "OPEN";
   const refresh = useCallback(() => router.refresh(), [router]);
@@ -123,7 +119,10 @@ export function TableOrderView({
 
   function add(product: Product) {
     if (!product.id || !editable || busyRef.current) return;
-    const existing = draft.items.find((item) => item.productId === product.id);
+    roundIdRef.current = null;
+    const existing = isDishProduct(product)
+      ? undefined
+      : draft.items.find((item) => item.productId === product.id);
     draft.edit(
       existing
         ? draft.items.map((item) =>
@@ -153,7 +152,11 @@ export function TableOrderView({
       if (editable && !(await draft.flush())) return;
       if (editable) {
         const result = send
-          ? await sendTableDraft(session.id, draft.revision.current)
+          ? await sendTableDraft(
+              session.id,
+              draft.revision.current,
+              (roundIdRef.current ??= crypto.randomUUID()),
+            )
           : await leaveEmptyTable(session.id, draft.revision.current);
         if (!result.success) {
           setError(result.message);
@@ -183,27 +186,11 @@ export function TableOrderView({
     setBusy(true);
     try {
       if (editable && !(await draft.flush())) return;
-      router.push(`/dashboard/tables/${table.id}/payment?session=${session.id}`);
+      router.push(
+        `/dashboard/tables/${table.id}/payment?session=${session.id}`,
+      );
     } catch {
       setError("No se pudo abrir la cuenta. Vuelve a intentarlo.");
-    } finally {
-      busyRef.current = false;
-      setBusy(false);
-    }
-  }
-
-  async function serve(round: number) {
-    if (busyRef.current) return;
-    busyRef.current = true;
-    setBusy(true);
-    try {
-      const result = await serveKitchenRoundAction(table.id, round);
-      if (result.success) {
-        toast({ title: "Comanda marcada como servida" });
-        router.refresh();
-      } else setError(result.message);
-    } catch {
-      setError("No se pudo marcar la comanda. Vuelve a intentarlo.");
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -456,9 +443,9 @@ export function TableOrderView({
                 </span>
               </h3>
               {draft.items.length ? (
-                draft.items.map((item) => (
+                draft.items.map((item, index) => (
                   <div
-                    key={item.productId}
+                    key={`${item.productId}-${index}`}
                     className="flex flex-col gap-3 border-b pb-4"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -479,17 +466,18 @@ export function TableOrderView({
                           size="icon"
                           disabled={busy || !editable}
                           aria-label={`Quitar uno de ${item.productName}`}
-                          onClick={() =>
+                          onClick={() => (
+                            (roundIdRef.current = null),
                             draft.edit(
                               draft.items
-                                .map((row) =>
-                                  row.productId === item.productId
+                                .map((row, rowIndex) =>
+                                  rowIndex === index
                                     ? { ...row, quantity: row.quantity - 1 }
                                     : row,
                                 )
                                 .filter((row) => row.quantity > 0),
                             )
-                          }
+                          )}
                         >
                           <Minus aria-hidden />
                         </Button>
@@ -501,15 +489,16 @@ export function TableOrderView({
                           size="icon"
                           disabled={busy || !editable}
                           aria-label={`Agregar uno de ${item.productName}`}
-                          onClick={() =>
+                          onClick={() => (
+                            (roundIdRef.current = null),
                             draft.edit(
-                              draft.items.map((row) =>
-                                row.productId === item.productId
+                              draft.items.map((row, rowIndex) =>
+                                rowIndex === index
                                   ? { ...row, quantity: row.quantity + 1 }
                                   : row,
                               ),
                             )
-                          }
+                          )}
                         >
                           <Plus aria-hidden />
                         </Button>
@@ -521,15 +510,16 @@ export function TableOrderView({
                       maxLength={200}
                       value={item.notes ?? ""}
                       disabled={busy || !editable}
-                      onChange={(event) =>
+                      onChange={(event) => (
+                        (roundIdRef.current = null),
                         draft.edit(
-                          draft.items.map((row) =>
-                            row.productId === item.productId
+                          draft.items.map((row, rowIndex) =>
+                            rowIndex === index
                               ? { ...row, notes: event.target.value }
                               : row,
                           ),
                         )
-                      }
+                      )}
                     />
                   </div>
                 ))
@@ -558,16 +548,16 @@ export function TableOrderView({
                   const items = sentItems.filter(
                     (item) => item.round === round,
                   );
-                  const active = items.filter(
-                    (item) => item.kitchenStatus !== "CANCELLED",
+                  const roundDetails = session.order?.rounds?.find(
+                    (entry) => entry.number === round,
                   );
-                  const ready =
-                    active.length > 0 &&
-                    active.every((item) => item.kitchenStatus === "READY");
                   return (
                     <div key={round} className="flex flex-col gap-3">
                       <p className="text-xs text-muted-foreground">
                         Pedido {round}
+                        {roundDetails
+                          ? ` · ${roundDetails.responsible.name || "Sin nombre"} · ${new Intl.DateTimeFormat("es-PE", { dateStyle: "short", timeStyle: "short" }).format(new Date(roundDetails.createdAt))}`
+                          : ""}
                       </p>
                       {items.map((item) => (
                         <div
@@ -587,16 +577,23 @@ export function TableOrderView({
                               {item.notes}
                             </p>
                           ) : null}
-                          <p className="text-xs text-muted-foreground">
-                            {
+                          {roundDetails?.items.find(
+                            (roundItem) => roundItem.orderItemId === item.id,
+                          )?.kitchen ? (
+                            <p className="text-xs text-muted-foreground">
+                              Kitchen:{" "}
                               {
-                                PENDING: "Enviado",
-                                PREPARING: "En preparación",
-                                READY: "Listo para servir",
-                                SERVED: "Servido",
-                                CANCELLED: "Cancelado",
-                              }[item.kitchenStatus]
-                            }
+                                roundDetails.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )!.kitchen!.name
+                              }
+                            </p>
+                          ) : null}
+                          <p className="text-xs text-muted-foreground">
+                            {item.kitchenStatus === "CANCELLED"
+                              ? "Cancelado"
+                              : "Enviado"}
                           </p>
                           {item.kitchenStatus === "CANCELLED" ? (
                             <p className="text-xs text-muted-foreground break-words">
@@ -608,15 +605,6 @@ export function TableOrderView({
                           ) : null}
                         </div>
                       ))}
-                      {ready && canEdit ? (
-                        <Button
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() => serve(round)}
-                        >
-                          <CheckCheck aria-hidden /> Marcar como servido
-                        </Button>
-                      ) : null}
                     </div>
                   );
                 })}
@@ -624,9 +612,17 @@ export function TableOrderView({
             ) : null}
           </div>
           <footer className="flex shrink-0 flex-col gap-3 border-t p-4">
-            <Button variant="outline" className="min-h-12 w-full" disabled={busy || sentTotal <= 0} onClick={openPayment}>
+            <Button
+              variant="outline"
+              className="min-h-12 w-full"
+              disabled={busy || sentTotal <= 0}
+              onClick={openPayment}
+            >
               <ReceiptText aria-hidden />
-              {session.status === "BILL_REQUESTED" ? "Ver cobro en caja" : "Cobrar cuenta"} · {formatPrice(sentTotal)}
+              {session.status === "BILL_REQUESTED"
+                ? "Ver cobro en caja"
+                : "Cobrar cuenta"}{" "}
+              · {formatPrice(sentTotal)}
             </Button>
             <div className="flex items-center justify-between text-sm">
               <span>Total por enviar</span>
