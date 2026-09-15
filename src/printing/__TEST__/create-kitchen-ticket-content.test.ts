@@ -29,4 +29,31 @@ describe("createKitchenTicketContent", () => {
     expect(ascii).not.toContain("S/");
     expect([...content]).toEqual(expect.arrayContaining([0x1d, 0x56]));
   });
+
+  test("marks reprints and includes current and cancelled quantities", () => {
+    const content = createKitchenTicketContent(
+      {
+        ticketId: "ticket-1",
+        createdAt: new Date("2026-09-15T18:30:00Z"),
+        kitchenName: "Cocina",
+        orderType: "DINE_IN",
+        orderLabel: "7",
+        responsibleName: "Ana",
+        isReprint: true,
+        items: [{ productName: "Lomo", quantity: 2, cancelledQuantity: 1 }],
+      },
+      {
+        columns: 32,
+        codepageMapping: "epson",
+        cutEnabled: false,
+        feedBeforeCut: 0,
+      },
+    );
+
+    const text = Buffer.from(content).toString("latin1");
+    expect(text).toContain("REIMPRESI");
+    expect(text).not.toContain("REIMPRESI?N");
+    expect(text).toContain("2 x Lomo");
+    expect(text).toContain("1 cancelado(s)");
+  });
 });

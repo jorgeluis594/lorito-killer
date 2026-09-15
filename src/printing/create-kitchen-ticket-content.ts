@@ -7,9 +7,11 @@ export type KitchenTicketContentInput = {
   orderType: "DINE_IN" | "TAKE_AWAY" | "DELIVERY" | "RETAIL";
   orderLabel: string;
   responsibleName: string;
+  isReprint?: boolean;
   items: Array<{
     productName: string;
     quantity: number;
+    cancelledQuantity?: number;
     notes?: string | null;
   }>;
 };
@@ -37,11 +39,15 @@ export function createKitchenTicketContent(
     columns: profile.columns,
     codepageMapping: profile.codepageMapping,
     feedBeforeCut: profile.feedBeforeCut,
-  })
-    .initialize()
-    .align("center")
-    .bold(true)
-    .line(input.kitchenName)
+  }).initialize();
+  (
+    encoder as ReceiptPrinterEncoder & {
+      codepage: (name: string) => ReceiptPrinterEncoder;
+    }
+  ).codepage("auto");
+  encoder = encoder.align("center").bold(true).line(input.kitchenName);
+  if (input.isReprint) encoder = encoder.line("REIMPRESIÓN");
+  encoder = encoder
     .bold(false)
     .line(`COMANDA ${input.ticketId}`)
     .line(
@@ -62,6 +68,8 @@ export function createKitchenTicketContent(
       .bold(true)
       .line(`${item.quantity} x ${item.productName}`)
       .bold(false);
+    if (item.cancelledQuantity)
+      encoder = encoder.line(`${item.cancelledQuantity} cancelado(s)`);
     if (item.notes) encoder = encoder.line(`  Obs: ${item.notes}`);
   }
 

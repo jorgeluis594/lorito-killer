@@ -13,6 +13,7 @@ import {
   Send,
   ShoppingBasket,
   ReceiptText,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -27,13 +28,20 @@ import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
 import ProductThumbnail from "@/new-order/components/product-thumbnail";
+import type { KitchenTicketView } from "@/kitchen/types";
+import {
+  printKitchenTicketAction,
+  reprintKitchenTicketAction,
+} from "@/kitchen/actions";
 
 export function TableOrderView({
   table,
   canEdit = true,
+  kitchenTickets = [],
 }: {
   table: TableWithSession;
   canEdit?: boolean;
+  kitchenTickets?: KitchenTicketView[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -56,6 +64,8 @@ export function TableOrderView({
   const busyRef = useRef(false);
   const roundIdRef = useRef<string | null>(null);
   const [error, setError] = useState("");
+  const [printingTicketId, setPrintingTicketId] = useState<string | null>(null);
+  const printRequestIds = useRef(new Map<string, string>());
   const editable = canEdit && session.status === "OPEN";
   const refresh = useCallback(() => router.refresh(), [router]);
   const sentItems = session.order?.orderItems ?? [];
@@ -193,6 +203,37 @@ export function TableOrderView({
     } finally {
       busyRef.current = false;
       setBusy(false);
+    }
+  }
+
+  async function requestPrint(ticket: KitchenTicketView, reprint: boolean) {
+    if (printingTicketId) return;
+    setPrintingTicketId(ticket.id);
+    setError("");
+    const key = `${ticket.id}:${reprint}`;
+    const jobId = printRequestIds.current.get(key) ?? crypto.randomUUID();
+    printRequestIds.current.set(key, jobId);
+    try {
+      const action = reprint
+        ? reprintKitchenTicketAction
+        : printKitchenTicketAction;
+      const result = await action({ kitchenTicketId: ticket.id, jobId });
+      if (!result.success) {
+        setError(result.message);
+        return;
+      }
+      printRequestIds.current.delete(key);
+      toast({
+        title: reprint ? "Reimpresión solicitada" : "Impresión solicitada",
+        description: `${ticket.kitchen.name}: ${result.data.status}`,
+      });
+      router.refresh();
+    } catch {
+      setError(
+        "No se recibió la respuesta. Vuelve a intentar para recuperar la misma solicitud.",
+      );
+    } finally {
+      setPrintingTicketId(null);
     }
   }
 
@@ -624,6 +665,66 @@ export function TableOrderView({
                           ) : null}
                         </div>
                       ))}
+                      {kitchenTickets
+                        .filter((ticket) => ticket.round.number === round)
+                        .map((ticket) => (
+                          <div
+                            key={ticket.id}
+                            className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3 text-sm"
+                          >
+                            <Printer className="size-4" aria-hidden />
+                            <span className="min-w-0 flex-1 font-medium">
+                              Comanda · {ticket.kitchen.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {ticket.activeJob?.status ??
+                                ticket.lastJob?.status ??
+                                (ticket.attentionReason ===
+                                "NO_PRINTER_CONFIGURED"
+                                  ? "Sin impresora"
+                                  : ticket.attentionReason === "NOT_PRINTED"
+                                    ? "Sin imprimir"
+                                    : "Sin platos vigentes")}
+                            </span>
+                            {ticket.canPrint ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={printingTicketId === ticket.id}
+                                onClick={() => void requestPrint(ticket, false)}
+                              >
+                                {printingTicketId === ticket.id ? (
+                                  <Loader2
+                                    className="animate-spin"
+                                    aria-hidden
+                                  />
+                                ) : (
+                                  <Printer aria-hidden />
+                                )}
+                                Imprimir
+                              </Button>
+                            ) : null}
+                            {ticket.canReprint ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={printingTicketId === ticket.id}
+                                onClick={() => void requestPrint(ticket, true)}
+                              >
+                                {printingTicketId === ticket.id ? (
+                                  <Loader2
+                                    className="animate-spin"
+                                    aria-hidden
+                                  />
+                                ) : (
+                                  <Printer aria-hidden />
+                                )}
+                                Reimprimir
+                              </Button>
+                            ) : null}
+                          </div>
+                        ))}
                     </div>
                   );
                 })}

@@ -5,6 +5,12 @@ import type { response } from "@/lib/types";
 import type { KitchenItem } from "./types";
 import type { Kitchen, KitchenOption } from "./types";
 import type { PrintJob, PrintJobStatus } from "./types";
+import type { KitchenTicketView, ManualPrintJob } from "./types";
+import type { ManualPrintInput } from "./use-cases/print-kitchen-ticket";
+import type {
+  KitchenTicketContentInput,
+  KitchenTicketPrinterProfile,
+} from "@/printing/create-kitchen-ticket-content";
 import type { KitchenInput } from "./use-cases/configure-kitchens";
 
 const configurationError = (error: unknown) => {
@@ -222,6 +228,317 @@ export const findPrintJobFailureAudience = (jobId: string) =>
       },
     },
   });
+
+export async function findKitchenTickets(input: {
+  companyId: string;
+  orderId: string;
+  responsibleUserId?: string;
+}): Promise<KitchenTicketView[]> {
+  const tickets = await prisma().kitchenTicket.findMany({
+    where: {
+      orderRound: {
+        orderId: input.orderId,
+        order: { companyId: input.companyId },
+        ...(input.responsibleUserId
+          ? { responsibleUserId: input.responsibleUserId }
+          : {}),
+      },
+    },
+    include: {
+      kitchen: { include: { printer: true } },
+      orderRound: {
+        select: {
+          number: true,
+          responsibleUserId: true,
+          items: {
+            select: {
+              kitchenId: true,
+              orderItem: { select: { quantity: true } },
+            },
+          },
+        },
+      },
+      printJobs: {
+        select: { id: true, status: true, isReprint: true, createdAt: true },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return tickets.map((ticket) => {
+    const lastJob = ticket.printJobs[0] ?? null;
+    const activeJob =
+      ticket.printJobs.find(
+        (job) => job.status === "PENDING" || job.status === "PROCESSING",
+      ) ?? null;
+    const hasCurrentItems = ticket.orderRound.items.some(
+      (item) =>
+        item.kitchenId === ticket.kitchen.id && item.orderItem.quantity.gt(0),
+    );
+    const validPrinter =
+      ticket.kitchen.status === "ACTIVE" &&
+      ticket.kitchen.printer?.status === "ACTIVE" &&
+      ticket.kitchen.printer.companyId === input.companyId;
+    return {
+      id: ticket.id,
+      kitchen: { id: ticket.kitchen.id, name: ticket.kitchen.name },
+      round: {
+        number: ticket.orderRound.number,
+        responsibleUserId: ticket.orderRound.responsibleUserId,
+      },
+      createdAt: ticket.createdAt,
+      attentionReason: !lastJob
+        ? hasCurrentItems
+          ? validPrinter
+            ? "NOT_PRINTED"
+            : "NO_PRINTER_CONFIGURED"
+          : null
+        : lastJob.status === "FAILED"
+          ? "FAILED"
+          : null,
+      lastJob,
+      activeJob:
+        activeJob?.status === "PENDING" || activeJob?.status === "PROCESSING"
+          ? { id: activeJob.id, status: activeJob.status }
+          : null,
+      canPrint: !lastJob && hasCurrentItems && Boolean(validPrinter),
+      canReprint: Boolean(lastJob && !activeJob && validPrinter),
+    };
+  });
+}
+
+const manualPrintError = (error: unknown) => {
+  const code = (error as { code?: string }).code;
+  if (code === "P2002")
+    return "La comanda ya tiene una impresión en curso. Actualiza el pedido.";
+  if (code === "P2034" || code === "P2010")
+    return "La comanda cambió. Actualiza el pedido e inténtalo otra vez.";
+  return error instanceof Error
+    ? error.message
+    : "No se pudo solicitar la impresión.";
+};
+
+export async function createManualKitchenTicketPrintJob(
+  input: ManualPrintInput & { isReprint: boolean },
+  generate: (
+    content: KitchenTicketContentInput,
+    profile: KitchenTicketPrinterProfile,
+  ) => Uint8Array,
+  attempt = 0,
+): Promise<response<ManualPrintJob>> {
+  try {
+    return await prisma().$transaction(
+      async (db) => {
+        const existing = await db.kitchetTicketPrintJob.findUnique({
+          where: { id: input.jobId },
+          include: { printer: { select: { printClientId: true } } },
+        });
+        if (existing) {
+          if (
+            existing.companyId !== input.companyId ||
+            existing.kitchenTicketId !== input.kitchenTicketId ||
+            existing.requestedById !== input.userId ||
+            existing.isReprint !== input.isReprint
+          )
+            return {
+              success: false,
+              message: "El identificador de impresión ya fue utilizado.",
+            };
+          return {
+            success: true,
+            data: {
+              id: existing.id,
+              kitchenTicketId: existing.kitchenTicketId,
+              printClientId: existing.printer.printClientId,
+              status: existing.status,
+              isReprint: existing.isReprint,
+            },
+          };
+        }
+
+        await db.$queryRaw`SELECT id FROM "KitchenTicket" WHERE id = ${input.kitchenTicketId} FOR UPDATE`;
+        const recovered = await db.kitchetTicketPrintJob.findUnique({
+          where: { id: input.jobId },
+          include: { printer: { select: { printClientId: true } } },
+        });
+        if (recovered) {
+          if (
+            recovered.companyId !== input.companyId ||
+            recovered.kitchenTicketId !== input.kitchenTicketId ||
+            recovered.requestedById !== input.userId ||
+            recovered.isReprint !== input.isReprint
+          )
+            return {
+              success: false,
+              message: "El identificador de impresión ya fue utilizado.",
+            };
+          return {
+            success: true,
+            data: {
+              id: recovered.id,
+              kitchenTicketId: recovered.kitchenTicketId,
+              printClientId: recovered.printer.printClientId,
+              status: recovered.status,
+              isReprint: recovered.isReprint,
+            },
+          };
+        }
+        const ticketIdentity = await db.kitchenTicket.findFirst({
+          where: {
+            id: input.kitchenTicketId,
+            orderRound: { order: { companyId: input.companyId } },
+          },
+          select: {
+            orderRound: { select: { orderId: true, responsibleUserId: true } },
+          },
+        });
+        if (!ticketIdentity)
+          return { success: false, message: "Comanda no encontrada." };
+        if (
+          input.role !== "ADMIN" &&
+          ticketIdentity.orderRound.responsibleUserId !== input.userId
+        )
+          return {
+            success: false,
+            message: "No puedes imprimir una comanda de otro mozo.",
+          };
+        await db.$queryRaw`SELECT id FROM "Order" WHERE id = ${ticketIdentity.orderRound.orderId} FOR UPDATE`;
+
+        const ticket = await db.kitchenTicket.findUnique({
+          where: { id: input.kitchenTicketId },
+          include: {
+            kitchen: { include: { printer: true } },
+            printJobs: { select: { id: true, status: true } },
+            orderRound: {
+              include: {
+                responsibleUser: { select: { name: true, email: true } },
+                order: {
+                  select: {
+                    orderType: true,
+                    tableSession: {
+                      select: {
+                        table: { select: { label: true, number: true } },
+                      },
+                    },
+                  },
+                },
+                items: {
+                  include: {
+                    orderItem: { select: { quantity: true } },
+                    cancellations: { select: { quantity: true } },
+                  },
+                  orderBy: { createdAt: "asc" },
+                },
+              },
+            },
+          },
+        });
+        if (!ticket)
+          return { success: false, message: "Comanda no encontrada." };
+        const items = ticket.orderRound.items.filter(
+          (item) => item.kitchenId === ticket.kitchenId,
+        );
+        const printer = ticket.kitchen.printer;
+        if (
+          ticket.kitchen.status !== "ACTIVE" ||
+          !printer ||
+          printer.status !== "ACTIVE" ||
+          printer.companyId !== input.companyId
+        )
+          return {
+            success: false,
+            message: "La Kitchen no tiene una impresora activa válida.",
+          };
+        if (input.isReprint) {
+          if (!ticket.printJobs.length)
+            return {
+              success: false,
+              message: "La comanda todavía no fue impresa.",
+            };
+          if (
+            ticket.printJobs.some(
+              (job) => job.status === "PENDING" || job.status === "PROCESSING",
+            )
+          )
+            return {
+              success: false,
+              message: "La comanda ya tiene una impresión en curso.",
+            };
+        } else {
+          if (ticket.printJobs.length)
+            return { success: false, message: "La comanda ya fue impresa." };
+          if (!items.some((item) => item.orderItem.quantity.gt(0)))
+            return {
+              success: false,
+              message: "La comanda no tiene platos vigentes para imprimir.",
+            };
+        }
+
+        const content = generate(
+          {
+            ticketId: ticket.id,
+            createdAt: ticket.createdAt,
+            kitchenName: ticket.kitchen.name,
+            orderType: ticket.orderRound.order.orderType,
+            orderLabel:
+              ticket.orderRound.order.tableSession?.table.label ||
+              String(
+                ticket.orderRound.order.tableSession?.table.number ?? "Pedido",
+              ),
+            responsibleName:
+              ticket.orderRound.responsibleUser.name ||
+              ticket.orderRound.responsibleUser.email,
+            isReprint: input.isReprint,
+            items: items
+              .filter(
+                (item) => input.isReprint || item.orderItem.quantity.gt(0),
+              )
+              .map((item) => ({
+                productName: item.productName,
+                quantity: item.orderItem.quantity.toNumber(),
+                cancelledQuantity: input.isReprint
+                  ? item.cancellations.reduce(
+                      (sum, cancellation) =>
+                        sum + cancellation.quantity.toNumber(),
+                      0,
+                    )
+                  : undefined,
+                notes: item.notes,
+              })),
+          },
+          printer,
+        );
+        const job = await db.kitchetTicketPrintJob.create({
+          data: {
+            id: input.jobId,
+            companyId: input.companyId,
+            kitchenTicketId: ticket.id,
+            printerId: printer.id,
+            requestedById: input.userId,
+            isReprint: input.isReprint,
+            content: Buffer.from(content),
+          },
+        });
+        return {
+          success: true,
+          data: {
+            id: job.id,
+            kitchenTicketId: job.kitchenTicketId,
+            printClientId: printer.printClientId,
+            status: job.status,
+            isReprint: job.isReprint,
+          },
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if ((code === "P2034" || code === "P2010") && attempt < 2)
+      return createManualKitchenTicketPrintJob(input, generate, attempt + 1);
+    return { success: false, message: manualPrintError(error) };
+  }
+}
 
 export const listKitchens = async (
   companyId: string,

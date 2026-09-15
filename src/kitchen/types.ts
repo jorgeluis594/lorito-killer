@@ -61,3 +61,28 @@ export type PrintAttempt = {
 };
 
 export type PrintResult = "DELIVERED" | "RETRYABLE_FAILURE" | "FAILED";
+
+export type KitchenTicketView = {
+  id: string;
+  kitchen: { id: string; name: string };
+  round: { number: number; responsibleUserId: string };
+  createdAt: Date;
+  attentionReason: "NO_PRINTER_CONFIGURED" | "NOT_PRINTED" | "FAILED" | null;
+  lastJob: {
+    id: string;
+    status: PrintJobStatus;
+    isReprint: boolean;
+    createdAt: Date;
+  } | null;
+  activeJob: { id: string; status: "PENDING" | "PROCESSING" } | null;
+  canPrint: boolean;
+  canReprint: boolean;
+};
+
+export type ManualPrintJob = {
+  id: string;
+  kitchenTicketId: string;
+  printClientId: string;
+  status: PrintJobStatus;
+  isReprint: boolean;
+};
