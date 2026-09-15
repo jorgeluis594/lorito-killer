@@ -13,6 +13,8 @@ export type OrderRoundView = {
     id: string;
     productName: string;
     quantity: number;
+    cancelledQuantity: number;
+    currentQuantity: number;
     notes: string | null;
     kitchen: { id: string; name: string } | null;
   }>;

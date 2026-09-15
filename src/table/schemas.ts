@@ -78,15 +78,6 @@ export const RequestBillSchema = z.object({
   tableId: z.string().min(1, "El ID de mesa es requerido"),
 });
 
-export const CancelOrderItemSchema = z.object({
-  orderItemId: z.string().uuid("El producto no es valido"),
-  reason: z
-    .string()
-    .trim()
-    .min(1, "El motivo de cancelacion es requerido")
-    .max(500, "El motivo no puede exceder 500 caracteres"),
-});
-
 export const TakeOrderItemSchema = z.object({
   orderItemId: z.string().uuid("El producto no es valido"),
 });

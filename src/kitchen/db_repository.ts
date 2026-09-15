@@ -379,7 +379,7 @@ export async function findKitchenItems(
       success: true,
       data: items.map((item) => ({
         id: item.id,
-        paid: item.order.status === "COMPLETED",
+        paid: item.order.paymentStatus === "PAID",
         preparationStation: item.preparationStation,
         productName: item.product.name,
         quantity: Number(item.quantity),
@@ -540,8 +540,7 @@ export async function servePaidKitchenItem(input: {
       kitchenStatus: "READY",
       order: {
         companyId: input.companyId,
-        status: "COMPLETED",
-        tableSession: { status: "CLOSED" },
+        paymentStatus: "PAID",
       },
     },
     data: {

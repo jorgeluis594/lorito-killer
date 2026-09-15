@@ -1,11 +1,4 @@
-import {
-  addDays,
-  addHours,
-  format,
-  isAfter,
-  isEqual,
-  min,
-} from "date-fns";
+import { addDays, addHours, format, isAfter, isEqual, min } from "date-fns";
 import {
   $Enums,
   type PaymentMethod,
@@ -112,10 +105,8 @@ const salesTrendKey = (date: Date, bucket: DashboardQuery["bucket"]) =>
 const salesTrendLabel = (date: Date, bucket: DashboardQuery["bucket"]) =>
   format(date, bucket === "hour" ? "HH:mm" : "dd/MM");
 
-const salesTrendBucketEnd = (
-  date: Date,
-  bucket: DashboardQuery["bucket"],
-) => (bucket === "hour" ? addHours(date, 1) : addDays(date, 1));
+const salesTrendBucketEnd = (date: Date, bucket: DashboardQuery["bucket"]) =>
+  bucket === "hour" ? addHours(date, 1) : addDays(date, 1);
 
 const fillSalesTrendBuckets = (
   query: DashboardQuery,
@@ -131,7 +122,10 @@ const fillSalesTrendBuckets = (
     const key = salesTrendKey(cursor, query.bucket);
     const row = rowByKey.get(key);
     const bucketStart = new Date(cursor);
-    const bucketEnd = min([salesTrendBucketEnd(bucketStart, query.bucket), query.endDate]);
+    const bucketEnd = min([
+      salesTrendBucketEnd(bucketStart, query.bucket),
+      query.endDate,
+    ]);
 
     points.push({
       key,
@@ -240,7 +234,9 @@ export async function findDashboardFilters(
   }
 }
 
-async function findCashSummary(query: DashboardQuery): Promise<DashboardCashSummary> {
+async function findCashSummary(
+  query: DashboardQuery,
+): Promise<DashboardCashSummary> {
   const cashShifts = await prisma().cashShift.findMany({
     where: {
       companyId: query.companyId,
@@ -280,7 +276,7 @@ async function findCashSummary(query: DashboardQuery): Promise<DashboardCashSumm
         method: "CASH",
         order: {
           companyId: query.companyId,
-          status: "COMPLETED",
+          paymentStatus: "PAID",
           createdAt: { gte: query.startDate, lte: query.endDate },
         },
       },
@@ -309,7 +305,9 @@ async function findCashSummary(query: DashboardQuery): Promise<DashboardCashSumm
     cashPayments: numberFromDecimal(cashPayments._sum.amount),
     expenses: numberFromDecimal(expenses._sum.amount),
   });
-  const openCount = cashShifts.filter((cashShift) => cashShift.status === "OPEN").length;
+  const openCount = cashShifts.filter(
+    (cashShift) => cashShift.status === "OPEN",
+  ).length;
   const closedCount = cashShifts.length - openCount;
   const difference = calculateCashDifference({
     initialAmount,
@@ -319,11 +317,12 @@ async function findCashSummary(query: DashboardQuery): Promise<DashboardCashSumm
   });
 
   return {
-    status: openCount > 0 && closedCount > 0
-      ? "mixed"
-      : openCount > 0
-        ? "open"
-        : "closed",
+    status:
+      openCount > 0 && closedCount > 0
+        ? "mixed"
+        : openCount > 0
+          ? "open"
+          : "closed",
     label:
       cashShifts.length === 1
         ? buildCashShiftLabel(cashShifts[0].openedAt, cashShifts[0].status)
@@ -453,7 +452,9 @@ async function findTopProducts(
       },
       select: { id: true, name: true },
     });
-    const productById = new Map(products.map((product) => [product.id, product]));
+    const productById = new Map(
+      products.map((product) => [product.id, product]),
+    );
 
     return {
       success: true,
@@ -517,10 +518,17 @@ export async function findRecentSales(
           documentLabel: document
             ? `${document.series}-${document.number}`
             : "Sin comprobante",
-          sellerName: order.seller?.name || order.seller?.email || "Sin vendedor",
+          sellerName:
+            order.seller?.name || order.seller?.email || "Sin vendedor",
           paymentMethods:
             order.payments.length > 0
-              ? Array.from(new Set(order.payments.map((payment) => PAYMENT_METHOD_LABELS[payment.method]))).join(", ")
+              ? Array.from(
+                  new Set(
+                    order.payments.map(
+                      (payment) => PAYMENT_METHOD_LABELS[payment.method],
+                    ),
+                  ),
+                ).join(", ")
               : "Sin pago",
           status,
           href: `/dashboard/orders/${order.id}`,
@@ -538,7 +546,8 @@ export async function findOperationalAlerts(
 ): Promise<response<OperationalAlerts>> {
   try {
     const restaurantsEnabled =
-      options?.restaurantsEnabled ?? (await isFeatureEnabled(query.companyId, "restaurants"));
+      options?.restaurantsEnabled ??
+      (await isFeatureEnabled(query.companyId, "restaurants"));
     const [
       openCashShifts,
       openOrders,
@@ -619,9 +628,7 @@ export async function findOperationalAlerts(
     ]);
 
     const operationCount = restaurantsEnabled ? activeTables : openOrders;
-    const operationHref = restaurantsEnabled
-      ? "/dashboard/tables"
-      : undefined;
+    const operationHref = restaurantsEnabled ? "/dashboard/tables" : undefined;
     const discountTotal =
       numberFromDecimal(orderDiscounts._sum.discountAmount) +
       numberFromDecimal(itemDiscounts._sum.discountAmount);

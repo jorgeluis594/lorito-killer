@@ -13,7 +13,9 @@ import {
   CashShiftWithOutOrders,
   CashShift,
   CashShiftBase,
-  Expense, CashShiftResponse, OrderItemType,
+  Expense,
+  CashShiftResponse,
+  OrderItemType,
 } from "./types";
 import { response } from "@/lib/types";
 import {
@@ -23,7 +25,7 @@ import {
 import PaymentMethod = $Enums.PaymentMethod;
 import { User } from "@/user/types";
 import { plus } from "@/lib/utils";
-import {log} from "@/lib/log";
+import { log } from "@/lib/log";
 
 // improve this
 export const userExists = async (userId: string) => {
@@ -195,7 +197,7 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
 
   const completedOrderIds = new Set(
     prismaCashShift.orders
-      .filter((order) => order.status === "COMPLETED")
+      .filter((order) => order.paymentStatus === "PAID")
       .map((order) => order.id),
   );
 
@@ -254,7 +256,7 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     payments: (prismaCashShift.payments || []).map(mapPrismaPaymentToPayment),
   };
 
-  log.info("cashshift_base_created",{baseCashShift})
+  log.info("cashshift_base_created", { baseCashShift });
 
   if (prismaCashShift.status === "OPEN") {
     return {
@@ -350,7 +352,7 @@ export const findOrderItems = async (
       orders: {
         include: {
           orderItems: {
-            where: { kitchenStatus: { not: "CANCELLED" } },
+            where: { quantity: { gt: 0 } },
             include: {
               product: true,
             },
@@ -360,7 +362,7 @@ export const findOrderItems = async (
     },
   });
 
-  const itemsArray = orderItems!.orders.flatMap(order => order.orderItems);
+  const itemsArray = orderItems!.orders.flatMap((order) => order.orderItems);
 
   const OrderItemsMapped = itemsArray.map((o) => {
     const purchaseTotal = +o.product.purchasePrice! * +o.quantity || 0;
@@ -376,10 +378,10 @@ export const findOrderItems = async (
       totalDifference: totalDifference,
       createdAt: o.createdAt,
     };
-  })
+  });
 
   return {
     success: true,
-    data: OrderItemsMapped
-  }
-}
+    data: OrderItemsMapped,
+  };
+};

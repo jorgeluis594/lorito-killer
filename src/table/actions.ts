@@ -19,7 +19,6 @@ import {
   updateTable as dbUpdateTable,
   deleteTable as dbDeleteTable,
   getWaiters,
-  cancelPendingOrderItem,
 } from "./db_repository";
 import { closeTableSession } from "./use-cases/close-table-session";
 import { requestBill } from "./use-cases/request-bill";
@@ -37,10 +36,8 @@ import {
   CreateTableSchema,
   UpdateTableSchema,
   DeleteTableSchema,
-  CancelOrderItemSchema,
   SendTableDraftSchema,
 } from "./schemas";
-import { cancelOrderItem } from "./use-cases/cancel-order-item";
 import { TableDraftSchema } from "./schemas";
 import { openTableForService, updateTableDraft } from "./draft-repository";
 import {
@@ -48,6 +45,9 @@ import {
   findOrderRounds,
 } from "@/order/rounds/db_repository";
 import { getOrderRounds } from "@/order/rounds/use-cases/get-order-rounds";
+import { CancelRoundItemSchema } from "@/order/rounds/schema";
+import { cancelRoundItem } from "@/order/rounds/use-cases/cancel-round-item";
+import { persistRoundItemCancellation } from "@/order/rounds/db_repository";
 
 // -- Zone Actions --
 
@@ -468,14 +468,10 @@ export const getOrderRoundsAction = protectedAction(
     getOrderRounds(orderId, (id) => findOrderRounds(id, user.companyId)),
 );
 
-export const cancelOrderItemAction = protectedAction(
+export const cancelRoundItemAction = protectedAction(
   { resource: "tables", action: "update" },
-  async (
-    user,
-    orderItemId: string,
-    reason: string,
-  ): Promise<response<void>> => {
-    const parsed = CancelOrderItemSchema.safeParse({ orderItemId, reason });
+  async (user, input) => {
+    const parsed = CancelRoundItemSchema.safeParse(input);
     if (!parsed.success) {
       return {
         success: false,
@@ -483,20 +479,20 @@ export const cancelOrderItemAction = protectedAction(
       };
     }
 
-    const result = await cancelOrderItem(
+    const result = await cancelRoundItem(
       {
-        orderItemId: parsed.data.orderItemId,
+        ...parsed.data,
         companyId: user.companyId,
         userId: user.id,
-        reason: parsed.data.reason,
+        isAdmin: user.role === "ADMIN",
       },
-      cancelPendingOrderItem,
+      persistRoundItemCancellation,
     );
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "order-item-cancelled", {
-        orderItemId: parsed.data.orderItemId,
+        orderRoundItemId: parsed.data.orderRoundItemId,
       });
     }
     return result;

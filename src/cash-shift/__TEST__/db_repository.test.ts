@@ -51,7 +51,7 @@ describe("findOrderItems", () => {
         orders: {
           include: {
             orderItems: {
-              where: { kitchenStatus: { not: "CANCELLED" } },
+              where: { quantity: { gt: 0 } },
               include: { product: true },
             },
           },

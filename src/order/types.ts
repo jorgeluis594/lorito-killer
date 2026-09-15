@@ -45,6 +45,7 @@ export type PercentDiscount = {
 export type Discount = AmountDiscount | PercentDiscount;
 
 export type Status = "pending" | "completed" | "cancelled";
+export type PaymentStatus = "pending" | "paid";
 
 export type Order = {
   id?: string;
@@ -58,6 +59,7 @@ export type Order = {
   total: number;
   cancellationReason?: string;
   status: Status;
+  paymentStatus?: PaymentStatus;
   payments: Payment[];
   discount?: Discount;
   documentType: DocumentType;

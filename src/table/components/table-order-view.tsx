@@ -60,9 +60,8 @@ export function TableOrderView({
   const refresh = useCallback(() => router.refresh(), [router]);
   const sentItems = session.order?.orderItems ?? [];
   const sentTotal =
-    sentItems
-      .filter((item) => item.kitchenStatus !== "CANCELLED")
-      .reduce((sum, item) => sum + Math.round(item.total * 100), 0) / 100;
+    sentItems.reduce((sum, item) => sum + Math.round(item.total * 100), 0) /
+    100;
   const draftTotal =
     draft.items.reduce(
       (sum, item) => sum + Math.round(item.productPrice * 100) * item.quantity,
@@ -591,17 +590,37 @@ export function TableOrderView({
                             </p>
                           ) : null}
                           <p className="text-xs text-muted-foreground">
-                            {item.kitchenStatus === "CANCELLED"
-                              ? "Cancelado"
-                              : "Enviado"}
+                            Enviado
                           </p>
-                          {item.kitchenStatus === "CANCELLED" ? (
-                            <p className="text-xs text-muted-foreground break-words">
-                              {item.cancellationReason}
+                          {roundDetails?.items.find(
+                            (roundItem) => roundItem.orderItemId === item.id,
+                          )?.cancelledQuantity ? (
+                            <p className="text-xs text-muted-foreground">
+                              {
+                                roundDetails.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )!.cancelledQuantity
+                              }{" "}
+                              cancelado(s) de{" "}
+                              {
+                                roundDetails.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )!.quantity
+                              }
                             </p>
                           ) : null}
-                          {item.kitchenStatus === "PENDING" && editable ? (
-                            <CancelOrderItemDialog itemId={item.id} />
+                          {editable && item.quantity > 0 ? (
+                            <CancelOrderItemDialog
+                              orderRoundItemId={
+                                roundDetails?.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )?.id
+                              }
+                              availableQuantity={item.quantity}
+                            />
                           ) : null}
                         </div>
                       ))}

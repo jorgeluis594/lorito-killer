@@ -40,7 +40,10 @@ export type TableOrder = {
     createdAt: Date;
     responsible: { id: string; name?: string | null };
     items: Array<{
+      id: string;
       orderItemId: string;
+      quantity: number;
+      cancelledQuantity: number;
       kitchen: { id: string; name: string } | null;
     }>;
   }>;

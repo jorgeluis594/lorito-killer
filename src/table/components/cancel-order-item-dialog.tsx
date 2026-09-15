@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ban } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { Input } from "@/shared/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,21 +18,33 @@ import {
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { cancelOrderItemAction } from "../actions";
+import { cancelRoundItemAction } from "../actions";
 
-export function CancelOrderItemDialog({ itemId }: { itemId: string }) {
+export function CancelOrderItemDialog({
+  orderRoundItemId,
+  availableQuantity,
+}: {
+  orderRoundItemId?: string;
+  availableQuantity: number;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [reason, setReason] = useState("");
+  const [quantity, setQuantity] = useState(availableQuantity);
   const [pending, setPending] = useState(false);
+  const cancellationId = useRef(crypto.randomUUID());
 
   const cancelItem = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    const trimmedReason = reason.trim();
-    if (!trimmedReason) return;
+    if (!orderRoundItemId) return;
 
     setPending(true);
-    const result = await cancelOrderItemAction(itemId, trimmedReason);
+    const result = await cancelRoundItemAction({
+      cancellationId: cancellationId.current,
+      orderRoundItemId,
+      quantity,
+      reason: reason.trim() || undefined,
+    });
     setPending(false);
     if (!result.success) {
       toast({
@@ -43,6 +56,7 @@ export function CancelOrderItemDialog({ itemId }: { itemId: string }) {
     }
 
     toast({ title: "Producto cancelado" });
+    cancellationId.current = crypto.randomUUID();
     setReason("");
     router.refresh();
   };
@@ -59,10 +73,19 @@ export function CancelOrderItemDialog({ itemId }: { itemId: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Cancelar producto</AlertDialogTitle>
           <AlertDialogDescription>
-            Solo puede cancelarse mientras Cocina no haya comenzado a
-            prepararlo.
+            Indica cuántos platos dejarán de cobrarse. El motivo es opcional.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <Input
+          type="number"
+          min={1}
+          max={availableQuantity}
+          step={1}
+          value={quantity}
+          onChange={(event) => setQuantity(Number(event.target.value))}
+          aria-label="Cantidad a cancelar"
+          disabled={pending}
+        />
         <Textarea
           value={reason}
           onChange={(event) => setReason(event.target.value)}
@@ -75,7 +98,12 @@ export function CancelOrderItemDialog({ itemId }: { itemId: string }) {
           <AlertDialogCancel disabled={pending}>Volver</AlertDialogCancel>
           <AlertDialogAction
             onClick={cancelItem}
-            disabled={pending || !reason.trim()}
+            disabled={
+              pending ||
+              !orderRoundItemId ||
+              quantity <= 0 ||
+              quantity > availableQuantity
+            }
           >
             Confirmar cancelación
           </AlertDialogAction>

@@ -76,7 +76,11 @@ function mapPaymentToPrisma(payment: Payment): PaymentPrismaMatch {
   } else if (payment.method == "wallet") {
     const details = walletPaymentDetailsSchema.safeParse(payment);
     if (!details.success) throw new Error(details.error.issues[0].message);
-    const { name: _name, operationCode: _operationCode, ...paymentData } = payment;
+    const {
+      name: _name,
+      operationCode: _operationCode,
+      ...paymentData
+    } = payment;
     return {
       ...paymentData,
       method: payment.method.toUpperCase() as PaymentMethod,
@@ -201,14 +205,19 @@ const mapReceiptPrintOrder = async (
   cashShiftId: prismaOrder.cashShiftId,
   companyId: prismaOrder.companyId || "some_company_id",
   customerId: prismaOrder.customerId || undefined,
-  orderItems: prismaOrder.orderItems.filter((item) => item.kitchenStatus !== "CANCELLED").map(mapReceiptPrintOrderItem),
+  orderItems: prismaOrder.orderItems
+    .filter((item) => item.quantity.gt(0))
+    .map(mapReceiptPrintOrderItem),
   netTotal: prismaOrder.netTotal.toNumber(),
   discountAmount: prismaOrder.discountAmount.toNumber(),
   total: prismaOrder.total.toNumber(),
   cancellationReason: prismaOrder.cancellationReason || "",
   status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
   payments: prismaOrder.payments.map(mapPrismaPaymentToPayment),
-  discount: toOrderDiscount(prismaOrder.discountType, prismaOrder.discountValue),
+  discount: toOrderDiscount(
+    prismaOrder.discountType,
+    prismaOrder.discountValue,
+  ),
   documentType: toOrderDocumentType(prismaOrder.documentType),
   customer: prismaOrder.customer
     ? await prismaToCustomer(prismaOrder.customer)
@@ -225,6 +234,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       customer,
       discount,
       cancellationReason,
+      paymentStatus,
       ...orderData
     } = order;
 
@@ -232,6 +242,12 @@ export const create = async (order: Order): Promise<response<Order>> => {
       data: {
         ...orderData,
         status: STATUS_TO_PRISMA_MAPPER[order.status],
+        paymentStatus:
+          paymentStatus === "pending"
+            ? "PENDING"
+            : payments.length
+              ? "PAID"
+              : "PENDING",
         discountType: discount ? DISCOUNT_TYPE_MAPPER[discount.type] : null,
         discountValue: discount?.value,
         customerId: customer?.id,
@@ -259,6 +275,8 @@ export const create = async (order: Order): Promise<response<Order>> => {
       netTotal: createdOrderResponse.netTotal.toNumber(),
       discountAmount: createdOrderResponse.discountAmount.toNumber(),
       status: order.status,
+      paymentStatus:
+        createdOrderResponse.paymentStatus.toLowerCase() as Order["paymentStatus"],
       cancellationReason: order.cancellationReason,
       documentType: order.documentType,
       payments: createdOrderResponse.payments.map(mapPrismaPaymentToPayment),
@@ -277,7 +295,7 @@ export const create = async (order: Order): Promise<response<Order>> => {
       .filter((oi): oi is successResponse<OrderItem> => oi.success)
       .map((oi) => oi.data);
 
-    log.info("order_created",{order,createdOrder})
+    log.info("order_created", { order, createdOrder });
 
     return { success: true, data: createdOrder };
   } catch (e: any) {
@@ -363,7 +381,10 @@ export async function transformOrdersData(
   prismaOrders: PrismaOrder[],
 ): Promise<Order[]> {
   const prismaOrderItems = await prisma().orderItem.findMany({
-    where: { orderId: { in: prismaOrders.map((order) => order.id) }, kitchenStatus: { not: "CANCELLED" } },
+    where: {
+      orderId: { in: prismaOrders.map((order) => order.id) },
+      quantity: { gt: 0 },
+    },
   });
 
   const prismaOrderItemsMap = prismaOrderItems.reduce(
@@ -449,6 +470,8 @@ export async function transformOrdersData(
       customerId: prismaOrder.customerId!,
       sellerId: prismaOrder.sellerId,
       status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
+      paymentStatus:
+        prismaOrder.paymentStatus.toLowerCase() as Order["paymentStatus"],
       companyId: prismaOrder.companyId || "some_company_id",
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(
@@ -469,7 +492,10 @@ export async function update(order: Order): Promise<response<Order>> {
   try {
     await prisma().order.update({
       where: { id: order.id },
-      data: { status: STATUS_TO_PRISMA_MAPPER[order.status], cancellationReason: order.cancellationReason },
+      data: {
+        status: STATUS_TO_PRISMA_MAPPER[order.status],
+        cancellationReason: order.cancellationReason,
+      },
     });
 
     return { success: true, data: { ...order } };

@@ -12,8 +12,177 @@ import { createKitchenTicketContent } from "@/printing/create-kitchen-ticket-con
 import { createKitchenTickets } from "@/kitchen/use-cases/create-kitchen-tickets";
 import { sendRound } from "./use-cases/send-round";
 import type { OrderRoundView, RoundLineInput, SendRoundResult } from "./types";
+import type { CancelRoundItemInput } from "./schema";
+import type { OrderItemCancellationResult } from "./use-cases/cancel-round-item";
 
 type Db = Prisma.TransactionClient;
+
+export async function persistRoundItemCancellation(
+  input: CancelRoundItemInput & {
+    companyId: string;
+    userId: string;
+    isAdmin: boolean;
+  },
+): Promise<response<OrderItemCancellationResult>> {
+  try {
+    return await prisma().$transaction(
+      async (db) => {
+        const existing = await db.orderItemCancellation.findUnique({
+          where: { id: input.cancellationId },
+          include: {
+            orderRoundItem: {
+              include: { orderRound: { include: { order: true } } },
+            },
+          },
+        });
+        if (existing) {
+          const same =
+            existing.orderRoundItemId === input.orderRoundItemId &&
+            existing.quantity.equals(input.quantity) &&
+            (existing.reason ?? "") === (input.reason ?? "") &&
+            existing.orderRoundItem.orderRound.order.companyId ===
+              input.companyId;
+          if (!same)
+            return {
+              success: false,
+              message: "El identificador de cancelación ya fue utilizado.",
+            };
+          return {
+            success: true,
+            data: {
+              id: existing.id,
+              orderRoundItemId: existing.orderRoundItemId,
+              quantity: existing.quantity.toNumber(),
+              reason: existing.reason,
+            },
+          };
+        }
+
+        const item = await db.orderRoundItem.findFirst({
+          where: {
+            id: input.orderRoundItemId,
+            orderRound: { order: { companyId: input.companyId } },
+          },
+          include: {
+            orderItem: true,
+            cancellations: true,
+            orderRound: { include: { order: true } },
+          },
+        });
+        if (!item)
+          return { success: false, message: "El plato enviado no existe." };
+        await db.$queryRaw`SELECT id FROM "Order" WHERE id = ${item.orderRound.orderId} FOR UPDATE`;
+        const locked = await db.orderRoundItem.findUnique({
+          where: { id: item.id },
+          include: {
+            orderItem: true,
+            cancellations: true,
+            orderRound: { include: { order: true } },
+          },
+        });
+        if (!locked)
+          return { success: false, message: "El plato enviado no existe." };
+        if (
+          !input.isAdmin &&
+          locked.orderRound.responsibleUserId !== input.userId
+        )
+          return {
+            success: false,
+            message: "No puedes cancelar platos enviados por otro mozo.",
+          };
+        if (
+          locked.orderRound.order.paymentStatus !== "PENDING" ||
+          locked.orderRound.order.status !== "PENDING"
+        )
+          return {
+            success: false,
+            message: "Un pedido pagado o cerrado ya no admite cancelaciones.",
+          };
+
+        const quantity = new Prisma.Decimal(input.quantity);
+        const cancelled = locked.cancellations.reduce(
+          (sum, row) => sum.add(row.quantity),
+          new Prisma.Decimal(0),
+        );
+        if (
+          quantity.gt(locked.quantity.sub(cancelled)) ||
+          quantity.gt(locked.orderItem.quantity)
+        )
+          return {
+            success: false,
+            message: "La cantidad supera los platos disponibles.",
+          };
+
+        const newQuantity = locked.orderItem.quantity.sub(quantity);
+        const netTotal = locked.orderItem.productPrice.mul(newQuantity);
+        let discountAmount = new Prisma.Decimal(0);
+        if (
+          locked.orderItem.discountType === "PERCENT" &&
+          locked.orderItem.discountValue
+        )
+          discountAmount = netTotal
+            .mul(locked.orderItem.discountValue)
+            .div(100);
+        else if (
+          locked.orderItem.discountType === "AMOUNT" &&
+          locked.orderItem.discountValue
+        )
+          discountAmount = Prisma.Decimal.min(
+            netTotal,
+            locked.orderItem.discountValue,
+          );
+        await db.orderItem.update({
+          where: { id: locked.orderItemId },
+          data: {
+            quantity: newQuantity,
+            netTotal,
+            discountAmount,
+            total: netTotal.sub(discountAmount),
+          },
+        });
+        const cancellation = await db.orderItemCancellation.create({
+          data: {
+            id: input.cancellationId,
+            orderRoundItemId: locked.id,
+            quantity,
+            reason: input.reason || null,
+            userId: input.userId,
+          },
+        });
+        const totals = await db.orderItem.aggregate({
+          where: { orderId: locked.orderRound.orderId },
+          _sum: { total: true, netTotal: true, discountAmount: true },
+        });
+        await db.order.update({
+          where: { id: locked.orderRound.orderId },
+          data: {
+            total: totals._sum.total ?? 0,
+            netTotal: totals._sum.netTotal ?? 0,
+            discountAmount: totals._sum.discountAmount ?? 0,
+          },
+        });
+        return {
+          success: true,
+          data: {
+            id: cancellation.id,
+            orderRoundItemId: cancellation.orderRoundItemId,
+            quantity: cancellation.quantity.toNumber(),
+            reason: cancellation.reason,
+          },
+        };
+      },
+      { isolationLevel: "Serializable" },
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        (error as { code?: string }).code === "P2034"
+          ? "El pedido cambió. Revisa las cantidades e inténtalo otra vez."
+          : "No se pudo cancelar el plato.",
+    };
+  }
+}
 
 const productTypes = {
   DISH: DishProductType,
@@ -329,7 +498,10 @@ export async function findOrderRounds(
     include: {
       responsibleUser: { select: { id: true, name: true } },
       items: {
-        include: { kitchen: { select: { id: true, name: true } } },
+        include: {
+          kitchen: { select: { id: true, name: true } },
+          cancellations: { select: { quantity: true } },
+        },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -340,12 +512,20 @@ export async function findOrderRounds(
     number: round.number,
     responsible: round.responsibleUser,
     createdAt: round.createdAt,
-    items: round.items.map((item) => ({
-      id: item.id,
-      productName: item.productName,
-      quantity: item.quantity.toNumber(),
-      notes: item.notes,
-      kitchen: item.kitchen,
-    })),
+    items: round.items.map((item) => {
+      const cancelledQuantity = item.cancellations.reduce(
+        (sum, cancellation) => sum + cancellation.quantity.toNumber(),
+        0,
+      );
+      return {
+        id: item.id,
+        productName: item.productName,
+        quantity: item.quantity.toNumber(),
+        cancelledQuantity,
+        currentQuantity: item.quantity.toNumber() - cancelledQuantity,
+        notes: item.notes,
+        kitchen: item.kitchen,
+      };
+    }),
   }));
 }
