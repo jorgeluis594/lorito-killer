@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { authenticatePrintClient } from "@/printing/clients/authenticate";
 import { findPrintJob, recordPrintJobResult } from "@/kitchen/db_repository";
-import { notifyPrintJobFailed } from "@/kitchen/notifications";
+import {
+  notifyKitchenChanged,
+  notifyPrintJobFailed,
+} from "@/kitchen/notifications";
 import { getPrintRecoveryPolicy } from "@/kitchen/print-policy";
 import { recordPrintResult } from "@/kitchen/use-cases/record-print-result";
 import { PrintJobResultSchema } from "@/printing/clients/schema";
@@ -36,6 +39,10 @@ export async function POST(
   );
   if (result.success && result.data.status === "FAILED" && result.data.applied)
     await notifyPrintJobFailed(jobId).catch(() => undefined);
+  if (result.success && result.data.applied)
+    await notifyKitchenChanged(auth.data.companyId, "print-job-changed").catch(
+      () => undefined,
+    );
   return NextResponse.json(
     result.success
       ? {

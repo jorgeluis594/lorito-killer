@@ -64,6 +64,11 @@ export type PrintResult = "DELIVERED" | "RETRYABLE_FAILURE" | "FAILED";
 
 export type KitchenTicketView = {
   id: string;
+  order: {
+    id: string;
+    type: "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
+    label: string;
+  };
   kitchen: { id: string; name: string };
   round: { number: number; responsibleUserId: string };
   createdAt: Date;
@@ -77,6 +82,13 @@ export type KitchenTicketView = {
   activeJob: { id: string; status: "PENDING" | "PROCESSING" } | null;
   canPrint: boolean;
   canReprint: boolean;
+};
+
+export type KitchenPrinterAttention = {
+  id: string;
+  name: string;
+  printClientId: string;
+  reason: "MISSING_FROM_INVENTORY" | "STALE_ACTIVITY";
 };
 
 export type ManualPrintJob = {

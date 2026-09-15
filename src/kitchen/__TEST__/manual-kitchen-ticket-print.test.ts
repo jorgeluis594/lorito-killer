@@ -54,6 +54,24 @@ describe("manual kitchen ticket printing", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  test("scopes the attention list by company and waiter", async () => {
+    const find = vi.fn().mockResolvedValue([]);
+    await getKitchenTickets(
+      {
+        companyId: "company-1",
+        userId: "waiter-1",
+        role: "WAITER",
+        requiresActionOnly: true,
+      },
+      find,
+    );
+    expect(find).toHaveBeenCalledWith({
+      companyId: "company-1",
+      responsibleUserId: "waiter-1",
+      requiresActionOnly: true,
+    });
+  });
+
   test("passes a stable request as first print or reprint", async () => {
     const create = vi
       .fn()

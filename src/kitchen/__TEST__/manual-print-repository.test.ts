@@ -260,6 +260,11 @@ describe("findKitchenTickets", () => {
       orderRound: {
         number: 1,
         responsibleUserId: "waiter-1",
+        order: {
+          id: "order-1",
+          orderType: "DINE_IN",
+          tableSession: { table: { label: "7", number: 7 } },
+        },
         items: [
           {
             kitchenId: "kitchen-1",

@@ -6,6 +6,7 @@ import type { KitchenItem } from "./types";
 import type { Kitchen, KitchenOption } from "./types";
 import type { PrintJob, PrintJobStatus } from "./types";
 import type { KitchenTicketView, ManualPrintJob } from "./types";
+import type { KitchenPrinterActivity } from "./use-cases/check-kitchen-printers";
 import type { ManualPrintInput } from "./use-cases/print-kitchen-ticket";
 import type {
   KitchenTicketContentInput,
@@ -231,14 +232,18 @@ export const findPrintJobFailureAudience = (jobId: string) =>
 
 export async function findKitchenTickets(input: {
   companyId: string;
-  orderId: string;
+  orderId?: string;
+  requiresActionOnly?: boolean;
   responsibleUserId?: string;
 }): Promise<KitchenTicketView[]> {
   const tickets = await prisma().kitchenTicket.findMany({
     where: {
       orderRound: {
-        orderId: input.orderId,
-        order: { companyId: input.companyId },
+        ...(input.orderId ? { orderId: input.orderId } : {}),
+        order: {
+          companyId: input.companyId,
+          ...(input.requiresActionOnly ? { status: "PENDING" } : {}),
+        },
         ...(input.responsibleUserId
           ? { responsibleUserId: input.responsibleUserId }
           : {}),
@@ -250,6 +255,15 @@ export async function findKitchenTickets(input: {
         select: {
           number: true,
           responsibleUserId: true,
+          order: {
+            select: {
+              id: true,
+              orderType: true,
+              tableSession: {
+                select: { table: { select: { label: true, number: true } } },
+              },
+            },
+          },
           items: {
             select: {
               kitchenId: true,
@@ -265,7 +279,7 @@ export async function findKitchenTickets(input: {
     },
     orderBy: { createdAt: "asc" },
   });
-  return tickets.map((ticket) => {
+  const views: KitchenTicketView[] = tickets.map((ticket) => {
     const lastJob = ticket.printJobs[0] ?? null;
     const activeJob =
       ticket.printJobs.find(
@@ -281,6 +295,18 @@ export async function findKitchenTickets(input: {
       ticket.kitchen.printer.companyId === input.companyId;
     return {
       id: ticket.id,
+      order: {
+        id: ticket.orderRound.order.id,
+        type: ticket.orderRound.order
+          .orderType as KitchenTicketView["order"]["type"],
+        label:
+          ticket.orderRound.order.tableSession?.table.label ||
+          (ticket.orderRound.order.orderType === "DINE_IN"
+            ? `Mesa ${ticket.orderRound.order.tableSession?.table.number ?? ""}`.trim()
+            : ticket.orderRound.order.orderType === "DELIVERY"
+              ? "Delivery"
+              : "Para llevar"),
+      },
       kitchen: { id: ticket.kitchen.id, name: ticket.kitchen.name },
       round: {
         number: ticket.orderRound.number,
@@ -305,7 +331,50 @@ export async function findKitchenTickets(input: {
       canReprint: Boolean(lastJob && !activeJob && validPrinter),
     };
   });
+  return input.requiresActionOnly
+    ? views.filter(({ attentionReason }) => attentionReason !== null)
+    : views;
 }
+
+export const findKitchenPrinterActivity = async (
+  companyId: string,
+): Promise<KitchenPrinterActivity[]> => {
+  const kitchens = await prisma().kitchen.findMany({
+    where: { companyId, printerId: { not: null } },
+    select: {
+      name: true,
+      printer: {
+        select: {
+          id: true,
+          printClientId: true,
+          lastDetectedAt: true,
+          printClient: { select: { lastInventoryAt: true } },
+          kitchenTicketPrintJobs: {
+            where: { status: "DELIVERED" },
+            orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+            take: 1,
+            select: { updatedAt: true },
+          },
+        },
+      },
+    },
+  });
+  return kitchens.flatMap(({ name, printer }) =>
+    printer
+      ? [
+          {
+            id: printer.id,
+            name,
+            printClientId: printer.printClientId,
+            lastDetectedAt: printer.lastDetectedAt,
+            lastInventoryAt: printer.printClient.lastInventoryAt,
+            lastDeliveredAt:
+              printer.kitchenTicketPrintJobs[0]?.updatedAt ?? null,
+          },
+        ]
+      : [],
+  );
+};
 
 const manualPrintError = (error: unknown) => {
   const code = (error as { code?: string }).code;

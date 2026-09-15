@@ -3,10 +3,17 @@ import type { response } from "@/lib/types";
 import type { KitchenTicketView } from "../types";
 
 export async function getKitchenTickets(
-  input: { companyId: string; userId: string; role: UserRole; orderId: string },
+  input: {
+    companyId: string;
+    userId: string;
+    role: UserRole;
+    orderId?: string;
+    requiresActionOnly?: boolean;
+  },
   find: (input: {
     companyId: string;
-    orderId: string;
+    orderId?: string;
+    requiresActionOnly?: boolean;
     responsibleUserId?: string;
   }) => Promise<KitchenTicketView[]>,
 ): Promise<response<KitchenTicketView[]>> {
@@ -16,7 +23,8 @@ export async function getKitchenTickets(
     success: true,
     data: await find({
       companyId: input.companyId,
-      orderId: input.orderId,
+      ...(input.orderId ? { orderId: input.orderId } : {}),
+      ...(input.requiresActionOnly ? { requiresActionOnly: true } : {}),
       responsibleUserId: input.role === "WAITER" ? input.userId : undefined,
     }),
   };

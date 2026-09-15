@@ -3,6 +3,7 @@ import { authenticatePrintClient } from "@/printing/clients/authenticate";
 import { registerInventory } from "@/printing/clients/db_repository";
 import { PrinterInventorySchema } from "@/printing/clients/schema";
 import { registerPrinterInventory } from "@/printing/clients/use-cases/register-printer-inventory";
+import { notifyKitchenChanged } from "@/kitchen/notifications";
 
 export async function POST(request: Request) {
   const auth = await authenticatePrintClient(
@@ -23,5 +24,10 @@ export async function POST(request: Request) {
     auth.data,
     parsed.data,
   );
+  if (result.success)
+    await notifyKitchenChanged(
+      auth.data.companyId,
+      "printer-inventory-updated",
+    ).catch(() => undefined);
   return NextResponse.json(result, { status: result.success ? 200 : 401 });
 }
