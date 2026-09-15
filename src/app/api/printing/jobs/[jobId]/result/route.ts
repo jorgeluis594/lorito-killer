@@ -36,5 +36,18 @@ export async function POST(
   );
   if (result.success && result.data.status === "FAILED" && result.data.applied)
     await notifyPrintJobFailed(jobId).catch(() => undefined);
-  return NextResponse.json(result, { status: result.success ? 200 : 409 });
+  return NextResponse.json(
+    result.success
+      ? {
+          success: true,
+          data: {
+            jobId: result.data.id,
+            attemptNumber: result.data.attempts,
+            status: result.data.status,
+            nextAttemptAt: result.data.nextAttemptAt,
+          },
+        }
+      : result,
+    { status: result.success ? 200 : 409 },
+  );
 }
