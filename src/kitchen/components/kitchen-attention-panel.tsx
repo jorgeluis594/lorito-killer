@@ -120,30 +120,21 @@ export function KitchenAttentionPanel({
 
   async function requestPrint(ticket: KitchenTicketView) {
     setPrinting(ticket.id);
-    try {
-      const action = ticket.canPrint
-        ? printKitchenTicketAction
-        : reprintKitchenTicketAction;
-      const result = await action({
-        kitchenTicketId: ticket.id,
-        jobId: crypto.randomUUID(),
-      });
-      if (!result.success)
-        toast({
-          title: "No se pudo imprimir",
-          description: result.message,
-          variant: "destructive",
-        });
-      await refreshTickets();
-    } catch {
+    const action = ticket.canPrint
+      ? printKitchenTicketAction
+      : reprintKitchenTicketAction;
+    const result = await action({
+      kitchenTicketId: ticket.id,
+      jobId: crypto.randomUUID(),
+    });
+    if (!result.success)
       toast({
         title: "No se pudo imprimir",
-        description: "Actualiza la página e inténtalo nuevamente.",
+        description: result.message,
         variant: "destructive",
       });
-    } finally {
-      setPrinting(null);
-    }
+    await refreshTickets();
+    setPrinting(null);
   }
 
   return (
