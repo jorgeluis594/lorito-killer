@@ -141,6 +141,21 @@ export const failTimedOutPrintJob = async (input: {
   return changed.count === 1 ? findPrintJob(input.jobId) : null;
 };
 
+export const failRevokedPrintJobs = async (now: Date): Promise<string[]> => {
+  const jobs = await prisma().$queryRaw<{ id: string }[]>(Prisma.sql`
+    UPDATE "KitchetTicketPrintJob" job
+    SET status = 'FAILED', "claimRequestedAt" = NULL,
+        "processingStartedAt" = NULL, "nextAttemptAt" = NULL,
+        "lastError" = 'El cliente de impresión fue revocado', "updatedAt" = ${now}
+    FROM "Printer" printer
+    JOIN "PrintClient" client ON client.id = printer."printClientId"
+    WHERE job."printerId" = printer.id
+      AND job.status = 'PENDING' AND client."revokedAt" IS NOT NULL
+    RETURNING job.id
+  `);
+  return jobs.map((job) => job.id);
+};
+
 type ReservedJob = {
   id: string;
   companyId: string;

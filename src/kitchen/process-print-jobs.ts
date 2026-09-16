@@ -1,5 +1,6 @@
 import { log } from "@/lib/log";
 import {
+  failRevokedPrintJobs,
   failTimedOutPrintJob,
   findAnnouncedPrintJobs,
   findPrintJobTimeouts,
@@ -10,6 +11,13 @@ import { getPrintRecoveryPolicy } from "./print-policy";
 import { recordPrintTimeout } from "./use-cases/record-print-timeout";
 
 export async function processPrintJobs(now = new Date()) {
+  const revoked = await failRevokedPrintJobs(now);
+  for (const jobId of revoked) {
+    await notifyPrintJobFailed(jobId).catch((error) =>
+      log.warn("print_job_failure_notification_failed", { jobId, error }),
+    );
+  }
+
   const policy = getPrintRecoveryPolicy();
   const cutoff = new Date(now.getTime() - policy.timeoutMs);
   const timedOut = await findPrintJobTimeouts(cutoff);

@@ -1,12 +1,20 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import prisma from "@/lib/prisma";
 import {
   authorizePrintJob,
+  failRevokedPrintJobs,
   findPrintJob,
   recordPrintJobResult,
   reserveDuePrintJobs,
 } from "@/kitchen/db_repository";
+import { processPrintJobs } from "@/kitchen/process-print-jobs";
+import { notifyPrintJobFailed } from "@/kitchen/notifications";
+
+vi.mock("@/kitchen/notifications", () => ({
+  notifyPrintJobAvailable: vi.fn().mockResolvedValue(undefined),
+  notifyPrintJobFailed: vi.fn().mockResolvedValue(undefined),
+}));
 
 const ids = {
   company: randomUUID(),
@@ -165,4 +173,68 @@ test("the partial index rejects another active job for the same ticket", async (
       },
     }),
   ).rejects.toMatchObject({ code: "P2002" });
+});
+
+test("revoked clients fail pending jobs before timeouts and cannot reserve them again", async () => {
+  const db = prisma();
+  const now = new Date();
+  const expired = new Date(0);
+  await db.kitchetTicketPrintJob.updateMany({
+    where: { id: { in: ids.jobs.slice(0, 2) } },
+    data: {
+      status: "PENDING",
+      claimRequestedAt: null,
+      processingStartedAt: expired,
+      nextAttemptAt: new Date(now.getTime() + 60000),
+      lastError: "Error anterior",
+    },
+  });
+  await db.kitchetTicketPrintJob.update({
+    where: { id: ids.jobs[1] },
+    data: { claimRequestedAt: expired },
+  });
+  await db.kitchetTicketPrintJob.update({
+    where: { id: ids.jobs[2] },
+    data: {
+      status: "PROCESSING",
+      claimRequestedAt: null,
+      processingStartedAt: now,
+    },
+  });
+  expect(
+    (await failRevokedPrintJobs(now)).filter((id) => ids.jobs.includes(id)),
+  ).toEqual([]);
+  await db.printClient.update({
+    where: { id: ids.client },
+    data: { revokedAt: now },
+  });
+
+  expect(await processPrintJobs(now)).toEqual({
+    timedOut: expect.any(Number),
+    reserved: expect.any(Number),
+  });
+
+  for (const id of ids.jobs.slice(0, 2)) {
+    expect(
+      await db.kitchetTicketPrintJob.findUnique({ where: { id } }),
+    ).toMatchObject({
+      status: "FAILED",
+      claimRequestedAt: null,
+      processingStartedAt: null,
+      nextAttemptAt: null,
+      lastError: "El cliente de impresión fue revocado",
+      updatedAt: now,
+    });
+    expect(notifyPrintJobFailed).toHaveBeenCalledWith(id);
+  }
+  expect(notifyPrintJobFailed).not.toHaveBeenCalledWith(ids.jobs[2]);
+  expect(await findPrintJob(ids.jobs[2])).toMatchObject({
+    status: "PROCESSING",
+    processingStartedAt: now,
+  });
+  expect(
+    (await failRevokedPrintJobs(now)).filter((id) => ids.jobs.includes(id)),
+  ).toEqual([]);
+  const reserved = await reserveDuePrintJobs(new Date(now.getTime() + 120000));
+  expect(reserved.filter((job) => ids.jobs.includes(job.id))).toEqual([]);
 });
