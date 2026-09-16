@@ -79,6 +79,7 @@ const buildCompletedOrderWhere = (
 ): Prisma.OrderWhereInput => ({
   ...buildOrderWhere(query),
   paymentStatus: "PAID",
+  status: { not: "CANCELLED" },
 });
 
 const buildSalesReportHref = (
@@ -154,6 +155,7 @@ const buildOrderSqlFilters = (query: DashboardQuery) => {
   const filters = [
     Prisma.sql`o."companyId" = ${query.companyId}`,
     Prisma.sql`o."paymentStatus"::text = 'PAID'`,
+    Prisma.sql`o."status"::text <> 'CANCELLED'`,
     Prisma.sql`o."createdAt" >= ${query.startDate}`,
     Prisma.sql`o."createdAt" <= ${query.endDate}`,
   ];
@@ -281,6 +283,7 @@ async function findCashSummary(
         order: {
           companyId: query.companyId,
           paymentStatus: "PAID",
+          status: { not: "CANCELLED" },
           createdAt: { gte: query.startDate, lte: query.endDate },
         },
       },

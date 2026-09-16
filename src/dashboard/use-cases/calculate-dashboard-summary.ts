@@ -27,7 +27,9 @@ export function calculateAverageTicket(total: number, count: number) {
 export function calculatePaidSalesKpis(
   facts: DashboardOrderFact[],
 ): Pick<DashboardKpis, "paidSalesTotal" | "paidSalesCount" | "averageTicket"> {
-  const completed = facts.filter((fact) => fact.paymentStatus === "PAID");
+  const completed = facts.filter(
+    (fact) => fact.paymentStatus === "PAID" && fact.status !== "CANCELLED",
+  );
   const paidSalesTotal = completed.reduce(
     (total, fact) => add(total, fact.total),
     0,
