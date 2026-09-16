@@ -56,6 +56,17 @@ public static class PipeProtocol
         await stream.FlushAsync(cancellationToken);
     }
 
+    public static async Task<string> ReadAsync(Stream stream, CancellationToken cancellationToken)
+    {
+        var lengthBytes = new byte[4];
+        await stream.ReadExactlyAsync(lengthBytes, cancellationToken);
+        var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBytes);
+        if (length is < 1 or > MaxMessageBytes) throw new InvalidDataException("Invalid pipe response length");
+        var payload = new byte[length];
+        await stream.ReadExactlyAsync(payload, cancellationToken);
+        return Encoding.UTF8.GetString(payload);
+    }
+
     private sealed record Request(int Version, string Operation, string? Code);
     private sealed record Response(bool Success, Status? Status, string? Error = null);
     private sealed record Status(string CompanyId, string CompanyName);

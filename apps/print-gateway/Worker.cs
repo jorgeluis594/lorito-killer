@@ -21,7 +21,7 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
         if (binding is not null) await PublishInventory(binding, stoppingToken);
         while (!stoppingToken.IsCancellationRequested)
         {
-            await using var pipe = new NamedPipeServerStream(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            await using var pipe = PipeFactory.Create();
             await pipe.WaitForConnectionAsync(stoppingToken);
             await PipeProtocol.HandleAsync(pipe, bindingStore, backend, stoppingToken);
         }
@@ -31,6 +31,22 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
     {
         try { await backend.PublishInventoryAsync(binding, printers.Enumerate(), cancellationToken); }
         catch (Exception exception) { logger.LogError(exception, "Printer inventory enumeration failed"); }
+    }
+}
+
+internal static class PipeFactory
+{
+    public static NamedPipeServerStream Create()
+    {
+#if NET10_0_WINDOWS
+        var security = new PipeSecurity();
+        security.AddAccessRule(new PipeAccessRule("NT AUTHORITY\\INTERACTIVE", PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule("BUILTIN\\Administrators", PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule("NT AUTHORITY\\SYSTEM", PipeAccessRights.FullControl, AccessControlType.Allow));
+        return NamedPipeServerStreamAcl.Create(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security);
+#else
+        return new NamedPipeServerStream(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+#endif
     }
 }
 
