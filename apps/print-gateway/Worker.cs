@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lorito.PrintGateway;
 
-public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, IPrinterEnumerator printers, ILogger<Worker> logger) : BackgroundService
+public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, IPrinterEnumerator printers, ILogger<Worker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -18,12 +18,21 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
             return;
         }
         var binding = bindingStore.Read();
-        if (binding is not null) await PublishInventory(binding, stoppingToken);
+        if (binding is not null)
+        {
+            await PublishInventory(binding, stoppingToken);
+            _ = ListenForInventoryRefresh(binding, stoppingToken);
+        }
         while (!stoppingToken.IsCancellationRequested)
         {
             await using var pipe = PipeFactory.Create();
             await pipe.WaitForConnectionAsync(stoppingToken);
-            await PipeProtocol.HandleAsync(pipe, bindingStore, backend, stoppingToken);
+            await PipeProtocol.HandleAsync(pipe, bindingStore, backend, binding =>
+            {
+                _ = PublishInventory(binding, stoppingToken);
+                _ = ListenForInventoryRefresh(binding, stoppingToken);
+                return Task.CompletedTask;
+            }, stoppingToken);
         }
     }
 
@@ -31,6 +40,13 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
     {
         try { await backend.PublishInventoryAsync(binding, printers.Enumerate(), cancellationToken); }
         catch (Exception exception) { logger.LogError(exception, "Printer inventory enumeration failed"); }
+    }
+
+    private async Task ListenForInventoryRefresh(Binding binding, CancellationToken cancellationToken)
+    {
+        try { await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), cancellationToken); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception exception) { logger.LogError(exception, "Realtime subscription failed"); }
     }
 }
 

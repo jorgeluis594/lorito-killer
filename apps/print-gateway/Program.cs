@@ -17,6 +17,7 @@ public static class Program
 #endif
         builder.Services.AddSingleton<HttpClient>();
         builder.Services.AddSingleton<BackendClient>();
+        builder.Services.AddSingleton<RealtimeClient>();
         builder.Services.AddHostedService<Worker>();
         return builder.Build();
     }
