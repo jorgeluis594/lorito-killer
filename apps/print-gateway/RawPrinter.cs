@@ -28,7 +28,7 @@ public sealed class WindowsRawPrinter : IRawPrinter
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] private struct DOCINFO { public string pDocName; public string pOutputFile; public string pDataType; }
     [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool OpenPrinter(string name, out IntPtr handle, IntPtr defaults);
     [DllImport("winspool.drv", SetLastError = true)] private static extern bool ClosePrinter(IntPtr handle);
-    [DllImport("winspool.drv", SetLastError = true)] private static extern int StartDocPrinter(IntPtr handle, int level, ref DOCINFO doc);
+    [DllImport("winspool.drv", CharSet = CharSet.Unicode, SetLastError = true)] private static extern int StartDocPrinter(IntPtr handle, int level, ref DOCINFO doc);
     [DllImport("winspool.drv", SetLastError = true)] private static extern bool EndDocPrinter(IntPtr handle);
     [DllImport("winspool.drv", SetLastError = true)] private static extern bool StartPagePrinter(IntPtr handle);
     [DllImport("winspool.drv", SetLastError = true)] private static extern bool EndPagePrinter(IntPtr handle);
