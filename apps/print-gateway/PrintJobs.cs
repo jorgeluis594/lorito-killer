@@ -12,7 +12,8 @@ namespace Lorito.PrintGateway;
 public sealed record PrintClaim(string JobId, int AttemptNumber, string PrinterId, string PrinterLocalName, byte[] Content, DateTimeOffset AttemptExpiresAt, DateTimeOffset ServerNow);
 public sealed class InvalidClaimException(int attemptNumber, string message) : Exception(message) { public int AttemptNumber { get; } = attemptNumber; }
 public sealed record PrintBackendResult(string JobId, int AttemptNumber, string Status, bool HttpSuccess);
-public sealed record PrintJournal(string JobId, int AttemptNumber, string PrinterId, string PrinterLocalName, string ContentSha256, string Phase, string? Result, string? Error, bool BackendConfirmed);
+public sealed record PrintJournalEntry(int AttemptNumber, string PrinterId, string PrinterLocalName, string ContentSha256, string Phase, string? Result, string? Error, DateTimeOffset? ConfirmedAt);
+public sealed record PrintJournal(string JobId, int AttemptNumber, string PrinterId, string PrinterLocalName, string ContentSha256, string Phase, string? Result, string? Error, bool BackendConfirmed, DateTimeOffset? ConfirmedAt = null, string? BackendStatus = null, IReadOnlyList<PrintJournalEntry>? History = null);
 
 public sealed class BackendClient(HttpClient httpClient, GatewayConfiguration configuration)
 {
@@ -98,13 +99,29 @@ public sealed class JournalStore
     private readonly string root;
     private readonly object gate = new();
     public JournalStore(string? root = null) => this.root = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway", "jobs");
+    public string Root => root;
+    public void EnsureReady()
+    {
+        lock (gate)
+        {
+            if (!Directory.Exists(root)) throw new IOException("Print journal directory is missing");
+            var probe = Path.Combine(root, ".write-probe");
+            try { File.WriteAllText(probe, "ok"); File.Delete(probe); }
+            catch (Exception exception) { throw new IOException("Print journal directory is not writable", exception); }
+        }
+    }
     public PrintJournal? Read(string jobId)
     {
         lock (gate)
         {
             var path = PathFor(jobId);
             if (!File.Exists(path)) return null;
-            try { return JsonSerializer.Deserialize<PrintJournal>(File.ReadAllBytes(path), Options) ?? throw new InvalidDataException("Invalid journal"); }
+            try
+            {
+                var journal = JsonSerializer.Deserialize<PrintJournal>(File.ReadAllBytes(path), Options) ?? throw new InvalidDataException("Invalid journal");
+                if (journal.JobId != jobId || journal.AttemptNumber <= 0 || string.IsNullOrWhiteSpace(journal.Phase)) throw new InvalidDataException("Invalid journal identity");
+                return journal;
+            }
             catch (JsonException exception) { throw new InvalidDataException("Invalid journal", exception); }
         }
     }
@@ -112,11 +129,28 @@ public sealed class JournalStore
     {
         lock (gate)
         {
-            Directory.CreateDirectory(root);
+            if (!Directory.Exists(root)) throw new IOException("Print journal directory is missing");
             var path = PathFor(journal.JobId);
             var temp = path + ".tmp";
             using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None)) { JsonSerializer.Serialize(stream, journal, Options); stream.Flush(true); }
             File.Move(temp, path, true);
+        }
+    }
+    public int Cleanup(DateTimeOffset now)
+    {
+        lock (gate)
+        {
+            if (!Directory.Exists(root)) throw new IOException("Print journal directory is missing");
+            var deleted = 0;
+            foreach (var path in Directory.EnumerateFiles(root, "*.json"))
+            {
+                PrintJournal? journal;
+                try { journal = JsonSerializer.Deserialize<PrintJournal>(File.ReadAllBytes(path), Options); }
+                catch (JsonException) { continue; }
+                if (journal?.BackendConfirmed == true && journal.ConfirmedAt is { } confirmedAt && confirmedAt <= now.AddDays(-30) && journal.Result is "DELIVERED" or "FAILED")
+                { File.Delete(path); deleted++; }
+            }
+            return deleted;
         }
     }
     private string PathFor(string jobId) => Path.Combine(root, Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(jobId))).ToLowerInvariant() + ".json");
@@ -139,9 +173,14 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
 
     private async Task ProcessLockedAsync(Binding binding, string jobId, CancellationToken cancellationToken)
     {
+        journal.EnsureReady();
         var previous = journal.Read(jobId);
-        if (previous?.Phase == "SENDING") { await Report(binding, previous, "FAILED", "Resultado incierto tras reinicio", cancellationToken); return; }
-        if (previous?.Result is { } known) { await Report(binding, previous, known, previous.Error, cancellationToken); return; }
+        if (previous?.Phase == "SENDING") { await SaveAndReport(binding, previous with { Phase = "RESULT", Result = "FAILED", Error = "Resultado incierto tras reinicio", BackendConfirmed = false }, cancellationToken); return; }
+        if (previous?.Result is { } known && known is not "RETRYABLE_FAILURE")
+        {
+            if (!previous.BackendConfirmed) await Report(binding, previous, known, previous.Error, cancellationToken);
+            return;
+        }
 
         var started = Stopwatch.GetTimestamp();
         PrintClaim claim;
@@ -153,15 +192,20 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
             return;
         }
         var hash = Convert.ToHexString(SHA256.HashData(claim.Content));
-        if (previous is not null && (previous.AttemptNumber != claim.AttemptNumber || previous.ContentSha256 != hash)) { await Report(binding, previous, "FAILED", "El intento cambió o su contenido no coincide", cancellationToken); return; }
+        if (previous is not null && previous.AttemptNumber == claim.AttemptNumber && previous.ContentSha256 != hash) { await SaveAndReport(binding, previous with { Phase = "RESULT", Result = "FAILED", Error = "El contenido del intento cambió", BackendConfirmed = false }, cancellationToken); return; }
         var printerMutex = printers.GetOrAdd(claim.PrinterId, _ => new(1, 1));
-        await printerMutex.WaitAsync(cancellationToken);
+        if (!await printerMutex.WaitAsync(0, cancellationToken))
+        {
+            await SaveAndReport(binding, claim, hash, "RETRYABLE_FAILURE", "La impresora está ocupada por una llamada nativa", cancellationToken);
+            return;
+        }
         var release = true;
         try
         {
             var remaining = claim.AttemptExpiresAt - claim.ServerNow - Stopwatch.GetElapsedTime(started);
             if (remaining <= TimeSpan.Zero) { await SaveAndReport(binding, claim, hash, "FAILED", "El plazo del intento expiró", cancellationToken); return; }
-            var record = new PrintJournal(claim.JobId, claim.AttemptNumber, claim.PrinterId, claim.PrinterLocalName, hash, "SENDING", null, null, false);
+            var history = previous is null ? null : (previous.History ?? []).Append(new PrintJournalEntry(previous.AttemptNumber, previous.PrinterId, previous.PrinterLocalName, previous.ContentSha256, previous.Phase, previous.Result, previous.Error, previous.ConfirmedAt)).ToArray();
+            var record = new PrintJournal(claim.JobId, claim.AttemptNumber, claim.PrinterId, claim.PrinterLocalName, hash, "SENDING", null, null, false, null, null, history);
             journal.Write(record);
             var nativeTask = printer.PrintAsync(claim.PrinterLocalName, claim.Content, CancellationToken.None);
             NativePrintResult native;
@@ -169,7 +213,7 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
             catch (TimeoutException)
             {
                 release = false;
-                _ = ReleaseWhenDone(nativeTask, printerMutex);
+                _ = ObserveLate(nativeTask, claim, logger, printerMutex);
                 native = new("FAILED", "La entrega nativa excedió el plazo");
             }
             catch (Exception exception) { native = new("FAILED", exception.Message); }
@@ -178,21 +222,33 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
         finally { if (release) printerMutex.Release(); }
     }
 
-    private static async Task ReleaseWhenDone(Task task, SemaphoreSlim mutex) { try { await task; } catch { } finally { mutex.Release(); } }
+    private static async Task ObserveLate(Task<NativePrintResult> task, PrintClaim claim, ILogger logger, SemaphoreSlim mutex)
+    {
+        try { var result = await task; logger.LogWarning("Late native print result for {JobId}/{AttemptNumber}: {Result}", claim.JobId, claim.AttemptNumber, result.Result); }
+        catch (Exception exception) { logger.LogWarning(exception, "Late native print call failed for {JobId}/{AttemptNumber}", claim.JobId, claim.AttemptNumber); }
+        finally { mutex.Release(); }
+    }
 
     private async Task SaveAndReport(Binding binding, PrintClaim claim, string hash, string result, string? error, CancellationToken cancellationToken)
     {
-        var record = new PrintJournal(claim.JobId, claim.AttemptNumber, claim.PrinterId, claim.PrinterLocalName, hash, "RESULT", result, error, false);
+        var previous = journal.Read(claim.JobId);
+        var history = previous is null ? null : (previous.History ?? []).Append(new PrintJournalEntry(previous.AttemptNumber, previous.PrinterId, previous.PrinterLocalName, previous.ContentSha256, previous.Phase, previous.Result, previous.Error, previous.ConfirmedAt)).ToArray();
+        var record = new PrintJournal(claim.JobId, claim.AttemptNumber, claim.PrinterId, claim.PrinterLocalName, hash, "RESULT", result, error, false, null, null, history);
+        await SaveAndReport(binding, record, cancellationToken);
+    }
+    private async Task SaveAndReport(Binding binding, PrintJournal record, CancellationToken cancellationToken)
+    {
         journal.Write(record);
-        await Report(binding, record, result, error, cancellationToken);
+        await Report(binding, record, record.Result ?? "FAILED", record.Error, cancellationToken);
     }
     private async Task Report(Binding binding, PrintJournal record, string result, string? error, CancellationToken cancellationToken)
     {
         try
         {
             var response = await backend.ReportAsync(binding, record.JobId, record.AttemptNumber, result, error, cancellationToken);
-            if (!string.Equals(response.Status, result, StringComparison.Ordinal)) logger.LogWarning("Backend status {BackendStatus} differs from local result {LocalResult} for {JobId}", response.Status, result, record.JobId);
-            journal.Write(record with { BackendConfirmed = response.HttpSuccess && string.Equals(response.JobId, record.JobId, StringComparison.Ordinal) });
+            var confirmed = response.HttpSuccess && string.Equals(response.JobId, record.JobId, StringComparison.Ordinal) && string.Equals(response.Status, result, StringComparison.Ordinal);
+            if (!confirmed) logger.LogWarning("Backend status {BackendStatus} differs from local result {LocalResult} for {JobId}", response.Status, result, record.JobId);
+            journal.Write(record with { BackendConfirmed = confirmed, BackendStatus = response.Status, ConfirmedAt = confirmed ? DateTimeOffset.UtcNow : null });
         }
         catch (Exception exception) { logger.LogError(exception, "Print result report failed for {JobId}", record.JobId); }
     }

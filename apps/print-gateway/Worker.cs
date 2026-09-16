@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lorito.PrintGateway;
 
-public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, IPrinterEnumerator printers, ILogger<Worker> logger) : BackgroundService
+public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, JournalStore journal, IPrinterEnumerator printers, ILogger<Worker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -19,6 +19,7 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
         var binding = bindingStore.Read();
         if (binding is not null)
         {
+            _ = CleanupJournal(stoppingToken);
             await PublishInventory(binding, stoppingToken);
             _ = Listen(binding, stoppingToken);
         }
@@ -32,6 +33,17 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
                 _ = Listen(binding, stoppingToken);
                 return Task.CompletedTask;
             }, stoppingToken);
+        }
+    }
+
+    private async Task CleanupJournal(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try { journal.Cleanup(DateTimeOffset.UtcNow); }
+            catch (Exception exception) { logger.LogError(exception, "Print journal cleanup failed"); }
+            try { await Task.Delay(TimeSpan.FromDays(1), cancellationToken); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         }
     }
 
