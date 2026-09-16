@@ -2,6 +2,7 @@ using Lorito.PrintGateway;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Lorito.PrintGateway.Tests;
@@ -57,6 +58,58 @@ public sealed class HostTests
 
         await host.StartAsync(cancellationToken);
         await host.StopAsync(cancellationToken);
+    }
+
+    [Fact]
+    public void Host_uses_configured_data_path_for_binding_and_journal_stores()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var previous = Environment.GetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH");
+        try
+        {
+            Environment.SetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH", root);
+            using var host = Program.CreateHost([]);
+
+            var configuration = host.Services.GetRequiredService<GatewayConfiguration>();
+            Assert.Equal(root, configuration.DataPath);
+            Assert.Equal(root, host.Services.GetRequiredService<BindingStore>().Root);
+            Assert.Equal(Path.Combine(root, "jobs"), host.Services.GetRequiredService<JournalStore>().Root);
+        }
+        finally { Environment.SetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH", previous); }
+    }
+
+    [Fact]
+    public async Task Host_isolates_pipe_failures_and_preserves_cancellation()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var configuration = new GatewayConfiguration("https://backend.test", "https://supabase.test", "key");
+        var store = new BindingStore(root);
+        var backend = new BackendClient(new HttpClient(), configuration);
+        var logger = new CapturingLogger<Worker>();
+        var provider = new DailyFileLoggerProvider(Path.Combine(root, "logs"));
+        var worker = new Worker(configuration, store, backend, new RealtimeClient(configuration, NullLogger<RealtimeClient>.Instance), new PrintJobProcessor(backend, new JournalStore(root), new TestPrinter(), NullLogger<PrintJobProcessor>.Instance), new JournalStore(root), new EmptyPrinterEnumerator(), provider, logger);
+        var cancellation = new CancellationTokenSource();
+        var first = new TestStream([0, 0, 0, 0]);
+        var second = new TestStream(PipeProtocol.Frame("{\"version\":1,\"operation\":\"GET_STATUS\"}"));
+        var secondRequestLength = second.Length;
+        var calls = 0;
+        var previous = PipeFactory.AcceptAsync;
+        PipeFactory.AcceptAsync = token =>
+        {
+            if (++calls == 1) return Task.FromResult<Stream>(first);
+            if (calls == 2) return Task.FromResult<Stream>(second);
+            cancellation.Cancel();
+            return Task.FromCanceled<Stream>(token);
+        };
+
+        try { await worker.ProcessConnectionsAsync(cancellation.Token); }
+        finally { PipeFactory.AcceptAsync = previous; provider.Dispose(); }
+
+        Assert.Equal(3, calls);
+        Assert.Single(logger.Warnings);
+        Assert.DoesNotContain("OperationCanceledException", logger.Warnings);
+        second.Position = secondRequestLength;
+        Assert.True(System.Text.Json.JsonDocument.Parse(await PipeProtocol.ReadAsync(second, CancellationToken.None)).RootElement.GetProperty("success").GetBoolean());
     }
 
     [Fact]
@@ -119,5 +172,28 @@ public sealed class HostTests
         Assert.Equal(1, provider.Cleanup(DateTimeOffset.UtcNow));
         Assert.False(File.Exists(old));
         Assert.True(File.Exists(log));
+    }
+}
+
+internal sealed class TestStream : MemoryStream
+{
+    public TestStream(byte[] buffer) { Write(buffer); Position = 0; }
+    protected override void Dispose(bool disposing) { }
+    public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+internal sealed class TestPrinter : IRawPrinter
+{
+    public Task<NativePrintResult> PrintAsync(string printerLocalName, byte[] content, CancellationToken cancellationToken) => Task.FromResult(new NativePrintResult("FAILED", null));
+}
+
+internal sealed class CapturingLogger<T> : ILogger<T>
+{
+    public List<string> Warnings { get; } = [];
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullLogger<T>.Instance.BeginScope(state);
+    public bool IsEnabled(LogLevel logLevel) => true;
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    {
+        if (logLevel == LogLevel.Warning) Warnings.Add($"{exception?.GetType().Name}: {formatter(state, exception)}");
     }
 }

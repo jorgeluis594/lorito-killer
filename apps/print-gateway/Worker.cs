@@ -3,11 +3,17 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+#if WINDOWS
+using System.Security.AccessControl;
+using System.Security.Principal;
+#endif
 
 namespace Lorito.PrintGateway;
 
 public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, JournalStore journal, IPrinterEnumerator printers, DailyFileLoggerProvider fileLogger, ILogger<Worker> logger) : BackgroundService
 {
+    private int reconciliationStarted;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (!configuration.IsValid(out var error)) { logger.LogError("Invalid configuration: {Error}", error); return; }
@@ -19,6 +25,7 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
         fileLogger.Cleanup(DateTimeOffset.UtcNow);
         logger.LogInformation("operation=startup status=started");
         _ = CleanupJournal(stoppingToken);
+        StartReconciliation(stoppingToken);
         var binding = bindingStore.Read();
         if (binding is not null)
         {
@@ -26,16 +33,53 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
             _ = Listen(binding, stoppingToken);
         }
         else logger.LogInformation("operation=connection status=unlinked");
+        await ProcessConnectionsAsync(stoppingToken);
+    }
+
+    internal async Task ProcessConnectionsAsync(CancellationToken stoppingToken)
+    {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await using var pipe = PipeFactory.Create();
-            await pipe.WaitForConnectionAsync(stoppingToken);
-            await PipeProtocol.HandleAsync(pipe, bindingStore, backend, binding =>
+            try
             {
-                _ = PublishInventory(binding, stoppingToken);
-                _ = Listen(binding, stoppingToken);
-                return Task.CompletedTask;
-            }, stoppingToken);
+                await using var pipe = await PipeFactory.AcceptAsync(stoppingToken);
+                await PipeProtocol.HandleAsync(pipe, bindingStore, backend, binding =>
+                {
+                    _ = PublishInventory(binding, stoppingToken);
+                    _ = Listen(binding, stoppingToken);
+                    StartReconciliation(stoppingToken);
+                    return Task.CompletedTask;
+                }, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
+            catch (Exception exception) { logger.LogWarning(exception, "operation=pipe status=failed"); }
+        }
+    }
+
+    internal static TimeSpan ReconciliationDelay(Func<double>? random = null)
+    {
+        var value = Math.Clamp((random ?? Random.Shared.NextDouble)(), 0, 1);
+        return TimeSpan.FromMilliseconds(4000 + value * 2000);
+    }
+
+    private void StartReconciliation(CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref reconciliationStarted, 1) == 0) _ = ReconcileJournal(cancellationToken);
+    }
+
+    private async Task ReconcileJournal(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                var binding = bindingStore.Read();
+                if (binding is not null) await processor.ReconcileAsync(binding, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            catch (Exception exception) { logger.LogError(exception, "Print journal reconciliation failed"); }
+            try { await Task.Delay(ReconciliationDelay(), cancellationToken); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
         }
     }
 
@@ -66,9 +110,18 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
 
 internal static class PipeFactory
 {
+    internal static Func<CancellationToken, Task<Stream>> AcceptAsync { get; set; } = AcceptPipeAsync;
+
+    private static async Task<Stream> AcceptPipeAsync(CancellationToken cancellationToken)
+    {
+        var pipe = Create();
+        try { await pipe.WaitForConnectionAsync(cancellationToken); return pipe; }
+        catch { await pipe.DisposeAsync(); throw; }
+    }
+
     public static NamedPipeServerStream Create()
     {
-#if NET10_0_WINDOWS
+#if WINDOWS
         var security = new PipeSecurity();
         security.AddAccessRule(new PipeAccessRule("NT AUTHORITY\\INTERACTIVE", PipeAccessRights.ReadWrite, AccessControlType.Allow));
         security.AddAccessRule(new PipeAccessRule("BUILTIN\\Administrators", PipeAccessRights.FullControl, AccessControlType.Allow));
@@ -114,6 +167,7 @@ public sealed class BindingStore
     private readonly string path;
     private readonly object gate = new();
     public BindingStore(string? root = null) => path = Path.Combine(root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway"), "binding.dat");
+    internal string Root => Path.GetDirectoryName(path)!;
     public Binding? Read()
     {
         lock (gate)
