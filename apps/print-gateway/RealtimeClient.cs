@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -7,6 +8,10 @@ namespace Lorito.PrintGateway;
 
 public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<RealtimeClient> logger)
 {
+    private readonly ConcurrentDictionary<Task, byte> activeJobs = new();
+
+    internal int ActiveJobCount => activeJobs.Count;
+
     public async Task ListenAsync(string clientId, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken)
     {
         var uri = new Uri(configuration.SupabaseUrl.Replace("https://", "wss://", StringComparison.OrdinalIgnoreCase) + $"/realtime/v1/websocket?apikey={Uri.EscapeDataString(configuration.SupabasePublishableKey)}&vsn=1.0.0");
@@ -26,7 +31,7 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
         }
     }
 
-    private static async Task ReceiveAsync(ClientWebSocket socket, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken)
+    internal async Task ReceiveAsync(WebSocket socket, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken)
     {
         var buffer = new byte[16 * 1024];
         using var message = new MemoryStream();
@@ -42,7 +47,7 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
                 if (json.RootElement.TryGetProperty("event", out var eventName) && eventName.GetString() == "broadcast" && json.RootElement.TryGetProperty("payload", out var payload) && payload.TryGetProperty("payload", out var body) && body.TryGetProperty("type", out var type) && body.TryGetProperty("version", out var version) && version.GetInt32() == 1)
                 {
                     if (type.GetString() == "REFRESH_PRINTER_INVENTORY") await refreshInventory();
-                    else if (type.GetString() == "PRINT_JOB_AVAILABLE" && body.TryGetProperty("jobId", out var jobId) && Guid.TryParse(jobId.GetString(), out _)) await processJob(jobId.GetString()!);
+                    else if (type.GetString() == "PRINT_JOB_AVAILABLE" && body.TryGetProperty("jobId", out var jobId) && Guid.TryParse(jobId.GetString(), out _)) StartJob(processJob, jobId.GetString()!, cancellationToken);
                 }
             }
             catch (JsonException) { }
@@ -50,7 +55,25 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
         }
     }
 
-    private static async Task SendAsync(ClientWebSocket socket, object value, CancellationToken cancellationToken)
+    private void StartJob(Func<string, Task> processJob, string jobId, CancellationToken cancellationToken)
+    {
+        Task task;
+        try { task = processJob(jobId); }
+        catch (Exception exception) { logger.LogError(exception, "Print job failed before starting for {JobId}", jobId); return; }
+
+        activeJobs.TryAdd(task, 0);
+        _ = ObserveJobAsync(task, jobId, cancellationToken);
+    }
+
+    private async Task ObserveJobAsync(Task task, string jobId, CancellationToken cancellationToken)
+    {
+        try { await task; }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception exception) { logger.LogError(exception, "Print job failed for {JobId}", jobId); }
+        finally { activeJobs.TryRemove(task, out _); }
+    }
+
+    private static async Task SendAsync(WebSocket socket, object value, CancellationToken cancellationToken)
     {
         var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value));
         await socket.SendAsync(bytes, WebSocketMessageType.Text, true, cancellationToken);
