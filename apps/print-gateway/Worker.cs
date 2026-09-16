@@ -1,5 +1,4 @@
 using System.IO.Pipes;
-using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
@@ -7,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lorito.PrintGateway;
 
-public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, IPrinterEnumerator printers, ILogger<Worker> logger) : BackgroundService
+public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, IPrinterEnumerator printers, ILogger<Worker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -21,7 +20,7 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
         if (binding is not null)
         {
             await PublishInventory(binding, stoppingToken);
-            _ = ListenForInventoryRefresh(binding, stoppingToken);
+            _ = Listen(binding, stoppingToken);
         }
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -30,7 +29,7 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
             await PipeProtocol.HandleAsync(pipe, bindingStore, backend, binding =>
             {
                 _ = PublishInventory(binding, stoppingToken);
-                _ = ListenForInventoryRefresh(binding, stoppingToken);
+                _ = Listen(binding, stoppingToken);
                 return Task.CompletedTask;
             }, stoppingToken);
         }
@@ -42,9 +41,9 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
         catch (Exception exception) { logger.LogError(exception, "Printer inventory enumeration failed"); }
     }
 
-    private async Task ListenForInventoryRefresh(Binding binding, CancellationToken cancellationToken)
+    private async Task Listen(Binding binding, CancellationToken cancellationToken)
     {
-        try { await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), cancellationToken); }
+        try { await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), jobId => processor.ProcessAsync(binding, jobId, cancellationToken), cancellationToken); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
         catch (Exception exception) { logger.LogError(exception, "Realtime subscription failed"); }
     }
@@ -73,9 +72,15 @@ public sealed class EmptyPrinterEnumerator : IPrinterEnumerator { public Printer
 
 public sealed class GatewayConfiguration
 {
-    public string BackendUrl { get; } = Environment.GetEnvironmentVariable("PRINT_BACKEND_URL") ?? "";
-    public string SupabaseUrl { get; } = Environment.GetEnvironmentVariable("SUPABASE_URL") ?? "";
-    public string SupabasePublishableKey { get; } = Environment.GetEnvironmentVariable("SUPABASE_PUBLISHABLE_KEY") ?? "";
+    public string BackendUrl { get; }
+    public string SupabaseUrl { get; }
+    public string SupabasePublishableKey { get; }
+    public GatewayConfiguration(string? backendUrl = null, string? supabaseUrl = null, string? supabasePublishableKey = null)
+    {
+        BackendUrl = backendUrl ?? Environment.GetEnvironmentVariable("PRINT_BACKEND_URL") ?? "";
+        SupabaseUrl = supabaseUrl ?? Environment.GetEnvironmentVariable("SUPABASE_URL") ?? "";
+        SupabasePublishableKey = supabasePublishableKey ?? Environment.GetEnvironmentVariable("SUPABASE_PUBLISHABLE_KEY") ?? "";
+    }
     public bool IsValid(out string error)
     {
         if (!Uri.TryCreate(BackendUrl, UriKind.Absolute, out var backend) || backend.Scheme != Uri.UriSchemeHttps) return Fail("PRINT_BACKEND_URL must be HTTPS", out error);
@@ -84,31 +89,6 @@ public sealed class GatewayConfiguration
         error = ""; return true;
     }
     private static bool Fail(string message, out string error) { error = message; return false; }
-}
-
-public sealed class BackendClient(HttpClient httpClient, GatewayConfiguration configuration)
-{
-    public async Task<Binding?> LinkAsync(string code, string machineName, CancellationToken cancellationToken)
-    {
-        using var response = await httpClient.PostAsJsonAsync(new Uri(new Uri(configuration.BackendUrl), "/api/printing/clients/link"), new { code, machineName }, cancellationToken);
-        if (!response.IsSuccessStatusCode) return null;
-        var envelope = await response.Content.ReadFromJsonAsync<LinkEnvelope>(cancellationToken);
-        var data = envelope?.Data;
-        return data is null ? null : new(data.Id, data.CompanyId, data.CompanyName, configuration.BackendUrl, data.Credential);
-    }
-
-    public async Task PublishInventoryAsync(Binding binding, PrinterInventory inventory, CancellationToken cancellationToken)
-    {
-        if (!string.Equals(binding.BackendUrl, configuration.BackendUrl, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("The configured backend does not match the linked environment");
-        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(configuration.BackendUrl), "/api/printing/clients/printers"));
-        request.Headers.Authorization = new("Bearer", binding.Credential);
-        request.Content = JsonContent.Create(new { version = inventory.Version, printers = inventory.Printers.Select(localName => new { localName }) });
-        using var response = await httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-    }
-    private sealed record LinkEnvelope(bool Success, LinkData? Data);
-    private sealed record LinkData(string Id, string CompanyId, string? CompanyName, string Credential);
 }
 
 public sealed class BindingStore

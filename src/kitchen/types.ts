@@ -58,6 +58,8 @@ export type PrintAttempt = {
   printerLocalName: string;
   content: Uint8Array;
   timeoutMs: number;
+  attemptExpiresAt: Date;
+  serverNow: Date;
 };
 
 export type PrintResult = "DELIVERED" | "RETRYABLE_FAILURE" | "FAILED";

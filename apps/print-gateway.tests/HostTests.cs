@@ -36,4 +36,19 @@ public sealed class HostTests
         await host.StartAsync(cancellationToken);
         await host.StopAsync(cancellationToken);
     }
+
+    [Fact]
+    public void Journal_is_atomic_and_does_not_store_printable_bytes_or_external_path_data()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var store = new JournalStore(root);
+        store.Write(new PrintJournal("job/with\\separators", 1, "printer", "Kitchen", "ABC123", "SENDING", null, null, false));
+
+        var journal = store.Read("job/with\\separators");
+        Assert.NotNull(journal);
+        Assert.Equal("SENDING", journal.Phase);
+        Assert.DoesNotContain("job/with", Directory.GetFiles(root).Single());
+        using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Directory.GetFiles(root).Single()));
+        Assert.False(json.RootElement.TryGetProperty("content", out _));
+    }
 }

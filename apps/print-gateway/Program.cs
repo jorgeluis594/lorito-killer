@@ -17,6 +17,13 @@ public static class Program
 #endif
         builder.Services.AddSingleton<HttpClient>();
         builder.Services.AddSingleton<BackendClient>();
+        builder.Services.AddSingleton<JournalStore>();
+#if NET10_0_WINDOWS
+        builder.Services.AddSingleton<IRawPrinter, WindowsRawPrinter>();
+#else
+        builder.Services.AddSingleton<IRawPrinter, UnsupportedRawPrinter>();
+#endif
+        builder.Services.AddSingleton<PrintJobProcessor>();
         builder.Services.AddSingleton<RealtimeClient>();
         builder.Services.AddHostedService<Worker>();
         return builder.Build();
