@@ -229,10 +229,11 @@ export const cancelOrder = protectedAction(
     }
 
     if (
-      orderResponse.data.paymentStatus === "paid" ||
       !canCancelOrder({
         hasPermission: true,
         orderStatus: orderResponse.data.status,
+        paymentStatus: orderResponse.data.paymentStatus,
+        hasDishProduct: orderResponse.data.hasDishProduct ?? false,
         documentStatus: documentResponse.data.status,
         orderCreatedAt: orderResponse.data.createdAt,
       })

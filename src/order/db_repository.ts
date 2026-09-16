@@ -476,6 +476,9 @@ export async function transformOrdersData(
         prismaOrder.paymentStatus.toLowerCase() as Order["paymentStatus"],
       orderType: prismaOrder.orderType,
       companyId: prismaOrder.companyId || "some_company_id",
+      hasDishProduct: (prismaOrderItemsMap[prismaOrder.id] || []).some(
+        (item) => prismaProductsMap[item.productId].productType === "DISH",
+      ),
       orderItems: parsedOrderItems,
       payments: (orderPayments[prismaOrder.id] || []).map(
         mapPrismaPaymentToPayment,

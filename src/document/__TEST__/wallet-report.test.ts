@@ -18,9 +18,9 @@ const document: Document = { id: "document", companyId: "company", orderId: "ord
 ] };
 
 test("report reads wallet details from the selected tenant's documents", async () => {
-  db.document.findMany.mockResolvedValue([{ ...document, documentType: "TICKET", status: "REGISTERED", order: { payments: [{ method: "WALLET", amount: new Prisma.Decimal(4), cashShiftId: "shift", data: { name: "Plin", operationCode: "000123" } }] } }]);
+  db.document.findMany.mockResolvedValue([{ ...document, documentType: "TICKET", status: "REGISTERED", order: { status: "COMPLETED", paymentStatus: "PAID", createdAt: new Date(), orderItems: [], payments: [{ method: "WALLET", amount: new Prisma.Decimal(4), cashShiftId: "shift", data: { name: "Plin", operationCode: "000123" } }] } }]);
   const result = await getMany({ companyId: "company", ticket: true });
-  expect(db.document.findMany.mock.calls[0][0]).toMatchObject({ where: { companyId: "company" }, include: { order: { include: { payments: true } } } });
+  expect(db.document.findMany.mock.calls[0][0]).toMatchObject({ where: { companyId: "company" }, include: { order: { select: { payments: true } } } });
   expect(result.success).toBe(true);
   if (result.success) expect(result.data[0].payments?.[0]).toMatchObject({ name: "Plin", operationCode: "000123", amount: 4 });
 });

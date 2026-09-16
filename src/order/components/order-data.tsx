@@ -109,7 +109,6 @@ export default async function OrderData({ order }: { order: Order }) {
               )}
             {documentResponse.success &&
               session.user &&
-              order.paymentStatus !== "paid" &&
               canCancelOrder({
                 hasPermission: hasPermission(
                   session.user.role,
@@ -117,6 +116,8 @@ export default async function OrderData({ order }: { order: Order }) {
                   "delete",
                 ),
                 orderStatus: order.status,
+                paymentStatus: order.paymentStatus,
+                hasDishProduct: order.hasDishProduct ?? false,
                 documentStatus: documentResponse.data.status,
                 orderCreatedAt: order.createdAt,
               }) && (

@@ -61,6 +61,7 @@ export type Order = {
   cancellationReason?: string;
   status: Status;
   paymentStatus?: PaymentStatus;
+  hasDishProduct?: boolean;
   orderType?: "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
   payments: Payment[];
   discount?: Discount;

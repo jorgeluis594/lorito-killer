@@ -1,5 +1,5 @@
 import { Customer } from "@/customer/types";
-import { Payment, Status } from "@/order/types";
+import { Payment, PaymentStatus, Status } from "@/order/types";
 
 export const INVOICE = "invoice";
 export type InvoiceType = typeof INVOICE;
@@ -108,6 +108,8 @@ export type SearchParams = {
 export type SalesReportDocument = Document & {
   customer?: Customer;
   orderStatus: Status;
+  paymentStatus: PaymentStatus;
+  hasDishProduct: boolean;
   orderCreatedAt: Date;
 };
 

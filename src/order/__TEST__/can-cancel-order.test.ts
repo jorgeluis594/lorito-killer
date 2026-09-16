@@ -4,6 +4,8 @@ import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 const now = new Date("2026-09-11T12:00:00.000Z");
 const eligible = {
   hasPermission: true,
+  paymentStatus: "paid" as const,
+  hasDishProduct: false,
   orderStatus: "completed" as const,
   documentStatus: "registered" as const,
   orderCreatedAt: new Date(now.getTime() - 167 * 60 * 60 * 1000),
@@ -15,7 +17,18 @@ describe("canCancelOrder", () => {
     expect(canCancelOrder(eligible)).toBe(true);
   });
 
+  test("allows pending payment with dishes", () => {
+    expect(
+      canCancelOrder({
+        ...eligible,
+        paymentStatus: "pending",
+        hasDishProduct: true,
+      }),
+    ).toBe(true);
+  });
+
   test.for([
+    { name: "when paid with dishes", values: { hasDishProduct: true } },
     { name: "without permission", values: { hasPermission: false } },
     { name: "when the order is pending", values: { orderStatus: "pending" } },
     {
