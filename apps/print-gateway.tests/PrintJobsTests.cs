@@ -31,6 +31,27 @@ public sealed class PrintJobsTests
     }
 
     [Fact]
+    public async Task Lost_report_for_retryable_failure_does_not_resend_duplicate_attempt()
+    {
+        var handler = new DuplicateAttemptHandler(Encoding.UTF8.GetBytes("ESC/POS"));
+        var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
+        var printer = new CapturingPrinter { Result = new("RETRYABLE_FAILURE", "offline") };
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var store = new JournalStore(root);
+        var processor = new PrintJobProcessor(backend, store, printer, NullLogger<PrintJobProcessor>.Instance);
+
+        await processor.ProcessAsync(Binding(), "job", CancellationToken.None);
+        await processor.ProcessAsync(Binding(), "job", CancellationToken.None);
+
+        Assert.Equal(1, printer.Calls);
+        Assert.Equal(2, handler.Claims);
+        Assert.Equal(2, handler.Reports);
+        Assert.Equal("RETRYABLE_FAILURE", handler.LastResult);
+        Assert.Equal("offline", handler.LastError);
+    }
+
+    [Fact]
     public async Task Sending_after_restart_is_reported_uncertain_without_resending()
     {
         var handler = new StubHandler(Encoding.UTF8.GetBytes("ESC/POS"));
@@ -169,6 +190,34 @@ public sealed class PrintJobsTests
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
             }
             return base.SendAsync(request, cancellationToken);
+        }
+    }
+
+    private sealed class DuplicateAttemptHandler(byte[] content) : StubHandler(content)
+    {
+        public int Claims { get; private set; }
+        public int Reports { get; private set; }
+        public string? LastResult { get; private set; }
+        public string? LastError { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.RequestUri?.AbsolutePath.EndsWith("/claim", StringComparison.Ordinal) == true)
+            {
+                Claims++;
+                var now = DateTimeOffset.UtcNow;
+                var json = $"{{\"success\":true,\"data\":{{\"jobId\":\"job\",\"attemptNumber\":1,\"printerId\":\"printer-1\",\"printerLocalName\":\"Kitchen\",\"timeoutMs\":10000,\"contentBase64\":\"{Convert.ToBase64String(content)}\",\"attemptExpiresAt\":\"{now.AddSeconds(10):O}\",\"serverNow\":\"{now:O}\"}}}}";
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+            }
+
+            Reports++;
+            var body = await request.Content!.ReadAsStringAsync(cancellationToken);
+            using var document = System.Text.Json.JsonDocument.Parse(body);
+            LastResult = document.RootElement.GetProperty("result").GetString();
+            LastError = document.RootElement.GetProperty("error").GetString();
+            var success = Reports > 1;
+            var status = success ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
+            return new HttpResponseMessage(status) { Content = new StringContent($"{{\"success\":{success.ToString().ToLowerInvariant()},\"data\":{{\"jobId\":\"job\",\"attemptNumber\":1,\"status\":\"{LastResult}\"}}}}", Encoding.UTF8, "application/json") };
         }
     }
 }

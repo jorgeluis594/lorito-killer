@@ -194,6 +194,11 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
         logger.LogInformation("operation=claim status=authorized job={JobId} attempt={AttemptNumber}", claim.JobId, claim.AttemptNumber);
         var hash = Convert.ToHexString(SHA256.HashData(claim.Content));
         if (previous is not null && previous.AttemptNumber == claim.AttemptNumber && previous.ContentSha256 != hash) { await SaveAndReport(binding, previous with { Phase = "RESULT", Result = "FAILED", Error = "El contenido del intento cambió", BackendConfirmed = false }, cancellationToken); return; }
+        if (previous is not null && claim.AttemptNumber <= previous.AttemptNumber)
+        {
+            if (claim.AttemptNumber == previous.AttemptNumber) await Report(binding, previous, previous.Result ?? "FAILED", previous.Error, cancellationToken);
+            return;
+        }
         var printerMutex = printers.GetOrAdd(claim.PrinterId, _ => new(1, 1));
         if (!await printerMutex.WaitAsync(0, cancellationToken))
         {
