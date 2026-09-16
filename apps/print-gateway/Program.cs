@@ -8,6 +8,10 @@ public static class Program
     public static IHost CreateHost(string[]? args = null)
     {
         var builder = Host.CreateApplicationBuilder(args ?? []);
+        var fileLogger = new DailyFileLoggerProvider(Path.Combine(new GatewayConfiguration().DataPath, "logs"));
+        builder.Logging.AddProvider(fileLogger);
+        builder.Services.AddSingleton(fileLogger);
+        builder.Services.AddWindowsService(options => options.ServiceName = "LoritoPrintGateway");
         builder.Services.AddSingleton<GatewayConfiguration>();
         builder.Services.AddSingleton<BindingStore>();
 #if NET10_0_WINDOWS

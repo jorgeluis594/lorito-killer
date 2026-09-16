@@ -191,6 +191,7 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
             await Report(binding, new PrintJournal(jobId, exception.AttemptNumber, "", "", "", "RESULT", "FAILED", exception.Message, false), "FAILED", exception.Message, cancellationToken);
             return;
         }
+        logger.LogInformation("operation=claim status=authorized job={JobId} attempt={AttemptNumber}", claim.JobId, claim.AttemptNumber);
         var hash = Convert.ToHexString(SHA256.HashData(claim.Content));
         if (previous is not null && previous.AttemptNumber == claim.AttemptNumber && previous.ContentSha256 != hash) { await SaveAndReport(binding, previous with { Phase = "RESULT", Result = "FAILED", Error = "El contenido del intento cambió", BackendConfirmed = false }, cancellationToken); return; }
         var printerMutex = printers.GetOrAdd(claim.PrinterId, _ => new(1, 1));
@@ -249,6 +250,7 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
             var confirmed = response.HttpSuccess && string.Equals(response.JobId, record.JobId, StringComparison.Ordinal) && string.Equals(response.Status, result, StringComparison.Ordinal);
             if (!confirmed) logger.LogWarning("Backend status {BackendStatus} differs from local result {LocalResult} for {JobId}", response.Status, result, record.JobId);
             journal.Write(record with { BackendConfirmed = confirmed, BackendStatus = response.Status, ConfirmedAt = confirmed ? DateTimeOffset.UtcNow : null });
+            logger.LogInformation("operation=report status={Status} job={JobId} attempt={AttemptNumber} confirmed={Confirmed}", response.Status, record.JobId, record.AttemptNumber, confirmed);
         }
         catch (Exception exception) { logger.LogError(exception, "Print result report failed for {JobId}", record.JobId); }
     }

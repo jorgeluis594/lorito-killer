@@ -1,10 +1,11 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Lorito.PrintGateway;
 
-public sealed class RealtimeClient(GatewayConfiguration configuration)
+public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<RealtimeClient> logger)
 {
     public async Task ListenAsync(string clientId, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken)
     {
@@ -15,12 +16,13 @@ public sealed class RealtimeClient(GatewayConfiguration configuration)
             {
                 using var socket = new ClientWebSocket();
                 await socket.ConnectAsync(uri, cancellationToken);
+                logger.LogInformation("operation=connection status=connected client={ClientId}", clientId);
                 await SendAsync(socket, new { topic = $"realtime:print-client:{clientId}", @event = "phx_join", payload = new { config = new { broadcast = new { ack = false, self = false }, presence = new { key = "" } } }, @ref = "1" }, cancellationToken);
                 await refreshInventory();
                 await ReceiveAsync(socket, refreshInventory, processJob, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
-            catch { await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken); }
+            catch (Exception exception) { logger.LogWarning(exception, "operation=connection status=reconnecting client={ClientId}", clientId); await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken); }
         }
     }
 

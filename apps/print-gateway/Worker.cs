@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lorito.PrintGateway;
 
-public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, JournalStore journal, IPrinterEnumerator printers, ILogger<Worker> logger) : BackgroundService
+public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, JournalStore journal, IPrinterEnumerator printers, DailyFileLoggerProvider fileLogger, ILogger<Worker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -16,13 +16,16 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
             await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
             return;
         }
+        fileLogger.Cleanup(DateTimeOffset.UtcNow);
+        logger.LogInformation("operation=startup status=started");
+        _ = CleanupJournal(stoppingToken);
         var binding = bindingStore.Read();
         if (binding is not null)
         {
-            _ = CleanupJournal(stoppingToken);
             await PublishInventory(binding, stoppingToken);
             _ = Listen(binding, stoppingToken);
         }
+        else logger.LogInformation("operation=connection status=unlinked");
         while (!stoppingToken.IsCancellationRequested)
         {
             await using var pipe = PipeFactory.Create();
@@ -40,7 +43,7 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            try { journal.Cleanup(DateTimeOffset.UtcNow); }
+            try { fileLogger.Cleanup(DateTimeOffset.UtcNow); journal.Cleanup(DateTimeOffset.UtcNow); }
             catch (Exception exception) { logger.LogError(exception, "Print journal cleanup failed"); }
             try { await Task.Delay(TimeSpan.FromDays(1), cancellationToken); }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
@@ -49,15 +52,15 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
 
     private async Task PublishInventory(Binding binding, CancellationToken cancellationToken)
     {
-        try { await backend.PublishInventoryAsync(binding, printers.Enumerate(), cancellationToken); }
-        catch (Exception exception) { logger.LogError(exception, "Printer inventory enumeration failed"); }
+        try { await backend.PublishInventoryAsync(binding, printers.Enumerate(), cancellationToken); logger.LogInformation("operation=inventory status=published client={ClientId}", binding.ClientId); }
+        catch (Exception exception) { logger.LogError(exception, "operation=inventory status=failed client={ClientId}", binding.ClientId); }
     }
 
     private async Task Listen(Binding binding, CancellationToken cancellationToken)
     {
-        try { await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), jobId => processor.ProcessAsync(binding, jobId, cancellationToken), cancellationToken); }
+        try { logger.LogInformation("operation=connection status=connecting client={ClientId}", binding.ClientId); await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), jobId => processor.ProcessAsync(binding, jobId, cancellationToken), cancellationToken); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
-        catch (Exception exception) { logger.LogError(exception, "Realtime subscription failed"); }
+        catch (Exception exception) { logger.LogError(exception, "operation=connection status=failed client={ClientId}", binding.ClientId); }
     }
 }
 
@@ -87,11 +90,13 @@ public sealed class GatewayConfiguration
     public string BackendUrl { get; }
     public string SupabaseUrl { get; }
     public string SupabasePublishableKey { get; }
+    public string DataPath { get; }
     public GatewayConfiguration(string? backendUrl = null, string? supabaseUrl = null, string? supabasePublishableKey = null)
     {
         BackendUrl = backendUrl ?? Environment.GetEnvironmentVariable("PRINT_BACKEND_URL") ?? "";
         SupabaseUrl = supabaseUrl ?? Environment.GetEnvironmentVariable("SUPABASE_URL") ?? "";
         SupabasePublishableKey = supabasePublishableKey ?? Environment.GetEnvironmentVariable("SUPABASE_PUBLISHABLE_KEY") ?? "";
+        DataPath = Environment.GetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway");
     }
     public bool IsValid(out string error)
     {

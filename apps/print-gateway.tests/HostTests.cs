@@ -1,6 +1,7 @@
 using Lorito.PrintGateway;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Lorito.PrintGateway.Tests;
@@ -78,5 +79,24 @@ public sealed class HostTests
         Assert.Equal(1, store.Cleanup(DateTimeOffset.UtcNow));
         Assert.Null(store.Read("old"));
         Assert.NotNull(store.Read("pending"));
+    }
+
+    [Fact]
+    public void Daily_logs_are_rotated_after_seven_days_and_redact_credentials_and_content()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var provider = new DailyFileLoggerProvider(root);
+        provider.CreateLogger("test").LogInformation("operation=report credential=secret contentBase64=bytes");
+
+        var log = Directory.GetFiles(root, "*.log").Single();
+        var old = Path.Combine(root, "gateway-old.log");
+        File.WriteAllText(old, "old");
+        File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-8));
+
+        Assert.DoesNotContain("secret", File.ReadAllText(log));
+        Assert.DoesNotContain("bytes", File.ReadAllText(log));
+        Assert.Equal(1, provider.Cleanup(DateTimeOffset.UtcNow));
+        Assert.False(File.Exists(old));
+        Assert.True(File.Exists(log));
     }
 }
