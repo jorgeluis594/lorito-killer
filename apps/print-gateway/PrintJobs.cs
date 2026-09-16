@@ -125,6 +125,25 @@ public sealed class JournalStore
             catch (JsonException exception) { throw new InvalidDataException("Invalid journal", exception); }
         }
     }
+
+    public IReadOnlyList<PrintJournal> ReadUnconfirmed()
+    {
+        lock (gate)
+        {
+            if (!Directory.Exists(root)) return [];
+            var journals = new List<PrintJournal>();
+            foreach (var path in Directory.EnumerateFiles(root, "*.json"))
+            {
+                try
+                {
+                    var journal = JsonSerializer.Deserialize<PrintJournal>(File.ReadAllBytes(path), Options);
+                    if (journal is not null && IsValid(journal) && !journal.BackendConfirmed) journals.Add(journal);
+                }
+                catch (Exception) { }
+            }
+            return journals;
+        }
+    }
     public void Write(PrintJournal journal)
     {
         lock (gate)
@@ -154,6 +173,7 @@ public sealed class JournalStore
         }
     }
     private string PathFor(string jobId) => Path.Combine(root, Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(jobId))).ToLowerInvariant() + ".json");
+    private static bool IsValid(PrintJournal journal) => !string.IsNullOrWhiteSpace(journal.JobId) && journal.AttemptNumber > 0 && !string.IsNullOrWhiteSpace(journal.Phase);
 }
 
 public sealed record NativePrintResult(string Result, string? Error);
@@ -169,6 +189,35 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
         await mutex.WaitAsync(cancellationToken);
         try { await ProcessLockedAsync(binding, jobId, cancellationToken); }
         finally { mutex.Release(); }
+    }
+
+    public async Task ReconcileAsync(Binding binding, CancellationToken cancellationToken)
+    {
+        foreach (var pending in journal.ReadUnconfirmed())
+        {
+            try
+            {
+                var mutex = jobs.GetOrAdd(pending.JobId, _ => new(1, 1));
+                await mutex.WaitAsync(cancellationToken);
+                try { await ReconcileLockedAsync(binding, pending.JobId, cancellationToken); }
+                finally { mutex.Release(); }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            catch (Exception exception) { logger.LogError(exception, "Print journal reconciliation failed for {JobId}", pending.JobId); }
+        }
+    }
+
+    private async Task ReconcileLockedAsync(Binding binding, string jobId, CancellationToken cancellationToken)
+    {
+        var current = journal.Read(jobId);
+        if (current is null || current.BackendConfirmed) return;
+        if (current.Phase == "SENDING")
+        {
+            current = current with { Phase = "RESULT", Result = "FAILED", Error = "Resultado incierto tras reinicio" };
+            journal.Write(current);
+        }
+        if (current.Phase == "RESULT" && current.Result is "DELIVERED" or "FAILED" or "RETRYABLE_FAILURE")
+            await Report(binding, current, current.Result, current.Error, cancellationToken);
     }
 
     private async Task ProcessLockedAsync(Binding binding, string jobId, CancellationToken cancellationToken)
@@ -252,7 +301,7 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
         try
         {
             var response = await backend.ReportAsync(binding, record.JobId, record.AttemptNumber, result, error, cancellationToken);
-            var confirmed = response.HttpSuccess && string.Equals(response.JobId, record.JobId, StringComparison.Ordinal) && string.Equals(response.Status, result, StringComparison.Ordinal);
+            var confirmed = response.HttpSuccess && string.Equals(response.JobId, record.JobId, StringComparison.Ordinal) && (string.Equals(response.Status, result, StringComparison.Ordinal) || result == "RETRYABLE_FAILURE" && response.Status == "PENDING");
             if (!confirmed) logger.LogWarning("Backend status {BackendStatus} differs from local result {LocalResult} for {JobId}", response.Status, result, record.JobId);
             journal.Write(record with { BackendConfirmed = confirmed, BackendStatus = response.Status, ConfirmedAt = confirmed ? DateTimeOffset.UtcNow : null });
             logger.LogInformation("operation=report status={Status} job={JobId} attempt={AttemptNumber} confirmed={Confirmed}", response.Status, record.JobId, record.AttemptNumber, confirmed);

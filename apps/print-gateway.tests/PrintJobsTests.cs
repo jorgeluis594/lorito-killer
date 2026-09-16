@@ -114,6 +114,85 @@ public sealed class PrintJobsTests
         await first;
     }
 
+    [Fact]
+    public void Journal_scan_returns_only_valid_unconfirmed_json_records()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var store = new JournalStore(root);
+        store.Write(new PrintJournal("pending", 1, "p", "P", "hash", "RESULT", "DELIVERED", null, false));
+        store.Write(new PrintJournal("confirmed", 1, "p", "P", "hash", "RESULT", "DELIVERED", null, true));
+        File.WriteAllText(Path.Combine(root, "broken.json"), "{");
+        File.WriteAllText(Path.Combine(root, "temporary.json.tmp"), "{}");
+
+        var journals = store.ReadUnconfirmed();
+
+        Assert.Single(journals);
+        Assert.Equal("pending", journals[0].JobId);
+    }
+
+    [Fact]
+    public async Task Reconciliation_retries_a_failed_report_without_claiming_or_printing()
+    {
+        var handler = new ReconciliationHandler("DELIVERED") { FailReports = 1 };
+        var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
+        var printer = new CapturingPrinter();
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var store = new JournalStore(root);
+        store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "RESULT", "DELIVERED", null, false));
+        var processor = new PrintJobProcessor(backend, store, printer, NullLogger<PrintJobProcessor>.Instance);
+
+        await processor.ReconcileAsync(Binding(), CancellationToken.None);
+        await processor.ReconcileAsync(Binding(), CancellationToken.None);
+
+        Assert.Equal(0, handler.Claims);
+        Assert.Equal(2, handler.Reports);
+        Assert.True(store.Read("job")!.BackendConfirmed);
+        Assert.Equal(0, printer.Calls);
+    }
+
+    [Fact]
+    public async Task Reconciliation_reports_sending_as_uncertain_without_printing()
+    {
+        var handler = new ReconciliationHandler("FAILED");
+        var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
+        var printer = new CapturingPrinter();
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var store = new JournalStore(root);
+        store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "SENDING", null, null, false));
+
+        await new PrintJobProcessor(backend, store, printer, NullLogger<PrintJobProcessor>.Instance).ReconcileAsync(Binding(), CancellationToken.None);
+
+        Assert.Equal(0, handler.Claims);
+        Assert.Equal(1, handler.Reports);
+        Assert.Equal("FAILED", store.Read("job")!.Result);
+        Assert.Equal(0, printer.Calls);
+    }
+
+    [Fact]
+    public async Task Retryable_failure_is_confirmed_by_pending_backend_status()
+    {
+        var handler = new ReconciliationHandler("PENDING");
+        var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var store = new JournalStore(root);
+        store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "RESULT", "RETRYABLE_FAILURE", "offline", false));
+
+        await new PrintJobProcessor(backend, store, new CapturingPrinter(), NullLogger<PrintJobProcessor>.Instance).ReconcileAsync(Binding(), CancellationToken.None);
+
+        Assert.True(store.Read("job")!.BackendConfirmed);
+    }
+
+    [Fact]
+    public void Reconciliation_jitter_stays_between_four_and_six_seconds()
+    {
+        foreach (var value in Enumerable.Range(0, 101).Select(index => index / 100d))
+            Assert.InRange(Worker.ReconciliationDelay(() => value).TotalSeconds, 4, 6);
+    }
+
     private static Binding Binding() => new("client", "company", "Company", "https://backend.test", "lpk_test");
 
     private sealed class CapturingPrinter : IRawPrinter
@@ -218,6 +297,27 @@ public sealed class PrintJobsTests
             var success = Reports > 1;
             var status = success ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
             return new HttpResponseMessage(status) { Content = new StringContent($"{{\"success\":{success.ToString().ToLowerInvariant()},\"data\":{{\"jobId\":\"job\",\"attemptNumber\":1,\"status\":\"{LastResult}\"}}}}", Encoding.UTF8, "application/json") };
+        }
+    }
+
+    private sealed class ReconciliationHandler(string status) : HttpMessageHandler
+    {
+        public int Claims { get; private set; }
+        public int Reports { get; private set; }
+        public int FailReports { get; init; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.RequestUri?.AbsolutePath.EndsWith("/claim", StringComparison.Ordinal) == true)
+            {
+                Claims++;
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Conflict));
+            }
+            Reports++;
+            var successful = Reports > FailReports;
+            var responseStatus = successful ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
+            var body = $"{{\"success\":{successful.ToString().ToLowerInvariant()},\"data\":{{\"jobId\":\"job\",\"attemptNumber\":1,\"status\":\"{status}\"}}}}";
+            return Task.FromResult(new HttpResponseMessage(responseStatus) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
         }
     }
 }
