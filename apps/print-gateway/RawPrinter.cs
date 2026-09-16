@@ -1,6 +1,6 @@
 namespace Lorito.PrintGateway;
 
-#if NET10_0_WINDOWS
+#if WINDOWS
 using System.Runtime.InteropServices;
 using System.Text;
 

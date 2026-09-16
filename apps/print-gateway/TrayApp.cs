@@ -1,4 +1,4 @@
-#if NET10_0_WINDOWS
+#if WINDOWS
 using System.Windows.Forms;
 using System.IO.Pipes;
 using System.Text.Json;

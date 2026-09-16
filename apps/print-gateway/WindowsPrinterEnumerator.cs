@@ -1,4 +1,4 @@
-#if NET10_0_WINDOWS
+#if WINDOWS
 using System.Drawing.Printing;
 
 namespace Lorito.PrintGateway;
