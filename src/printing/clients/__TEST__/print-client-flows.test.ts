@@ -49,7 +49,11 @@ describe("print client linking", () => {
   test("returns the credential once and persists only its hash", async () => {
     const consumeCode = vi
       .fn()
-      .mockResolvedValue({ id: "client-1", companyId: "company-1" });
+      .mockResolvedValue({
+        id: "client-1",
+        companyId: "company-1",
+        companyName: "Mi negocio",
+      });
     const result = await linkPrintClient(
       {
         consumeCode,
@@ -65,6 +69,7 @@ describe("print client linking", () => {
       data: {
         id: "client-1",
         companyId: "company-1",
+        companyName: "Mi negocio",
         credential: "lpk_secret",
       },
     });

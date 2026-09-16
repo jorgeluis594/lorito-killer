@@ -7,7 +7,9 @@ type Dependencies = {
     machineName: string;
     credentialHash: string;
     now: Date;
-  }) => Promise<{ id: string; companyId: string } | undefined>;
+  }) => Promise<
+    { id: string; companyId: string; companyName: string | null } | undefined
+  >;
   createCredential: () => string;
   hashCode: (code: string) => string;
   hashCredential: (credential: string) => string;
