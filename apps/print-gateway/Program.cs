@@ -8,21 +8,22 @@ public static class Program
     public static IHost CreateHost(string[]? args = null)
     {
         var builder = Host.CreateApplicationBuilder(args ?? []);
-        var fileLogger = new DailyFileLoggerProvider(Path.Combine(new GatewayConfiguration().DataPath, "logs"));
+        var configuration = new GatewayConfiguration();
+        var fileLogger = new DailyFileLoggerProvider(Path.Combine(configuration.DataPath, "logs"));
         builder.Logging.AddProvider(fileLogger);
         builder.Services.AddSingleton(fileLogger);
         builder.Services.AddWindowsService(options => options.ServiceName = "LoritoPrintGateway");
-        builder.Services.AddSingleton<GatewayConfiguration>();
-        builder.Services.AddSingleton<BindingStore>();
-#if NET10_0_WINDOWS
+        builder.Services.AddSingleton(configuration);
+        builder.Services.AddSingleton(_ => new BindingStore(configuration.DataPath));
+#if WINDOWS
         builder.Services.AddSingleton<IPrinterEnumerator, WindowsPrinterEnumerator>();
 #else
         builder.Services.AddSingleton<IPrinterEnumerator, EmptyPrinterEnumerator>();
 #endif
         builder.Services.AddSingleton<HttpClient>();
         builder.Services.AddSingleton<BackendClient>();
-        builder.Services.AddSingleton<JournalStore>();
-#if NET10_0_WINDOWS
+        builder.Services.AddSingleton(_ => new JournalStore(Path.Combine(configuration.DataPath, "jobs")));
+#if WINDOWS
         builder.Services.AddSingleton<IRawPrinter, WindowsRawPrinter>();
 #else
         builder.Services.AddSingleton<IRawPrinter, UnsupportedRawPrinter>();
@@ -37,7 +38,7 @@ public static class Program
     {
         if (args.Contains("--tray", StringComparer.OrdinalIgnoreCase))
         {
-#if NET10_0_WINDOWS
+#if WINDOWS
             TrayApp.Run();
             return Task.CompletedTask;
 #else
