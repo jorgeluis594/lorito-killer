@@ -9,6 +9,7 @@ public static class PipeProtocol
 {
     public const string Name = "LoritoPrintGateway.v1";
     public const int MaxMessageBytes = 8 * 1024;
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public static byte[] Frame(string json)
     {
@@ -28,7 +29,7 @@ public static class PipeProtocol
         if (length is < 1 or > MaxMessageBytes) throw new InvalidDataException("Invalid pipe message length");
         var payload = new byte[length];
         await stream.ReadExactlyAsync(payload, cancellationToken);
-        var request = JsonSerializer.Deserialize<Request>(payload) ?? throw new InvalidDataException("Invalid pipe JSON");
+        var request = JsonSerializer.Deserialize<Request>(payload, JsonOptions) ?? throw new InvalidDataException("Invalid pipe JSON");
         if (request.Version != 1) throw new InvalidDataException("Unsupported pipe version");
 
         Response response;
@@ -51,7 +52,7 @@ public static class PipeProtocol
         else throw new InvalidDataException("Unsupported pipe operation");
 
     Write:
-        var json = JsonSerializer.Serialize(response);
+        var json = JsonSerializer.Serialize(response, JsonOptions);
         await stream.WriteAsync(Frame(json), cancellationToken);
         await stream.FlushAsync(cancellationToken);
     }

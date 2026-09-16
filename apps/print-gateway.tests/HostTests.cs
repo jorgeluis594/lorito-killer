@@ -18,6 +18,27 @@ public sealed class HostTests
     }
 
     [Fact]
+    public async Task Pipe_handles_camel_case_status_request_and_response()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var request = PipeProtocol.Frame("{\"version\":1,\"operation\":\"GET_STATUS\"}");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var stream = new MemoryStream();
+        await stream.WriteAsync(request, cancellationToken);
+        stream.Position = 0;
+        var store = new BindingStore(root);
+        var backend = new BackendClient(new HttpClient(), new GatewayConfiguration());
+
+        await PipeProtocol.HandleAsync(stream, store, backend, _ => Task.CompletedTask, cancellationToken);
+
+        stream.Position = request.Length;
+        var response = await PipeProtocol.ReadAsync(stream, cancellationToken);
+        using var json = System.Text.Json.JsonDocument.Parse(response);
+        Assert.True(json.RootElement.GetProperty("success").GetBoolean());
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, json.RootElement.GetProperty("status").ValueKind);
+    }
+
+    [Fact]
     public void Configuration_requires_https_and_all_public_runtime_variables()
     {
         var configuration = new GatewayConfiguration();
