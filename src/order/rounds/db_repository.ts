@@ -245,9 +245,16 @@ const productTypes = {
 const requestHash = (items: RoundLineInput[]) =>
   createHash("sha256").update(JSON.stringify(items)).digest("hex");
 
-const existingRound = async (db: Db, roundId: string, companyId: string) => {
+const existingRound = async (
+  db: Db,
+  input: { roundId: string; companyId: string; sessionId?: string },
+) => {
   const round = await db.orderRound.findUnique({
-    where: { id: roundId, order: { companyId } },
+    where: {
+      id: input.roundId,
+      order: { companyId: input.companyId },
+      ...(input.sessionId ? { tableSessionId: input.sessionId } : {}),
+    },
     include: {
       order: { select: { tableSession: { select: { tableId: true } } } },
       kitchenTickets: {
@@ -272,6 +279,14 @@ const existingRound = async (db: Db, roundId: string, companyId: string) => {
     },
   };
 };
+
+export async function findExistingOrderRound(input: {
+  roundId: string;
+  companyId: string;
+  sessionId: string;
+}): Promise<SendRoundResult | null> {
+  return (await existingRound(prisma() as Db, input))?.result ?? null;
+}
 
 export async function submitOrderRound(
   input: {
@@ -318,7 +333,10 @@ export async function submitOrderRound(
           },
           {
             findExisting: (roundId) =>
-              existingRound(db, roundId, input.companyId),
+              existingRound(db, {
+                roundId,
+                companyId: input.companyId,
+              }),
             findProducts: async (productIds) => {
               const products = await db.product.findMany({
                 where: {

@@ -42,6 +42,7 @@ import { TableDraftSchema } from "./schemas";
 import { openTableForService, updateTableDraft } from "./draft-repository";
 import {
   submitOrderRound,
+  findExistingOrderRound,
   findOrderRounds,
 } from "@/order/rounds/db_repository";
 import { getOrderRounds } from "@/order/rounds/use-cases/get-order-rounds";
@@ -93,6 +94,12 @@ export const sendTableDraft = protectedAction(
     });
     if (!parsed.success)
       return { success: false, message: "El pedido no es válido." };
+    const existing = await findExistingOrderRound({
+      roundId: parsed.data.roundId,
+      companyId: user.companyId,
+      sessionId: parsed.data.sessionId,
+    });
+    if (existing) return { success: true, data: existing };
     const draft = await updateTableDraft({
       ...parsed.data,
       companyId: user.companyId,
