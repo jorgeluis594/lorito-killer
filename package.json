@@ -15,6 +15,7 @@
     "seed": "ts-node --project src/seeds/tsconfig.json src/seeds/seed.ts",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:docker": "docker compose run --rm web npm run test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
