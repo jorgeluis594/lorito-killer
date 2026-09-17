@@ -10,9 +10,9 @@
 
 **Hay tres pendientes. B1 fue corregido y cubierto con una prueba de regresión; B2, B3 y B4 siguen abiertos.**
 
-### 1. Corregir los totales de caja
+### 1. Corregir los totales de caja — RESUELTO
 
-- **Qué falla:** una venta anulada conserva su pago. La migración la marca como `PAID` y el nuevo cálculo de caja vuelve a sumarla, aunque siga anulada.
+- **Problema corregido:** una venta anulada conserva su pago. La migración la marca como `PAID`, pero el cálculo actualizado de caja ya no la suma.
 - **Ejemplo:** una venta de S/ 100 anulada antes no sumaba; con el PR puede agregar S/ 100 a los totales de caja.
 - **Qué hacer:** corregir el filtro de `src/cash-shift/db_repository.ts` para excluir pedidos `CANCELLED`. Revisar tanto ventas anuladas antes de migrar como anulaciones realizadas después. Cambiar solo la migración no resuelve ambos casos.
 - **Cómo comprobarlo:** probar una caja con una venta válida y otra anulada con pago. Solo la válida debe sumar en ventas, desgloses por medio de pago y cálculo del importe en caja. Comparar también una caja histórica antes y después.
@@ -43,7 +43,7 @@
 
 ### Qué no hace falta hacer
 
-No hace falta convertir rondas antiguas, reconstruir deliveries ni migrar cancelaciones históricas de restaurante: el usuario confirmó que no existen ventas ni clientes usando restaurante. Sí hacen falta las tablas nuevas para comenzar a usarlo. Los cuatro pendientes anteriores siguen aplicando porque afectan a ventas normales, tablas compartidas o al despliegue.
+No hace falta convertir rondas antiguas, reconstruir deliveries ni migrar cancelaciones históricas de restaurante: el usuario confirmó que no existen ventas ni clientes usando restaurante. Sí hacen falta las tablas nuevas para comenzar a usarlo. Los tres pendientes restantes siguen aplicando porque afectan a ventas normales, tablas compartidas o al despliegue.
 
 **La salida esperada es concreta:** caja sin sumar anulaciones, dashboard con estados correctos, transición sin ventas cobradas mal clasificadas y un ensayo de despliegue satisfactorio. Hasta entonces, el reporte no recomienda desplegar.
 
@@ -59,7 +59,7 @@ Contexto confirmado por el usuario: todavía no existe ninguna orden de venta de
 
 | ID | Prioridad | Hallazgo | Condición para levantarlo |
 | --- | --- | --- | --- |
-| B1 | Alta | Ventas anuladas con pagos se incluyen en los totales de caja | Excluir pedidos anulados del cálculo y cubrir la regresión |
+| B1 | Alta | Ventas anuladas con pagos se incluyen en los totales de caja | Resuelto: se excluyen pedidos anulados y la regresión está cubierta |
 | B2 | Alta | Ventas de la versión anterior durante la transición pueden quedar pagadas pero marcadas `PENDING` | Garantizar una transición sin escrituras antiguas o implementar compatibilidad y reconciliación |
 | B3 | Alta | No hay validación satisfactoria del commit: CI y preview fallidos | Resolver o aislar justificadamente los fallos y demostrar build y pruebas pertinentes exitosos |
 | B4 | Media | Las ventas anuladas con pagos aparecen como completadas en ventas recientes | Corregir la clasificación visual y verificar el caso de anulación con pago conservado |
@@ -78,7 +78,7 @@ Se extrajeron directamente de ambos commits el predicado de inclusión en caja y
 | Caso | Caja antes → después | Ventas recientes antes → después | Resultado |
 | --- | --- | --- | --- |
 | Venta completada, con pago y `PAID` | Incluida → incluida | Completada → completada | Sin cambio en estos dos resultados |
-| Venta anulada, conserva pago y queda `PAID` | Excluida → incluida | Anulada → completada | Dos regresiones confirmadas: B1 y B4 |
+| Venta anulada, conserva pago y queda `PAID` | Excluida → excluida | Anulada → completada | B1 resuelto; B4 sigue abierto |
 | Venta completada con pago, creada por versión anterior después del backfill; queda `PENDING` | Incluida → excluida | Completada → pendiente | Regresión condicionada a la ventana de despliegue: B2 |
 | Pedido `PENDING` con pago y `PAID` | Excluido → incluido | Pendiente → completado | Cambio semántico confirmado; no se comprobó que existan estos registros en producción |
 
@@ -94,7 +94,7 @@ La tercera fila también describe los resultados de un histórico `COMPLETED` qu
 | Stock y comprobante | La acción mantiene la secuencia transaccional de pedido, actualización de stock, comprobante y despacho fiscal; no cambian los archivos de stock comparados | No se identificó una regresión en esa secuencia por el diff; no se ejecutó una venta completa contra servicios reales |
 | Anulación fiscal sin platos | `canCancelOrder` conserva permiso, estado `completed`, comprobante `registered` y ventana de menos de 168 horas | La elegibilidad normal continúa; el efecto posterior en caja y etiqueta sí cambia |
 | Venta con un plato `DISH` | La nueva restricción bloquea la anulación si está pagada y contiene un plato vigente, sin distinguir el canal del pedido | Cambio intencional de alcance por producto; también alcanza una venta de mostrador si se le agrega un plato. No afecta al histórico confirmado sin restaurante |
-| Totales de caja | Se sustituye `COMPLETED` por `PAID`, sin excluir `CANCELLED` | Regresión B1; también se cambia qué pedidos pendientes se cuentan |
+| Totales de caja | Se exige `PAID` y se excluye `CANCELLED` | B1 resuelto; los pedidos pagados no anulados se contabilizan |
 | KPIs, tendencias y efectivo del dashboard | Se sustituye `COMPLETED` por `PAID` excluyendo `CANCELLED` | Ventas normales completas y bien clasificadas mantienen inclusión; casos de transición o históricos atípicos pueden cambiar resultados |
 | Ventas recientes | La condición `PAID` se evalúa antes que `CANCELLED` | Regresión B4, aunque los agregados del mismo dashboard excluyan anulaciones |
 | Reportes de ventas y vendedores | Los filtros de pagadas en `document/db_repository.ts` y `sale_report/db_repository.ts` siguen usando `COMPLETED` | Una venta normal completa que quede `paymentStatus = PENDING` puede seguir en esos reportes y desaparecer del dashboard/caja |
@@ -143,7 +143,7 @@ No se encontraron `DROP TABLE`, `DROP COLUMN`, `DELETE` ni `TRUNCATE` en estas s
 
 ## B1 — Las ventas anuladas vuelven a contar en caja
 
-**Estado: resuelto en código; cantidad de registros afectados en producción desconocida.**
+**Estado: RESUELTO en código y cubierto por prueba de regresión; cantidad de registros afectados en producción desconocida.**
 
 La migración de pagos utiliza esta condición:
 
@@ -153,7 +153,7 @@ SET "paymentStatus" = 'PAID'
 WHERE EXISTS (SELECT 1 FROM "Payment" p WHERE p."orderId" = o.id);
 ```
 
-Incluye pedidos `CANCELLED` que conservan sus pagos. Conservar el pago histórico no es por sí mismo un error: el problema está en el nuevo consumidor del estado. El cálculo de caja sustituye el filtro `status === "COMPLETED"` por `paymentStatus === "PAID"`, sin excluir anulaciones.
+Incluye pedidos `CANCELLED` que conservan sus pagos. Conservar el pago histórico no es por sí mismo un error: el problema estaba en el nuevo consumidor del estado. El cálculo de caja ahora exige `paymentStatus === "PAID"` y excluye `status === "CANCELLED"`.
 
 El flujo de anulación revisado cambia el estado del pedido a `CANCELLED`, pero no elimina los pagos ni cambia `paymentStatus`. Por tanto, el defecto también puede aparecer con anulaciones posteriores al despliegue; corregir únicamente la actualización histórica no lo resuelve.
 
