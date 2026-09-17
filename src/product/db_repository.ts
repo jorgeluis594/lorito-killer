@@ -545,7 +545,12 @@ const updateDishProduct = async (
         await assertActiveKitchen(db, product.companyId, product.kitchenId);
         await db.product.update({
           where: { id: product.id, companyId: product.companyId },
-          data: dishProductToPrisma(product),
+          data: {
+            ...dishProductToPrisma(product),
+            kitchen: product.kitchenId
+              ? { connect: { id: product.kitchenId } }
+              : { disconnect: true },
+          },
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
