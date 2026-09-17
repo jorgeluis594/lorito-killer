@@ -35,6 +35,7 @@ import type {
   TablePaymentResult,
 } from "../payment-repository";
 import { confirmTablePayment, loadTablePayment } from "../payment-actions";
+import { closeTable } from "../actions";
 import { TableRealtimeListener } from "./table-realtime-listener";
 
 const labels: Record<string, string> = {
@@ -306,6 +307,14 @@ export function TablePaymentView({
     }
   }
 
+  async function releaseTable() {
+    setBusy(true);
+    const response = await closeTable(data.tableId, false);
+    setBusy(false);
+    if (response.success) window.location.href = "/dashboard/tables";
+    else setError(response.message);
+  }
+
   const header = (
     <header className="border-b bg-card">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
@@ -361,7 +370,7 @@ export function TablePaymentView({
             </h2>
             <p className="text-muted-foreground">
               {paid
-                ? "La mesa ya está libre."
+                ? "El cobro está registrado. Libera la mesa cuando termine la atención."
                 : "Caja completará el cobro. La mesa sigue ocupada."}
             </p>
           </div>
@@ -379,12 +388,19 @@ export function TablePaymentView({
               </div>
             ) : null}
           </dl>
-          <Button asChild className="min-h-12">
-            <Link href="/dashboard/tables">
-              Volver a mesas
+          {paid ? (
+            <Button className="min-h-12" onClick={releaseTable} disabled={busy}>
+              Liberar mesa
               <ArrowRight aria-hidden />
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild className="min-h-12">
+              <Link href="/dashboard/tables">
+                Volver a mesas
+                <ArrowRight aria-hidden />
+              </Link>
+            </Button>
+          )}
           {paid && result ? (
             <div className="flex flex-wrap gap-3">
               <Button asChild variant="outline">

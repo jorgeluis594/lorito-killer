@@ -8,12 +8,13 @@ import {
 } from "@/dashboard/use-cases/calculate-dashboard-summary";
 
 describe("calculatePaidSalesKpis", () => {
-  test("excludes pending and cancelled orders from paid sales", () => {
+  test("includes paid completed and pending orders, excluding cancelled and unpaid", () => {
     const result = calculatePaidSalesKpis([
-      { status: "COMPLETED", total: 120 },
-      { status: "PENDING", total: 80 },
-      { status: "CANCELLED", total: 50 },
-      { status: "COMPLETED", total: 30 },
+      { status: "COMPLETED", paymentStatus: "PAID", total: 120 },
+      { status: "PENDING", paymentStatus: "PAID", total: 30 },
+      { status: "PENDING", paymentStatus: "PENDING", total: 80 },
+      { status: "CANCELLED", paymentStatus: "PENDING", total: 50 },
+      { status: "CANCELLED", paymentStatus: "PAID", total: 70 },
     ]);
 
     expect(result).toEqual({

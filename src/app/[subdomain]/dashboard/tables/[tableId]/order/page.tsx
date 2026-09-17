@@ -4,6 +4,8 @@ import { findTable } from "@/table/db_repository";
 import { hasPermission } from "@/authorization/helpers";
 import Link from "next/link";
 import { TableOrderView } from "@/table/components/table-order-view";
+import { getKitchenTickets } from "@/kitchen/use-cases/get-kitchen-tickets";
+import { findKitchenTickets } from "@/kitchen/db_repository";
 
 interface PageProps {
   params: Promise<{ subdomain: string; tableId: string }>;
@@ -35,11 +37,24 @@ async function TableOrderContent({ tableId }: { tableId: string }) {
     );
   }
 
+  const tickets = table.activeSession.order
+    ? await getKitchenTickets(
+        {
+          companyId: auth.data.companyId,
+          userId: auth.data.id,
+          role: auth.data.role,
+          orderId: table.activeSession.order.id,
+        },
+        findKitchenTickets,
+      )
+    : { success: true as const, data: [] };
+
   return (
     <TableOrderView
       key={table.activeSession.id}
       table={table}
       canEdit={hasPermission(auth.data.role, "tables", "update")}
+      kitchenTickets={tickets.success ? tickets.data : []}
     />
   );
 }

@@ -13,6 +13,7 @@ export type Photo = {
 export type PreparationStation = "KITCHEN" | "BAR";
 
 type ProductBase = {
+  kitchenId?: string | null;
   preparationStation?: PreparationStation | null;
   id?: string;
   companyId: string;
@@ -56,16 +57,24 @@ export type ProductService = ProductBase & {
   type: typeof ServiceProductType;
 };
 
+export const DishProductType = "DishProduct";
+export type TypeDishProductType = typeof DishProductType;
+
+export type DishProduct = ProductBase & {
+  type: typeof DishProductType;
+};
+
 // Union type for products that have stock
 export type StockableProduct = SingleProduct | PackageProduct;
 
 // Union type for all products
-export type Product = StockableProduct | ProductService;
+export type Product = StockableProduct | ProductService | DishProduct;
 
 type ProductTypeMap = {
   [SingleProductType]: SingleProduct;
   [PackageProductType]: PackageProduct;
   [ServiceProductType]: ProductService;
+  [DishProductType]: DishProduct;
 };
 
 export type ProductType = keyof ProductTypeMap;
@@ -81,26 +90,28 @@ export type ProductItem = {
 
 // Type guard functions
 export const isStockableProduct = (
-  product: Product
+  product: Product,
 ): product is StockableProduct => {
-  return product.type === SingleProductType ||
-         product.type === PackageProductType;
+  return (
+    product.type === SingleProductType || product.type === PackageProductType
+  );
 };
 
 export const isServiceProduct = (
-  product: Product
+  product: Product,
 ): product is ProductService => {
   return product.type === ServiceProductType;
 };
 
-export const isSingleProduct = (
-  product: Product
-): product is SingleProduct => {
+export const isDishProduct = (product: Product): product is DishProduct =>
+  product.type === DishProductType;
+
+export const isSingleProduct = (product: Product): product is SingleProduct => {
   return product.type === SingleProductType;
 };
 
 export const isPackageProduct = (
-  product: Product
+  product: Product,
 ): product is PackageProduct => {
   return product.type === PackageProductType;
 };

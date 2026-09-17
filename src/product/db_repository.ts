@@ -15,6 +15,8 @@ import {
   TypePackageProductType,
   TypeSingleProductType,
   UNIT_UNIT_TYPE,
+  DishProduct,
+  DishProductType,
 } from "./types";
 import { response } from "@/lib/types";
 import { log } from "@/lib/log";
@@ -172,6 +174,83 @@ const serviceProductToPrisma = (
   };
 };
 
+const dishProductToPrisma = (
+  product: DishProduct,
+): Prisma.ProductCreateInput => {
+  const { type, photos, categories, companyId, kitchenId, ...data } = product;
+  return {
+    ...data,
+    company: { connect: { id: companyId } },
+    kitchen: kitchenId ? { connect: { id: kitchenId } } : undefined,
+    sku: product.sku || null,
+    productType: "DISH",
+    price: new Prisma.Decimal(product.price),
+    stock: null,
+    unitType: null,
+    purchasePrice: null,
+    targetMovementProductId: null,
+    targetMovementProductStock: null,
+  };
+};
+
+const assertActiveKitchen = async (
+  db: Prisma.TransactionClient,
+  companyId: string,
+  kitchenId?: string | null,
+) => {
+  if (!kitchenId) return;
+  await db.$queryRaw`SELECT id FROM "Kitchen" WHERE id = ${kitchenId} FOR UPDATE`;
+  const kitchen = await db.kitchen.findFirst({
+    where: { id: kitchenId, companyId, status: "ACTIVE" },
+    select: { id: true },
+  });
+  if (!kitchen)
+    throw new Error("La Kitchen no está activa o pertenece a otra empresa");
+};
+
+const createDishProduct = async (
+  product: DishProduct,
+): Promise<response<DishProduct>> => {
+  try {
+    const createdProduct = await prisma().$transaction(
+      async (db) => {
+        await assertActiveKitchen(db, product.companyId, product.kitchenId);
+        const created = await db.product.create({
+          data: dishProductToPrisma(product),
+        });
+        const categories = await db.category.findMany({
+          where: {
+            id: { in: product.categories.map((category) => category.id!) },
+          },
+        });
+        return { created, categories };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+    return {
+      success: true,
+      data: {
+        ...createdProduct.created,
+        companyId: createdProduct.created.companyId!,
+        kitchenId: createdProduct.created.kitchenId,
+        type: DishProductType,
+        sku: createdProduct.created.sku || undefined,
+        price: createdProduct.created.price.toNumber(),
+        categories: createdProduct.categories.map((category) => ({
+          ...category,
+          companyId: category.companyId!,
+        })),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Error interno del servidor",
+    };
+  }
+};
+
 const createServiceProduct = async (
   product: ProductService,
 ): Promise<response<ProductService>> => {
@@ -302,6 +381,8 @@ export const create = async (product: Product): Promise<response<Product>> => {
     response = await createPackageProduct(product);
   } else if (product.type === ServiceProductType) {
     response = await createServiceProduct(product);
+  } else if (product.type === DishProductType) {
+    response = await createDishProduct(product);
   } else {
     return { success: false, message: "Invalid product type" };
   }
@@ -455,6 +536,35 @@ const updateServiceProduct = async (
   }
 };
 
+const updateDishProduct = async (
+  product: DishProduct,
+): Promise<response<DishProduct>> => {
+  try {
+    await prisma().$transaction(
+      async (db) => {
+        await assertActiveKitchen(db, product.companyId, product.kitchenId);
+        await db.product.update({
+          where: { id: product.id, companyId: product.companyId },
+          data: {
+            ...dishProductToPrisma(product),
+            kitchen: product.kitchenId
+              ? { connect: { id: product.kitchenId } }
+              : { disconnect: true },
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+    return { success: true, data: product };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Error interno del servidor",
+    };
+  }
+};
+
 const updatePackageProduct = async (
   product: PackageProduct,
 ): Promise<response<PackageProduct>> => {
@@ -509,6 +619,8 @@ export const update = async (product: Product): Promise<response<Product>> => {
     return updatePackageProduct(product);
   } else if (product.type === ServiceProductType) {
     return updateServiceProduct(product);
+  } else if (product.type === DishProductType) {
+    return updateDishProduct(product);
   } else {
     return { success: false, message: "Invalid product type" };
   }
@@ -518,7 +630,19 @@ const prismaToProduct = async (
   prismaProduct: PrismaProduct & { categories: PrismaCategory[] },
   db: Prisma.TransactionClient = prisma(),
 ): Promise<Product> => {
-  if (prismaProduct.productType === "SERVICE_PRODUCT") {
+  if (prismaProduct.productType === "DISH") {
+    return {
+      ...prismaProduct,
+      companyId: prismaProduct.companyId!,
+      type: DishProductType,
+      sku: prismaProduct.sku || undefined,
+      price: prismaProduct.price.toNumber(),
+      categories: prismaProduct.categories.map((category) => ({
+        ...category,
+        companyId: category.companyId!,
+      })),
+    };
+  } else if (prismaProduct.productType === "SERVICE_PRODUCT") {
     return {
       ...prismaProduct,
       companyId: prismaProduct.companyId || "some_company_id",
@@ -861,7 +985,9 @@ export const getMany = async ({
           includeHidden,
           stock,
         });
-        const products = await Promise.all(result.map((product) => prismaToProduct(product)));
+        const products = await Promise.all(
+          result.map((product) => prismaToProduct(product)),
+        );
 
         return { success: true, data: products };
       }
@@ -877,7 +1003,9 @@ export const getMany = async ({
         const product = productById.get(id);
         return product ? [product] : [];
       });
-      const products = await Promise.all(orderedResult.map((product) => prismaToProduct(product)));
+      const products = await Promise.all(
+        orderedResult.map((product) => prismaToProduct(product)),
+      );
 
       return { success: true, data: products };
     }
@@ -899,7 +1027,9 @@ export const getMany = async ({
       ...query,
       include: { photos: true, categories: true },
     });
-    const products = await Promise.all(result.map((product) => prismaToProduct(product)));
+    const products = await Promise.all(
+      result.map((product) => prismaToProduct(product)),
+    );
 
     return { success: true, data: products };
   } catch (error: any) {
@@ -1006,7 +1136,8 @@ export const storePhotos = async (
     });
     return {
       success: false,
-      message: "No se pudo guardar la imagen del producto. Inténtalo nuevamente.",
+      message:
+        "No se pudo guardar la imagen del producto. Inténtalo nuevamente.",
     };
   }
 
@@ -1036,7 +1167,8 @@ export const storePhotos = async (
     });
     return {
       success: false,
-      message: "No se pudo guardar la imagen del producto. Inténtalo nuevamente.",
+      message:
+        "No se pudo guardar la imagen del producto. Inténtalo nuevamente.",
     };
   }
 };
@@ -1076,7 +1208,9 @@ export const search = async ({
 
     return {
       success: true,
-      data: await Promise.all(result.map((product) => prismaToProduct(product))),
+      data: await Promise.all(
+        result.map((product) => prismaToProduct(product)),
+      ),
     };
   } catch (error: any) {
     return { success: false, message: error.message } as response;

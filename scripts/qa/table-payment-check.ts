@@ -12,10 +12,7 @@ import {
   markPreparingOrderItemReady,
   servePaidKitchenItem,
 } from "../../src/kitchen/db_repository";
-import {
-  cancelPendingOrderItem,
-  updateSessionStatus,
-} from "../../src/table/db_repository";
+import { updateSessionStatus } from "../../src/table/db_repository";
 import type { AuthorizedUser } from "../../src/authorization/server";
 import type { TablePaymentInput } from "../../src/table/payment-schema";
 
@@ -27,6 +24,9 @@ async function clean(companyId: string) {
       company.name === "Prueba de pagos",
   );
   await db.$transaction(async (tx) => {
+    await tx.orderItemCancellation.deleteMany({ where: { orderRoundItem: { orderRound: { order: { companyId } } } } });
+    await tx.orderRoundItem.deleteMany({ where: { orderRound: { order: { companyId } } } });
+    await tx.orderRound.deleteMany({ where: { order: { companyId } } });
     await tx.document.deleteMany({ where: { companyId } });
     await tx.payment.deleteMany({ where: { order: { companyId } } });
     await tx.stockTransfer.deleteMany({ where: { companyId } });
@@ -147,7 +147,7 @@ async function main() {
         capacity: 4,
       },
     });
-    return db.tableSession.create({
+    const session = await db.tableSession.create({
       data: {
         companyId: company.id,
         tableId: table.id,
@@ -184,10 +184,10 @@ async function main() {
                 },
                 {
                   productId: product.id,
-                  quantity: 1,
+                  quantity: 0,
                   productPrice: 38,
-                  total: 38,
-                  netTotal: 38,
+                  total: 0,
+                  netTotal: 0,
                   discountAmount: 0,
                   kitchenStatus: "CANCELLED",
                   preparationStation: "KITCHEN",
@@ -199,6 +199,25 @@ async function main() {
       },
       include: { order: { include: { orderItems: true } } },
     });
+    const round = await db.orderRound.create({
+      data: {
+        id: crypto.randomUUID(),
+        orderId: session.order!.id,
+        number: 1,
+        responsibleUserId: waiter.id,
+        requestHash: crypto.randomUUID(),
+      },
+    });
+    await db.orderRoundItem.createMany({
+      data: session.order!.orderItems.map((item) => ({
+        orderRoundId: round.id,
+        orderItemId: item.id,
+        productId: item.productId,
+        productName: item.productId === drink.id ? "Chicha morada" : "Lomo saltado",
+        quantity: item.quantity,
+      })),
+    });
+    return session;
   }
   async function inputFor(
     session: Awaited<ReturnType<typeof createAccount>>,
@@ -255,7 +274,7 @@ async function main() {
   assert.equal(
     (await db.tableSession.findUniqueOrThrow({ where: { id: account.id } }))
       .current,
-    null,
+    true,
   );
   const kitchenItems = await findKitchenItems(company.id, "KITCHEN");
   assert(kitchenItems.success);
@@ -319,41 +338,10 @@ async function main() {
     await db.payment.count({ where: { orderId: stale.order!.id } }),
     0,
   );
-  const cancelledRace = await createAccount();
-  const cancelledItemId = cancelledRace.order!.orderItems[0].id;
-  await db.orderItem.update({
-    where: { id: cancelledItemId },
-    data: { kitchenStatus: "PENDING" },
-  });
-  const raceInput = await inputFor(cancelledRace);
-  await Promise.all([
-    payTable(user, raceInput),
-    cancelPendingOrderItem({
-      orderItemId: cancelledItemId,
-      companyId: company.id,
-      userId: waiter.id,
-      reason: "Prueba concurrente",
-    }),
-  ]);
-  const afterRace = await db.order.findUniqueOrThrow({
-    where: { id: cancelledRace.order!.id },
-    include: { payments: true, orderItems: true },
-  });
-  if (afterRace.status === "COMPLETED") {
-    assert.equal(
-      afterRace.orderItems.find((item) => item.id === cancelledItemId)!
-        .kitchenStatus,
-      "PENDING",
-    );
-    assert.equal(afterRace.total.toNumber(), 100);
-  } else {
-    assert.equal(afterRace.payments.length, 0);
-    assert.equal(afterRace.total.toNumber(), 24);
-  }
   assert.equal(
-    (await updateSessionStatus(account.id, company.id, "OPEN")).success,
-    false,
-    "A paid session cannot be reopened through the legacy action",
+    (await updateSessionStatus(account.id, company.id, "CLOSED")).success,
+    true,
+    "A paid table can be released explicitly",
   );
   const rollback = await createAccount();
   const stockBefore = (

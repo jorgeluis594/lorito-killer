@@ -2,10 +2,21 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { Boxes, Briefcase, ChevronDown, PackagePlus, Plus } from "lucide-react";
+import {
+  Boxes,
+  Briefcase,
+  ChevronDown,
+  PackagePlus,
+  Plus,
+  Utensils,
+} from "lucide-react";
 import React, { useState } from "react";
 import { useProductFormStore } from "@/product/components/form/product-form-store-provider";
-import { PackageProductType, SingleProductType } from "@/product/types";
+import {
+  DishProductType,
+  PackageProductType,
+  SingleProductType,
+} from "@/product/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +28,11 @@ import {
 import ServiceProductModal from "@/product/components/form/service-product-modal";
 import { useRouter } from "next/navigation";
 
-export default function AddProductButtons() {
+export default function AddProductButtons({
+  isAdmin = false,
+}: {
+  isAdmin?: boolean;
+}) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const router = useRouter();
   const { resetProduct, setOpen, performingAction } = useProductFormStore(
@@ -58,6 +73,18 @@ export default function AddProductButtons() {
               <Plus aria-hidden="true" className="size-4" />
               Producto con inventario
             </DropdownMenuItem>
+            {isAdmin ? (
+              <DropdownMenuItem
+                className="min-h-11 gap-3"
+                onSelect={() => {
+                  resetProduct(DishProductType);
+                  setOpen(true);
+                }}
+              >
+                <Utensils aria-hidden="true" className="size-4" />
+                Plato
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem
               className="min-h-11 gap-3"
               onSelect={onNewPackageClick}

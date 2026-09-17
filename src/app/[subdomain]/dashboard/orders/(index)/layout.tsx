@@ -19,7 +19,7 @@ export default async function OrdersIndexLayout({
   const cashShiftResponse = await getLastOpenCashShift(session.user.id);
 
   if (!cashShiftResponse.success) {
-    return <div>No tienes una caja abierta</div>;
+    return <div className="h-[calc(100vh-theme(space.14))]">{children}</div>;
   }
 
   const documentsResponse = await getMany({

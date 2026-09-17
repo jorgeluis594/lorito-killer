@@ -25,10 +25,10 @@ export default async function SettingsLayout({
       </div>
       <Separator className="mt-4" />
       <div className="flex flex-col space-y-16 lg:flex-row lg:space-x-12 lg:space-y-0 mt-8">
-        <aside className="-mx-4 lg:w-1/5">
+        <aside className="-mx-4 min-w-0 lg:w-1/5">
           <NavItems isAdmin={user.success && user.data.role === "ADMIN"} />
         </aside>
-        <div className="flex-1 lg:max-w-2xl mt-6">{children}</div>
+        <div className="mt-6 min-w-0 flex-1 lg:max-w-2xl">{children}</div>
       </div>
     </div>
   );

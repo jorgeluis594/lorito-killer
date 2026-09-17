@@ -13,6 +13,7 @@ import {
   PackageProductType,
   Product,
   SingleProductType,
+  DishProductType,
   UNIT_UNIT_TYPE,
   isSingleProduct,
 } from "@/product/types";
@@ -36,9 +37,7 @@ interface OrderFormProviderProps {
 }
 
 export const OrderFormProvider = ({ children }: OrderFormProviderProps) => {
-  const [store] = useState(() =>
-    createOrderFormStore(initOrderFormStore()),
-  );
+  const [store] = useState(() => createOrderFormStore(initOrderFormStore()));
 
   return (
     <OrderFormStoreContext.Provider value={store}>
@@ -128,7 +127,7 @@ export const useOrderFormActions = (): Actions => {
       log.error("calculate_discount", {
         discountResponse,
       });
-      return
+      return;
     }
     orderFormStoreContext.setState(() => {
       return { order: discountResponse.data };
@@ -199,9 +198,10 @@ export const useOrderFormActions = (): Actions => {
   const addProduct = (product: Product, stock?: number) => {
     const { order } = orderFormStoreContext.getState();
 
-    const orderItem = order.orderItems.find(
-      (item) => item.productId === product.id,
-    );
+    const orderItem =
+      product.type === DishProductType
+        ? undefined
+        : order.orderItems.find((item) => item.productId === product.id);
 
     if (orderItem) {
       increaseQuantity(orderItem.id!);

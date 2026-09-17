@@ -94,6 +94,7 @@ function session() {
     order: {
       id: "order",
       status: "PENDING",
+      paymentStatus: "PENDING",
       updatedAt: new Date(input.orderVersion),
       total: new Prisma.Decimal(100),
       netTotal: new Prisma.Decimal(100),
@@ -104,11 +105,13 @@ function session() {
         {
           id: "item",
           kitchenStatus: "PREPARING",
+          quantity: new Prisma.Decimal(1),
           total: new Prisma.Decimal(100),
         },
         {
           id: "cancelled",
           kitchenStatus: "CANCELLED",
+          quantity: new Prisma.Decimal(0),
           total: new Prisma.Decimal(20),
         },
       ],
@@ -148,7 +151,7 @@ beforeEach(() => {
   mocks.customer.mockResolvedValue({ id: "customer" });
   mocks.stock.mockResolvedValue({ count: 1 });
 });
-test("waiter records a verified wallet payment against another user's shared register and closes only after receipt", async () => {
+test("waiter records a verified wallet payment without completing or freeing the table", async () => {
   expect((await payTable(user, input)).success).toBe(true);
   expect(mocks.shift).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -180,13 +183,12 @@ test("waiter records a verified wallet payment against another user's shared reg
     }),
   );
   expect(mocks.document.mock.calls[0][1].orderItems).toHaveLength(1);
-  expect(mocks.document.mock.invocationCallOrder[0]).toBeLessThan(
-    mocks.updateSession.mock.invocationCallOrder[0],
+  expect(mocks.updateOrder).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: expect.objectContaining({ paymentStatus: "PAID" }),
+    }),
   );
-  expect(mocks.updateSession).toHaveBeenCalledWith({
-    where: { id: input.sessionId },
-    data: { current: null, status: "CLOSED", closedAt: expect.any(Date) },
-  });
+  expect(mocks.updateSession).not.toHaveBeenCalled();
 });
 test("retries recover the existing payment without stock, receipt or payment duplication", async () => {
   const paid = session();
@@ -197,6 +199,7 @@ test("retries recover the existing payment without stock, receipt or payment dup
     order: {
       ...paid.order,
       status: "COMPLETED",
+      paymentStatus: "PAID",
       documents: [{ id: "original" }],
       payments: [{ method: "WALLET" }],
     },

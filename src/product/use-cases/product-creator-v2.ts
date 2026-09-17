@@ -4,11 +4,13 @@ import {
   SingleProductType,
   PackageProductType,
   ServiceProductType,
+  DishProductType,
 } from "@/product/types";
 import {
   PackageProductSchema,
   SingleProductSchema,
-  ServiceProductSchema
+  ServiceProductSchema,
+  DishProductSchema,
 } from "@/product/schema";
 import { response } from "@/lib/types";
 
@@ -31,6 +33,9 @@ const validateProduct = (product: Product): response<Product> => {
     case ServiceProductType:
       parsedProduct = ServiceProductSchema.safeParse(product);
       break;
+    case DishProductType:
+      parsedProduct = DishProductSchema.safeParse(product);
+      break;
     default:
       return { success: false, message: "Tipo de producto no válido" };
   }
@@ -48,7 +53,8 @@ const needsSkuValidation = (product: Product): boolean => {
 };
 
 // Async function to validate SKU uniqueness
-const validateSkuUniqueness = (repository: Repository) =>
+const validateSkuUniqueness =
+  (repository: Repository) =>
   async (product: Product): Promise<response<Product>> => {
     if (!needsSkuValidation(product)) {
       return { success: true, data: product };
@@ -67,9 +73,8 @@ const validateSkuUniqueness = (repository: Repository) =>
   };
 
 // Function composition utility for response types
-const pipeResponse = <T>(
-  ...fns: Array<(arg: T) => response<T> | Promise<response<T>>>
-) =>
+const pipeResponse =
+  <T>(...fns: Array<(arg: T) => response<T> | Promise<response<T>>>) =>
   async (value: T): Promise<response<T>> => {
     let result: response<T> = { success: true, data: value };
 
@@ -92,7 +97,7 @@ export default function productCreatorV2(repository: Repository) {
     // Compose validation pipeline
     const validatePipeline = pipeResponse(
       validateProduct,
-      validateSkuUniqueness(repository)
+      validateSkuUniqueness(repository),
     );
 
     // Execute validation pipeline

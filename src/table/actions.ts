@@ -19,13 +19,11 @@ import {
   updateTable as dbUpdateTable,
   deleteTable as dbDeleteTable,
   getWaiters,
-  cancelPendingOrderItem,
 } from "./db_repository";
 import { closeTableSession } from "./use-cases/close-table-session";
 import { requestBill } from "./use-cases/request-bill";
-import { addRound, type RoundItem } from "./use-cases/add-round";
+import type { RoundItem } from "./use-cases/add-round";
 import { transferTable } from "./use-cases/transfer-table";
-import { withinTransaction } from "@/lib/prisma";
 import {
   AddRoundSchema,
   OpenTableSchema,
@@ -38,13 +36,19 @@ import {
   CreateTableSchema,
   UpdateTableSchema,
   DeleteTableSchema,
-  CancelOrderItemSchema,
-  ServeKitchenRoundSchema,
+  SendTableDraftSchema,
 } from "./schemas";
-import { cancelOrderItem } from "./use-cases/cancel-order-item";
-import { serveReadyRound } from "@/kitchen/db_repository";
 import { TableDraftSchema } from "./schemas";
 import { openTableForService, updateTableDraft } from "./draft-repository";
+import {
+  submitOrderRound,
+  findExistingOrderRound,
+  findOrderRounds,
+} from "@/order/rounds/db_repository";
+import { getOrderRounds } from "@/order/rounds/use-cases/get-order-rounds";
+import { CancelRoundItemSchema } from "@/order/rounds/schema";
+import { cancelRoundItem } from "@/order/rounds/use-cases/cancel-round-item";
+import { persistRoundItemCancellation } from "@/order/rounds/db_repository";
 
 // -- Zone Actions --
 
@@ -80,17 +84,36 @@ export const saveTableDraft = protectedAction(
 
 export const sendTableDraft = protectedAction(
   { resource: "tables", action: "update" },
-  async (user, sessionId: string, revision: number) => {
+  async (user, sessionId: string, revision: number, roundId: string) => {
     const feature = await requireFeature(user.companyId, "restaurants");
     if (!feature.success) return feature;
-    const parsed = TableDraftSchema.safeParse({ sessionId, revision });
+    const parsed = SendTableDraftSchema.safeParse({
+      sessionId,
+      revision,
+      roundId,
+    });
     if (!parsed.success)
       return { success: false, message: "El pedido no es válido." };
-    const result = await updateTableDraft({
+    const existing = await findExistingOrderRound({
+      roundId: parsed.data.roundId,
+      companyId: user.companyId,
+      sessionId: parsed.data.sessionId,
+    });
+    if (existing) return { success: true, data: existing };
+    const draft = await updateTableDraft({
       ...parsed.data,
       companyId: user.companyId,
       userId: user.id,
-      operation: "send",
+      operation: "read",
+    });
+    if (!draft.success) return draft;
+    const result = await submitOrderRound({
+      companyId: user.companyId,
+      userId: user.id,
+      sessionId,
+      draftRevision: revision,
+      roundId,
+      items: draft.data.items ?? [],
     });
     if (result.success) {
       revalidatePath("/[subdomain]/dashboard/tables", "layout");
@@ -417,12 +440,8 @@ export const requestBillAction = protectedAction(
 
 export const addRoundAction = protectedAction(
   { resource: "tables", action: "update" },
-  async (
-    user,
-    tableId: string,
-    items: RoundItem[],
-  ): Promise<response<{ orderId: string; round: number }>> => {
-    const parsed = AddRoundSchema.safeParse({ tableId, items });
+  async (user, tableId: string, items: RoundItem[], roundId: string) => {
+    const parsed = AddRoundSchema.safeParse({ tableId, items, roundId });
     if (!parsed.success) {
       return {
         success: false,
@@ -430,8 +449,12 @@ export const addRoundAction = protectedAction(
       };
     }
 
-    const result = await withinTransaction(async () => {
-      return addRound(parsed.data.tableId, user.companyId, parsed.data.items);
+    const result = await submitOrderRound({
+      companyId: user.companyId,
+      userId: user.id,
+      tableId: parsed.data.tableId,
+      roundId: parsed.data.roundId,
+      items: parsed.data.items,
     });
 
     if (result.success) {
@@ -439,21 +462,23 @@ export const addRoundAction = protectedAction(
       await broadcast(user.companyId, "tables", "table-round-added", {
         tableId: parsed.data.tableId,
         orderId: result.data.orderId,
-        round: result.data.round,
+        round: result.data.number,
       });
     }
     return result;
   },
 );
 
-export const cancelOrderItemAction = protectedAction(
+export const getOrderRoundsAction = protectedAction(
+  { resource: "tables", action: "read" },
+  async (user, orderId: string) =>
+    getOrderRounds(orderId, (id) => findOrderRounds(id, user.companyId)),
+);
+
+export const cancelRoundItemAction = protectedAction(
   { resource: "tables", action: "update" },
-  async (
-    user,
-    orderItemId: string,
-    reason: string,
-  ): Promise<response<void>> => {
-    const parsed = CancelOrderItemSchema.safeParse({ orderItemId, reason });
+  async (user, input) => {
+    const parsed = CancelRoundItemSchema.safeParse(input);
     if (!parsed.success) {
       return {
         success: false,
@@ -461,49 +486,20 @@ export const cancelOrderItemAction = protectedAction(
       };
     }
 
-    const result = await cancelOrderItem(
+    const result = await cancelRoundItem(
       {
-        orderItemId: parsed.data.orderItemId,
+        ...parsed.data,
         companyId: user.companyId,
         userId: user.id,
-        reason: parsed.data.reason,
+        isAdmin: user.role === "ADMIN",
       },
-      cancelPendingOrderItem,
+      persistRoundItemCancellation,
     );
 
     if (result.success) {
       revalidatePath("/dashboard/tables");
       await broadcast(user.companyId, "tables", "order-item-cancelled", {
-        orderItemId: parsed.data.orderItemId,
-      });
-    }
-    return result;
-  },
-);
-
-export const serveKitchenRoundAction = protectedAction(
-  { resource: "tables", action: "update" },
-  async (user, tableId: string, round: number): Promise<response<void>> => {
-    const parsed = ServeKitchenRoundSchema.safeParse({ tableId, round });
-    if (!parsed.success) {
-      return {
-        success: false,
-        message: parsed.error.errors[0]?.message ?? "Datos invalidos",
-      };
-    }
-
-    const result = await serveReadyRound({
-      tableId: parsed.data.tableId,
-      round: parsed.data.round,
-      companyId: user.companyId,
-      userId: user.id,
-    });
-    if (result.success) {
-      revalidatePath("/dashboard/tables");
-      revalidatePath("/dashboard/kitchen");
-      await broadcast(user.companyId, "tables", "kitchen-ticket-served", {
-        tableId: parsed.data.tableId,
-        round: parsed.data.round,
+        orderRoundItemId: parsed.data.orderRoundItemId,
       });
     }
     return result;

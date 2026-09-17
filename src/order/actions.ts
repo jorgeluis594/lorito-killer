@@ -140,56 +140,54 @@ export const create = protectedAction(
     const createResponse = await withinTransaction<{
       order: Order;
       document: Document;
-    }>(
-      async function () {
-        const createOrderResponse = await createOrder(orderToCreate);
-        if (!createOrderResponse.success) {
-          log.error("create_order_failed", {});
-          return createOrderResponse;
-        }
+    }>(async function () {
+      const createOrderResponse = await createOrder(orderToCreate);
+      if (!createOrderResponse.success) {
+        log.error("create_order_failed", {});
+        return createOrderResponse;
+      }
 
-        revalidatePath("/api/orders");
-        const updateStockResponse = await updateStock(userId, order, {
-          findProduct,
-          createStockTransfer,
-          updateStock: UpdateStockFromStockTransfer,
-        });
+      revalidatePath("/api/orders");
+      const updateStockResponse = await updateStock(userId, order, {
+        findProduct,
+        createStockTransfer,
+        updateStock: UpdateStockFromStockTransfer,
+      });
 
-        if (!updateStockResponse.success) {
-          return updateStockResponse;
-        }
+      if (!updateStockResponse.success) {
+        return updateStockResponse;
+      }
 
-        const { billingToken, ...billingSettings } =
-          billingCredentialsResponse.data;
+      const { billingToken, ...billingSettings } =
+        billingCredentialsResponse.data;
 
-        // Build and persist document
-        const documentResponse = await buildAndPersistDocument(
-          {
-            createDocument: saveDocument,
-            getLastDocumentNumber: getLatestDocumentNumber,
-          },
-          createOrderResponse.data,
-          billingSettings,
-          companyResponse.data,
-        );
-        if (!documentResponse.success) {
-          return documentResponse;
-        }
+      // Build and persist document
+      const documentResponse = await buildAndPersistDocument(
+        {
+          createDocument: saveDocument,
+          getLastDocumentNumber: getLatestDocumentNumber,
+        },
+        createOrderResponse.data,
+        billingSettings,
+        companyResponse.data,
+      );
+      if (!documentResponse.success) {
+        return documentResponse;
+      }
 
-        await createPendingDocumentTaxDispatch(
-          documentResponse.data.id,
-          user.companyId,
-        );
+      await createPendingDocumentTaxDispatch(
+        documentResponse.data.id,
+        user.companyId,
+      );
 
-        return {
-          success: true,
-          data: {
-            order: { ...createOrderResponse.data },
-            document: { ...documentResponse.data },
-          },
-        };
-      },
-    );
+      return {
+        success: true,
+        data: {
+          order: { ...createOrderResponse.data },
+          document: { ...documentResponse.data },
+        },
+      };
+    });
 
     if (createResponse.success) {
       await enqueueDocumentTaxDispatch(
@@ -234,6 +232,8 @@ export const cancelOrder = protectedAction(
       !canCancelOrder({
         hasPermission: true,
         orderStatus: orderResponse.data.status,
+        paymentStatus: orderResponse.data.paymentStatus,
+        hasDishProduct: orderResponse.data.hasDishProduct ?? false,
         documentStatus: documentResponse.data.status,
         orderCreatedAt: orderResponse.data.createdAt,
       })

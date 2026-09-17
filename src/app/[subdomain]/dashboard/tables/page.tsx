@@ -7,6 +7,7 @@ import { findTables, findZones } from "@/table/db_repository";
 import { ArrowLeft, Settings2 } from "lucide-react";
 import { TableGrid } from "@/table/components/table-grid";
 import { TableGridSkeleton } from "@/table/components/table-grid-skeleton";
+import { KitchenAttentionPanel } from "@/kitchen/components/kitchen-attention-panel";
 
 interface PageProps {
   params: Promise<{ subdomain: string }>;
@@ -35,26 +36,34 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
   const zones = zonesRes.data;
   const canConfigure = hasPermission(auth.data.role, "tables", "create");
 
+  const attention = (
+    <KitchenAttentionPanel userId={auth.data.id} role={auth.data.role} />
+  );
+
   if (tables.length === 0) {
     return (
-      <div className="flex flex-col items-start gap-4 py-12">
-        <h3 className="text-2xl font-bold">Prepara tus mesas para empezar</h3>
-        <p className="text-muted-foreground">
-          {canConfigure
-            ? "Indica cuántas mesas tienes. Nosotros las numeramos."
-            : "Pide al administrador que configure las mesas del restaurante."}
-        </p>
-        {canConfigure ? (
-          <Button asChild>
-            <Link href="/dashboard/tables/configure">Crear mis mesas</Link>
-          </Button>
-        ) : null}
+      <div className="flex flex-col items-start gap-4">
+        <div className="w-full">{attention}</div>
+        <div className="flex flex-col items-start gap-4 py-12">
+          <h3 className="text-2xl font-bold">Prepara tus mesas para empezar</h3>
+          <p className="text-muted-foreground">
+            {canConfigure
+              ? "Indica cuántas mesas tienes. Nosotros las numeramos."
+              : "Pide al administrador que configure las mesas del restaurante."}
+          </p>
+          {canConfigure ? (
+            <Button asChild>
+              <Link href="/dashboard/tables/configure">Crear mis mesas</Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
+      {attention}
       {canConfigure ? (
         <details className="relative self-end">
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg px-3 text-sm hover:bg-accent">
