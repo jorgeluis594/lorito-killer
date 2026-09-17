@@ -162,7 +162,7 @@ El flujo de anulación revisado cambia el estado del pedido a `CANCELLED`, pero 
 - Una venta anulada de S/ 100 con un pago conservado puede sumar S/ 100 a los totales calculados de caja.
 - Afecta `totalSales`, los desgloses por medio de pago y el cálculo de `amountInCashRegister`.
 - Puede alterar la visualización de cajas históricas porque esos valores se recalculan; no implica que la migración sobrescriba el `finalAmount` guardado.
-- Los agregados del dashboard sí excluyen `CANCELLED`, de modo que caja y dashboard pueden mostrar resultados distintos. La etiqueta de ventas recientes tiene otra regresión, descrita en B4.
+- Los agregados del dashboard sí excluyen `CANCELLED`, de modo que caja y dashboard pueden mostrar resultados distintos. La etiqueta de ventas recientes se corrigió y se documenta en B4.
 
 ### Corrección aplicada
 
@@ -222,7 +222,7 @@ Ejecutar las pruebas de integración en una base aislada con las migraciones apl
 
 Evidencia: [CI del commit revisado](https://github.com/jorgeluis594/lorito-killer/actions/runs/35158138670) y [preview fallido](https://app.netlify.com/projects/kogoz/deploys/6aab18e22f24c200089dbc1c).
 
-## B4 — Una venta normal anulada aparece como completada
+## B4 — Una venta normal anulada aparece como completada — RESUELTO
 
 **Estado: RESUELTO en código y cubierto por una integración PostgreSQL.**
 
