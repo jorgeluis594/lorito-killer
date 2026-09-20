@@ -8,21 +8,24 @@ public sealed class WindowsRawPrinter : IRawPrinter
 {
     public Task<NativePrintResult> PrintAsync(string printerLocalName, byte[] content, CancellationToken cancellationToken)
     {
-        if (!OpenPrinter(printerLocalName, out var handle, IntPtr.Zero)) return Task.FromResult(new NativePrintResult("RETRYABLE_FAILURE", "No se pudo abrir la impresora"));
-        try
+        return Task.Run(() =>
         {
-            var document = new DOCINFO { pDocName = "Lorito Kitchen Ticket", pDataType = "RAW" };
-            if (StartDocPrinter(handle, 1, ref document) == 0) return Task.FromResult(new NativePrintResult("RETRYABLE_FAILURE", "No se pudo abrir el documento"));
-            var pageStarted = StartPagePrinter(handle);
-            var written = 0;
-            var accepted = pageStarted && WritePrinter(handle, content, content.Length, out written) && written == content.Length;
-            var pageClosed = pageStarted && EndPagePrinter(handle);
-            var documentClosed = EndDocPrinter(handle);
-            return Task.FromResult(accepted && pageClosed && documentClosed
-                ? new NativePrintResult("DELIVERED", null)
-                : new NativePrintResult("FAILED", accepted ? "No se pudo cerrar el documento" : "El spooler no aceptó todos los bytes"));
-        }
-        finally { ClosePrinter(handle); }
+            if (!OpenPrinter(printerLocalName, out var handle, IntPtr.Zero)) return new NativePrintResult("RETRYABLE_FAILURE", "No se pudo abrir la impresora");
+            try
+            {
+                var document = new DOCINFO { pDocName = "Lorito Kitchen Ticket", pDataType = "RAW" };
+                if (StartDocPrinter(handle, 1, ref document) == 0) return new NativePrintResult("RETRYABLE_FAILURE", "No se pudo abrir el documento");
+                var pageStarted = StartPagePrinter(handle);
+                var written = 0;
+                var accepted = pageStarted && WritePrinter(handle, content, content.Length, out written) && written == content.Length;
+                var pageClosed = pageStarted && EndPagePrinter(handle);
+                var documentClosed = EndDocPrinter(handle);
+                return accepted && pageClosed && documentClosed
+                    ? new NativePrintResult("DELIVERED", null)
+                    : new NativePrintResult("FAILED", accepted ? "No se pudo cerrar el documento" : "El spooler no aceptó todos los bytes");
+            }
+            finally { ClosePrinter(handle); }
+        });
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] private struct DOCINFO { public string pDocName; public string pOutputFile; public string pDataType; }
