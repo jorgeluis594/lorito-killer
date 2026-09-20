@@ -27,6 +27,8 @@ public sealed class PrintJobsTests
             Assert.Equal(1, printer.Calls);
             Assert.Equal(bytes, printer.Bytes);
             Assert.Equal(1, handler.ReportCalls);
+            using var report = System.Text.Json.JsonDocument.Parse(handler.LastReportBody!);
+            Assert.False(report.RootElement.TryGetProperty("error", out _));
             Assert.Equal("RESULT", store.Read("00000000-0000-0000-0000-000000000001")?.Phase);
     }
 
@@ -225,16 +227,18 @@ public sealed class PrintJobsTests
     {
         protected byte[] Content { get; } = content;
         public int ReportCalls { get; private set; }
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public string? LastReportBody { get; private set; }
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (request.RequestUri?.AbsolutePath.EndsWith("/claim", StringComparison.Ordinal) == true)
             {
                 var now = DateTimeOffset.UtcNow;
                 var json = $"{{\"success\":true,\"data\":{{\"jobId\":\"00000000-0000-0000-0000-000000000001\",\"attemptNumber\":1,\"printerId\":\"printer-1\",\"printerLocalName\":\"Kitchen\",\"timeoutMs\":10000,\"contentBase64\":\"{Convert.ToBase64String(content)}\",\"attemptExpiresAt\":\"{now.AddSeconds(10):O}\",\"serverNow\":\"{now:O}\"}}}}";
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
             }
             ReportCalls++;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"success\":true,\"data\":{\"jobId\":\"00000000-0000-0000-0000-000000000001\",\"attemptNumber\":1,\"status\":\"DELIVERED\"}}", Encoding.UTF8, "application/json") });
+            LastReportBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"success\":true,\"data\":{\"jobId\":\"00000000-0000-0000-0000-000000000001\",\"attemptNumber\":1,\"status\":\"DELIVERED\"}}", Encoding.UTF8, "application/json") };
         }
     }
 

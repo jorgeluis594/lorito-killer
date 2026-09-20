@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 
 namespace Lorito.PrintGateway;
@@ -17,7 +18,10 @@ public sealed record PrintJournal(string JobId, int AttemptNumber, string Printe
 
 public sealed class BackendClient(HttpClient httpClient, GatewayConfiguration configuration)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
     public async Task<Binding?> LinkAsync(string code, string machineName, CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(new Uri(new Uri(configuration.BackendUrl), "/api/printing/clients/link"), new { code, machineName }, cancellationToken);
@@ -57,7 +61,7 @@ public sealed class BackendClient(HttpClient httpClient, GatewayConfiguration co
     {
         EnsureEnvironment(binding);
         using var request = Authorized(HttpMethod.Post, $"/api/printing/jobs/{Uri.EscapeDataString(jobId)}/result", binding);
-        request.Content = JsonContent.Create(new { attemptNumber, result, error });
+        request.Content = JsonContent.Create(new { attemptNumber, result, error }, options: JsonOptions);
         using var response = await httpClient.SendAsync(request, cancellationToken);
         var body = await ReadLimitedAsync(response, 2 * 1024 * 1024, cancellationToken);
         var envelope = JsonSerializer.Deserialize<ResultEnvelope>(body, JsonOptions);
