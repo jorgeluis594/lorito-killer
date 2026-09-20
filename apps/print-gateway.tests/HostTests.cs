@@ -1,4 +1,7 @@
 using Lorito.PrintGateway;
+using System.IO.Pipes;
+using System.Runtime.Versioning;
+using System.Security.Principal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,6 +40,25 @@ public sealed class HostTests
         using var json = System.Text.Json.JsonDocument.Parse(response);
         Assert.True(json.RootElement.GetProperty("success").GetBoolean());
         Assert.Equal(System.Text.Json.JsonValueKind.Null, json.RootElement.GetProperty("status").ValueKind);
+    }
+
+    [Fact]
+    [SupportedOSPlatform("windows")]
+    public async Task Pipe_exchange_rejects_a_decoy_without_sending_payload()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var pipeName = $"LoritoPrintGateway.Tests.{Guid.NewGuid():N}";
+        await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        await using (var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
+        {
+            var connected = server.WaitForConnectionAsync(TestContext.Current.CancellationToken);
+            await client.ConnectAsync(TestContext.Current.CancellationToken);
+            await connected;
+
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => PipeClientExchange.SendAsync(client, new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), new { version = 1, operation = "LINK", code = "0047" }, TestContext.Current.CancellationToken));
+        }
+
+        Assert.Equal(0, await server.ReadAsync(new byte[1], TestContext.Current.CancellationToken));
     }
 
     [Fact]

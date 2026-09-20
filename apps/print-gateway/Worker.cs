@@ -110,6 +110,9 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
 
 internal static class PipeFactory
 {
+#if WINDOWS
+    internal static SecurityIdentifier ServiceSid => (SecurityIdentifier)new NTAccount(@"NT SERVICE\LoritoPrintGateway").Translate(typeof(SecurityIdentifier));
+#endif
     internal static Func<CancellationToken, Task<Stream>> AcceptAsync { get; set; } = AcceptPipeAsync;
 
     private static async Task<Stream> AcceptPipeAsync(CancellationToken cancellationToken)
@@ -122,10 +125,13 @@ internal static class PipeFactory
     public static NamedPipeServerStream Create()
     {
 #if WINDOWS
+        var serviceSid = ServiceSid;
         var security = new PipeSecurity();
         security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.InteractiveSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
         security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
         security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(serviceSid, PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.SetOwner(serviceSid);
         return NamedPipeServerStreamAcl.Create(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security);
 #else
         return new NamedPipeServerStream(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);

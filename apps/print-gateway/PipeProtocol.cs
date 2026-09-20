@@ -1,5 +1,7 @@
 using System.Buffers.Binary;
 using System.IO.Pipes;
+using System.Runtime.Versioning;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 
@@ -71,4 +73,17 @@ public static class PipeProtocol
     private sealed record Request(int Version, string Operation, string? Code);
     private sealed record Response(bool Success, Status? Status, string? Error = null);
     private sealed record Status(string CompanyId, string CompanyName);
+}
+
+[SupportedOSPlatform("windows")]
+internal static class PipeClientExchange
+{
+    public static async Task<string> SendAsync(NamedPipeClientStream pipe, SecurityIdentifier expectedOwner, object request, CancellationToken cancellationToken)
+    {
+        var owner = pipe.GetAccessControl().GetOwner(typeof(SecurityIdentifier));
+        if (!expectedOwner.Equals(owner)) throw new UnauthorizedAccessException("Untrusted print gateway pipe owner");
+        await pipe.WriteAsync(PipeProtocol.Frame(JsonSerializer.Serialize(request)), cancellationToken);
+        await pipe.FlushAsync(cancellationToken);
+        return await PipeProtocol.ReadAsync(pipe, cancellationToken);
+    }
 }

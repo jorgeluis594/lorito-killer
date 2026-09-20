@@ -68,9 +68,7 @@ internal static class TrayApp
         {
             using var pipe = new NamedPipeClientStream(".", PipeProtocol.Name, PipeDirection.InOut, PipeOptions.Asynchronous);
             await pipe.ConnectAsync(3000);
-            await pipe.WriteAsync(PipeProtocol.Frame(JsonSerializer.Serialize(request)));
-            await pipe.FlushAsync();
-            return await PipeProtocol.ReadAsync(pipe, CancellationToken.None);
+            return await PipeClientExchange.SendAsync(pipe, PipeFactory.ServiceSid, request, CancellationToken.None);
         }
     }
 }
