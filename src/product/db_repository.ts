@@ -555,151 +555,146 @@ export const getTotal = async ({
 };
 
 const updateSingleProduct = async (
+  db: Prisma.TransactionClient,
   product: SingleProduct,
-): Promise<response<SingleProduct>> => {
-  const { photos, categories, type, ...productData } = product;
-
-  try {
-    await prisma().product.update({
-      where: { id: product.id, companyId: product.companyId },
-      data: {
-        ...singleProductToPrisma(product),
-        kitchen:
-          product.kitchenId === undefined
-            ? undefined
-            : product.kitchenId
-              ? { connect: { id: product.kitchenId } }
-              : { disconnect: true },
-      },
-    });
-    return { success: true, data: { ...product } };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
+): Promise<SingleProduct> => {
+  await db.product.update({
+    where: { id: product.id, companyId: product.companyId },
+    data: {
+      ...singleProductToPrisma(product),
+      kitchen:
+        product.kitchenId === undefined
+          ? undefined
+          : product.kitchenId
+            ? { connect: { id: product.kitchenId } }
+            : { disconnect: true },
+    },
+  });
+  return product;
 };
 
 const updateServiceProduct = async (
+  db: Prisma.TransactionClient,
   product: ProductService,
-): Promise<response<ProductService>> => {
-  const { photos, categories, type, ...productData } = product;
-
-  try {
-    await prisma().product.update({
-      where: { id: product.id, companyId: product.companyId },
-      data: {
-        ...serviceProductToPrisma(product),
-        kitchen:
-          product.kitchenId === undefined
-            ? undefined
-            : product.kitchenId
-              ? { connect: { id: product.kitchenId } }
-              : { disconnect: true },
-      },
-    });
-    return { success: true, data: { ...product } };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
+): Promise<ProductService> => {
+  await db.product.update({
+    where: { id: product.id, companyId: product.companyId },
+    data: {
+      ...serviceProductToPrisma(product),
+      kitchen:
+        product.kitchenId === undefined
+          ? undefined
+          : product.kitchenId
+            ? { connect: { id: product.kitchenId } }
+            : { disconnect: true },
+    },
+  });
+  return product;
 };
 
 const updateDishProduct = async (
+  db: Prisma.TransactionClient,
   product: DishProduct,
-): Promise<response<DishProduct>> => {
-  try {
-    await prisma().$transaction(
-      async (db) => {
-        await db.product.update({
-          where: { id: product.id, companyId: product.companyId },
-          data: {
-            ...dishProductToPrisma(product),
-            kitchen:
-              product.kitchenId === undefined
-                ? undefined
-                : product.kitchenId
-                  ? { connect: { id: product.kitchenId } }
-                  : { disconnect: true },
-          },
-        });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-    return { success: true, data: product };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : "Error interno del servidor",
-    };
-  }
+): Promise<DishProduct> => {
+  await db.product.update({
+    where: { id: product.id, companyId: product.companyId },
+    data: {
+      ...dishProductToPrisma(product),
+      kitchen:
+        product.kitchenId === undefined
+          ? undefined
+          : product.kitchenId
+            ? { connect: { id: product.kitchenId } }
+            : { disconnect: true },
+    },
+  });
+  return product;
 };
 
 const updatePackageProduct = async (
+  db: Prisma.TransactionClient,
   product: PackageProduct,
-): Promise<response<PackageProduct>> => {
-  const { photos, categories, type, productItems, ...productData } = product;
+): Promise<PackageProduct> => {
+  await db.product.update({
+    where: { id: product.id, companyId: product.companyId },
+    data: {
+      ...packageProductToPrisma(product),
+      kitchen:
+        product.kitchenId === undefined
+          ? undefined
+          : product.kitchenId
+            ? { connect: { id: product.kitchenId } }
+            : { disconnect: true },
+    },
+  });
 
-  try {
-    await prisma().product.update({
-      where: { id: product.id, companyId: product.companyId },
-      data: {
-        ...packageProductToPrisma(product),
-        kitchen:
-          product.kitchenId === undefined
-            ? undefined
-            : product.kitchenId
-              ? { connect: { id: product.kitchenId } }
-              : { disconnect: true },
-      },
-    });
+  const previewItems = await db.packageItem.findMany({
+    where: { parentProductId: product.id },
+  });
 
-    const previewItems = await prisma().packageItem.findMany({
-      where: { parentProductId: product.id },
-    });
+  const itemsToDelete = previewItems.filter(
+    (item) => !product.productItems.find((i) => i.id === item.id),
+  );
 
-    const itemsToDelete = previewItems.filter(
-      (item) => !product.productItems.find((i) => i.id === item.id),
-    );
+  await db.packageItem.deleteMany({
+    where: { id: { in: itemsToDelete.map((i) => i.id) } },
+  });
 
-    await prisma().packageItem.deleteMany({
-      where: { id: { in: itemsToDelete.map((i) => i.id) } },
-    });
+  await Promise.all(
+    product.productItems.map((item) =>
+      db.packageItem.upsert({
+        where: { id: item.id },
+        create: {
+          id: item.id,
+          parentProductId: product.id!,
+          childProductId: item.productId,
+          quantity: item.quantity,
+        },
+        update: { quantity: item.quantity, childProductId: item.productId },
+      }),
+    ),
+  );
 
-    await Promise.all(
-      product.productItems.map((item) =>
-        prisma().packageItem.upsert({
-          where: { id: item.id },
-          create: {
-            id: item.id,
-            parentProductId: product.id!,
-            childProductId: item.productId,
-            quantity: item.quantity,
-          },
-          update: { quantity: item.quantity, childProductId: item.productId },
-        }),
-      ),
-    );
-
-    return { success: true, data: { ...product } };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
+  return product;
 };
 
 export const update = async (product: Product): Promise<response<Product>> => {
   let reactivating = false;
   try {
-    const current = await prisma().product.findFirst({
-      where: { id: product.id, companyId: product.companyId },
-      select: { hidden: true, kitchenId: true },
-    });
-    if (!current) return { success: false, message: "Producto no encontrado" };
-    reactivating = current.hidden && !product.hidden;
-    if (!product.hidden)
-      await assertActiveKitchen(
-        prisma(),
-        product.companyId,
-        product.kitchenId === undefined ? current.kitchenId : product.kitchenId,
-      );
+    return await prisma().$transaction(
+      async (db) => {
+        const current = await db.product.findFirst({
+          where: { id: product.id, companyId: product.companyId },
+          select: { hidden: true, kitchenId: true },
+        });
+        if (!current)
+          return { success: false, message: "Producto no encontrado" };
+        reactivating = current.hidden && !product.hidden;
+        if (!product.hidden)
+          await assertActiveKitchen(
+            db,
+            product.companyId,
+            product.kitchenId === undefined
+              ? current.kitchenId
+              : product.kitchenId,
+          );
+
+        let updated: Product;
+        if (product.type === SingleProductType) {
+          updated = await updateSingleProduct(db, product);
+        } else if (product.type === PackageProductType) {
+          updated = await updatePackageProduct(db, product);
+        } else if (product.type === ServiceProductType) {
+          updated = await updateServiceProduct(db, product);
+        } else if (product.type === DishProductType) {
+          updated = await updateDishProduct(db, product);
+        } else {
+          return { success: false, message: "Invalid product type" };
+        }
+        return { success: true, data: updated };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   } catch (error) {
     return {
       success: false,
@@ -709,17 +704,6 @@ export const update = async (product: Product): Promise<response<Product>> => {
         ? { type: "KitchenConfigurationRequired" as const }
         : {}),
     };
-  }
-  if (product.type === SingleProductType) {
-    return updateSingleProduct(product);
-  } else if (product.type === PackageProductType) {
-    return updatePackageProduct(product);
-  } else if (product.type === ServiceProductType) {
-    return updateServiceProduct(product);
-  } else if (product.type === DishProductType) {
-    return updateDishProduct(product);
-  } else {
-    return { success: false, message: "Invalid product type" };
   }
 };
 

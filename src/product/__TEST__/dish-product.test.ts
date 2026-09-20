@@ -40,7 +40,11 @@ beforeEach(() => {
     callback({
       $queryRaw: mocks.queryRaw,
       kitchen: { findFirst: mocks.kitchenFind },
-      product: { create: mocks.productCreate, update: mocks.productUpdate },
+      product: {
+        create: mocks.productCreate,
+        update: mocks.productUpdate,
+        findFirst: mocks.productFind,
+      },
       category: { findMany: mocks.categoryFind },
     }),
   );
@@ -92,6 +96,9 @@ test("disconnects the Kitchen when updating without one", async () => {
   const result = await update({ ...dish, id: "dish-1", kitchenId: null });
 
   expect(result.success).toBe(true);
+  expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
+    isolationLevel: "Serializable",
+  });
   expect(mocks.productUpdate).toHaveBeenCalledWith({
     where: { id: "dish-1", companyId: dish.companyId },
     data: expect.objectContaining({ kitchen: { disconnect: true } }),
