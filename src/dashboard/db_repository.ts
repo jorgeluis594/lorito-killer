@@ -495,7 +495,6 @@ export async function findRecentSales(
         createdAt: true,
         total: true,
         status: true,
-        paymentStatus: true,
         seller: { select: { name: true, email: true } },
         payments: { select: { method: true } },
         documents: {
@@ -513,7 +512,7 @@ export async function findRecentSales(
       data: orders.map((order) => {
         const document = order.documents[0];
         const status =
-          order.paymentStatus === "PAID"
+          order.status === "COMPLETED"
             ? "completed"
             : order.status === "CANCELLED"
               ? "cancelled"

@@ -98,7 +98,7 @@ Color presente, atención selectiva; cercanía en lenguaje y formas, precisión 
 
 Dirección y muestra conceptual aprobadas el 9 de septiembre de 2026. Este documento actualiza la definición inicial con los valores implementados en la [muestra interactiva](docs/design/jade.html), extraídos de [su CSS](docs/design/jade.css) y [sus interacciones](docs/design/jade.js). La muestra sigue siendo un prototipo independiente. La primera integración en la aplicación ya aplica Manrope local, paleta Jade, radios, foco y estados de error a las primitivas compartidas `Button`, `Input`, `MoneyInput`, `Textarea` y `SelectTrigger`. Fuentes en `public/vendor/manrope`, tema en `src/app/globals.css` y mapeo semántico en `tailwind.config.ts`. Las pantallas conservan su composición y sus estilos locales; esto no constituye el rediseño completo ni un despliegue.
 
-Actualización documental basada en `src/app/globals.css`, `tailwind.config.ts`, `src/shared/components/ui/{button,input,textarea,select,card,badge,dialog}.tsx` y `src/shared/dashboard-nav.tsx`. Los tokens de componentes y las muestras del archivo complementario describen las primitivas actuales de la aplicación. La paleta, los títulos, las etiquetas y el espaciado de referencia conservan la dirección Jade aprobada; no imponen una composición uniforme a las pantallas. La revisión es de código, sin validación visual en navegador.
+Revisión de código del 11 de septiembre de 2026 basada en `src/app/globals.css`, `tailwind.config.ts`, `src/shared/components/ui/{button,input,textarea,select,card,badge,dialog}.tsx` y `src/shared/dashboard-nav.tsx`. Los tokens de componentes y las muestras del archivo complementario describen las primitivas actuales de la aplicación. La paleta, los títulos, las etiquetas y el espaciado de referencia conservan la dirección Jade aprobada; no imponen una composición uniforme a las pantallas. La revisión es de código, sin validación visual en navegador.
 
 La integración conserva `sm` y `xs` para controles compactos; los campos usan 40 px en escritorio con puntero preciso y 44 px en móvil/táctil. Los campos operativos mantienen 14 px de texto. Los bordes de campo usan un tono más definido que los separadores. Se mantiene una variante oscura compatible; la referencia visual aprobada sigue siendo clara. La lavanda está disponible como token semántico, pendiente de aplicación contextual en las pantallas.
 
@@ -141,6 +141,12 @@ La muestra tiene fundamentos a la izquierda y primitivas interactivas a la derec
 
 La aplicación configura un contenedor centrado con relleno de 32 px y máximo de 1400 px en el corte 2xl. La barra lateral mide 288 px y aparece desde lg (1024 px); la navegación móvil usa un panel lateral. Los diálogos cambian su alineación y disposición desde sm (640 px). Estos cortes son propios de la aplicación.
 
+### Densidad de formularios
+
+`FormItem` usa grid con separación de 4 px entre etiqueta, control y error. Las filas usan 16 px; las secciones conservan 20–24 px. `MultipleSelector` comparte la altura mínima de campo y crece con su contenido. Los botones con rol combobox y la gestión de categorías usan la altura de campo; las acciones principales conservan sus tamaños. La altura está centralizada en `--field-height` en `globals.css`.
+
+Las tablas que activan `data-mobile-table` se reorganizan mediante una consulta al ancho de su contenedor (máximo 47.99rem). Conservan encabezados accesibles y distribuyen título, acciones, descripciones e importes según el rol de cada celda; las acciones móviles tienen un mínimo de 44 × 44 px. Fuente: `src/app/globals.css`.
+
 ## Elevation & Depth
 
 La dirección Jade depende de separación tonal, espacio y bordes finos. En el prototipo los contenedores son planos. La navegación activa añade una línea interior jade; el aviso temporal es la única superficie con sombra exterior. El diálogo nativo oscurece el fondo para establecer prioridad. En la aplicación, `Card` conserva una sombra pequeña y `Dialog` una sombra elevada, con fondo negro al 80 %. El diálogo usa la primitiva compartida, no el diálogo HTML nativo de la muestra. Las sombras y el movimiento de ambos contextos están identificados en el archivo complementario.
@@ -152,12 +158,18 @@ Esquinas suaves y contenidas: radio control para botones, navegación y campos; 
 ## Components
 
 - **Botones de aplicación:** `default` jade, `outline` blanco con borde, `secondary` agua, `ghost` transparente, `destructive` rojo, `ghost_destructive` rojo al pasar el puntero y `link` enlace jade. El principal mantiene jade-hover al presionar; el estado tinta pertenece al prototipo. Tamaños: predeterminado y grande 44 px, pequeño 36 px, extrapequeño 24 px, icono 44 × 44 px. Deshabilitado reduce opacidad al 50 %; `LoadingButton` sustituye el contenido por un indicador giratorio.
-- **Campos de aplicación:** `Input`, `MoneyInput` y `SelectTrigger` usan `--field-height`: 40 px desde 640 px con `pointer: fine`, 44 px en los demás casos; texto 14 px y relleno 8 × 12 px; `Textarea` usa tres líneas por defecto y un mínimo de 80 px. Borde de campo, fondo de tarjeta y foco jade. `Input`, `Textarea` y `SelectTrigger` muestran borde y anillo de error con `aria-invalid`; `MoneyInput` comparte las clases pero no propaga ese atributo actualmente. Etiquetas y mensajes se componen fuera de estas primitivas.
-- **Navegación de aplicación:** selección agua al coincidir exactamente la ruta, texto de 14 px y peso 500, relleno 8 × 12 px e icono de 16 px. Hover añade agua y texto verde profundo. La línea lateral y la negrita del prototipo aún no forman parte de esta navegación.
+- **Campos de aplicación:** `Input`, `MoneyInput` y `SelectTrigger` usan `--field-height`: 40 px desde 640 px con `pointer: fine`, 44 px en los demás casos; texto 14 px y relleno 8 × 12 px; `Textarea` usa tres líneas por defecto y un mínimo de 80 px. Borde de campo, fondo de tarjeta y foco jade. `Input`, `Textarea` y `SelectTrigger` declaran borde y anillo de error con `aria-invalid`, aunque la regla global elimina el anillo y aplica borde jade durante `:focus-visible`; `MoneyInput` comparte las clases pero no propaga ese atributo actualmente. Etiquetas y mensajes se componen fuera de estas primitivas.
+- **Navegación de aplicación:** selección agua al coincidir exactamente la ruta; Mesas también permanece seleccionada en sus subrutas; texto de 14 px y peso 500, relleno 8 × 12 px e icono de 16 px. Hover añade agua y texto verde profundo. La línea lateral y la negrita del prototipo aún no forman parte de esta navegación.
 - **Tarjetas y etiquetas:** `Card` usa radio container, borde, sombra pequeña y relleno de 24 px en sus secciones. `Badge` conserva forma de píldora, texto 12 px, peso 600 y relleno 2 × 10 px; variantes principal, secundaria, destructiva y contorno. La nota y la etiqueta lavanda son ejemplos del prototipo.
 - **Tablas y filtros:** las celdas de la aplicación usan cifras tabulares globalmente; la alineación de importes depende de la pantalla. Los filtros combinados, estados con icono y vacío con limpieza descritos en la muestra son patrones de referencia, no capacidades universales.
 - **Diálogo:** fondo de aplicación, ancho máximo predeterminado 512 px, relleno 24 px y separación 16 px; variante lateral derecha de altura completa. El cierre visible conserva el texto accesible «Close» en el código actual.
-- **Foco y movimiento:** la aplicación usa anillo de 2 px separado 2 px en botones y campos; enlaces y botones reciben también una regla global de contorno. El prototipo separa su contorno 4 px. Los botones de aplicación usan transición de color de 150 ms; las animaciones configuradas y el diálogo usan 200 ms. La regla global de movimiento reducido lleva las duraciones a 0.01 ms y desactiva el desplazamiento suave.
+- **Foco y movimiento:** las primitivas declaran anillos, pero la regla global `:focus-visible` elimina contorno y sombras de anillo con `!important` y cambia el borde a jade. Botones y enlaces de navegación reservan un borde transparente de 1 px. Esta descripción registra el comportamiento vigente; no acredita su contraste ni su accesibilidad visual. El prototipo separa su contorno 4 px. Los botones de aplicación usan transición de color de 150 ms; las animaciones configuradas y el diálogo usan 200 ms. La regla global de movimiento reducido lleva las duraciones a 0.01 ms y desactiva el desplazamiento suave.
+
+### Configuración de mesas
+
+La superficie `/dashboard/tables/configure` conserva Jade y Manrope. El código actual en `src/table/components/table-config-form.tsx` usa una columna con ancho máximo de 672 px: formulario primero y listado después. Cantidad y acción comparten una fila que permite salto; el rango se muestra como texto auxiliar. El listado tiene divisores y menús por mesa. Los errores se vinculan al campo y los resultados se anuncian como estado.
+
+El [brief aprobado](docs/plans/2026-09-11-configuracion-mesas-design.md) describe la composición anterior A+C, con vista previa y panel lateral agua. Esos elementos no aparecen en la implementación actual. La revisión visual histórica del 11 de septiembre de 2026 sobre A+C no valida esta composición posterior; esta actualización es documental y de código.
 
 ## Do's and Don'ts
 
@@ -171,7 +183,3 @@ Esquinas suaves y contenidas: radio control para botones, navegación y campos; 
 - Don't dar igual énfasis a todas las acciones ni comunicar estados solo mediante color.
 - Don't envolver cada elemento en una tarjeta ni convertir todos los controles en píldoras.
 - Don't trasladar la composición de catálogo o sus datos de ejemplo a todas las pantallas.
-
-## Densidad de formularios
-
-`FormItem` usa grid con separación de 4 px entre etiqueta, control y error. Las filas usan 16 px; las secciones conservan 20–24 px. `MultipleSelector` comparte la altura mínima de campo y crece con su contenido. Los botones con rol combobox y la gestión de categorías usan la altura de campo; las acciones principales conservan sus tamaños. La altura está centralizada en `--field-height` en `globals.css`.

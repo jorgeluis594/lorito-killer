@@ -18,7 +18,7 @@ vi.mock("@/lib/prisma", () => ({
   }),
 }));
 
-import { create } from "../db_repository";
+import { create, update } from "../db_repository";
 
 const dish: DishProduct = {
   companyId: "company-1",
@@ -37,7 +37,7 @@ beforeEach(() => {
     callback({
       $queryRaw: mocks.queryRaw,
       kitchen: { findFirst: mocks.kitchenFind },
-      product: { create: mocks.productCreate },
+      product: { create: mocks.productCreate, update: mocks.productUpdate },
       category: { findMany: mocks.categoryFind },
     }),
   );
@@ -78,5 +78,35 @@ test("persists DISH inventory columns as null and validates its Kitchen", async 
       targetMovementProductId: null,
       targetMovementProductStock: null,
     }),
+  });
+});
+
+test("disconnects the Kitchen when updating without one", async () => {
+  const result = await update({ ...dish, id: "dish-1", kitchenId: null });
+
+  expect(result.success).toBe(true);
+  expect(mocks.productUpdate).toHaveBeenCalledWith({
+    where: { id: "dish-1", companyId: dish.companyId },
+    data: expect.objectContaining({ kitchen: { disconnect: true } }),
+  });
+});
+
+test("connects the Kitchen when updating with one", async () => {
+  const result = await update({ ...dish, id: "dish-1" });
+
+  expect(result.success).toBe(true);
+  expect(mocks.productUpdate).toHaveBeenCalledWith({
+    where: { id: "dish-1", companyId: dish.companyId },
+    data: expect.objectContaining({
+      kitchen: { connect: { id: dish.kitchenId } },
+    }),
+  });
+});
+
+test("omits the Kitchen relation when creating without one", async () => {
+  await create({ ...dish, kitchenId: null });
+
+  expect(mocks.productCreate).toHaveBeenCalledWith({
+    data: expect.objectContaining({ kitchen: undefined }),
   });
 });

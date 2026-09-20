@@ -12,8 +12,10 @@
     "start:standalone": "npm run prepare:standalone && npm run start",
     "build-and-start": "npm run build:dev && npm run start:standalone",
     "prisma:deploy": "npx prisma migrate deploy && prisma generate",
+    "seed": "ts-node --project src/seeds/tsconfig.json src/seeds/seed.ts",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:docker": "docker compose run --rm web npm run test",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
