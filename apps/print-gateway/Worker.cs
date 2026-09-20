@@ -123,9 +123,9 @@ internal static class PipeFactory
     {
 #if WINDOWS
         var security = new PipeSecurity();
-        security.AddAccessRule(new PipeAccessRule("NT AUTHORITY\\INTERACTIVE", PipeAccessRights.ReadWrite, AccessControlType.Allow));
-        security.AddAccessRule(new PipeAccessRule("BUILTIN\\Administrators", PipeAccessRights.FullControl, AccessControlType.Allow));
-        security.AddAccessRule(new PipeAccessRule("NT AUTHORITY\\SYSTEM", PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.InteractiveSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
         return NamedPipeServerStreamAcl.Create(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security);
 #else
         return new NamedPipeServerStream(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
