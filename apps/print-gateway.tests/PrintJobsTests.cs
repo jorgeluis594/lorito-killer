@@ -189,6 +189,46 @@ public sealed class PrintJobsTests
     }
 
     [Fact]
+    public async Task Retryable_failure_is_confirmed_by_failed_backend_status_without_reconciliation_retry()
+    {
+        var handler = new ReconciliationHandler("FAILED");
+        var store = Store();
+        store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "RESULT", "RETRYABLE_FAILURE", "offline", false));
+        var processor = new PrintJobProcessor(Backend(handler), store, new CapturingPrinter(), NullLogger<PrintJobProcessor>.Instance);
+
+        await processor.ReconcileAsync(Binding(), CancellationToken.None);
+        await processor.ReconcileAsync(Binding(), CancellationToken.None);
+
+        var saved = store.Read("job")!;
+        Assert.True(saved.BackendConfirmed);
+        Assert.Equal("RETRYABLE_FAILURE", saved.Result);
+        Assert.Equal("FAILED", saved.BackendStatus);
+        Assert.Equal(1, handler.Reports);
+    }
+
+    [Fact]
+    public async Task Report_from_another_attempt_is_not_confirmed()
+    {
+        var handler = new ReconciliationHandler("FAILED") { AttemptNumber = 2 };
+        var store = Store();
+        store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "RESULT", "RETRYABLE_FAILURE", "offline", false));
+
+        await new PrintJobProcessor(Backend(handler), store, new CapturingPrinter(), NullLogger<PrintJobProcessor>.Instance).ReconcileAsync(Binding(), CancellationToken.None);
+
+        Assert.False(store.Read("job")!.BackendConfirmed);
+    }
+
+    [Fact]
+    public void Cleanup_removes_old_retryable_failure_confirmed_as_failed()
+    {
+        var store = Store();
+        store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "RESULT", "RETRYABLE_FAILURE", "offline", true, DateTimeOffset.UtcNow.AddDays(-31), "FAILED"));
+
+        Assert.Equal(1, store.Cleanup(DateTimeOffset.UtcNow));
+        Assert.Null(store.Read("job"));
+    }
+
+    [Fact]
     public void Reconciliation_jitter_stays_between_four_and_six_seconds()
     {
         foreach (var value in Enumerable.Range(0, 101).Select(index => index / 100d))
@@ -196,6 +236,13 @@ public sealed class PrintJobsTests
     }
 
     private static Binding Binding() => new("client", "company", "Company", "https://backend.test", "lpk_test");
+    private static BackendClient Backend(HttpMessageHandler handler) => new(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
+    private static JournalStore Store()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        return new(root);
+    }
 
     private sealed class CapturingPrinter : IRawPrinter
     {
@@ -309,6 +356,7 @@ public sealed class PrintJobsTests
         public int Claims { get; private set; }
         public int Reports { get; private set; }
         public int FailReports { get; init; }
+        public int AttemptNumber { get; init; } = 1;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -320,7 +368,7 @@ public sealed class PrintJobsTests
             Reports++;
             var successful = Reports > FailReports;
             var responseStatus = successful ? HttpStatusCode.OK : HttpStatusCode.InternalServerError;
-            var body = $"{{\"success\":{successful.ToString().ToLowerInvariant()},\"data\":{{\"jobId\":\"job\",\"attemptNumber\":1,\"status\":\"{status}\"}}}}";
+            var body = $"{{\"success\":{successful.ToString().ToLowerInvariant()},\"data\":{{\"jobId\":\"job\",\"attemptNumber\":{AttemptNumber},\"status\":\"{status}\"}}}}";
             return Task.FromResult(new HttpResponseMessage(responseStatus) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
         }
     }

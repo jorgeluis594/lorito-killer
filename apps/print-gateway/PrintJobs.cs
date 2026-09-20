@@ -170,7 +170,7 @@ public sealed class JournalStore
                 PrintJournal? journal;
                 try { journal = JsonSerializer.Deserialize<PrintJournal>(File.ReadAllBytes(path), Options); }
                 catch (JsonException) { continue; }
-                if (journal?.BackendConfirmed == true && journal.ConfirmedAt is { } confirmedAt && confirmedAt <= now.AddDays(-30) && journal.Result is "DELIVERED" or "FAILED")
+                if (journal?.BackendConfirmed == true && journal.ConfirmedAt is { } confirmedAt && confirmedAt <= now.AddDays(-30) && (journal.BackendStatus ?? journal.Result) is "DELIVERED" or "FAILED")
                 { File.Delete(path); deleted++; }
             }
             return deleted;
@@ -305,7 +305,7 @@ public sealed class PrintJobProcessor(BackendClient backend, JournalStore journa
         try
         {
             var response = await backend.ReportAsync(binding, record.JobId, record.AttemptNumber, result, error, cancellationToken);
-            var confirmed = response.HttpSuccess && string.Equals(response.JobId, record.JobId, StringComparison.Ordinal) && (string.Equals(response.Status, result, StringComparison.Ordinal) || result == "RETRYABLE_FAILURE" && response.Status == "PENDING");
+            var confirmed = response.HttpSuccess && string.Equals(response.JobId, record.JobId, StringComparison.Ordinal) && response.AttemptNumber == record.AttemptNumber && (string.Equals(response.Status, result, StringComparison.Ordinal) || result == "RETRYABLE_FAILURE" && response.Status is "PENDING" or "FAILED");
             if (!confirmed) logger.LogWarning("Backend status {BackendStatus} differs from local result {LocalResult} for {JobId}", response.Status, result, record.JobId);
             journal.Write(record with { BackendConfirmed = confirmed, BackendStatus = response.Status, ConfirmedAt = confirmed ? DateTimeOffset.UtcNow : null });
             logger.LogInformation("operation=report status={Status} job={JobId} attempt={AttemptNumber} confirmed={Confirmed}", response.Status, record.JobId, record.AttemptNumber, confirmed);
