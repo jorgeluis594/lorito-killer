@@ -5,6 +5,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { listKitchens } from "@/kitchen/db_repository";
 import { KitchenSettings } from "@/kitchen/components/kitchen-settings";
 import type { Kitchen } from "@/kitchen/types";
+import { requireFeature } from "@/feature-flags/server";
 
 export const revalidate = 0;
 
@@ -12,6 +13,9 @@ export default async function PrintingSettingsPage() {
   const auth = await requireRole("ADMIN");
   if (!auth.success)
     return <p className="p-4 text-destructive">{auth.message}</p>;
+  const feature = await requireFeature(auth.data.companyId, "restaurants");
+  if (!feature.success)
+    return <p className="p-4 text-destructive">{feature.message}</p>;
   const [clients, kitchens] = await Promise.all([
     getPrintClients(auth.data.companyId),
     listKitchens(auth.data.companyId, false),

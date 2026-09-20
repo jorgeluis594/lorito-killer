@@ -8,13 +8,16 @@ const mocks = vi.hoisted(() => ({
   kitchenFind: vi.fn(),
   productCreate: vi.fn(),
   productUpdate: vi.fn(),
+  productFind: vi.fn(),
   categoryFind: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   default: () => ({
     $transaction: mocks.transaction,
-    product: { update: mocks.productUpdate },
+    $queryRaw: mocks.queryRaw,
+    kitchen: { findFirst: mocks.kitchenFind },
+    product: { update: mocks.productUpdate, findFirst: mocks.productFind },
   }),
 }));
 
@@ -42,6 +45,7 @@ beforeEach(() => {
     }),
   );
   mocks.kitchenFind.mockResolvedValue({ id: dish.kitchenId });
+  mocks.productFind.mockResolvedValue({ kitchenId: dish.kitchenId });
   mocks.categoryFind.mockResolvedValue([]);
   mocks.productCreate.mockResolvedValue({
     ...dish,
@@ -100,6 +104,17 @@ test("connects the Kitchen when updating with one", async () => {
     data: expect.objectContaining({
       kitchen: { connect: { id: dish.kitchenId } },
     }),
+  });
+});
+
+test("preserves the Kitchen when kitchenId is omitted", async () => {
+  const { kitchenId: _kitchenId, ...withoutKitchen } = dish;
+  const result = await update({ ...withoutKitchen, id: "dish-1" });
+
+  expect(result.success).toBe(true);
+  expect(mocks.productUpdate).toHaveBeenCalledWith({
+    where: { id: "dish-1", companyId: dish.companyId },
+    data: expect.objectContaining({ kitchen: undefined }),
   });
 });
 

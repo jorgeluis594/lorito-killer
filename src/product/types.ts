@@ -10,11 +10,8 @@ export type Photo = {
   createdAt?: Date;
 };
 
-export type PreparationStation = "KITCHEN" | "BAR";
-
 type ProductBase = {
   kitchenId?: string | null;
-  preparationStation?: PreparationStation | null;
   id?: string;
   companyId: string;
   name: string;

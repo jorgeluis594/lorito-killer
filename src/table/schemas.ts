@@ -78,17 +78,6 @@ export const RequestBillSchema = z.object({
   tableId: z.string().min(1, "El ID de mesa es requerido"),
 });
 
-export const TakeOrderItemSchema = z.object({
-  orderItemId: z.string().uuid("El producto no es valido"),
-});
-
-export const ReadyOrderItemSchema = TakeOrderItemSchema;
-
-export const ServeKitchenRoundSchema = z.object({
-  tableId: z.string().uuid("La mesa no es valida"),
-  round: z.number().int().min(1, "La ronda no es valida"),
-});
-
 export const TransferTableSchema = z.object({
   tableId: z.string().min(1, "El ID de mesa es requerido"),
   newWaiterId: z.string().min(1, "El ID de mozo es requerido"),

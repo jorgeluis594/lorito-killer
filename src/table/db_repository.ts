@@ -1,4 +1,3 @@
-import type { PreparationStation } from "@/product/types";
 import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import type {
@@ -9,7 +8,6 @@ import type {
   TableConfiguration,
 } from "./types";
 import { $Enums } from "@prisma/client";
-import { countReadyRounds } from "./use-cases/count-ready-rounds";
 import { CreateTablesSchema } from "./schemas";
 
 // -- Mapper types --
@@ -53,15 +51,6 @@ type PrismaSessionResult = {
       quantity: { toNumber(): number } | number;
       total: { toNumber(): number } | number;
       notes: string | null;
-      round: number;
-      kitchenStatus?: $Enums.OrderItemKitchenStatus;
-      kitchenTakenAt?: Date | null;
-      kitchenReadyAt?: Date | null;
-      servedAt?: Date | null;
-      servedBy?: { id: string; name: string | null } | null;
-      cancellationReason?: string | null;
-      cancelledAt?: Date | null;
-      cancelledBy?: { id: string; name: string | null } | null;
       product: { name: string };
     }>;
   } | null;
@@ -105,11 +94,14 @@ const SESSION_STATUS_MAPPER: Record<
 
 function mapPrismaSession(s: PrismaSessionResult): TableSession {
   const orderItems = s.order?.orderItems || [];
+  const rounds = s.order?.rounds || [];
+  const roundByOrderItem = new Map(
+    rounds.flatMap((round) =>
+      round.items.map((item) => [item.orderItemId, round.number] as const),
+    ),
+  );
   const maxRound =
-    orderItems.length > 0
-      ? Math.max(...orderItems.map((oi) => oi.round ?? 1))
-      : 0;
-  const readyKitchenTickets = countReadyRounds(orderItems);
+    rounds.length > 0 ? Math.max(...rounds.map((round) => round.number)) : 0;
 
   return {
     draft: Array.isArray(s.draft)
@@ -143,29 +135,22 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
               ),
             })),
           })),
-          orderItems: s.order.orderItems.map((item) => ({
-            id: item.id,
-            productId: item.productId,
-            productName: item.product.name,
-            productPrice: Number(item.productPrice),
-            quantity: Number(item.quantity),
-            total: Number(item.total),
-            notes: item.notes,
-            round: item.round,
-            kitchenStatus: item.kitchenStatus ?? "PENDING",
-            kitchenTakenAt: item.kitchenTakenAt,
-            kitchenReadyAt: item.kitchenReadyAt,
-            servedAt: item.servedAt,
-            servedBy: item.servedBy,
-            cancellationReason: item.cancellationReason,
-            cancelledAt: item.cancelledAt,
-            cancelledBy: item.cancelledBy,
-          })),
+          orderItems: s.order.orderItems
+            .filter((item) => Number(item.quantity) > 0)
+            .map((item) => ({
+              id: item.id,
+              productId: item.productId,
+              productName: item.product.name,
+              productPrice: Number(item.productPrice),
+              quantity: Number(item.quantity),
+              total: Number(item.total),
+              notes: item.notes,
+              round: roundByOrderItem.get(item.id) ?? 0,
+            })),
         }
       : null,
     orderId: s.order?.id ?? null,
     currentRound: maxRound,
-    readyKitchenTickets,
     openedAt: s.openedAt,
     closedAt: s.closedAt,
     createdAt: s.createdAt,
@@ -441,8 +426,6 @@ export async function findTables(
                 orderItems: {
                   include: {
                     product: { select: { name: true } },
-                    cancelledBy: { select: { id: true, name: true } },
-                    servedBy: { select: { id: true, name: true } },
                   },
                   orderBy: { createdAt: "asc" },
                 },
@@ -493,8 +476,6 @@ export async function findTable(
                 orderItems: {
                   include: {
                     product: { include: { photos: true } },
-                    cancelledBy: { select: { id: true, name: true } },
-                    servedBy: { select: { id: true, name: true } },
                   },
                   orderBy: { createdAt: "asc" },
                 },
@@ -618,12 +599,25 @@ export async function findActiveSession(
             orderItems: {
               include: {
                 product: true,
-                cancelledBy: { select: { id: true, name: true } },
-                servedBy: { select: { id: true, name: true } },
               },
               orderBy: { createdAt: "asc" },
             },
             payments: true,
+            rounds: {
+              include: {
+                responsibleUser: { select: { id: true, name: true } },
+                items: {
+                  select: {
+                    id: true,
+                    orderItemId: true,
+                    quantity: true,
+                    cancellations: { select: { quantity: true } },
+                    kitchen: { select: { id: true, name: true } },
+                  },
+                },
+              },
+              orderBy: { number: "asc" },
+            },
           },
         },
       },
@@ -722,11 +716,24 @@ export async function updateSessionStatus(
         waiter: { select: { id: true, name: true } },
         order: {
           include: {
+            rounds: {
+              include: {
+                responsibleUser: { select: { id: true, name: true } },
+                items: {
+                  select: {
+                    id: true,
+                    orderItemId: true,
+                    quantity: true,
+                    cancellations: { select: { quantity: true } },
+                    kitchen: { select: { id: true, name: true } },
+                  },
+                },
+              },
+              orderBy: { number: "asc" },
+            },
             orderItems: {
               include: {
                 product: { select: { name: true } },
-                cancelledBy: { select: { id: true, name: true } },
-                servedBy: { select: { id: true, name: true } },
               },
             },
           },
@@ -757,11 +764,24 @@ export async function updateSessionWaiter(
         waiter: { select: { id: true, name: true } },
         order: {
           include: {
+            rounds: {
+              include: {
+                responsibleUser: { select: { id: true, name: true } },
+                items: {
+                  select: {
+                    id: true,
+                    orderItemId: true,
+                    quantity: true,
+                    cancellations: { select: { quantity: true } },
+                    kitchen: { select: { id: true, name: true } },
+                  },
+                },
+              },
+              orderBy: { number: "asc" },
+            },
             orderItems: {
               include: {
                 product: { select: { name: true } },
-                cancelledBy: { select: { id: true, name: true } },
-                servedBy: { select: { id: true, name: true } },
               },
             },
           },
@@ -798,79 +818,6 @@ export async function createDineInOrder(
   }
 }
 
-export async function getOrderBySessionId(
-  sessionId: string,
-  companyId: string,
-): Promise<response<{ id: string; orderItems: Array<{ round: number }> }>> {
-  try {
-    const order = await prisma().order.findFirst({
-      where: {
-        tableSessionId: sessionId,
-        tableSession: { companyId },
-      },
-      include: {
-        orderItems: {
-          select: { round: true },
-          orderBy: { createdAt: "asc" },
-        },
-      },
-    });
-    if (!order) return { success: false, message: "Orden no encontrada" };
-    return {
-      success: true,
-      data: { id: order.id, orderItems: order.orderItems },
-    };
-  } catch (e: any) {
-    console.error("getOrderBySessionId error:", e);
-    return { success: false, message: "Error interno del servidor" };
-  }
-}
-
-export async function addOrderItems(
-  orderId: string,
-  round: number,
-  items: Array<{
-    productId: string;
-    quantity: number;
-    productPrice: number;
-    preparationStation: PreparationStation | null;
-    notes?: string;
-  }>,
-): Promise<response<void>> {
-  try {
-    await prisma().orderItem.createMany({
-      data: items.map((item) => ({
-        orderId,
-        productId: item.productId,
-        preparationStation: item.preparationStation,
-        quantity: item.quantity,
-        productPrice: item.productPrice,
-        discountAmount: 0,
-        netTotal: item.quantity * item.productPrice,
-        total: item.quantity * item.productPrice,
-        notes: item.notes ?? null,
-        round,
-      })),
-    });
-
-    // Update order totals using aggregate
-    const { _sum } = await prisma().orderItem.aggregate({
-      where: { orderId, quantity: { gt: 0 } },
-      _sum: { total: true },
-    });
-    const total = _sum.total?.toNumber() ?? 0;
-    await prisma().order.update({
-      where: { id: orderId },
-      data: { total, netTotal: total },
-    });
-
-    return { success: true, data: undefined };
-  } catch (e: any) {
-    console.error("addOrderItems error:", e);
-    return { success: false, message: "Error interno del servidor" };
-  }
-}
-
 export async function getWaiters(
   companyId: string,
 ): Promise<response<Array<{ id: string; name: string | null }>>> {
@@ -882,39 +829,6 @@ export async function getWaiters(
     return { success: true, data: waiters };
   } catch (e: any) {
     console.error("getWaiters error:", e);
-    return { success: false, message: "Error interno del servidor" };
-  }
-}
-
-export async function findProductsByIds(
-  productIds: string[],
-  companyId: string,
-): Promise<
-  response<
-    Array<{
-      id: string;
-      price: number;
-      name: string;
-      preparationStation: PreparationStation | null;
-    }>
-  >
-> {
-  try {
-    const products = await prisma().product.findMany({
-      where: { id: { in: productIds }, companyId, hidden: false },
-      select: { id: true, price: true, name: true, preparationStation: true },
-    });
-    return {
-      success: true,
-      data: products.map((p) => ({
-        id: p.id,
-        price: p.price.toNumber(),
-        name: p.name,
-        preparationStation: p.preparationStation,
-      })),
-    };
-  } catch (e: any) {
-    console.error("findProductsByIds error:", e);
     return { success: false, message: "Error interno del servidor" };
   }
 }

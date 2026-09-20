@@ -5,13 +5,11 @@ export type TableSessionStatus =
   | "CANCELLED";
 export type TableDerivedStatus = "AVAILABLE" | "OCCUPIED" | "BILL_REQUESTED";
 export type OrderType = "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
-export type OrderItemKitchenStatus =
-  | "PENDING"
-  | "PREPARING"
-  | "READY"
-  | "SERVED"
-  | "CANCELLED";
-
+export type RoundItem = {
+  productId: string;
+  quantity: number;
+  notes?: string;
+};
 export type TableOrderItem = {
   id: string;
   productId: string;
@@ -21,14 +19,6 @@ export type TableOrderItem = {
   total: number;
   notes?: string | null;
   round: number;
-  kitchenStatus: OrderItemKitchenStatus;
-  kitchenTakenAt?: Date | null;
-  kitchenReadyAt?: Date | null;
-  servedAt?: Date | null;
-  servedBy?: { id: string; name?: string | null } | null;
-  cancellationReason?: string | null;
-  cancelledAt?: Date | null;
-  cancelledBy?: { id: string; name?: string | null } | null;
 };
 
 export type TableOrder = {
@@ -91,7 +81,6 @@ export type TableSession = {
   order?: TableOrder | null;
   orderId?: string | null;
   currentRound: number;
-  readyKitchenTickets: number;
   openedAt: Date;
   closedAt?: Date | null;
   createdAt: Date;

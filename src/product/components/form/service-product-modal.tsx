@@ -1,6 +1,6 @@
 "use client";
 
-import { PreparationStationField } from "./preparation-station-field";
+import { KitchenDestinationField } from "./kitchen-destination-field";
 
 import { Button } from "@/shared/components/ui/button";
 import { Input, MoneyInput } from "@/shared/components/ui/input";
@@ -45,16 +45,6 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { getCompany } from "@/order/actions";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
 import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
-import { getKitchenOptions } from "@/kitchen/actions";
-import type { KitchenOption } from "@/kitchen/types";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
 
 type ServiceProductFormValues = z.infer<typeof DishProductSchema>;
 
@@ -66,7 +56,7 @@ const transformToProduct = (
     ...data,
     categories: data.categories || [],
     type: isDish ? DishProductType : ServiceProductType,
-    kitchenId: isDish ? data.kitchenId || null : null,
+    kitchenId: data.kitchenId,
     hidden: false,
   };
 
@@ -90,7 +80,6 @@ export default function ServiceProductModal({
 }: ServiceProductModalProps) {
   const isDish = kind === "dish" || existingProduct?.type === DishProductType;
   const [performingAction, setPerformingAction] = useState(false);
-  const [kitchens, setKitchens] = useState<KitchenOption[]>([]);
   const { toast } = useToast();
 
   const form = useForm<ServiceProductFormValues>({
@@ -117,13 +106,6 @@ export default function ServiceProductModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!isDish || !open) return;
-    getKitchenOptions().then((result) => {
-      if (result.success) setKitchens(result.data);
-    });
-  }, [isDish, open]);
-
   const onSubmit = async (data: ServiceProductFormValues) => {
     setPerformingAction(true);
     try {
@@ -146,7 +128,6 @@ export default function ServiceProductModal({
         });
         onActionPerformed();
         form.reset({
-          preparationStation: null,
           companyId: data.companyId,
           name: "",
           price: 0,
@@ -193,7 +174,6 @@ export default function ServiceProductModal({
   const handleSheetChange = (isOpen: boolean) => {
     if (!isOpen) {
       form.reset({
-        preparationStation: null,
         companyId: form.getValues("companyId"),
         name: "",
         price: 0,
@@ -230,42 +210,7 @@ export default function ServiceProductModal({
             >
               <div className="flex flex-col gap-4">
                 <h3 className="text-base font-bold">Datos generales</h3>
-                {isDish ? (
-                  <FormField
-                    control={form.control}
-                    name="kitchenId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Destino de preparación</FormLabel>
-                        <Select
-                          value={field.value || "none"}
-                          onValueChange={(value) =>
-                            field.onChange(value === "none" ? null : value)
-                          }
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Sin destino" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectItem value="none">Sin destino</SelectItem>
-                              {kitchens.map((kitchen) => (
-                                <SelectItem key={kitchen.id} value={kitchen.id}>
-                                  {kitchen.name}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ) : (
-                  <PreparationStationField />
-                )}
+                <KitchenDestinationField />
                 <FormField
                   control={form.control}
                   name="name"

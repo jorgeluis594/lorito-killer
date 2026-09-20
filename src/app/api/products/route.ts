@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { sortOptions } from "@/product/constants";
 import { protectedRoute } from "@/authorization/server";
+import { isFeatureEnabled } from "@/feature-flags/server";
 
 export const revalidate = 0;
 
@@ -33,6 +34,18 @@ export const POST = protectedRoute(
         {
           success: false,
           message: "Solo un administrador puede configurar platos",
+        },
+        { status: 403 },
+      );
+    }
+    if (
+      product.kitchenId &&
+      !(await isFeatureEnabled(user.companyId, "restaurants"))
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "La función de restaurantes no está activa",
         },
         { status: 403 },
       );

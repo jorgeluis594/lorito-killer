@@ -47,9 +47,7 @@ beforeEach(() => {
   );
   db.session.mockResolvedValue(session());
   db.updateSession.mockResolvedValue({ count: 1 });
-  db.products.mockResolvedValue([
-    { id: "food", name: "Lomo", price: 25.5, preparationStation: null },
-  ]);
+  db.products.mockResolvedValue([{ id: "food", name: "Lomo", price: 25.5 }]);
 });
 
 test("reads the protected draft without consuming it", async () => {

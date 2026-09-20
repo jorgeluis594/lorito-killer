@@ -31,11 +31,6 @@ enum KitchenStatus {
   INACTIVE
 }
 
-enum PreparationStation {
-  KITCHEN
-  BAR
-}
-
 enum PrinterStatus {
   ACTIVE
   INACTIVE
@@ -51,7 +46,6 @@ model Product {
   companyId                  String?
   company                    Company?                 @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   name                       String
-  preparationStation         PreparationStation?
   price                      Decimal
   sku                        String?
   stock                      Decimal?
@@ -183,49 +177,24 @@ model CashShift {
 }
 
 model OrderItem {
-  id                 String                 @id @default(uuid())
-  quantity           Decimal
-  discountAmount     Decimal
-  discountType       DiscountType?
-  discountValue      Decimal?
-  netTotal           Decimal
-  total              Decimal
-  productId          String
-  orderId            String
-  productPrice       Decimal
-  notes              String?
-  preparationStation PreparationStation?
-  round              Int                    @default(1)
-  kitchenStatus      OrderItemKitchenStatus @default(PENDING)
-  kitchenTakenAt     DateTime?
-  kitchenTakenById   String?
-  kitchenReadyAt     DateTime?
-  kitchenReadyById   String?
-  servedAt           DateTime?
-  servedById         String?
-  cancellationReason String?
-  cancelledAt        DateTime?
-  cancelledById      String?
-  product            Product                @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  order              Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orderRoundItem     OrderRoundItem?
-  kitchenTakenBy     User?                  @relation("KitchenTakenOrderItems", fields: [kitchenTakenById], references: [id], onDelete: SetNull)
-  kitchenReadyBy     User?                  @relation("KitchenReadyOrderItems", fields: [kitchenReadyById], references: [id], onDelete: SetNull)
-  servedBy           User?                  @relation("ServedOrderItems", fields: [servedById], references: [id], onDelete: SetNull)
-  cancelledBy        User?                  @relation("CancelledOrderItems", fields: [cancelledById], references: [id], onDelete: SetNull)
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  id             String          @id @default(uuid())
+  quantity       Decimal
+  discountAmount Decimal
+  discountType   DiscountType?
+  discountValue  Decimal?
+  netTotal       Decimal
+  total          Decimal
+  productId      String
+  orderId        String
+  productPrice   Decimal
+  notes          String?
+  product        Product         @relation(fields: [productId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderRoundItem OrderRoundItem?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  @@index([kitchenStatus])
   @@index([orderId, productId])
-}
-
-enum OrderItemKitchenStatus {
-  PENDING
-  PREPARING
-  READY
-  SERVED
-  CANCELLED
 }
 
 enum DiscountType {
@@ -476,10 +445,6 @@ model User {
   stockTransfers         StockTransfer[]
   waiterSessions         TableSession[]          @relation("WaiterSessions")
   soldOrders             Order[]                 @relation("SellerOrders")
-  kitchenTakenOrderItems OrderItem[]             @relation("KitchenTakenOrderItems")
-  kitchenReadyOrderItems OrderItem[]             @relation("KitchenReadyOrderItems")
-  servedOrderItems       OrderItem[]             @relation("ServedOrderItems")
-  cancelledOrderItems    OrderItem[]             @relation("CancelledOrderItems")
   printClientLinkCodes   PrintClientLinkCode[]
   orderRounds            OrderRound[]            @relation("OrderRoundResponsible")
   kitchenTicketPrintJobs KitchetTicketPrintJob[] @relation("KitchenTicketPrintRequester")

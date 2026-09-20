@@ -243,7 +243,6 @@ export async function submitFulfillmentRound(
                     productPrice: line.productPrice,
                     quantity: line.quantity,
                     notes: line.notes,
-                    round: number,
                     discountAmount: 0,
                     netTotal: amount,
                     total: amount,

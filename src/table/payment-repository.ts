@@ -50,7 +50,6 @@ export type TablePaymentData = {
     name: string;
     quantity: number;
     total: number;
-    status: string;
   }[];
   receipt: TableReceiptInput;
   cashShift: { id: string; name: string } | null;
@@ -134,13 +133,14 @@ export async function getTablePaymentData(
       total: Number(order.total),
       status: session.status,
       draftCount: Array.isArray(session.draft) ? session.draft.length : 0,
-      items: order.orderItems.map((item) => ({
-        id: item.id,
-        name: item.product.name,
-        quantity: Number(item.quantity),
-        total: Number(item.total),
-        status: item.kitchenStatus,
-      })),
+      items: order.orderItems
+        .filter((item) => item.quantity.gt(0))
+        .map((item) => ({
+          id: item.id,
+          name: item.product.name,
+          quantity: Number(item.quantity),
+          total: Number(item.total),
+        })),
       receipt: {
         documentType:
           order.documentType === "invoice" || order.documentType === "receipt"

@@ -10,7 +10,6 @@ import {
   CreditCard,
   Smartphone,
   ReceiptText,
-  TriangleAlert,
   Loader2,
   Banknote,
   Layers,
@@ -57,14 +56,6 @@ const emptyCustomer = {
   legalName: "",
   address: "",
 };
-const statuses: Record<string, string> = {
-  PENDING: "Enviado",
-  PREPARING: "En preparación",
-  READY: "Listo para servir",
-  SERVED: "Servido",
-  CANCELLED: "Cancelado · no suma",
-};
-
 export function TablePaymentView({
   initialData,
   canCollectCash,
@@ -108,9 +99,6 @@ export function TablePaymentView({
   const paymentHeading = useRef<HTMLHeadingElement>(null);
   const accountHeading = useRef<HTMLHeadingElement>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
-  const pendingInKitchen = data.items
-    .filter((item) => item.status === "PENDING" || item.status === "PREPARING")
-    .reduce((sum, item) => sum + item.quantity, 0);
   const waitingAtRegister = data.status === "BILL_REQUESTED" && !canCollectCash;
   const closed = data.status === "CLOSED" || data.status === "CANCELLED";
   const blocked =
@@ -461,24 +449,12 @@ export function TablePaymentView({
                   {item.quantity} ×
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      "text-sm font-semibold break-words",
-                      item.status === "CANCELLED" && "line-through",
-                    )}
-                  >
+                  <p className="text-sm font-semibold break-words">
                     {item.name}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {statuses[item.status]}
                   </p>
                 </div>
                 <span className="shrink-0 text-sm tabular-nums">
-                  {item.status === "CANCELLED" ? (
-                    <s>{formatPrice(item.total)}</s>
-                  ) : (
-                    formatPrice(item.total)
-                  )}
+                  {formatPrice(item.total)}
                 </span>
               </li>
             ))}
@@ -918,25 +894,6 @@ export function TablePaymentView({
                 {formatPrice(data.total)}
               </strong>
             </div>
-            {pendingInKitchen > 0 ? (
-              <div
-                className="flex items-start gap-3 rounded-lg bg-[var(--payment-warning-bg)] p-3 text-[var(--payment-warning)]"
-                role="note"
-                style={
-                  {
-                    "--payment-warning-bg": "#fff5e5",
-                    "--payment-warning": "#825008",
-                  } as React.CSSProperties
-                }
-              >
-                <TriangleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
-                <p className="text-sm">
-                  Hay {pendingInKitchen}{" "}
-                  {pendingInKitchen === 1 ? "producto" : "productos"} en
-                  preparación. Puedes cobrar; siguen pendientes de atención.
-                </p>
-              </div>
-            ) : null}
             <p className="text-xs text-muted-foreground">
               {method === "register"
                 ? "La solicitud no registra un pago ni libera la mesa."

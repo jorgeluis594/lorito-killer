@@ -10,6 +10,7 @@ const testContext = vi.hoisted(() => ({
   findBy: vi.fn(),
   getMany: vi.fn(),
   revalidatePath: vi.fn(),
+  featureEnabled: vi.fn(),
   user: {
     id: "user-1",
     name: "Test User",
@@ -30,11 +31,18 @@ vi.mock("next/cache", () => ({
   revalidatePath: testContext.revalidatePath,
 }));
 
+vi.mock("@/feature-flags/server", () => ({
+  isFeatureEnabled: testContext.featureEnabled,
+}));
+
 vi.mock("@/authorization/server", () => ({
   protectedRoute:
     (
       _guard: unknown,
-      handler: (request: Request, user: typeof testContext.user) => Promise<Response>,
+      handler: (
+        request: Request,
+        user: typeof testContext.user,
+      ) => Promise<Response>,
     ) =>
     (request: Request) =>
       handler(request, testContext.user),
@@ -42,10 +50,7 @@ vi.mock("@/authorization/server", () => ({
 
 import { POST } from "@/app/api/products/route";
 
-const createSingleProduct = (
-  companyId: string,
-  sku?: string,
-): Product => ({
+const createSingleProduct = (companyId: string, sku?: string): Product => ({
   companyId,
   type: SingleProductType,
   sku,
@@ -72,6 +77,8 @@ const postProduct = (product: Product) =>
 describe("POST /api/products", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    testContext.user.role = "ADMIN";
+    testContext.featureEnabled.mockResolvedValue(true);
     testContext.findBy.mockResolvedValue({
       success: false,
       message: "Producto no encontrado",
@@ -83,6 +90,28 @@ describe("POST /api/products", () => {
         id: `product-${testContext.create.mock.calls.length}`,
       },
     }));
+  });
+
+  test("rejects a Kitchen assignment when restaurants is disabled", async () => {
+    testContext.featureEnabled.mockResolvedValue(false);
+    const response = await postProduct({
+      ...createSingleProduct("client-company"),
+      kitchenId: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(response.status).toBe(403);
+    expect(testContext.create).not.toHaveBeenCalled();
+  });
+
+  test("rejects a Kitchen assignment from a non-admin", async () => {
+    testContext.user.role = "CASHIER";
+    const response = await postProduct({
+      ...createSingleProduct("client-company"),
+      kitchenId: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(response.status).toBe(403);
+    expect(testContext.create).not.toHaveBeenCalled();
   });
 
   test("uses the authenticated company for two consecutive creations", async () => {
