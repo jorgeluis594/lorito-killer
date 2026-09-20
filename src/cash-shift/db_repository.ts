@@ -13,7 +13,9 @@ import {
   CashShiftWithOutOrders,
   CashShift,
   CashShiftBase,
-  Expense, CashShiftResponse, OrderItemType,
+  Expense,
+  CashShiftResponse,
+  OrderItemType,
 } from "./types";
 import { response } from "@/lib/types";
 import {
@@ -23,7 +25,7 @@ import {
 import PaymentMethod = $Enums.PaymentMethod;
 import { User } from "@/user/types";
 import { plus } from "@/lib/utils";
-import {log} from "@/lib/log";
+import { log } from "@/lib/log";
 
 // improve this
 export const userExists = async (userId: string) => {
@@ -193,15 +195,18 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     throw new Error("User not found");
   }
 
-  const completedOrderIds = new Set(
+  const validOrderIds = new Set(
     prismaCashShift.orders
-      .filter((order) => order.status === "COMPLETED")
+      .filter(
+        (order) =>
+          order.paymentStatus === "PAID" && order.status !== "CANCELLED",
+      )
       .map((order) => order.id),
   );
 
   const totalSales = prismaCashShift.orders.reduce(
     (total, order) =>
-      completedOrderIds.has(order.id!)
+      validOrderIds.has(order.id!)
         ? plus(total)(order.total.toNumber())
         : total,
     0,
@@ -223,29 +228,29 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     companyId: prismaCashShift.companyId || "some_company_id",
     userName: user.name || "sin nombre",
     initialAmount: Number(prismaCashShift.initialAmount),
-    totalSales: sumPaymentsAmount(prismaCashShift.payments, completedOrderIds),
+    totalSales: sumPaymentsAmount(prismaCashShift.payments, validOrderIds),
     amountInCashRegister: plus(prismaCashShift.initialAmount.toNumber())(
       totalSales,
     ),
     expenses,
     totalCashSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
-      completedOrderIds,
+      validOrderIds,
       "CASH",
     ),
     totalDebitCardSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
-      completedOrderIds,
+      validOrderIds,
       "DEBIT_CARD",
     ),
     totalCreditCardSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
-      completedOrderIds,
+      validOrderIds,
       "CREDIT_CARD",
     ),
     totalWalletSales: sumPaymentsAmount(
       prismaCashShift.payments || [],
-      completedOrderIds,
+      validOrderIds,
       "WALLET",
     ),
     orders: (await transformOrdersData(prismaCashShift.orders || [])).sort(
@@ -254,7 +259,7 @@ export const prismaCashShiftToCashShift = async <T extends CashShift>(
     payments: (prismaCashShift.payments || []).map(mapPrismaPaymentToPayment),
   };
 
-  log.info("cashshift_base_created",{baseCashShift})
+  log.info("cashshift_base_created", { baseCashShift });
 
   if (prismaCashShift.status === "OPEN") {
     return {
@@ -350,7 +355,7 @@ export const findOrderItems = async (
       orders: {
         include: {
           orderItems: {
-            where: { kitchenStatus: { not: "CANCELLED" } },
+            where: { quantity: { gt: 0 } },
             include: {
               product: true,
             },
@@ -360,7 +365,7 @@ export const findOrderItems = async (
     },
   });
 
-  const itemsArray = orderItems!.orders.flatMap(order => order.orderItems);
+  const itemsArray = orderItems!.orders.flatMap((order) => order.orderItems);
 
   const OrderItemsMapped = itemsArray.map((o) => {
     const purchaseTotal = +o.product.purchasePrice! * +o.quantity || 0;
@@ -376,10 +381,10 @@ export const findOrderItems = async (
       totalDifference: totalDifference,
       createdAt: o.createdAt,
     };
-  })
+  });
 
   return {
     success: true,
-    data: OrderItemsMapped
-  }
-}
+    data: OrderItemsMapped,
+  };
+};

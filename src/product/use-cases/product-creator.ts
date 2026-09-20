@@ -4,11 +4,13 @@ import {
   SingleProductType,
   PackageProductType,
   ServiceProductType,
+  DishProductType,
 } from "@/product/types";
 import {
   PackageProductSchema,
   SingleProductSchema,
   ServiceProductSchema,
+  DishProductSchema,
 } from "@/product/schema";
 import { response } from "@/lib/types";
 
@@ -32,6 +34,9 @@ export default async function productCreator(
       break;
     case ServiceProductType:
       parsedProduct = ServiceProductSchema.safeParse(product);
+      break;
+    case DishProductType:
+      parsedProduct = DishProductSchema.safeParse(product);
       break;
     default:
       return { success: false, message: "Tipo de producto no válido" };

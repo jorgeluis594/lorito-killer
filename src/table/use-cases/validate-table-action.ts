@@ -1,7 +1,7 @@
 import type { TableSessionStatus } from "../types";
 
 const VALID_TRANSITIONS: Record<TableSessionStatus, TableSessionStatus[]> = {
-  OPEN: ["BILL_REQUESTED", "CANCELLED"],
+  OPEN: ["BILL_REQUESTED", "CLOSED", "CANCELLED"],
   BILL_REQUESTED: ["CLOSED", "OPEN", "CANCELLED"],
   CLOSED: [],
   CANCELLED: [],

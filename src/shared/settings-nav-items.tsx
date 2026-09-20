@@ -17,11 +17,15 @@ export default function NavItems({ isAdmin }: { isAdmin: boolean }) {
   const restaurantsEnabled = useFeatureEnabled("restaurants");
   const visibleItems =
     isAdmin && restaurantsEnabled
-      ? [...items, { title: "Mesas", href: "/dashboard/tables/configure" }]
+      ? [
+          ...items,
+          { title: "Mesas", href: "/dashboard/tables/configure" },
+          { title: "Impresión", href: "/dashboard/settings/printing" },
+        ]
       : items;
 
   return (
-    <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
+    <nav className="flex flex-wrap gap-2 lg:flex-col lg:flex-nowrap">
       {visibleItems.map((item) => {
         return (
           item.href && (

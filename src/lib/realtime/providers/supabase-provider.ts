@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import type { RealtimeAdapter } from "../adapter.interface";
 import type { ConnectionState, Subscription, BaseRealtimeEvent } from "../types";
 
@@ -7,25 +8,21 @@ interface SupabaseConfig {
 }
 
 export class SupabaseRealtimeProvider implements RealtimeAdapter {
-  private client: any = null;
+  private client: any;
   private state: ConnectionState = "disconnected";
   private stateHandlers = new Set<(state: ConnectionState) => void>();
-  private channels = new Map<string, any>();
+  private channels = new Map<
+    string,
+    { channel: any; subscriptions: Set<Subscription> }
+  >();
 
-  constructor(private config: SupabaseConfig) {}
-
-  private async getClient() {
-    if (!this.client) {
-      const { createClient } = await import("@supabase/supabase-js");
-      this.client = createClient(this.config.url, this.config.anonKey);
-    }
-    return this.client;
+  constructor(config: SupabaseConfig) {
+    this.client = createClient(config.url, config.anonKey);
   }
 
   async connect(): Promise<void> {
     this.setState("connecting");
     try {
-      await this.getClient();
       this.setState("connected");
       console.log("[Realtime] Initial connection established (Supabase)");
     } catch (error) {
@@ -35,43 +32,56 @@ export class SupabaseRealtimeProvider implements RealtimeAdapter {
   }
 
   async disconnect(): Promise<void> {
-    const client = await this.getClient();
-    await client.removeAllChannels();
+    await this.client.removeAllChannels();
     this.channels.clear();
     this.setState("disconnected");
   }
 
   subscribe(subscription: Subscription): () => void {
-    if (!this.client) {
-      console.warn("[Realtime] Cannot subscribe: not connected");
-      return () => {};
+    let entry = this.channels.get(subscription.channel);
+    if (!entry) {
+      const channel = this.client.channel(subscription.channel);
+      const subscriptions = new Set<Subscription>();
+      channel.on(
+        "broadcast",
+        { event: "*" },
+        (payload: { event: string; payload: BaseRealtimeEvent }) => {
+          subscriptions.forEach((current) => {
+            if (current.event === payload.event) current.handler(payload.payload);
+          });
+        },
+      );
+      this.setState("connecting");
+      channel.subscribe((status: string) => {
+        if (status === "SUBSCRIBED" && this.state !== "connected") {
+          this.setState("connected");
+        }
+        else if (status === "CLOSED") this.setState("disconnected");
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          this.setState("error");
+        }
+      });
+      this.setState("connected");
+      entry = { channel, subscriptions };
+      this.channels.set(subscription.channel, entry);
     }
 
-    let channel = this.channels.get(subscription.channel);
-    if (!channel) {
-      channel = this.client.channel(subscription.channel);
-      this.channels.set(subscription.channel, channel);
-    }
-
-    channel.on(
-      "broadcast",
-      { event: subscription.event },
-      (payload: { payload: BaseRealtimeEvent }) => {
-        subscription.handler(payload.payload);
-      },
-    );
-
-    channel.subscribe();
+    entry.subscriptions.add(subscription);
+    let active = true;
 
     return () => {
-      channel.unsubscribe();
-      this.channels.delete(subscription.channel);
+      if (!active) return;
+      active = false;
+      entry?.subscriptions.delete(subscription);
+      if (entry && entry.subscriptions.size === 0) {
+        this.client.removeChannel(entry.channel);
+        this.channels.delete(subscription.channel);
+      }
     };
   }
 
   async broadcast(channel: string, event: string, data: unknown): Promise<void> {
-    const client = await this.getClient();
-    await client.channel(channel).send({
+    await this.client.channel(channel).send({
       type: "broadcast",
       event,
       payload: data,
@@ -91,4 +101,10 @@ export class SupabaseRealtimeProvider implements RealtimeAdapter {
     this.state = state;
     this.stateHandlers.forEach((h) => h(state));
   }
+}
+
+export function createSupabaseRealtimeProvider(
+  config: SupabaseConfig,
+): SupabaseRealtimeProvider {
+  return new SupabaseRealtimeProvider(config);
 }

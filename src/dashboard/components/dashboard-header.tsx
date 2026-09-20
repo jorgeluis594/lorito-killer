@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { PackageCheck, ShoppingCart } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import type { DashboardFiltersData, DashboardQuery } from "@/dashboard/types";
 import { dashboardQueryToFilterState } from "@/dashboard/use-cases/normalize-dashboard-query";
-import { formatDashboardDateRange, formatDashboardTime } from "@/dashboard/components/formatters";
+import {
+  formatDashboardDateRange,
+  formatDashboardTime,
+} from "@/dashboard/components/formatters";
 import { DashboardFilters } from "@/dashboard/components/dashboard-filters";
 import { RefreshButton } from "@/dashboard/components/refresh-button";
 
@@ -28,6 +31,12 @@ export function DashboardHeader({
         </div>
         <div className="flex flex-wrap gap-2">
           <RefreshButton />
+          <Button asChild variant="outline">
+            <Link href="/dashboard/orders/fulfillment">
+              <PackageCheck className="mr-2 h-4 w-4" />
+              Para llevar / Delivery
+            </Link>
+          </Button>
           <Button asChild>
             <Link href="/dashboard/orders/new">
               <ShoppingCart className="mr-2 h-4 w-4" />

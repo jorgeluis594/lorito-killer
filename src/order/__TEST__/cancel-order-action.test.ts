@@ -78,6 +78,24 @@ describe("cancelOrder", () => {
     mocks.cancel.mockResolvedValue({ success: true, data: order });
   });
 
+  test.for([
+    { paymentStatus: "paid", hasDishProduct: true, expected: false },
+    { paymentStatus: "paid", hasDishProduct: false, expected: true },
+    { paymentStatus: "pending", hasDishProduct: true, expected: true },
+  ] as const)(
+    "$paymentStatus with dishes=$hasDishProduct: $expected",
+    async ({ paymentStatus, hasDishProduct, expected }) => {
+      mocks.findOrder.mockResolvedValue({
+        success: true,
+        data: { ...order, paymentStatus, hasDishProduct },
+      });
+      expect((await cancelOrder("order-1", "Duplicada")).success).toBe(
+        expected,
+      );
+      expect(mocks.cancel).toHaveBeenCalledTimes(expected ? 1 : 0);
+    },
+  );
+
   test("rejects an order from another company", async () => {
     mocks.findOrder.mockResolvedValue({
       success: false,

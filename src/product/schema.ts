@@ -55,9 +55,7 @@ export const ProductItemSchema = z.object({
   id: z.string(),
   productId: z.string(),
   productName: z.string(),
-  quantity: z
-    .number()
-    .int(),
+  quantity: z.number().int(),
 });
 
 export const PackageProductSchema = z.object({
@@ -81,8 +79,7 @@ export const PackageProductSchema = z.object({
     .max(IMG_MAX_LIMIT, { message: "You can only add up to 5 images" })
     .optional(),
   categories: z.array(CategorySchema),
-  productItems: z
-    .array(ProductItemSchema),
+  productItems: z.array(ProductItemSchema),
   updatedAt: z.date().optional(),
   createdAt: z.date().optional(),
 });
@@ -109,4 +106,8 @@ export const ServiceProductSchema = z.object({
   categories: z.array(CategorySchema),
   updatedAt: z.date().optional(),
   createdAt: z.date().optional(),
+});
+
+export const DishProductSchema = ServiceProductSchema.extend({
+  kitchenId: z.string().uuid().nullable().optional(),
 });

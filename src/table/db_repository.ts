@@ -33,6 +33,19 @@ type PrismaSessionResult = {
   waiter?: { id: string; name: string | null } | null;
   order?: {
     id: string;
+    rounds?: Array<{
+      id: string;
+      number: number;
+      createdAt: Date;
+      responsibleUser: { id: string; name: string | null };
+      items: Array<{
+        id: string;
+        orderItemId: string;
+        quantity: { toNumber(): number } | number;
+        cancellations: Array<{ quantity: { toNumber(): number } | number }>;
+        kitchen: { id: string; name: string } | null;
+      }>;
+    }>;
     orderItems: Array<{
       id: string;
       productId: string;
@@ -116,6 +129,20 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
     order: s.order
       ? {
           id: s.order.id,
+          rounds: s.order.rounds?.map((round) => ({
+            id: round.id,
+            number: round.number,
+            createdAt: round.createdAt,
+            responsible: round.responsibleUser,
+            items: round.items.map(({ cancellations, ...item }) => ({
+              ...item,
+              quantity: Number(item.quantity),
+              cancelledQuantity: cancellations.reduce(
+                (sum, cancellation) => sum + Number(cancellation.quantity),
+                0,
+              ),
+            })),
+          })),
           orderItems: s.order.orderItems.map((item) => ({
             id: item.id,
             productId: item.productId,
@@ -396,6 +423,21 @@ export async function findTables(
             waiter: { select: { id: true, name: true } },
             order: {
               include: {
+                rounds: {
+                  include: {
+                    responsibleUser: { select: { id: true, name: true } },
+                    items: {
+                      select: {
+                        id: true,
+                        orderItemId: true,
+                        quantity: true,
+                        cancellations: { select: { quantity: true } },
+                        kitchen: { select: { id: true, name: true } },
+                      },
+                    },
+                  },
+                  orderBy: { number: "asc" },
+                },
                 orderItems: {
                   include: {
                     product: { select: { name: true } },
@@ -433,6 +475,21 @@ export async function findTable(
             waiter: { select: { id: true, name: true } },
             order: {
               include: {
+                rounds: {
+                  include: {
+                    responsibleUser: { select: { id: true, name: true } },
+                    items: {
+                      select: {
+                        id: true,
+                        orderItemId: true,
+                        quantity: true,
+                        cancellations: { select: { quantity: true } },
+                        kitchen: { select: { id: true, name: true } },
+                      },
+                    },
+                  },
+                  orderBy: { number: "asc" },
+                },
                 orderItems: {
                   include: {
                     product: { include: { photos: true } },
@@ -632,8 +689,24 @@ export async function updateSessionStatus(
         companyId,
         current: true,
         status: existing.status,
-        ...(status === "CLOSED" ? { order: { status: "COMPLETED", payments: { some: {} }, documents: { some: {} } } }
-          : { OR: [{ order: null }, { order: { status: "PENDING", payments: { none: {} }, documents: { none: {} } } }] }),
+        ...(status === "CLOSED"
+          ? {
+              order: {
+                status: "PENDING",
+                paymentStatus: "PAID",
+              },
+            }
+          : {
+              OR: [
+                { order: null },
+                {
+                  order: {
+                    status: "PENDING",
+                    paymentStatus: "PENDING",
+                  },
+                },
+              ],
+            }),
         ...(status === "BILL_REQUESTED" ? { draft: { equals: [] } } : {}),
       },
       data: {
@@ -641,6 +714,9 @@ export async function updateSessionStatus(
         current: isClosed ? null : true,
         closedAt: isClosed ? new Date() : null,
         cancellationReason: status === "CANCELLED" ? cancellationReason : null,
+        ...(status === "CLOSED"
+          ? { order: { update: { status: "COMPLETED" } } }
+          : {}),
       },
       include: {
         waiter: { select: { id: true, name: true } },
@@ -779,7 +855,7 @@ export async function addOrderItems(
 
     // Update order totals using aggregate
     const { _sum } = await prisma().orderItem.aggregate({
-      where: { orderId, kitchenStatus: { not: "CANCELLED" } },
+      where: { orderId, quantity: { gt: 0 } },
       _sum: { total: true },
     });
     const total = _sum.total?.toNumber() ?? 0;
@@ -791,71 +867,6 @@ export async function addOrderItems(
     return { success: true, data: undefined };
   } catch (e: any) {
     console.error("addOrderItems error:", e);
-    return { success: false, message: "Error interno del servidor" };
-  }
-}
-
-export async function cancelPendingOrderItem(input: {
-  orderItemId: string;
-  companyId: string;
-  userId: string;
-  reason: string;
-}): Promise<response<void>> {
-  try {
-    return await prisma().$transaction(async (tx) => {
-      // Serialize cancellation with payment before changing either items or totals.
-      await tx.$queryRaw`SELECT s.id FROM "TableSession" s
-        JOIN "Order" o ON o."tableSessionId" = s.id
-        JOIN "OrderItem" i ON i."orderId" = o.id
-        WHERE i.id = ${input.orderItemId} AND s."companyId" = ${input.companyId}
-        FOR UPDATE OF s, o`;
-      const cancelled = await tx.orderItem.updateMany({
-        where: {
-          id: input.orderItemId,
-          kitchenStatus: "PENDING",
-          order: {
-            companyId: input.companyId,
-            status: "PENDING",
-            tableSession: { current: true, status: "OPEN" },
-          },
-        },
-        data: {
-          kitchenStatus: "CANCELLED",
-          cancellationReason: input.reason,
-          cancelledAt: new Date(),
-          cancelledById: input.userId,
-        },
-      });
-
-      if (cancelled.count !== 1) {
-        return {
-          success: false,
-          message: "El producto ya fue tomado por cocina o cancelado",
-        };
-      }
-
-      const item = await tx.orderItem.findUnique({
-        where: { id: input.orderItemId },
-        select: { orderId: true },
-      });
-      if (!item) return { success: false, message: "Producto no encontrado" };
-
-      const totals = await tx.orderItem.aggregate({
-        where: { orderId: item.orderId, kitchenStatus: { not: "CANCELLED" } },
-        _sum: { total: true, netTotal: true },
-      });
-      await tx.order.update({
-        where: { id: item.orderId },
-        data: {
-          total: totals._sum.total ?? 0,
-          netTotal: totals._sum.netTotal ?? 0,
-        },
-      });
-
-      return { success: true, data: undefined };
-    });
-  } catch (error) {
-    console.error("cancelPendingOrderItem error:", error);
     return { success: false, message: "Error interno del servidor" };
   }
 }

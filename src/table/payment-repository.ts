@@ -61,8 +61,7 @@ export type TablePaymentData = {
 function paidResult(session: Session): TablePaymentResult | null {
   const order = session.order;
   if (
-    session.status !== "CLOSED" ||
-    order?.status !== "COMPLETED" ||
+    order?.paymentStatus !== "PAID" ||
     !order.documents.length ||
     !order.payments.length
   )
@@ -212,9 +211,7 @@ export async function payTable(
           return reject(
             "La cuenta cambió en otro dispositivo. Revisa el total actualizado antes de confirmar.",
           );
-        const items = order.orderItems.filter(
-          (item) => item.kitchenStatus !== "CANCELLED",
-        );
+        const items = order.orderItems.filter((item) => item.quantity.gt(0));
         if (!items.length || order.total.lte(0))
           return reject("La cuenta no tiene productos para cobrar.");
         const company = await tx.company.findUnique({
@@ -349,7 +346,7 @@ export async function payTable(
           cashShiftId: shift.id,
           sellerId: user.id,
           documentType: receipt.documentType,
-          status: "completed",
+          status: "pending",
           createdAt: order.createdAt,
           total: Number(order.total),
           netTotal: Number(order.netTotal),
@@ -392,7 +389,7 @@ export async function payTable(
         await tx.order.update({
           where: { id: order.id },
           data: {
-            status: "COMPLETED",
+            paymentStatus: "PAID",
             cashShiftId: shift.id,
             sellerId: user.id,
             customerId,
@@ -443,10 +440,6 @@ export async function payTable(
           await tx.documentTaxDispatch.create({
             data: { documentId: document.data.id, companyId: user.companyId },
           });
-        await tx.tableSession.update({
-          where: { id: session.id },
-          data: { status: "CLOSED", current: null, closedAt: new Date() },
-        });
         return {
           success: true,
           data: {

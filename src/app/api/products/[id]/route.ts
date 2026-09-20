@@ -5,7 +5,7 @@ import {
   findBy,
   orderByProductIdCount,
 } from "@/product/db_repository";
-import { SingleProduct } from "@/product/types";
+import { DishProductType, Product } from "@/product/types";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { protectedRoute } from "@/authorization/server";
@@ -16,7 +16,7 @@ export const PUT = protectedRoute(
   async (req, user) => {
     const url = new URL(req.url);
     const id = url.pathname.split("/").pop()!;
-    const productData: SingleProduct = await req.json();
+    const productData: Product = await req.json();
     productData.id = id;
     productData.companyId = user.companyId;
 
@@ -25,6 +25,21 @@ export const PUT = protectedRoute(
       return NextResponse.json(
         { success: false, message: "Product not found" },
         { status: 404 },
+      );
+    }
+    if (
+      user.role !== "ADMIN" &&
+      (productData.type === DishProductType ||
+        findProductResponse.data.type === DishProductType ||
+        productData.kitchenId !== findProductResponse.data.kitchenId)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Solo un administrador puede configurar la Kitchen de un producto",
+        },
+        { status: 403 },
       );
     }
 

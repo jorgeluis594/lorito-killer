@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
-  CheckCheck,
   ChevronRight,
   Loader2,
   Minus,
@@ -14,31 +13,35 @@ import {
   Send,
   ShoppingBasket,
   ReceiptText,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice, shortLocalizeDate } from "@/lib/utils";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { getMany } from "@/product/api_repository";
-import type { Product } from "@/product/types";
+import { isDishProduct, type Product } from "@/product/types";
 import type { TableWithSession } from "../types";
-import {
-  leaveEmptyTable,
-  sendTableDraft,
-  serveKitchenRoundAction,
-} from "../actions";
+import { leaveEmptyTable, sendTableDraft } from "../actions";
 import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
 import ProductThumbnail from "@/new-order/components/product-thumbnail";
+import type { KitchenTicketView } from "@/kitchen/types";
+import {
+  printKitchenTicketAction,
+  reprintKitchenTicketAction,
+} from "@/kitchen/actions";
 
 export function TableOrderView({
   table,
   canEdit = true,
+  kitchenTickets = [],
 }: {
   table: TableWithSession;
   canEdit?: boolean;
+  kitchenTickets?: KitchenTicketView[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -59,14 +62,16 @@ export function TableOrderView({
   );
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
+  const roundIdRef = useRef<string | null>(null);
   const [error, setError] = useState("");
+  const [printingTicketId, setPrintingTicketId] = useState<string | null>(null);
+  const printRequestIds = useRef(new Map<string, string>());
   const editable = canEdit && session.status === "OPEN";
   const refresh = useCallback(() => router.refresh(), [router]);
   const sentItems = session.order?.orderItems ?? [];
   const sentTotal =
-    sentItems
-      .filter((item) => item.kitchenStatus !== "CANCELLED")
-      .reduce((sum, item) => sum + Math.round(item.total * 100), 0) / 100;
+    sentItems.reduce((sum, item) => sum + Math.round(item.total * 100), 0) /
+    100;
   const draftTotal =
     draft.items.reduce(
       (sum, item) => sum + Math.round(item.productPrice * 100) * item.quantity,
@@ -123,7 +128,10 @@ export function TableOrderView({
 
   function add(product: Product) {
     if (!product.id || !editable || busyRef.current) return;
-    const existing = draft.items.find((item) => item.productId === product.id);
+    roundIdRef.current = null;
+    const existing = isDishProduct(product)
+      ? undefined
+      : draft.items.find((item) => item.productId === product.id);
     draft.edit(
       existing
         ? draft.items.map((item) =>
@@ -153,7 +161,11 @@ export function TableOrderView({
       if (editable && !(await draft.flush())) return;
       if (editable) {
         const result = send
-          ? await sendTableDraft(session.id, draft.revision.current)
+          ? await sendTableDraft(
+              session.id,
+              draft.revision.current,
+              (roundIdRef.current ??= crypto.randomUUID()),
+            )
           : await leaveEmptyTable(session.id, draft.revision.current);
         if (!result.success) {
           setError(result.message);
@@ -183,7 +195,9 @@ export function TableOrderView({
     setBusy(true);
     try {
       if (editable && !(await draft.flush())) return;
-      router.push(`/dashboard/tables/${table.id}/payment?session=${session.id}`);
+      router.push(
+        `/dashboard/tables/${table.id}/payment?session=${session.id}`,
+      );
     } catch {
       setError("No se pudo abrir la cuenta. Vuelve a intentarlo.");
     } finally {
@@ -192,21 +206,34 @@ export function TableOrderView({
     }
   }
 
-  async function serve(round: number) {
-    if (busyRef.current) return;
-    busyRef.current = true;
-    setBusy(true);
+  async function requestPrint(ticket: KitchenTicketView, reprint: boolean) {
+    if (printingTicketId) return;
+    setPrintingTicketId(ticket.id);
+    setError("");
+    const key = `${ticket.id}:${reprint}`;
+    const jobId = printRequestIds.current.get(key) ?? crypto.randomUUID();
+    printRequestIds.current.set(key, jobId);
     try {
-      const result = await serveKitchenRoundAction(table.id, round);
-      if (result.success) {
-        toast({ title: "Comanda marcada como servida" });
-        router.refresh();
-      } else setError(result.message);
+      const action = reprint
+        ? reprintKitchenTicketAction
+        : printKitchenTicketAction;
+      const result = await action({ kitchenTicketId: ticket.id, jobId });
+      if (!result.success) {
+        setError(result.message);
+        return;
+      }
+      printRequestIds.current.delete(key);
+      toast({
+        title: reprint ? "Reimpresión solicitada" : "Impresión solicitada",
+        description: `${ticket.kitchen.name}: ${result.data.status}`,
+      });
+      router.refresh();
     } catch {
-      setError("No se pudo marcar la comanda. Vuelve a intentarlo.");
+      setError(
+        "No se recibió la respuesta. Vuelve a intentar para recuperar la misma solicitud.",
+      );
     } finally {
-      busyRef.current = false;
-      setBusy(false);
+      setPrintingTicketId(null);
     }
   }
 
@@ -456,9 +483,9 @@ export function TableOrderView({
                 </span>
               </h3>
               {draft.items.length ? (
-                draft.items.map((item) => (
+                draft.items.map((item, index) => (
                   <div
-                    key={item.productId}
+                    key={`${item.productId}-${index}`}
                     className="flex flex-col gap-3 border-b pb-4"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -479,17 +506,18 @@ export function TableOrderView({
                           size="icon"
                           disabled={busy || !editable}
                           aria-label={`Quitar uno de ${item.productName}`}
-                          onClick={() =>
+                          onClick={() => (
+                            (roundIdRef.current = null),
                             draft.edit(
                               draft.items
-                                .map((row) =>
-                                  row.productId === item.productId
+                                .map((row, rowIndex) =>
+                                  rowIndex === index
                                     ? { ...row, quantity: row.quantity - 1 }
                                     : row,
                                 )
                                 .filter((row) => row.quantity > 0),
                             )
-                          }
+                          )}
                         >
                           <Minus aria-hidden />
                         </Button>
@@ -501,15 +529,16 @@ export function TableOrderView({
                           size="icon"
                           disabled={busy || !editable}
                           aria-label={`Agregar uno de ${item.productName}`}
-                          onClick={() =>
+                          onClick={() => (
+                            (roundIdRef.current = null),
                             draft.edit(
-                              draft.items.map((row) =>
-                                row.productId === item.productId
+                              draft.items.map((row, rowIndex) =>
+                                rowIndex === index
                                   ? { ...row, quantity: row.quantity + 1 }
                                   : row,
                               ),
                             )
-                          }
+                          )}
                         >
                           <Plus aria-hidden />
                         </Button>
@@ -521,15 +550,16 @@ export function TableOrderView({
                       maxLength={200}
                       value={item.notes ?? ""}
                       disabled={busy || !editable}
-                      onChange={(event) =>
+                      onChange={(event) => (
+                        (roundIdRef.current = null),
                         draft.edit(
-                          draft.items.map((row) =>
-                            row.productId === item.productId
+                          draft.items.map((row, rowIndex) =>
+                            rowIndex === index
                               ? { ...row, notes: event.target.value }
                               : row,
                           ),
                         )
-                      }
+                      )}
                     />
                   </div>
                 ))
@@ -558,16 +588,16 @@ export function TableOrderView({
                   const items = sentItems.filter(
                     (item) => item.round === round,
                   );
-                  const active = items.filter(
-                    (item) => item.kitchenStatus !== "CANCELLED",
+                  const roundDetails = session.order?.rounds?.find(
+                    (entry) => entry.number === round,
                   );
-                  const ready =
-                    active.length > 0 &&
-                    active.every((item) => item.kitchenStatus === "READY");
                   return (
                     <div key={round} className="flex flex-col gap-3">
                       <p className="text-xs text-muted-foreground">
                         Pedido {round}
+                        {roundDetails
+                          ? ` · ${roundDetails.responsible.name || "Sin nombre"} · ${shortLocalizeDate(new Date(roundDetails.createdAt))}`
+                          : ""}
                       </p>
                       {items.map((item) => (
                         <div
@@ -587,36 +617,114 @@ export function TableOrderView({
                               {item.notes}
                             </p>
                           ) : null}
-                          <p className="text-xs text-muted-foreground">
-                            {
+                          {roundDetails?.items.find(
+                            (roundItem) => roundItem.orderItemId === item.id,
+                          )?.kitchen ? (
+                            <p className="text-xs text-muted-foreground">
+                              Kitchen:{" "}
                               {
-                                PENDING: "Enviado",
-                                PREPARING: "En preparación",
-                                READY: "Listo para servir",
-                                SERVED: "Servido",
-                                CANCELLED: "Cancelado",
-                              }[item.kitchenStatus]
-                            }
-                          </p>
-                          {item.kitchenStatus === "CANCELLED" ? (
-                            <p className="text-xs text-muted-foreground break-words">
-                              {item.cancellationReason}
+                                roundDetails.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )!.kitchen!.name
+                              }
                             </p>
                           ) : null}
-                          {item.kitchenStatus === "PENDING" && editable ? (
-                            <CancelOrderItemDialog itemId={item.id} />
+                          <p className="text-xs text-muted-foreground">
+                            Enviado
+                          </p>
+                          {roundDetails?.items.find(
+                            (roundItem) => roundItem.orderItemId === item.id,
+                          )?.cancelledQuantity ? (
+                            <p className="text-xs text-muted-foreground">
+                              {
+                                roundDetails.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )!.cancelledQuantity
+                              }{" "}
+                              cancelado(s) de{" "}
+                              {
+                                roundDetails.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )!.quantity
+                              }
+                            </p>
+                          ) : null}
+                          {editable && item.quantity > 0 ? (
+                            <CancelOrderItemDialog
+                              orderRoundItemId={
+                                roundDetails?.items.find(
+                                  (roundItem) =>
+                                    roundItem.orderItemId === item.id,
+                                )?.id
+                              }
+                              availableQuantity={item.quantity}
+                            />
                           ) : null}
                         </div>
                       ))}
-                      {ready && canEdit ? (
-                        <Button
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() => serve(round)}
-                        >
-                          <CheckCheck aria-hidden /> Marcar como servido
-                        </Button>
-                      ) : null}
+                      {kitchenTickets
+                        .filter((ticket) => ticket.round.number === round)
+                        .map((ticket) => (
+                          <div
+                            key={ticket.id}
+                            className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3 text-sm"
+                          >
+                            <Printer className="size-4" aria-hidden />
+                            <span className="min-w-0 flex-1 font-medium">
+                              Comanda · {ticket.kitchen.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {ticket.activeJob?.status ??
+                                ticket.lastJob?.status ??
+                                (ticket.attentionReason ===
+                                "NO_PRINTER_CONFIGURED"
+                                  ? "Sin impresora"
+                                  : ticket.attentionReason === "NOT_PRINTED"
+                                    ? "Sin imprimir"
+                                    : "Sin platos vigentes")}
+                            </span>
+                            {ticket.canPrint ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                disabled={printingTicketId === ticket.id}
+                                onClick={() => void requestPrint(ticket, false)}
+                              >
+                                {printingTicketId === ticket.id ? (
+                                  <Loader2
+                                    className="animate-spin"
+                                    aria-hidden
+                                  />
+                                ) : (
+                                  <Printer aria-hidden />
+                                )}
+                                Imprimir
+                              </Button>
+                            ) : null}
+                            {ticket.canReprint ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={printingTicketId === ticket.id}
+                                onClick={() => void requestPrint(ticket, true)}
+                              >
+                                {printingTicketId === ticket.id ? (
+                                  <Loader2
+                                    className="animate-spin"
+                                    aria-hidden
+                                  />
+                                ) : (
+                                  <Printer aria-hidden />
+                                )}
+                                Reimprimir
+                              </Button>
+                            ) : null}
+                          </div>
+                        ))}
                     </div>
                   );
                 })}
@@ -624,9 +732,17 @@ export function TableOrderView({
             ) : null}
           </div>
           <footer className="flex shrink-0 flex-col gap-3 border-t p-4">
-            <Button variant="outline" className="min-h-12 w-full" disabled={busy || sentTotal <= 0} onClick={openPayment}>
+            <Button
+              variant="outline"
+              className="min-h-12 w-full"
+              disabled={busy || sentTotal <= 0}
+              onClick={openPayment}
+            >
               <ReceiptText aria-hidden />
-              {session.status === "BILL_REQUESTED" ? "Ver cobro en caja" : "Cobrar cuenta"} · {formatPrice(sentTotal)}
+              {session.status === "BILL_REQUESTED"
+                ? "Ver cobro en caja"
+                : "Cobrar cuenta"}{" "}
+              · {formatPrice(sentTotal)}
             </Button>
             <div className="flex items-center justify-between text-sm">
               <span>Total por enviar</span>

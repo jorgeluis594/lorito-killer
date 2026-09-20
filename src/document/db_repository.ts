@@ -19,7 +19,7 @@ import PrismaDocumentType = $Enums.DocumentType;
 import { errorResponse, isEmpty } from "@/lib/utils";
 import { log } from "@/lib/log";
 import { Customer } from "@/customer/types";
-import type { Status } from "@/order/types";
+import type { PaymentStatus, Status } from "@/order/types";
 import { findCustomer } from "@/customer/db_repository";
 import { isInvoice, isReceipt } from "@/document/utils";
 
@@ -402,7 +402,19 @@ export const getMany = async ({
     take: pageSize,
     orderBy: { dateOfIssue: "desc" },
     include: {
-      order: { select: { status: true, createdAt: true, payments: true } },
+      order: {
+        select: {
+          status: true,
+          paymentStatus: true,
+          createdAt: true,
+          payments: true,
+          orderItems: {
+            where: { quantity: { gt: 0 }, product: { productType: "DISH" } },
+            select: { id: true },
+            take: 1,
+          },
+        },
+      },
     },
   });
 
@@ -438,6 +450,9 @@ export const getMany = async ({
         ...document,
         orderStatus: prismaDocument.order.status.toLowerCase() as Status,
         orderCreatedAt: prismaDocument.order.createdAt,
+        paymentStatus:
+          prismaDocument.order.paymentStatus.toLowerCase() as PaymentStatus,
+        hasDishProduct: prismaDocument.order.orderItems.length > 0,
       };
     },
   );

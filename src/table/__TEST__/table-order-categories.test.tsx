@@ -22,6 +22,7 @@ vi.mock("../components/use-table-draft", () => ({
   useTableDraft: () => ({ items: [], status: "saved", error: "" }),
 }));
 vi.mock("../actions", () => ({}));
+vi.mock("@/kitchen/actions", () => ({}));
 vi.mock("../components/table-realtime-listener", () => ({
   TableRealtimeListener: () => null,
 }));

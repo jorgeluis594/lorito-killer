@@ -41,6 +41,7 @@ export type OpenTableValues = z.infer<typeof OpenTableSchema>;
 // -- Server action validation schemas --
 
 export const AddRoundSchema = z.object({
+  roundId: z.string().uuid("La ronda no es válida"),
   tableId: z.string().min(1, "El ID de mesa es requerido"),
   items: z
     .array(
@@ -75,15 +76,6 @@ export const CloseTableSchema = z
 
 export const RequestBillSchema = z.object({
   tableId: z.string().min(1, "El ID de mesa es requerido"),
-});
-
-export const CancelOrderItemSchema = z.object({
-  orderItemId: z.string().uuid("El producto no es valido"),
-  reason: z
-    .string()
-    .trim()
-    .min(1, "El motivo de cancelacion es requerido")
-    .max(500, "El motivo no puede exceder 500 caracteres"),
 });
 
 export const TakeOrderItemSchema = z.object({
@@ -156,4 +148,8 @@ export const TableDraftSchema = z.object({
   sessionId: z.string().uuid(),
   revision: z.number().int().nonnegative(),
   items: z.array(AddRoundSchema.shape.items.element).max(100).optional(),
+});
+
+export const SendTableDraftSchema = TableDraftSchema.extend({
+  roundId: z.string().uuid("La ronda no es válida"),
 });

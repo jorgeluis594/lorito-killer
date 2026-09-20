@@ -41,6 +41,8 @@ async function loadDocuments(
       canCancel: canCancelOrder({
         hasPermission: hasCancelPermission,
         orderStatus: document.orderStatus,
+        paymentStatus: document.paymentStatus,
+        hasDishProduct: document.hasDishProduct,
         documentStatus: document.status,
         orderCreatedAt: document.orderCreatedAt,
       }),

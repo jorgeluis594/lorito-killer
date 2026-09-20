@@ -18,8 +18,14 @@ import * as z from "zod";
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ProductService, ServiceProductType, Photo } from "@/product/types";
-import { update } from "@/product/api_repository";
+import {
+  DishProduct,
+  DishProductType,
+  ProductService,
+  ServiceProductType,
+  Photo,
+} from "@/product/types";
+import { create, update } from "@/product/api_repository";
 import { createServiceProduct } from "@/product/actions";
 import FileUpload from "@/product/components/file-upload/file-upload";
 import {
@@ -30,7 +36,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/shared/components/ui/form";
-import { ServiceProductSchema } from "@/product/schema";
+import { DishProductSchema } from "@/product/schema";
 import CategoriesSelector from "@/product/components/category/categories-selector";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { Category } from "@/category/types";
@@ -39,14 +45,28 @@ import { ReloadIcon } from "@radix-ui/react-icons";
 import { getCompany } from "@/order/actions";
 import CategoriesModal from "@/category/components/category-list-model/category-modal";
 import { HelpTooltip } from "@/shared/components/ui/help-tooltip";
+import { getKitchenOptions } from "@/kitchen/actions";
+import type { KitchenOption } from "@/kitchen/types";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 
-type ServiceProductFormValues = z.infer<typeof ServiceProductSchema>;
+type ServiceProductFormValues = z.infer<typeof DishProductSchema>;
 
-const transformToProduct = (data: ServiceProductFormValues): ProductService => {
-  const product: ProductService = {
+const transformToProduct = (
+  data: ServiceProductFormValues,
+  isDish: boolean,
+): ProductService | DishProduct => {
+  const product: ProductService | DishProduct = {
     ...data,
     categories: data.categories || [],
-    type: ServiceProductType,
+    type: isDish ? DishProductType : ServiceProductType,
+    kitchenId: isDish ? data.kitchenId || null : null,
     hidden: false,
   };
 
@@ -54,7 +74,8 @@ const transformToProduct = (data: ServiceProductFormValues): ProductService => {
 };
 
 interface ServiceProductModalProps {
-  product?: ProductService;
+  product?: ProductService | DishProduct;
+  kind?: "service" | "dish";
   open: boolean;
   onClose: () => void;
   onActionPerformed: () => void;
@@ -62,15 +83,18 @@ interface ServiceProductModalProps {
 
 export default function ServiceProductModal({
   product: existingProduct,
+  kind = "service",
   open,
   onClose,
   onActionPerformed,
 }: ServiceProductModalProps) {
+  const isDish = kind === "dish" || existingProduct?.type === DishProductType;
   const [performingAction, setPerformingAction] = useState(false);
+  const [kitchens, setKitchens] = useState<KitchenOption[]>([]);
   const { toast } = useToast();
 
   const form = useForm<ServiceProductFormValues>({
-    resolver: zodResolver(ServiceProductSchema),
+    resolver: zodResolver(DishProductSchema),
     defaultValues: existingProduct
       ? { ...existingProduct, createdAt: undefined, updatedAt: undefined }
       : {
@@ -93,23 +117,32 @@ export default function ServiceProductModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!isDish || !open) return;
+    getKitchenOptions().then((result) => {
+      if (result.success) setKitchens(result.data);
+    });
+  }, [isDish, open]);
+
   const onSubmit = async (data: ServiceProductFormValues) => {
     setPerformingAction(true);
     try {
-      const product = transformToProduct(data);
+      const product = transformToProduct(data, isDish);
       const response = existingProduct
         ? await update({
             ...product,
             id: existingProduct.id,
             hidden: existingProduct.hidden,
           })
-        : await createServiceProduct(product);
+        : isDish
+          ? await create(product)
+          : await createServiceProduct(product as ProductService);
 
       if (response.success) {
         toast({
           description: existingProduct
-            ? "Servicio actualizado con éxito"
-            : "Servicio creado con éxito",
+            ? `${isDish ? "Plato" : "Servicio"} actualizado con éxito`
+            : `${isDish ? "Plato" : "Servicio"} creado con éxito`,
         });
         onActionPerformed();
         form.reset({
@@ -121,20 +154,21 @@ export default function ServiceProductModal({
           sku: "",
           categories: [],
           photos: [],
+          kitchenId: null,
         });
         onClose();
       } else {
         toast({
           title: "Error",
           variant: "destructive",
-          description: "Error al registrar el servicio, " + response.message,
+          description: `Error al registrar el ${isDish ? "plato" : "servicio"}, ${response.message}`,
         });
       }
     } catch (error) {
       toast({
         title: "Error",
         variant: "destructive",
-        description: "Ocurrió un error al crear el servicio",
+        description: `Ocurrió un error al crear el ${isDish ? "plato" : "servicio"}`,
       });
     } finally {
       setPerformingAction(false);
@@ -167,6 +201,7 @@ export default function ServiceProductModal({
         sku: "",
         categories: [],
         photos: [],
+        kitchenId: null,
       });
       onClose();
     }
@@ -177,12 +212,14 @@ export default function ServiceProductModal({
       <SheetContent className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl [&>button]:flex [&>button]:size-11 [&>button]:items-center [&>button]:justify-center">
         <SheetHeader className="shrink-0 border-b bg-card px-6 py-4 pr-16 text-left sm:px-8 sm:pr-20">
           <SheetTitle className="text-2xl font-bold tracking-tight">
-            {existingProduct ? "Editar servicio" : "Agregar servicio"}
+            {existingProduct
+              ? `Editar ${isDish ? "plato" : "servicio"}`
+              : `Agregar ${isDish ? "plato" : "servicio"}`}
           </SheetTitle>
           <SheetDescription>
             {existingProduct
-              ? "Actualiza los datos y el precio del servicio."
-              : "Registra los datos y el precio del servicio."}
+              ? `Actualiza los datos y el precio del ${isDish ? "plato" : "servicio"}.`
+              : `Registra los datos y el precio del ${isDish ? "plato" : "servicio"}.`}
           </SheetDescription>
         </SheetHeader>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-8">
@@ -193,7 +230,42 @@ export default function ServiceProductModal({
             >
               <div className="flex flex-col gap-4">
                 <h3 className="text-base font-bold">Datos generales</h3>
-                <PreparationStationField />
+                {isDish ? (
+                  <FormField
+                    control={form.control}
+                    name="kitchenId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Destino de preparación</FormLabel>
+                        <Select
+                          value={field.value || "none"}
+                          onValueChange={(value) =>
+                            field.onChange(value === "none" ? null : value)
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sin destino" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="none">Sin destino</SelectItem>
+                              {kitchens.map((kitchen) => (
+                                <SelectItem key={kitchen.id} value={kitchen.id}>
+                                  {kitchen.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <PreparationStationField />
+                )}
                 <FormField
                   control={form.control}
                   name="name"
@@ -203,7 +275,7 @@ export default function ServiceProductModal({
                       <FormControl>
                         <Input
                           autoComplete="off"
-                          placeholder="Nombre del servicio"
+                          placeholder={`Nombre del ${isDish ? "plato" : "servicio"}`}
                           {...field}
                         />
                       </FormControl>
@@ -261,7 +333,9 @@ export default function ServiceProductModal({
                         />
                         <div className="flex items-center gap-2">
                           <CategoriesModal addCategory={addCategoryToProduct} />
-                          <HelpTooltip text="Categorías del Servicio" />
+                          <HelpTooltip
+                            text={`Categorías del ${isDish ? "Plato" : "Servicio"}`}
+                          />
                         </div>
                       </div>
                       <FormMessage />
@@ -276,7 +350,7 @@ export default function ServiceProductModal({
                       <FormLabel>Descripción</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Escribe la descripción del servicio aquí."
+                          placeholder={`Escribe la descripción del ${isDish ? "plato" : "servicio"} aquí.`}
                           {...field}
                         />
                       </FormControl>
@@ -324,7 +398,9 @@ export default function ServiceProductModal({
                 className="mr-2 h-4 w-4 animate-spin"
               />
             )}
-            {existingProduct ? "Guardar cambios" : "Agregar servicio"}
+            {existingProduct
+              ? "Guardar cambios"
+              : `Agregar ${isDish ? "plato" : "servicio"}`}
           </Button>
         </SheetFooter>
       </SheetContent>

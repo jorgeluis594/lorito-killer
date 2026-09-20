@@ -17,6 +17,7 @@ export type OrderItem = {
   productPhotoUrl?: string;
   productPrice: number;
   quantity: number;
+  notes?: string | null;
   unitType: typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
   netTotal: number;
   total: number;
@@ -45,6 +46,7 @@ export type PercentDiscount = {
 export type Discount = AmountDiscount | PercentDiscount;
 
 export type Status = "pending" | "completed" | "cancelled";
+export type PaymentStatus = "pending" | "paid";
 
 export type Order = {
   id?: string;
@@ -58,6 +60,9 @@ export type Order = {
   total: number;
   cancellationReason?: string;
   status: Status;
+  paymentStatus?: PaymentStatus;
+  hasDishProduct?: boolean;
+  orderType?: "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
   payments: Payment[];
   discount?: Discount;
   documentType: DocumentType;

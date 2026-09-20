@@ -5,8 +5,8 @@ const DEFAULT_ROUTE_BY_ROLE: Record<UserRole, string> = {
   CASHIER: "/dashboard/orders/new",
   SELLER: "/dashboard/orders/new",
   WAITER: "/dashboard/orders/new",
-  KITCHEN: "/dashboard/kitchen",
-  BARTENDER: "/dashboard/kitchen",
+  KITCHEN: "/dashboard/tables",
+  BARTENDER: "/dashboard/tables",
 };
 
 export function getDefaultRouteForRole(role: unknown): string {

@@ -7,8 +7,8 @@ describe("getDefaultRouteForRole", () => {
     { role: "CASHIER", expected: "/dashboard/orders/new" },
     { role: "SELLER", expected: "/dashboard/orders/new" },
     { role: "WAITER", expected: "/dashboard/orders/new" },
-    { role: "KITCHEN", expected: "/dashboard/kitchen" },
-    { role: "BARTENDER", expected: "/dashboard/kitchen" },
+    { role: "KITCHEN", expected: "/dashboard/tables" },
+    { role: "BARTENDER", expected: "/dashboard/tables" },
   ] as const)("maps $role to $expected", ({ role, expected }) => {
     expect(getDefaultRouteForRole(role)).toBe(expected);
   });
