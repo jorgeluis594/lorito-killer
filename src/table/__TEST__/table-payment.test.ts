@@ -104,13 +104,11 @@ function session() {
       orderItems: [
         {
           id: "item",
-          kitchenStatus: "PREPARING",
           quantity: new Prisma.Decimal(1),
           total: new Prisma.Decimal(100),
         },
         {
           id: "cancelled",
-          kitchenStatus: "CANCELLED",
           quantity: new Prisma.Decimal(0),
           total: new Prisma.Decimal(20),
         },

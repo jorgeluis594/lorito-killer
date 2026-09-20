@@ -1,5 +1,10 @@
 # Pendientes de la funcionalidad de restaurante
 
+> Actualización 2026-09-19: GAP-08 y GAP-09 fueron reemplazados por el modelo
+> de Kitchens configurables y comandas impresas. Ya no existen estaciones fijas
+> Cocina/Barra ni estados de preparación/servido en `OrderItem`. Las secciones
+> históricas se conservan como evidencia de decisiones anteriores.
+
 ## Estado actual
 
 Ya se implementaron las siguientes brechas:
@@ -163,7 +168,6 @@ los demás entornos antes de ejecutar esta versión).
   a la pestaña, además de escuchar los eventos de preparación y entrega.
 
 Evidencia y límites de validación: [reporte QA GAP-09](qa-flujos/09-separacion-cocina-barra-resultados.md).
-
 
 #### Problema
 

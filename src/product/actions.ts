@@ -1,11 +1,18 @@
 "use server";
 
-import { find, update, getParentPackages, create, findBy } from "@/product/db_repository";
+import {
+  find,
+  update,
+  getParentPackages,
+  create,
+  findBy,
+} from "@/product/db_repository";
 import { response } from "@/lib/types";
 import { Product, ProductService } from "@/product/types";
 import { revalidatePath } from "next/cache";
 import { protectedAction } from "@/authorization/server";
 import productCreatorV2 from "@/product/use-cases/product-creator-v2";
+import { isFeatureEnabled } from "@/feature-flags/server";
 
 const createProduct = productCreatorV2({ create, findBy });
 
@@ -41,11 +48,19 @@ export const hideProduct = protectedAction(
 
 export const unhideProduct = protectedAction(
   { resource: "products", action: "delete" },
-  async (user, productId: string): Promise<response<Product>> => {
+  async (
+    user,
+    productId: string,
+    kitchenId?: string | null,
+  ): Promise<response<Product>> => {
     const productResponse = await find(productId, user.companyId);
     if (!productResponse.success) return productResponse;
 
-    const updatedProduct = { ...productResponse.data, hidden: false };
+    const updatedProduct = {
+      ...productResponse.data,
+      hidden: false,
+      ...(kitchenId !== undefined ? { kitchenId } : {}),
+    };
     const updateResponse = await update(updatedProduct);
 
     if (updateResponse.success) {
@@ -60,6 +75,16 @@ export const createServiceProduct = protectedAction(
   { resource: "products", action: "create" },
   async (user, data: ProductService): Promise<response<ProductService>> => {
     try {
+      if (
+        data.kitchenId &&
+        (user.role !== "ADMIN" ||
+          !(await isFeatureEnabled(user.companyId, "restaurants")))
+      )
+        return {
+          success: false,
+          message:
+            "Solo un administrador con restaurantes activo puede configurar una Kitchen",
+        };
       const serviceProduct: ProductService = {
         ...data,
         companyId: user.companyId,

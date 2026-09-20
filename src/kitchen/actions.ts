@@ -34,6 +34,7 @@ import { createKitchenTicketContent } from "@/printing/create-kitchen-ticket-con
 import { processPrintJobs } from "./process-print-jobs";
 import { checkKitchenPrinters } from "./use-cases/check-kitchen-printers";
 import { notifyKitchenChanged, requestPrinterInventory } from "./notifications";
+import { requireFeature } from "@/feature-flags/server";
 
 const kitchenDependencies = {
   list: listKitchens,
@@ -42,20 +43,26 @@ const kitchenDependencies = {
 };
 
 export const getKitchenOptions = protectedAction(
-  { roles: ["ADMIN"] },
-  async (user): Promise<response<KitchenOption[]>> => ({
-    success: true,
-    data: (await getKitchens(
-      kitchenDependencies,
-      user.companyId,
-      "PRODUCT_SELECTOR",
-    )) as KitchenOption[],
-  }),
+  { resource: "products", action: "delete" },
+  async (user): Promise<response<KitchenOption[]>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    return {
+      success: true,
+      data: (await getKitchens(
+        kitchenDependencies,
+        user.companyId,
+        "PRODUCT_SELECTOR",
+      )) as KitchenOption[],
+    };
+  },
 );
 
 export const createKitchenAction = protectedAction(
   { roles: ["ADMIN"] },
   async (user, input: unknown): Promise<response<Kitchen>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
     const parsed = KitchenInputSchema.safeParse(input);
     if (!parsed.success)
       return {
@@ -75,6 +82,8 @@ export const createKitchenAction = protectedAction(
 export const updateKitchenAction = protectedAction(
   { roles: ["ADMIN"] },
   async (user, input: unknown): Promise<response<Kitchen>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
     const parsed = KitchenInputSchema.safeParse(input);
     if (!parsed.success || !parsed.data.id)
       return {

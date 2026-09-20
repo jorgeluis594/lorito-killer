@@ -11,13 +11,15 @@ type Dependencies = {
   }) => Promise<PrintJob | null>;
 };
 
-const attempt = (job: PrintJob, timeoutMs: number): PrintAttempt => ({
+const attempt = (job: PrintJob, timeoutMs: number, serverNow: Date): PrintAttempt => ({
   jobId: job.id,
   attemptNumber: job.attempts,
   printerId: job.printerId,
   printerLocalName: job.printerLocalName,
   content: job.content,
   timeoutMs,
+  attemptExpiresAt: new Date((job.processingStartedAt ?? serverNow).getTime() + timeoutMs),
+  serverNow,
 });
 
 export async function authorizePrintAttempt(
@@ -36,7 +38,7 @@ export async function authorizePrintAttempt(
   if (job.status === "PROCESSING" && job.processingStartedAt)
     return job.processingStartedAt.getTime() + policy.timeoutMs >
       input.now.getTime()
-      ? { success: true, data: attempt(job, policy.timeoutMs) }
+      ? { success: true, data: attempt(job, policy.timeoutMs, input.now) }
       : { success: false, message: "Trabajo no disponible" };
   if (
     job.status !== "PENDING" ||
@@ -54,6 +56,6 @@ export async function authorizePrintAttempt(
     now: input.now,
   });
   return authorized
-    ? { success: true, data: attempt(authorized, policy.timeoutMs) }
+    ? { success: true, data: attempt(authorized, policy.timeoutMs, input.now) }
     : { success: false, message: "Trabajo no disponible" };
 }

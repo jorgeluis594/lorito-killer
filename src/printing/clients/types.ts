@@ -4,6 +4,7 @@ export type PrintClientIdentity = {
 };
 
 export type LinkedPrintClient = PrintClientIdentity & {
+  companyName: string | null;
   credential: string;
 };
 

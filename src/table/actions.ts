@@ -22,7 +22,7 @@ import {
 } from "./db_repository";
 import { closeTableSession } from "./use-cases/close-table-session";
 import { requestBill } from "./use-cases/request-bill";
-import type { RoundItem } from "./use-cases/add-round";
+import type { RoundItem } from "./types";
 import { transferTable } from "./use-cases/transfer-table";
 import {
   AddRoundSchema,

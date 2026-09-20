@@ -32,7 +32,7 @@ export const consumeCode = async (input: {
   machineName: string;
   credentialHash: string;
   now: Date;
-}): Promise<PrintClientIdentity | undefined> =>
+}): Promise<(PrintClientIdentity & { companyName: string | null }) | undefined> =>
   prisma().$transaction(async (db) => {
     await db.printClientLinkCode.deleteMany({
       where: { expiresAt: { lte: input.now } },
@@ -48,15 +48,16 @@ export const consumeCode = async (input: {
     });
     if (consumed.count !== 1) return undefined;
 
-    return db.printClient.create({
+    const client = await db.printClient.create({
       data: {
         companyId: code.companyId,
         machineName: input.machineName,
         credentialHash: input.credentialHash,
         lastSeenAt: input.now,
       },
-      select: { id: true, companyId: true },
+      select: { id: true, companyId: true, company: { select: { name: true } } },
     });
+    return { ...client, companyName: client.company.name };
   });
 
 export const authenticateCredential = async (

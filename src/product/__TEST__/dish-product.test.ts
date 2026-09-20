@@ -8,13 +8,16 @@ const mocks = vi.hoisted(() => ({
   kitchenFind: vi.fn(),
   productCreate: vi.fn(),
   productUpdate: vi.fn(),
+  productFind: vi.fn(),
   categoryFind: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   default: () => ({
     $transaction: mocks.transaction,
-    product: { update: mocks.productUpdate },
+    $queryRaw: mocks.queryRaw,
+    kitchen: { findFirst: mocks.kitchenFind },
+    product: { update: mocks.productUpdate, findFirst: mocks.productFind },
   }),
 }));
 
@@ -37,11 +40,19 @@ beforeEach(() => {
     callback({
       $queryRaw: mocks.queryRaw,
       kitchen: { findFirst: mocks.kitchenFind },
-      product: { create: mocks.productCreate, update: mocks.productUpdate },
+      product: {
+        create: mocks.productCreate,
+        update: mocks.productUpdate,
+        findFirst: mocks.productFind,
+      },
       category: { findMany: mocks.categoryFind },
     }),
   );
   mocks.kitchenFind.mockResolvedValue({ id: dish.kitchenId });
+  mocks.productFind.mockResolvedValue({
+    hidden: dish.hidden,
+    kitchenId: dish.kitchenId,
+  });
   mocks.categoryFind.mockResolvedValue([]);
   mocks.productCreate.mockResolvedValue({
     ...dish,
@@ -85,6 +96,9 @@ test("disconnects the Kitchen when updating without one", async () => {
   const result = await update({ ...dish, id: "dish-1", kitchenId: null });
 
   expect(result.success).toBe(true);
+  expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
+    isolationLevel: "Serializable",
+  });
   expect(mocks.productUpdate).toHaveBeenCalledWith({
     where: { id: "dish-1", companyId: dish.companyId },
     data: expect.objectContaining({ kitchen: { disconnect: true } }),
@@ -100,6 +114,64 @@ test("connects the Kitchen when updating with one", async () => {
     data: expect.objectContaining({
       kitchen: { connect: { id: dish.kitchenId } },
     }),
+  });
+});
+
+test("preserves the Kitchen when kitchenId is omitted", async () => {
+  const { kitchenId: _kitchenId, ...withoutKitchen } = dish;
+  const result = await update({ ...withoutKitchen, id: "dish-1" });
+
+  expect(result.success).toBe(true);
+  expect(mocks.productUpdate).toHaveBeenCalledWith({
+    where: { id: "dish-1", companyId: dish.companyId },
+    data: expect.objectContaining({ kitchen: undefined }),
+  });
+});
+
+test("rejects making a product visible with its inactive Kitchen", async () => {
+  mocks.kitchenFind.mockResolvedValue(null);
+  mocks.productFind.mockResolvedValue({
+    hidden: true,
+    kitchenId: dish.kitchenId,
+  });
+
+  const result = await update({ ...dish, id: "dish-1", hidden: false });
+
+  expect(result).toEqual({
+    success: false,
+    message: "La Kitchen no está activa o pertenece a otra empresa",
+    type: "KitchenConfigurationRequired",
+  });
+  expect(mocks.productUpdate).not.toHaveBeenCalled();
+});
+
+test("allows a hidden product to keep its inactive Kitchen", async () => {
+  mocks.kitchenFind.mockResolvedValue(null);
+  mocks.productFind.mockResolvedValue({
+    hidden: true,
+    kitchenId: dish.kitchenId,
+  });
+
+  const result = await update({ ...dish, id: "dish-1", hidden: true });
+
+  expect(result.success).toBe(true);
+  expect(mocks.kitchenFind).not.toHaveBeenCalled();
+});
+
+test("makes a product visible with an active replacement Kitchen", async () => {
+  const kitchenId = "8419f57d-f12c-4b36-8d61-351155faa846";
+
+  const result = await update({
+    ...dish,
+    id: "dish-1",
+    hidden: false,
+    kitchenId,
+  });
+
+  expect(result.success).toBe(true);
+  expect(mocks.kitchenFind).toHaveBeenCalledWith({
+    where: { id: kitchenId, companyId: "company-1", status: "ACTIVE" },
+    select: { id: true },
   });
 });
 

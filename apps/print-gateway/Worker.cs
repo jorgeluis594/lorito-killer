@@ -1,13 +1,227 @@
+using System.IO.Pipes;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+#if WINDOWS
+using System.Security.AccessControl;
+using System.Security.Principal;
+#endif
+
 namespace Lorito.PrintGateway;
 
-public sealed class Worker(ILogger<Worker> logger) : BackgroundService
+public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, JournalStore journal, IPrinterEnumerator printers, DailyFileLoggerProvider fileLogger, ILogger<Worker> logger) : BackgroundService
 {
+    private int reconciliationStarted;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        if (!configuration.IsValid(out var error)) { logger.LogError("Invalid configuration: {Error}", error); return; }
+        if (!OperatingSystem.IsWindows())
+        {
+            await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
+            return;
+        }
+        fileLogger.Cleanup(DateTimeOffset.UtcNow);
+        logger.LogInformation("operation=startup status=started");
+        _ = CleanupJournal(stoppingToken);
+        StartReconciliation(stoppingToken);
+        var binding = bindingStore.Read();
+        if (binding is not null)
+        {
+            await PublishInventory(binding, stoppingToken);
+            _ = Listen(binding, stoppingToken);
+        }
+        else logger.LogInformation("operation=connection status=unlinked");
+        await ProcessConnectionsAsync(stoppingToken);
+    }
+
+    internal async Task ProcessConnectionsAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Worker running at: {Time}", DateTimeOffset.Now);
-            await Task.Delay(1_000, stoppingToken);
+            try
+            {
+                await using var pipe = await PipeFactory.AcceptAsync(stoppingToken);
+                await PipeProtocol.HandleAsync(pipe, bindingStore, backend, binding =>
+                {
+                    _ = PublishInventory(binding, stoppingToken);
+                    _ = Listen(binding, stoppingToken);
+                    StartReconciliation(stoppingToken);
+                    return Task.CompletedTask;
+                }, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
+            catch (Exception exception) { logger.LogWarning(exception, "operation=pipe status=failed"); }
         }
     }
+
+    internal static TimeSpan ReconciliationDelay(Func<double>? random = null)
+    {
+        var value = Math.Clamp((random ?? Random.Shared.NextDouble)(), 0, 1);
+        return TimeSpan.FromMilliseconds(4000 + value * 2000);
+    }
+
+    private void StartReconciliation(CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref reconciliationStarted, 1) == 0) _ = ReconcileJournal(cancellationToken);
+    }
+
+    private async Task ReconcileJournal(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                var binding = bindingStore.Read();
+                if (binding is not null) await processor.ReconcileAsync(binding, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+            catch (Exception exception) { logger.LogError(exception, "Print journal reconciliation failed"); }
+            try { await Task.Delay(ReconciliationDelay(), cancellationToken); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
+        }
+    }
+
+    private async Task CleanupJournal(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try { fileLogger.Cleanup(DateTimeOffset.UtcNow); journal.Cleanup(DateTimeOffset.UtcNow); }
+            catch (Exception exception) { logger.LogError(exception, "Print journal cleanup failed"); }
+            try { await Task.Delay(TimeSpan.FromDays(1), cancellationToken); }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        }
+    }
+
+    private async Task PublishInventory(Binding binding, CancellationToken cancellationToken)
+    {
+        try { await backend.PublishInventoryAsync(binding, printers.Enumerate(), cancellationToken); logger.LogInformation("operation=inventory status=published client={ClientId}", binding.ClientId); }
+        catch (Exception exception) { logger.LogError(exception, "operation=inventory status=failed client={ClientId}", binding.ClientId); }
+    }
+
+    private async Task Listen(Binding binding, CancellationToken cancellationToken)
+    {
+        try { logger.LogInformation("operation=connection status=connecting client={ClientId}", binding.ClientId); await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), jobId => processor.ProcessAsync(binding, jobId, cancellationToken), cancellationToken); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception exception) { logger.LogError(exception, "operation=connection status=failed client={ClientId}", binding.ClientId); }
+    }
+}
+
+internal static class PipeFactory
+{
+#if WINDOWS
+    internal static SecurityIdentifier ServiceSid => (SecurityIdentifier)new NTAccount(@"NT SERVICE\LoritoPrintGateway").Translate(typeof(SecurityIdentifier));
+#endif
+    internal static Func<CancellationToken, Task<Stream>> AcceptAsync { get; set; } = AcceptPipeAsync;
+
+    private static async Task<Stream> AcceptPipeAsync(CancellationToken cancellationToken)
+    {
+        var pipe = Create();
+        try { await pipe.WaitForConnectionAsync(cancellationToken); return pipe; }
+        catch { await pipe.DisposeAsync(); throw; }
+    }
+
+    public static NamedPipeServerStream Create()
+    {
+#if WINDOWS
+        var serviceSid = ServiceSid;
+        var security = new PipeSecurity();
+        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.InteractiveSid, null), PipeAccessRights.ReadWrite, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null), PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.AddAccessRule(new PipeAccessRule(serviceSid, PipeAccessRights.FullControl, AccessControlType.Allow));
+        security.SetOwner(serviceSid);
+        return NamedPipeServerStreamAcl.Create(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security);
+#else
+        return new NamedPipeServerStream(PipeProtocol.Name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+#endif
+    }
+}
+
+public sealed record Binding(string ClientId, string CompanyId, string? CompanyName, string BackendUrl, string Credential);
+public sealed record PrinterInventory(int Version, IReadOnlyList<string> Printers);
+public interface IPrinterEnumerator { PrinterInventory Enumerate(); }
+public sealed class EmptyPrinterEnumerator : IPrinterEnumerator { public PrinterInventory Enumerate() => new(1, []); }
+
+public sealed class GatewayConfiguration
+{
+    public string BackendUrl { get; }
+    public string SupabaseUrl { get; }
+    public string SupabasePublishableKey { get; }
+    public string DataPath { get; }
+    public GatewayConfiguration(string? backendUrl = null, string? supabaseUrl = null, string? supabasePublishableKey = null)
+    {
+        BackendUrl = backendUrl ?? Environment.GetEnvironmentVariable("PRINT_BACKEND_URL") ?? "";
+        SupabaseUrl = supabaseUrl ?? Environment.GetEnvironmentVariable("SUPABASE_URL") ?? "";
+        SupabasePublishableKey = supabasePublishableKey ?? Environment.GetEnvironmentVariable("SUPABASE_PUBLISHABLE_KEY") ?? "";
+        DataPath = Environment.GetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway");
+    }
+    public bool IsValid(out string error)
+    {
+        if (!Uri.TryCreate(BackendUrl, UriKind.Absolute, out var backend) || backend.Scheme != Uri.UriSchemeHttps) return Fail("PRINT_BACKEND_URL must be HTTPS", out error);
+        if (!Uri.TryCreate(SupabaseUrl, UriKind.Absolute, out var supabase) || supabase.Scheme != Uri.UriSchemeHttps) return Fail("SUPABASE_URL must be HTTPS", out error);
+        if (string.IsNullOrWhiteSpace(SupabasePublishableKey)) return Fail("SUPABASE_PUBLISHABLE_KEY is required", out error);
+        error = ""; return true;
+    }
+    private static bool Fail(string message, out string error) { error = message; return false; }
+}
+
+public sealed class BindingStore
+{
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly string path;
+    private readonly object gate = new();
+    public BindingStore(string? root = null) => path = Path.Combine(root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway"), "binding.dat");
+    internal string Root => Path.GetDirectoryName(path)!;
+    public Binding? Read()
+    {
+        lock (gate)
+        {
+            if (!File.Exists(path)) return null;
+            try { return JsonSerializer.Deserialize<Binding>(Unprotect(File.ReadAllBytes(path)), JsonOptions); } catch { return null; }
+        }
+    }
+    public void Write(Binding binding)
+    {
+        lock (gate)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            var temporary = path + ".tmp";
+            using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None)) { stream.Write(Protect(JsonSerializer.SerializeToUtf8Bytes(binding, JsonOptions))); stream.Flush(true); }
+            File.Move(temporary, path, true);
+        }
+    }
+    private static byte[] Protect(byte[] value) => WindowsDataProtection.Protect(value);
+    private static byte[] Unprotect(byte[] value) => WindowsDataProtection.Unprotect(value);
+}
+
+internal static class WindowsDataProtection
+{
+    public static byte[] Protect(byte[] data) => Transform(data, true);
+    public static byte[] Unprotect(byte[] data) => Transform(data, false);
+
+    private static byte[] Transform(byte[] data, bool protect)
+    {
+        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("DPAPI is Windows-only");
+        var input = new Blob(data);
+        var output = new Blob();
+        var success = protect ? CryptProtectData(ref input.Value, "Lorito PrintGateway", IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 4, ref output.Value) : CryptUnprotectData(ref input.Value, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 4, ref output.Value);
+        if (!success) throw new System.ComponentModel.Win32Exception();
+        try { return output.ToArray(); } finally { LocalFree(output.Value.pbData); }
+    }
+
+    private sealed class Blob
+    {
+        private readonly IntPtr memory;
+        public CRYPT_BLOB Value;
+        public Blob(byte[] data) { memory = Marshal.AllocHGlobal(data.Length); Marshal.Copy(data, 0, memory, data.Length); Value = new((uint)data.Length, memory); }
+        public Blob() { }
+        public byte[] ToArray() { var data = new byte[Value.cbData]; Marshal.Copy(Value.pbData, data, 0, data.Length); return data; }
+    }
+
+    [StructLayout(LayoutKind.Sequential)] private struct CRYPT_BLOB(uint size, IntPtr data) { public uint cbData = size; public IntPtr pbData = data; }
+    [DllImport("crypt32.dll", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool CryptProtectData(ref CRYPT_BLOB dataIn, string description, IntPtr entropy, IntPtr reserved, IntPtr prompt, uint flags, ref CRYPT_BLOB dataOut);
+    [DllImport("crypt32.dll", SetLastError = true)] private static extern bool CryptUnprotectData(ref CRYPT_BLOB dataIn, IntPtr description, IntPtr entropy, IntPtr reserved, IntPtr prompt, uint flags, ref CRYPT_BLOB dataOut);
+    [DllImport("kernel32.dll")] private static extern IntPtr LocalFree(IntPtr handle);
 }

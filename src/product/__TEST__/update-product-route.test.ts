@@ -9,6 +9,7 @@ const testContext = vi.hoisted(() => ({
   find: vi.fn(),
   findBy: vi.fn(),
   update: vi.fn(),
+  featureEnabled: vi.fn(),
   user: {
     id: "user-1",
     name: "Test User",
@@ -29,11 +30,18 @@ vi.mock("@/product/db_repository", () => ({
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
+vi.mock("@/feature-flags/server", () => ({
+  isFeatureEnabled: testContext.featureEnabled,
+}));
+
 vi.mock("@/authorization/server", () => ({
   protectedRoute:
     (
       _guard: unknown,
-      handler: (request: Request, user: typeof testContext.user) => Promise<Response>,
+      handler: (
+        request: Request,
+        user: typeof testContext.user,
+      ) => Promise<Response>,
     ) =>
     (request: Request) =>
       handler(request, testContext.user),
@@ -69,11 +77,50 @@ const putProduct = (body: Product) =>
 describe("PUT /api/products/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    testContext.find.mockResolvedValue({ success: true, data: product("product-1") });
+    testContext.user.role = "ADMIN";
+    testContext.featureEnabled.mockResolvedValue(true);
+    testContext.find.mockResolvedValue({
+      success: true,
+      data: product("product-1"),
+    });
     testContext.update.mockImplementation(async (data: Product) => ({
       success: true,
       data,
     }));
+  });
+
+  test("preserves an existing Kitchen when the field is omitted", async () => {
+    const kitchenId = "11111111-1111-4111-8111-111111111111";
+    testContext.find.mockResolvedValue({
+      success: true,
+      data: { ...product("product-1"), kitchenId },
+    });
+    testContext.findBy.mockResolvedValue({ success: false });
+    testContext.featureEnabled.mockResolvedValue(false);
+
+    const response = await putProduct(product("product-1"));
+
+    expect(response.status).toBe(200);
+    expect(testContext.update).toHaveBeenCalledWith(
+      expect.not.objectContaining({ kitchenId: expect.anything() }),
+    );
+  });
+
+  test("rejects removing a Kitchen when restaurants is disabled", async () => {
+    const kitchenId = "11111111-1111-4111-8111-111111111111";
+    testContext.find.mockResolvedValue({
+      success: true,
+      data: { ...product("product-1"), kitchenId },
+    });
+    testContext.featureEnabled.mockResolvedValue(false);
+
+    const response = await putProduct({
+      ...product("product-1"),
+      kitchenId: null,
+    });
+
+    expect(response.status).toBe(403);
+    expect(testContext.update).not.toHaveBeenCalled();
   });
 
   test("allows keeping the current SKU and trusts URL/session identifiers", async () => {

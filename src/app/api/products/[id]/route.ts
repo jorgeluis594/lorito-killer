@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { protectedRoute } from "@/authorization/server";
 import productRemoverCreator from "@/product/use-cases/product-remover";
+import { isFeatureEnabled } from "@/feature-flags/server";
 
 export const PUT = protectedRoute(
   { resource: "products", action: "update" },
@@ -27,11 +28,16 @@ export const PUT = protectedRoute(
         { status: 404 },
       );
     }
+    const changesKitchen =
+      productData.kitchenId !== undefined &&
+      productData.kitchenId !== findProductResponse.data.kitchenId;
     if (
-      user.role !== "ADMIN" &&
-      (productData.type === DishProductType ||
-        findProductResponse.data.type === DishProductType ||
-        productData.kitchenId !== findProductResponse.data.kitchenId)
+      (user.role !== "ADMIN" &&
+        (productData.type === DishProductType ||
+          findProductResponse.data.type === DishProductType ||
+          changesKitchen)) ||
+      (changesKitchen &&
+        !(await isFeatureEnabled(user.companyId, "restaurants")))
     ) {
       return NextResponse.json(
         {

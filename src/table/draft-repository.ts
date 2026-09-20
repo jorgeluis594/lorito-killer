@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
-import type { RoundItem } from "./use-cases/add-round";
+import type { RoundItem } from "./types";
 import { findActiveSession } from "./db_repository";
 import type { TableSession } from "./types";
 
@@ -128,7 +128,6 @@ export async function updateTableDraft(input: {
             id: true,
             name: true,
             price: true,
-            preparationStation: true,
           },
         });
         const productMap = new Map(
