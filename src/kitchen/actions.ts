@@ -43,7 +43,7 @@ const kitchenDependencies = {
 };
 
 export const getKitchenOptions = protectedAction(
-  { roles: ["ADMIN"] },
+  { resource: "products", action: "delete" },
   async (user): Promise<response<KitchenOption[]>> => {
     const feature = await requireFeature(user.companyId, "restaurants");
     if (!feature.success) return feature;

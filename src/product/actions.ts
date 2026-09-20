@@ -48,11 +48,19 @@ export const hideProduct = protectedAction(
 
 export const unhideProduct = protectedAction(
   { resource: "products", action: "delete" },
-  async (user, productId: string): Promise<response<Product>> => {
+  async (
+    user,
+    productId: string,
+    kitchenId?: string | null,
+  ): Promise<response<Product>> => {
     const productResponse = await find(productId, user.companyId);
     if (!productResponse.success) return productResponse;
 
-    const updatedProduct = { ...productResponse.data, hidden: false };
+    const updatedProduct = {
+      ...productResponse.data,
+      hidden: false,
+      ...(kitchenId !== undefined ? { kitchenId } : {}),
+    };
     const updateResponse = await update(updatedProduct);
 
     if (updateResponse.success) {

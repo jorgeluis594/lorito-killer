@@ -45,7 +45,10 @@ beforeEach(() => {
     }),
   );
   mocks.kitchenFind.mockResolvedValue({ id: dish.kitchenId });
-  mocks.productFind.mockResolvedValue({ kitchenId: dish.kitchenId });
+  mocks.productFind.mockResolvedValue({
+    hidden: dish.hidden,
+    kitchenId: dish.kitchenId,
+  });
   mocks.categoryFind.mockResolvedValue([]);
   mocks.productCreate.mockResolvedValue({
     ...dish,
@@ -115,6 +118,53 @@ test("preserves the Kitchen when kitchenId is omitted", async () => {
   expect(mocks.productUpdate).toHaveBeenCalledWith({
     where: { id: "dish-1", companyId: dish.companyId },
     data: expect.objectContaining({ kitchen: undefined }),
+  });
+});
+
+test("rejects making a product visible with its inactive Kitchen", async () => {
+  mocks.kitchenFind.mockResolvedValue(null);
+  mocks.productFind.mockResolvedValue({
+    hidden: true,
+    kitchenId: dish.kitchenId,
+  });
+
+  const result = await update({ ...dish, id: "dish-1", hidden: false });
+
+  expect(result).toEqual({
+    success: false,
+    message: "La Kitchen no está activa o pertenece a otra empresa",
+    type: "KitchenConfigurationRequired",
+  });
+  expect(mocks.productUpdate).not.toHaveBeenCalled();
+});
+
+test("allows a hidden product to keep its inactive Kitchen", async () => {
+  mocks.kitchenFind.mockResolvedValue(null);
+  mocks.productFind.mockResolvedValue({
+    hidden: true,
+    kitchenId: dish.kitchenId,
+  });
+
+  const result = await update({ ...dish, id: "dish-1", hidden: true });
+
+  expect(result.success).toBe(true);
+  expect(mocks.kitchenFind).not.toHaveBeenCalled();
+});
+
+test("makes a product visible with an active replacement Kitchen", async () => {
+  const kitchenId = "8419f57d-f12c-4b36-8d61-351155faa846";
+
+  const result = await update({
+    ...dish,
+    id: "dish-1",
+    hidden: false,
+    kitchenId,
+  });
+
+  expect(result.success).toBe(true);
+  expect(mocks.kitchenFind).toHaveBeenCalledWith({
+    where: { id: kitchenId, companyId: "company-1", status: "ACTIVE" },
+    select: { id: true },
   });
 });
 

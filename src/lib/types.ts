@@ -8,7 +8,11 @@ export type successResponse<DataType = any> = {
 export type ErrorResponse = {
   success: false;
   message: string;
-  type?: "AuthError" | "CompanyInactive" | "AuthorizationError";
+  type?:
+    | "AuthError"
+    | "CompanyInactive"
+    | "AuthorizationError"
+    | "KitchenConfigurationRequired";
 };
 
 export type response<DataType = any> =

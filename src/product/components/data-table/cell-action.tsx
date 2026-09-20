@@ -26,6 +26,18 @@ import { UNIT_TYPE_MAPPER } from "@/product/constants";
 import { performProductMovementStockTransfer } from "@/stock-transfer/components/actions";
 import { useUserSession } from "@/lib/use-user-session";
 import { hideProduct, unhideProduct } from "@/product/actions";
+import { getKitchenOptions } from "@/kitchen/actions";
+import type { KitchenOption } from "@/kitchen/types";
+import { Modal } from "@/shared/components/ui/modal";
+import { Label } from "@/shared/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 
 interface CellActionProps {
   product: Product;
@@ -35,6 +47,9 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [movementStockModalOpen, setMovementStockModalOpen] = useState(false);
+  const [kitchenModalOpen, setKitchenModalOpen] = useState(false);
+  const [kitchens, setKitchens] = useState<KitchenOption[]>([]);
+  const [selectedKitchen, setSelectedKitchen] = useState("UNASSIGNED");
   const [targetMovementProduct, setTargetMovementProduct] =
     useState<SingleProduct | null>(null);
   const setProduct = useProductFormStore((store) => store.setProduct);
@@ -95,6 +110,21 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
   const onUnhideProduct = async () => {
     const response = await unhideProduct(product.id!);
     if (!response.success) {
+      if (response.type === "KitchenConfigurationRequired") {
+        const kitchenResponse = await getKitchenOptions();
+        if (kitchenResponse.success) {
+          setKitchens(kitchenResponse.data);
+          setSelectedKitchen("UNASSIGNED");
+          setKitchenModalOpen(true);
+          return;
+        }
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: kitchenResponse.message,
+        });
+        return;
+      }
       toast({
         title: "Error",
         variant: "destructive",
@@ -105,6 +135,26 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
     toast({
       title: "Producto desocultado",
     });
+    router.refresh();
+  };
+
+  const onConfirmUnhideProduct = async () => {
+    setLoading(true);
+    const response = await unhideProduct(
+      product.id!,
+      selectedKitchen === "UNASSIGNED" ? null : selectedKitchen,
+    );
+    setLoading(false);
+    if (!response.success) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: response.message,
+      });
+      return;
+    }
+    setKitchenModalOpen(false);
+    toast({ title: "Producto desocultado" });
     router.refresh();
   };
 
@@ -150,6 +200,45 @@ export const CellAction: React.FC<CellActionProps> = ({ product }) => {
           <span className="font-semibold">{targetMovementProduct?.name}</span>
         </>
       </AlertModal>
+      <Modal
+        title="Destino de preparación"
+        description="Elige una Kitchen activa o deja el producto sin Kitchen."
+        isOpen={kitchenModalOpen}
+        onClose={() => setKitchenModalOpen(false)}
+      >
+        <div className="flex flex-col gap-4 pt-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor={`kitchen-${product.id}`}>Kitchen</Label>
+            <Select value={selectedKitchen} onValueChange={setSelectedKitchen}>
+              <SelectTrigger id={`kitchen-${product.id}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="UNASSIGNED">Sin cocina</SelectItem>
+                  {kitchens.map((kitchen) => (
+                    <SelectItem key={kitchen.id} value={kitchen.id}>
+                      {kitchen.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              disabled={loading}
+              variant="outline"
+              onClick={() => setKitchenModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button disabled={loading} onClick={onConfirmUnhideProduct}>
+              Desocultar
+            </Button>
+          </div>
+        </div>
+      </Modal>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon">

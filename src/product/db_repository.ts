@@ -230,6 +230,8 @@ const dishProductToPrisma = (
   };
 };
 
+class KitchenConfigurationRequiredError extends Error {}
+
 const assertActiveKitchen = async (
   db: ReturnType<typeof prisma> | Prisma.TransactionClient,
   companyId: string,
@@ -242,7 +244,9 @@ const assertActiveKitchen = async (
     select: { id: true },
   });
   if (!kitchen)
-    throw new Error("La Kitchen no está activa o pertenece a otra empresa");
+    throw new KitchenConfigurationRequiredError(
+      "La Kitchen no está activa o pertenece a otra empresa",
+    );
 };
 
 const createDishProduct = async (
@@ -682,22 +686,28 @@ const updatePackageProduct = async (
 };
 
 export const update = async (product: Product): Promise<response<Product>> => {
+  let reactivating = false;
   try {
     const current = await prisma().product.findFirst({
       where: { id: product.id, companyId: product.companyId },
-      select: { kitchenId: true },
+      select: { hidden: true, kitchenId: true },
     });
     if (!current) return { success: false, message: "Producto no encontrado" };
-    if (
-      product.kitchenId !== undefined &&
-      product.kitchenId !== current.kitchenId
-    )
-      await assertActiveKitchen(prisma(), product.companyId, product.kitchenId);
+    reactivating = current.hidden && !product.hidden;
+    if (!product.hidden)
+      await assertActiveKitchen(
+        prisma(),
+        product.companyId,
+        product.kitchenId === undefined ? current.kitchenId : product.kitchenId,
+      );
   } catch (error) {
     return {
       success: false,
       message:
         error instanceof Error ? error.message : "Error interno del servidor",
+      ...(reactivating && error instanceof KitchenConfigurationRequiredError
+        ? { type: "KitchenConfigurationRequired" as const }
+        : {}),
     };
   }
   if (product.type === SingleProductType) {
