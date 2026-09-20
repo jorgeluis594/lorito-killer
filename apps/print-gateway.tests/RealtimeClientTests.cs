@@ -1,7 +1,9 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Channels;
 using Lorito.PrintGateway;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -10,6 +12,49 @@ namespace Lorito.PrintGateway.Tests;
 
 public sealed class RealtimeClientTests
 {
+    [Fact]
+    public async Task Heartbeat_uses_phoenix_format_and_matching_reply_allows_the_next_one()
+    {
+        var client = ClientWithFastHeartbeat();
+        var socket = new HeartbeatWebSocket();
+        using var cancellation = new CancellationTokenSource();
+        var connection = client.RunConnectionAsync(socket, "client-1", () => Task.CompletedTask, _ => Task.CompletedTask, cancellation.Token);
+
+        await WaitUntilAsync(() => socket.Sent.Count >= 2);
+        AssertHeartbeat(socket.Sent.ElementAt(1), "2");
+        socket.Reply("2");
+        await WaitUntilAsync(() => socket.Sent.Count >= 3);
+        AssertHeartbeat(socket.Sent.ElementAt(2), "3");
+
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => connection);
+    }
+
+    [Fact]
+    public async Task Heartbeat_reply_with_a_different_reference_does_not_confirm_it()
+    {
+        var client = ClientWithFastHeartbeat();
+        var socket = new HeartbeatWebSocket();
+        var connection = client.RunConnectionAsync(socket, "client-1", () => Task.CompletedTask, _ => Task.CompletedTask, CancellationToken.None);
+
+        await WaitUntilAsync(() => socket.Sent.Count >= 2);
+        socket.Reply("999");
+
+        await Assert.ThrowsAsync<TimeoutException>(() => connection);
+        Assert.Equal(2, socket.Sent.Count);
+    }
+
+    [Fact]
+    public async Task Missing_heartbeat_reply_ends_the_connection()
+    {
+        var client = ClientWithFastHeartbeat();
+        var socket = new HeartbeatWebSocket();
+
+        await Assert.ThrowsAsync<TimeoutException>(() => client.RunConnectionAsync(socket, "client-1", () => Task.CompletedTask, _ => Task.CompletedTask, CancellationToken.None));
+
+        Assert.Equal(2, socket.Sent.Count);
+    }
+
     [Fact]
     public async Task Jobs_are_received_independently_failures_are_observed_and_completed_jobs_are_removed()
     {
@@ -50,6 +95,21 @@ public sealed class RealtimeClientTests
         @event = "broadcast",
         payload = new { payload = new { type = "PRINT_JOB_AVAILABLE", version = 1, jobId = $"00000000-0000-0000-0000-00000000000{suffix[^1]}" } }
     }));
+
+    private static RealtimeClient ClientWithFastHeartbeat() => new(new GatewayConfiguration(), new CapturingLogger())
+    {
+        HeartbeatInterval = TimeSpan.FromMilliseconds(100)
+    };
+
+    private static void AssertHeartbeat(byte[] message, string reference)
+    {
+        using var json = JsonDocument.Parse(message);
+        Assert.Equal("phoenix", json.RootElement.GetProperty("topic").GetString());
+        Assert.Equal("heartbeat", json.RootElement.GetProperty("event").GetString());
+        Assert.Equal(JsonValueKind.Object, json.RootElement.GetProperty("payload").ValueKind);
+        Assert.Empty(json.RootElement.GetProperty("payload").EnumerateObject());
+        Assert.Equal(reference, json.RootElement.GetProperty("ref").GetString());
+    }
 
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
@@ -92,5 +152,31 @@ public sealed class RealtimeClientTests
             return Task.FromResult(new WebSocketReceiveResult(message.Length, WebSocketMessageType.Text, true));
         }
         public override Task SendAsync(ArraySegment<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class HeartbeatWebSocket : WebSocket
+    {
+        private readonly Channel<byte[]> incoming = Channel.CreateUnbounded<byte[]>();
+        public ConcurrentQueue<byte[]> Sent { get; } = [];
+        public override WebSocketCloseStatus? CloseStatus => null;
+        public override string? CloseStatusDescription => null;
+        public override WebSocketState State => WebSocketState.Open;
+        public override string? SubProtocol => null;
+        public override void Abort() { }
+        public override Task CloseAsync(WebSocketCloseStatus closeStatus, string? statusDescription, CancellationToken cancellationToken) => Task.CompletedTask;
+        public override Task CloseOutputAsync(WebSocketCloseStatus closeStatus, string? statusDescription, CancellationToken cancellationToken) => Task.CompletedTask;
+        public override void Dispose() { }
+        public void Reply(string reference) => incoming.Writer.TryWrite(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { topic = "phoenix", @event = "phx_reply", payload = new { }, @ref = reference })));
+        public override async Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
+        {
+            var message = await incoming.Reader.ReadAsync(cancellationToken);
+            Buffer.BlockCopy(message, 0, buffer.Array!, buffer.Offset, message.Length);
+            return new WebSocketReceiveResult(message.Length, WebSocketMessageType.Text, true);
+        }
+        public override Task SendAsync(ArraySegment<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
+        {
+            Sent.Enqueue(buffer.ToArray());
+            return Task.CompletedTask;
+        }
     }
 }

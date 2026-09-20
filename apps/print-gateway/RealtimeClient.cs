@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -11,6 +12,7 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
     private readonly ConcurrentDictionary<Task, byte> activeJobs = new();
 
     internal int ActiveJobCount => activeJobs.Count;
+    internal TimeSpan HeartbeatInterval { get; init; } = TimeSpan.FromSeconds(25);
 
     public async Task ListenAsync(string clientId, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken)
     {
@@ -22,16 +24,33 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
                 using var socket = new ClientWebSocket();
                 await socket.ConnectAsync(uri, cancellationToken);
                 logger.LogInformation("operation=connection status=connected client={ClientId}", clientId);
-                await SendAsync(socket, new { topic = $"realtime:print-client:{clientId}", @event = "phx_join", payload = new { config = new { broadcast = new { ack = false, self = false }, presence = new { key = "" } } }, @ref = "1" }, cancellationToken);
-                await refreshInventory();
-                await ReceiveAsync(socket, refreshInventory, processJob, cancellationToken);
+                await RunConnectionAsync(socket, clientId, refreshInventory, processJob, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return; }
             catch (Exception exception) { logger.LogWarning(exception, "operation=connection status=reconnecting client={ClientId}", clientId); await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken); }
         }
     }
 
-    internal async Task ReceiveAsync(WebSocket socket, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken)
+    internal async Task RunConnectionAsync(WebSocket socket, string clientId, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken)
+    {
+        await SendAsync(socket, new { topic = $"realtime:print-client:{clientId}", @event = "phx_join", payload = new { config = new { broadcast = new { ack = false, self = false }, presence = new { key = "" } } }, @ref = "1" }, cancellationToken);
+        await refreshInventory();
+
+        using var connectionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var heartbeat = new HeartbeatState();
+        var receiveTask = ReceiveAsync(socket, refreshInventory, processJob, heartbeat, connectionCancellation.Token, cancellationToken);
+        var heartbeatTask = SendHeartbeatsAsync(socket, heartbeat, connectionCancellation.Token);
+        var completedTask = await Task.WhenAny(receiveTask, heartbeatTask);
+        connectionCancellation.Cancel();
+        try { await Task.WhenAll(receiveTask, heartbeatTask); }
+        catch (OperationCanceledException) when (!completedTask.IsFaulted) { }
+        await completedTask;
+    }
+
+    internal Task ReceiveAsync(WebSocket socket, Func<Task> refreshInventory, Func<string, Task> processJob, CancellationToken cancellationToken) =>
+        ReceiveAsync(socket, refreshInventory, processJob, null, cancellationToken, cancellationToken);
+
+    private async Task ReceiveAsync(WebSocket socket, Func<Task> refreshInventory, Func<string, Task> processJob, HeartbeatState? heartbeat, CancellationToken cancellationToken, CancellationToken jobCancellationToken)
     {
         var buffer = new byte[16 * 1024];
         using var message = new MemoryStream();
@@ -44,14 +63,28 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
             try
             {
                 using var json = JsonDocument.Parse(message.ToArray());
-                if (json.RootElement.TryGetProperty("event", out var eventName) && eventName.GetString() == "broadcast" && json.RootElement.TryGetProperty("payload", out var payload) && payload.TryGetProperty("payload", out var body) && body.TryGetProperty("type", out var type) && body.TryGetProperty("version", out var version) && version.GetInt32() == 1)
+                var root = json.RootElement;
+                if (heartbeat is not null && root.TryGetProperty("topic", out var topic) && topic.GetString() == "phoenix" && root.TryGetProperty("event", out var replyEvent) && replyEvent.GetString() == "phx_reply" && root.TryGetProperty("ref", out var replyRef)) heartbeat.Confirm(replyRef.GetString());
+                else if (root.TryGetProperty("event", out var eventName) && eventName.GetString() == "broadcast" && root.TryGetProperty("payload", out var payload) && payload.TryGetProperty("payload", out var body) && body.TryGetProperty("type", out var type) && body.TryGetProperty("version", out var version) && version.GetInt32() == 1)
                 {
                     if (type.GetString() == "REFRESH_PRINTER_INVENTORY") await refreshInventory();
-                    else if (type.GetString() == "PRINT_JOB_AVAILABLE" && body.TryGetProperty("jobId", out var jobId) && Guid.TryParse(jobId.GetString(), out _)) StartJob(processJob, jobId.GetString()!, cancellationToken);
+                    else if (type.GetString() == "PRINT_JOB_AVAILABLE" && body.TryGetProperty("jobId", out var jobId) && Guid.TryParse(jobId.GetString(), out _)) StartJob(processJob, jobId.GetString()!, jobCancellationToken);
                 }
             }
             catch (JsonException) { }
             message.SetLength(0);
+        }
+    }
+
+    private async Task SendHeartbeatsAsync(WebSocket socket, HeartbeatState heartbeat, CancellationToken cancellationToken)
+    {
+        var nextRef = 2;
+        while (socket.State == WebSocketState.Open)
+        {
+            await Task.Delay(HeartbeatInterval, cancellationToken);
+            var reference = nextRef++.ToString(CultureInfo.InvariantCulture);
+            if (!heartbeat.Begin(reference)) throw new TimeoutException("Realtime heartbeat was not acknowledged");
+            await SendAsync(socket, new { topic = "phoenix", @event = "heartbeat", payload = new { }, @ref = reference }, cancellationToken);
         }
     }
 
@@ -77,5 +110,16 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
     {
         var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value));
         await socket.SendAsync(bytes, WebSocketMessageType.Text, true, cancellationToken);
+    }
+
+    private sealed class HeartbeatState
+    {
+        private string? pendingRef;
+        public bool Begin(string reference) => Interlocked.CompareExchange(ref pendingRef, reference, null) is null;
+        public void Confirm(string? reference)
+        {
+            var pending = Volatile.Read(ref pendingRef);
+            if (pending == reference) Interlocked.CompareExchange(ref pendingRef, null, pending);
+        }
     }
 }
