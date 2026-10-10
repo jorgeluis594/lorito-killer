@@ -28,23 +28,33 @@ export default function FulfillmentPaymentButton({
   orderVersion,
   total,
   cashShiftId,
+  initialCashReceived = "",
 }: {
   orderId: string;
   orderVersion: string;
   total: number;
   cashShiftId?: string;
+  initialCashReceived?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState<"cash" | "debit_card" | "credit_card">(
     "cash",
   );
-  const [cashReceived, setCashReceived] = useState(total);
+  const [cashReceived, setCashReceived] = useState(initialCashReceived);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const { toast } = useToast();
 
   function pay() {
     if (!cashShiftId) return;
+    const received = Number(cashReceived);
+    if (method === "cash" && (!cashReceived || received < total)) {
+      toast({
+        variant: "destructive",
+        description: "El efectivo recibido debe cubrir el total.",
+      });
+      return;
+    }
     startTransition(async () => {
       const result = await confirmFulfillmentPayment({
         orderId,
@@ -53,7 +63,7 @@ export default function FulfillmentPaymentButton({
         cashShiftId,
         method,
         receipt: { documentType: "ticket" },
-        ...(method === "cash" ? { cashReceived } : {}),
+        ...(method === "cash" ? { cashReceived: received } : {}),
       });
       if (!result.success) {
         toast({ variant: "destructive", description: result.message });
@@ -96,8 +106,9 @@ export default function FulfillmentPaymentButton({
             step="0.01"
             min={total}
             aria-label="Efectivo recibido"
+            inputMode="decimal"
             value={cashReceived}
-            onChange={(event) => setCashReceived(Number(event.target.value))}
+            onChange={(event) => setCashReceived(event.target.value)}
           />
         )}
         <DialogFooter>

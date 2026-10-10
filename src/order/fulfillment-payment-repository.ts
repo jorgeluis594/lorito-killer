@@ -33,6 +33,10 @@ export async function findFulfillmentCashShift(companyId: string) {
   });
 }
 
+// Reintentos acotados de la transacción completa ante conflictos de
+// serialización (cobros simultáneos de la misma serie o del mismo pedido).
+const MAX_SERIALIZATION_RETRIES = 4;
+
 const reject = (message: string): never => {
   throw new Error(message);
 };
@@ -40,6 +44,7 @@ const reject = (message: string): never => {
 export async function payFulfillmentOrder(
   user: AuthorizedUser,
   input: FulfillmentPaymentInput,
+  attempt = 0,
 ): Promise<response<FulfillmentPaymentResult>> {
   try {
     return await prisma().$transaction(
@@ -54,6 +59,7 @@ export async function payFulfillmentOrder(
           include: {
             payments: true,
             documents: true,
+            delivery: { select: { fee: true } },
             orderItems: { include: { product: true } },
           },
         });
@@ -157,6 +163,7 @@ export async function payFulfillmentOrder(
           orderType: order.orderType,
           createdAt: order.createdAt,
           total: order.total.toNumber(),
+          deliveryFee: order.delivery?.fee.toNumber(),
           netTotal: order.netTotal.toNumber(),
           discountAmount: order.discountAmount.toNumber(),
           payments,
@@ -231,6 +238,11 @@ export async function payFulfillmentOrder(
       },
     );
   } catch (error) {
+    if (
+      (error as { code?: string }).code === "P2034" &&
+      attempt < MAX_SERIALIZATION_RETRIES
+    )
+      return payFulfillmentOrder(user, input, attempt + 1);
     return {
       success: false,
       message:

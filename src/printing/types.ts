@@ -139,7 +139,7 @@ export type ReceiptPrintData = {
     date: string;
     items: Array<{
       id: string;
-      productId: string;
+      productId?: string; // ausente en la línea de envío
       sku?: string;
       name: string;
       quantity: number;

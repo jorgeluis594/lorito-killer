@@ -28,6 +28,7 @@ import DeliveryActions from "@/delivery/components/delivery-actions";
 import DeliveryContactDetails from "@/delivery/components/delivery-contact-details";
 import { findFulfillmentCashShift } from "@/order/fulfillment-payment-repository";
 import { getDeliveryDetails } from "@/delivery/db_repository";
+import { initialCashReceived } from "@/delivery/use-cases/initial-cash-received";
 import { findOrderRounds } from "@/order/rounds/db_repository";
 import { CancelOrderItemDialog } from "@/table/components/cancel-order-item-dialog";
 
@@ -150,6 +151,10 @@ export default async function OrderData({ order }: { order: Order }) {
                 ).toISOString()}
                 total={order.total}
                 cashShiftId={cashShift?.id}
+                initialCashReceived={initialCashReceived(
+                  delivery?.expectedPaymentMethod,
+                  delivery?.cashPaysWith,
+                )}
                 delivery={deliveryView}
                 canEditProducts={canEditProducts}
               />

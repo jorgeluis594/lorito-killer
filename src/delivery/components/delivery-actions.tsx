@@ -15,6 +15,7 @@ export default function DeliveryActions({
   orderVersion,
   total,
   cashShiftId,
+  initialCashReceived,
   delivery,
   canEditProducts,
 }: {
@@ -24,6 +25,7 @@ export default function DeliveryActions({
   orderVersion: string;
   total: number;
   cashShiftId?: string;
+  initialCashReceived?: string;
   delivery?: {
     status: "PENDING" | "DISPATCHED" | "DELIVERED";
     dispatchedAt: string | null;
@@ -92,6 +94,7 @@ export default function DeliveryActions({
               orderVersion={orderVersion}
               total={total}
               cashShiftId={cashShiftId}
+              initialCashReceived={initialCashReceived}
             />
           </>
         )}

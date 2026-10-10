@@ -58,6 +58,8 @@ export type Order = {
   netTotal: number;
   discountAmount: number;
   total: number;
+  /** Envío de Delivery (Delivery.fee); ya incluido en `total` y `netTotal`. */
+  deliveryFee?: number;
   cancellationReason?: string;
   status: Status;
   paymentStatus?: PaymentStatus;

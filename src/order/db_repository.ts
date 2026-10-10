@@ -145,6 +145,7 @@ const DISCOUNT_TYPE_MAPPER: Record<Discount["type"], $Enums.DiscountType> = {
 type ReceiptPrintOrderPayload = Prisma.OrderGetPayload<{
   include: {
     customer: true;
+    delivery: { select: { fee: true } };
     orderItems: { include: { product: true } };
     payments: true;
   };
@@ -213,6 +214,7 @@ const mapReceiptPrintOrder = async (
   netTotal: prismaOrder.netTotal.toNumber(),
   discountAmount: prismaOrder.discountAmount.toNumber(),
   total: prismaOrder.total.toNumber(),
+  deliveryFee: prismaOrder.delivery?.fee.toNumber(),
   cancellationReason: prismaOrder.cancellationReason || "",
   status: PRISMA_TO_STATUS_MAPPER[prismaOrder.status],
   orderType: prismaOrder.orderType,
@@ -313,7 +315,7 @@ export const find = async (
   try {
     const prismaOrder = await prisma().order.findUnique({
       where: { id: id },
-      include: { customer: true },
+      include: { customer: true, delivery: { select: { fee: true } } },
     });
     if (!prismaOrder || prismaOrder.companyId !== companyId) {
       return { success: false, message: "Order not found" };
@@ -326,6 +328,7 @@ export const find = async (
       success: true,
       data: {
         ...order,
+        deliveryFee: prismaOrder.delivery?.fee.toNumber(),
         customer: prismaOrder.customer
           ? await prismaToCustomer(prismaOrder.customer)
           : undefined,
@@ -345,6 +348,7 @@ export const findReceiptPrintOrder = async (
       where: { id, companyId },
       include: {
         customer: true,
+        delivery: { select: { fee: true } },
         orderItems: {
           include: { product: true },
           orderBy: { createdAt: "asc" },
