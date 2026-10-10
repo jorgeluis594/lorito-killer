@@ -26,7 +26,10 @@ import { buildReceiptPrintData } from "@/printing/receipt-builder";
 import { buildThermalReceiptCommands } from "@/printing/printers/imin/thermal-receipt-renderer";
 import Voucher from "@/order/components/voucher";
 import type { Company } from "@/company/types";
-import { createFixture, type RestaurantFixture } from "./helpers/restaurant-fixture";
+import {
+  createFixture,
+  type RestaurantFixture,
+} from "./helpers/restaurant-fixture";
 
 let f: RestaurantFixture;
 
@@ -325,9 +328,9 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
 
     // Solo el total viejo (con versión vigente) también se rechaza.
     const versionOnly = await f.paymentInput(orderId, { expectedTotal: 55 });
-    expect(await payFulfillmentOrder(f.user("cashier"), versionOnly)).toMatchObject(
-      { success: false },
-    );
+    expect(
+      await payFulfillmentOrder(f.user("cashier"), versionOnly),
+    ).toMatchObject({ success: false });
     expect(await countFor(orderId)).toEqual({ payments: 0, documents: 0 });
 
     // Con el total vigente (58) el cobro procede y el documento lo refleja.
@@ -446,9 +449,7 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
     expect(shippingItems(bodies[0].items)).toHaveLength(0);
     expect(bodies[0].totales.total_venta).toBe(50);
     expect(await f.stockA()).toBe(stockBefore);
-    expect(
-      await db().orderItem.count({ where: { orderId } }),
-    ).toBe(2);
+    expect(await db().orderItem.count({ where: { orderId } })).toBe(2);
   });
 
   test("el cobro del envío no genera ni repone stock", async () => {

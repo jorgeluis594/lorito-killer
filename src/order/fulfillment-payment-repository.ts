@@ -37,6 +37,13 @@ export async function findFulfillmentCashShift(companyId: string) {
 // serialización (cobros simultáneos de la misma serie o del mismo pedido).
 const MAX_SERIALIZATION_RETRIES = 4;
 
+// Prisma informa 40001 como P2034 en operaciones del modelo y como P2010 en
+// consultas crudas (el `FOR UPDATE` del pedido).
+const isSerializationConflict = (error: unknown) => {
+  const { code, message } = error as { code?: string; message?: string };
+  return code === "P2034" || (code === "P2010" && !!message?.includes("40001"));
+};
+
 const reject = (message: string): never => {
   throw new Error(message);
 };
@@ -238,19 +245,15 @@ export async function payFulfillmentOrder(
       },
     );
   } catch (error) {
-    if (
-      (error as { code?: string }).code === "P2034" &&
-      attempt < MAX_SERIALIZATION_RETRIES
-    )
+    if (isSerializationConflict(error) && attempt < MAX_SERIALIZATION_RETRIES)
       return payFulfillmentOrder(user, input, attempt + 1);
     return {
       success: false,
-      message:
-        (error as { code?: string }).code === "P2034"
-          ? "El pedido cambió. Consulta su estado antes de reintentar."
-          : error instanceof Error
-            ? error.message
-            : "No se pudo cobrar el pedido.",
+      message: isSerializationConflict(error)
+        ? "El pedido cambió. Consulta su estado antes de reintentar."
+        : error instanceof Error
+          ? error.message
+          : "No se pudo cobrar el pedido.",
     };
   }
 }

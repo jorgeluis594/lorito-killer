@@ -4,6 +4,11 @@ import prisma from "@/lib/prisma";
 import { submitFulfillmentRound } from "@/order/rounds/fulfillment-repository";
 import { completeTakeAway, transitionDelivery } from "@/delivery/db_repository";
 import { payFulfillmentOrder } from "@/order/fulfillment-payment-repository";
+import { submitFulfillmentRound as addRound } from "@/order/rounds/fulfillment-repository";
+import {
+  createFixture,
+  type RestaurantFixture,
+} from "./helpers/restaurant-fixture";
 
 const suffix = randomUUID();
 const ids = {
@@ -355,5 +360,209 @@ describe("fulfillment orders PostgreSQL integration", () => {
         })
       ).stock?.toNumber(),
     ).toBe(7);
+  });
+});
+
+describe("§11.2 recorridos completos de Delivery (DEL-03)", () => {
+  let f: RestaurantFixture;
+  const db = () => prisma();
+
+  beforeAll(async () => {
+    f = await createFixture("del03-flow");
+  });
+  afterAll(async () => {
+    await f.destroy();
+  });
+
+  const transition = (orderId: string, action: "DISPATCH" | "DELIVER") =>
+    transitionDelivery(f.ids.company, f.ids.seller, orderId, action);
+  const rows = async (orderId: string) => ({
+    payments: await db().payment.count({ where: { orderId } }),
+    documents: await db().document.count({ where: { orderId } }),
+    transfers: await db().stockTransfer.count({
+      where: { companyId: f.ids.company },
+    }),
+    rounds: await db().orderRound.count({ where: { orderId } }),
+  });
+  const documentPayload = async (orderId: string) => {
+    const { result, bodies } = await f.sendToFactpro(
+      (await f.documentFor(orderId)).id,
+    );
+    expect(result.success).toBe(true);
+    return bodies[0];
+  };
+  const shipping = (payload: Record<string, any>): unknown[] =>
+    payload.items.filter(
+      (item: { descripcion: string }) => item.descripcion === "Envío",
+    );
+
+  test("R1 cobro al crear: boleta de 55 con Envío, despacho y entrega", async () => {
+    await f.setStockA(10);
+    const orderId = await f.createOrder({});
+    const paid = await f.pay(orderId);
+    expect(paid, JSON.stringify(paid)).toMatchObject({
+      success: true,
+      data: { total: 55 },
+    });
+    expect(await transition(orderId, "DISPATCH")).toMatchObject({
+      success: true,
+    });
+    expect(await transition(orderId, "DELIVER")).toMatchObject({
+      success: true,
+    });
+
+    const order = await db().order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: { delivery: true, payments: true, documents: true },
+    });
+    expect(order).toMatchObject({ status: "COMPLETED", paymentStatus: "PAID" });
+    expect(order.total.toNumber()).toBe(55);
+    expect(
+      order.payments.reduce((sum, p) => sum + p.amount.toNumber(), 0),
+    ).toBe(55);
+    expect(order.documents).toHaveLength(1);
+    expect(order.documents[0].total.toNumber()).toBe(55);
+    expect(shipping(await documentPayload(orderId))).toHaveLength(1);
+    expect(await f.stockA()).toBe(9);
+    expect(order.delivery).toMatchObject({
+      status: "DELIVERED",
+      createdById: f.ids.seller,
+      dispatchedById: f.ids.seller,
+      deliveredById: f.ids.seller,
+    });
+    expect(order.delivery?.dispatchedAt).toBeInstanceOf(Date);
+    expect(order.delivery?.deliveredAt).toBeInstanceOf(Date);
+    expect(order.payments[0].data).toMatchObject({
+      confirmedById: f.ids.cashier,
+      source: "delivery",
+    });
+  });
+
+  test("R2 cobro tras una segunda ronda: 70 y comanda adicional solo con C", async () => {
+    const orderId = await f.createOrder({});
+    const added = await addRound(f.ids.company, f.ids.seller, {
+      orderId,
+      roundId: randomUUID(),
+      orderType: "DELIVERY",
+      items: [{ productId: f.ids.productC, quantity: 1 }],
+    });
+    expect(added, JSON.stringify(added)).toMatchObject({ success: true });
+    const round2 = await db().orderRound.findFirstOrThrow({
+      where: { orderId, number: 2 },
+      include: { items: true, kitchenTickets: true },
+    });
+    expect(round2.items).toHaveLength(1);
+    expect(round2.items[0].productId).toBe(f.ids.productC);
+    // C no tiene estación: no se genera comanda para la ronda adicional.
+    expect(round2.kitchenTickets).toHaveLength(0);
+
+    const paid = await f.pay(orderId);
+    expect(paid).toMatchObject({ success: true, data: { total: 70 } });
+    const document = await f.documentFor(orderId);
+    expect(document.total.toNumber()).toBe(70);
+    const payload = await documentPayload(orderId);
+    expect(payload.totales.total_venta).toBe(70);
+    expect(shipping(payload)).toHaveLength(1);
+    expect(payload.items).toHaveLength(4);
+  });
+
+  test("R3 cobro al entregar: entrega rechazada sin pago; efectivo 100 con vuelto 45", async () => {
+    const orderId = await f.createOrder({
+      delivery: {
+        ...f.defaultDelivery,
+        expectedPaymentMethod: "CASH",
+        cashPaysWith: 100,
+      },
+    });
+    expect(await transition(orderId, "DISPATCH")).toMatchObject({
+      success: true,
+    });
+    const early = await transition(orderId, "DELIVER");
+    expect(early.success).toBe(false);
+    expect(
+      (await db().delivery.findUniqueOrThrow({ where: { orderId } })).status,
+    ).toBe("DISPATCHED");
+
+    const paid = await f.pay(orderId, {
+      method: "cash",
+      cashReceived: 100,
+      receipt: { documentType: "ticket" },
+    });
+    expect(paid, JSON.stringify(paid)).toMatchObject({
+      success: true,
+      data: { total: 55 },
+    });
+    const payment = await db().payment.findFirstOrThrow({ where: { orderId } });
+    expect(payment.amount.toNumber()).toBe(55);
+    expect(payment.data).toMatchObject({ received_amount: 100, change: 45 });
+    expect(await transition(orderId, "DELIVER")).toMatchObject({
+      success: true,
+      data: { status: "DELIVERED" },
+    });
+  });
+
+  test("R4 Para llevar: sin Delivery ni envío, stock A 8 y COMPLETED", async () => {
+    await f.setStockA(10);
+    const orderId = await f.createOrder({
+      orderType: "TAKE_AWAY",
+      items: [{ productId: f.ids.productA, quantity: 2 }],
+    });
+    const paid = await f.pay(orderId);
+    expect(paid).toMatchObject({ success: true, data: { total: 60 } });
+    expect(await completeTakeAway(f.ids.company, orderId)).toMatchObject({
+      success: true,
+      data: { status: "COMPLETED" },
+    });
+    expect(await db().delivery.count({ where: { orderId } })).toBe(0);
+    expect(await f.stockA()).toBe(8);
+    const payload = await documentPayload(orderId);
+    expect(shipping(payload)).toHaveLength(0);
+    expect(payload.totales.total_venta).toBe(60);
+  });
+
+  test("R5 envío gratis con factura: total de productos y payload sin Envío", async () => {
+    const orderId = await f.createOrder({
+      delivery: { ...f.defaultDelivery, fee: 0 },
+    });
+    const paid = await f.pay(orderId, { receipt: f.invoiceReceipt });
+    expect(paid).toMatchObject({ success: true, data: { total: 50 } });
+    const payload = await documentPayload(orderId);
+    expect(payload.tipo_documento).toBe("01");
+    expect(shipping(payload)).toHaveLength(0);
+    expect(payload.items).toHaveLength(2);
+    expect(payload.totales).toMatchObject({
+      total_exoneradas: 50,
+      total_venta: 50,
+    });
+  });
+
+  test("R6 reintentos de cobro, despacho y entrega no duplican filas ni stock", async () => {
+    await f.setStockA(10);
+    const orderId = await f.createOrder({});
+    const input = await f.paymentInput(orderId);
+    const cashier = f.user("cashier");
+    const first = await payFulfillmentOrder(cashier, input);
+    expect(first.success).toBe(true);
+    expect((await transition(orderId, "DISPATCH")).success).toBe(true);
+    const delivered = await transition(orderId, "DELIVER");
+    expect(delivered.success).toBe(true);
+    const before = await rows(orderId);
+    const audit = await db().delivery.findUniqueOrThrow({ where: { orderId } });
+    const stock = await f.stockA();
+
+    expect(await payFulfillmentOrder(cashier, input)).toEqual(first);
+    // El despacho repetido tras la entrega devuelve éxito sin retroceder.
+    expect(await transition(orderId, "DISPATCH")).toMatchObject({
+      success: true,
+      data: { orderId, status: "DELIVERED" },
+    });
+    expect(await transition(orderId, "DELIVER")).toEqual(delivered);
+
+    expect(await rows(orderId)).toEqual(before);
+    expect(
+      await db().delivery.findUniqueOrThrow({ where: { orderId } }),
+    ).toEqual(audit);
+    expect(await f.stockA()).toBe(stock);
+    expect(stock).toBe(9);
   });
 });

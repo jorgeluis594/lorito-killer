@@ -6,10 +6,7 @@ import { submitFulfillmentRound } from "@/order/rounds/fulfillment-repository";
 import { payFulfillmentOrder } from "@/order/fulfillment-payment-repository";
 import type { FulfillmentPaymentInput } from "@/order/fulfillment-payment-schema";
 import { sendToTaxEntity } from "@/document/use_cases/send-to-tax-entity";
-import {
-  findDocumentById,
-  updateDocument,
-} from "@/document/db_repository";
+import { findDocumentById, updateDocument } from "@/document/db_repository";
 import { find as findOrder } from "@/order/db_repository";
 import factproGateway from "@/document/factpro/gateway";
 import type { BillingCredentials } from "@/document/types";
@@ -213,11 +210,7 @@ export async function createFixture(label: string) {
     orderId: string,
     overrides: Partial<FulfillmentPaymentInput> = {},
     by: "admin" | "cashier" = "cashier",
-  ) =>
-    payFulfillmentOrder(
-      user(by),
-      await paymentInput(orderId, overrides),
-    );
+  ) => payFulfillmentOrder(user(by), await paymentInput(orderId, overrides));
 
   const invoiceReceipt = {
     documentType: "invoice" as const,
