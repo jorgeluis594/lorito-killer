@@ -16,3 +16,29 @@ export const DeliveryDetailsSchema = z.object({
 });
 
 export type DeliveryDetailsFormInput = z.infer<typeof DeliveryDetailsSchema>;
+
+export const UpdateDeliveryDetailsSchema = DeliveryDetailsSchema.extend({
+  orderId: z.string().uuid(),
+  /** Versión (`Order.updatedAt`) con la que se cargó la pantalla. */
+  updatedAt: z.string().datetime(),
+});
+
+export type UpdateDeliveryDetailsInput = z.infer<
+  typeof UpdateDeliveryDetailsSchema
+>;
+
+export const DELIVERY_LIST_PAGE_SIZE = 20;
+
+export const DeliveryListFiltersSchema = z.object({
+  /** Día (YYYY-MM-DD, hora de Lima); por defecto hoy. */
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  /** Sin estado: Pendientes y Despachados. */
+  status: z.enum(["PENDING", "DISPATCHED", "DELIVERED"]).optional(),
+  search: z.string().trim().max(120).optional(),
+  cursor: z.string().uuid().optional(),
+});
+
+export type DeliveryListFilters = z.infer<typeof DeliveryListFiltersSchema>;
