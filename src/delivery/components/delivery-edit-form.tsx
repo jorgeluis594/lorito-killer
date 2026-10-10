@@ -88,6 +88,9 @@ export default function DeliveryEditForm({
         orderId,
         updatedAt,
         ...form,
+        reference: form.reference || null,
+        expectedPaymentMethod: form.expectedPaymentMethod || null,
+        cashPaysWith: form.cashPaysWith || null,
       });
       toast({
         variant: result.success ? "default" : "destructive",

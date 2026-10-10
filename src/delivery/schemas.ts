@@ -11,7 +11,11 @@ export const DeliveryDetailsSchema = z.object({
   address: z.string().max(1000).optional(),
   reference: z.string().max(1000).nullish(),
   fee: z.union([z.number(), z.string().max(30)]).nullish(),
-  expectedPaymentMethod: z.enum(["CASH", "WALLET"]).nullish(),
+  // El formulario usa "" para “Sin definir”: equivale a no informar medio.
+  expectedPaymentMethod: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.enum(["CASH", "WALLET"]).nullish(),
+  ),
   cashPaysWith: z.union([z.number(), z.string().max(30)]).nullish(),
 });
 

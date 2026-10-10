@@ -4,6 +4,7 @@ import type { response } from "@/lib/types";
 import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
 import { getDeliveryTransition } from "./use-cases/delivery-transition";
 import { isDeliveryOverdue } from "./use-cases/is-delivery-overdue";
+import { parseDeliverySearch } from "./use-cases/parse-delivery-search";
 import { planDeliveryEdit } from "./use-cases/plan-delivery-edit";
 import {
   CASH_PAYS_WITH_BELOW_TOTAL_MESSAGE,
@@ -289,6 +290,11 @@ export async function updateDeliveryDetails(
   }
 }
 
+const OPEN_STATUSES: Array<"PENDING" | "DISPATCHED"> = [
+  "PENDING",
+  "DISPATCHED",
+];
+
 const LIMA_OFFSET = "-05:00";
 
 /** Rango [inicio, fin) de un día calendario de Lima (sin horario de verano). */
@@ -325,25 +331,45 @@ export async function listDeliveryOrders(
   if (Number.isNaN(Date.parse(`${date}T00:00:00Z`)))
     return { success: false, message: "La fecha no es válida." };
   const { from, to } = limaDayRange(date);
-  const search = filters.search?.trim();
-  const digits = search?.replace(/\D/g, "");
+  const { text: search, phoneDigits } = parseDeliverySearch(filters.search);
   const rows = await prisma().delivery.findMany({
     where: {
-      status: filters.status ?? { in: ["PENDING", "DISPATCHED"] },
+      status: filters.status ?? { in: OPEN_STATUSES },
       order: {
         companyId,
         orderType: "DELIVERY",
         status: { not: "CANCELLED" },
-        createdAt: { gte: from, lt: to },
+        // Con fecha explícita solo ese día; sin fecha, hoy más los Pendientes
+        // y Despachados de días anteriores, para que un atraso no se pierda.
+        ...(filters.date ? { createdAt: { gte: from, lt: to } } : {}),
       },
-      ...(search
-        ? {
-            OR: [
-              { name: { contains: search, mode: "insensitive" as const } },
-              ...(digits ? [{ phone: { contains: digits } }] : []),
-            ],
-          }
-        : {}),
+      AND: [
+        ...(filters.date
+          ? []
+          : [
+              {
+                OR: [
+                  { order: { createdAt: { gte: from, lt: to } } },
+                  {
+                    status: { in: OPEN_STATUSES },
+                    order: { createdAt: { lt: from } },
+                  },
+                ],
+              },
+            ]),
+        ...(search
+          ? [
+              {
+                OR: [
+                  { name: { contains: search, mode: "insensitive" as const } },
+                  ...(phoneDigits
+                    ? [{ phone: { contains: phoneDigits } }]
+                    : []),
+                ],
+              },
+            ]
+          : []),
+      ],
     },
     orderBy: [{ order: { createdAt: "desc" } }, { orderId: "desc" }],
     take: DELIVERY_LIST_PAGE_SIZE + 1,

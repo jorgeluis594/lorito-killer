@@ -286,6 +286,38 @@ describe("DEL-04 · edición de datos de entrega", () => {
     }
   });
 
+  test('B1 el formulario real (strings y "" en un pedido sin medio esperado) guarda la edición', async () => {
+    const orderId = await createOrder(main, {
+      ...baseDelivery,
+      fee: 0,
+      expectedPaymentMethod: null,
+      cashPaysWith: null,
+      reference: undefined,
+    });
+    // Exactamente lo que arma delivery-edit-form: todo texto, "" para vacíos.
+    const formShape = {
+      orderId,
+      updatedAt: await version(orderId),
+      name: "Maria Quispe",
+      phone: "987654321",
+      address: "Corregida 99",
+      reference: "",
+      fee: "0",
+      expectedPaymentMethod: "",
+      cashPaysWith: "",
+    };
+    const result = await editDeliveryDetails(formShape);
+    expect(result.success, JSON.stringify(result)).toBe(true);
+    const order = await loadOrder(orderId);
+    expect(order.delivery).toMatchObject({
+      address: "Corregida 99",
+      reference: null,
+      expectedPaymentMethod: null,
+      cashPaysWith: null,
+    });
+    expect(order.total.toNumber()).toBe(50);
+  });
+
   test("L1 aplica las validaciones de DEL-02 y no guarda nada si fallan", async () => {
     const orderId = await createOrder(main);
     const before = await loadOrder(orderId);
@@ -636,6 +668,20 @@ describe("DEL-04 · lista de Delivery", () => {
       name: "Zeta Ayer",
       createdAt: minutesBefore(24 * 60 + 30),
     });
+    // Despachado ayer, aún en la calle: debe seguir visible y resaltado.
+    await place("lateYesterday", {
+      name: "Calle Ayer",
+      status: "DISPATCHED",
+      createdAt: minutesBefore(24 * 60 + 60),
+      dispatchedAt: minutesBefore(24 * 60 + 45),
+    });
+    // Entregado ayer: solo aparece al pedir ese día o ese estado.
+    await place("deliveredYesterday", {
+      name: "Entregado Ayer",
+      status: "DELIVERED",
+      createdAt: minutesBefore(24 * 60 + 90),
+      dispatchedAt: minutesBefore(24 * 60 + 80),
+    });
     await place("takeaway", { orderType: "TAKE_AWAY" });
     await place("elsewhere", {
       name: "Ana Torres",
@@ -664,9 +710,18 @@ describe("DEL-04 · lista de Delivery", () => {
     await place("p500", { name: "Atraso 500", createdAt: minutesBefore(300) });
   });
 
-  test("L5 por defecto lista solo Pendientes y Despachados de hoy de la empresa", async () => {
+  test("L5 por defecto lista Pendientes y Despachados de hoy (y abiertos de días anteriores) de la empresa", async () => {
     const { items } = await list();
-    expectIds(items, ["pending", "dispatched", "d159", "d200", "d300", "p500"]);
+    expectIds(items, [
+      "pending",
+      "dispatched",
+      "d159",
+      "d200",
+      "d300",
+      "p500",
+      "yesterday",
+      "lateYesterday",
+    ]);
     const row = items.find((item) => item.orderId === ids.pending)!;
     expect(row).toMatchObject({
       name: "Ana Torres",
@@ -681,9 +736,35 @@ describe("DEL-04 · lista de Delivery", () => {
     expectIds((await list({}, other)).items, ["elsewhere"]);
   });
 
-  test("L5 filtra por fecha: ayer solo muestra el pedido de ayer", async () => {
+  test("L5 con fecha explícita solo muestra ese día", async () => {
     const { items } = await list({ date: "2026-10-08" });
-    expectIds(items, ["yesterday"]);
+    expectIds(items, ["yesterday", "lateYesterday"]);
+    expectIds((await list({ date: "2026-10-08", status: "DELIVERED" })).items, [
+      "deliveredYesterday",
+    ]);
+  });
+
+  test("M2 un despachado de ayer sigue visible y resaltado en la vista por defecto", async () => {
+    const { items } = await list();
+    const row = items.find((item) => item.orderId === ids.lateYesterday)!;
+    expect(row.status).toBe("DISPATCHED");
+    expect(row.isOverdue).toBe(true);
+    expect(items.some((i) => i.orderId === ids.deliveredYesterday)).toBe(false);
+    // Entregado sin fecha sigue acotado al día de hoy.
+    expectIds((await list({ status: "DELIVERED" })).items, ["delivered"]);
+  });
+
+  test("M3 el prefijo +51 y los textos con un dígito no amplían la búsqueda", async () => {
+    expectIds(
+      (await list({ search: "+51 965 432", status: "DELIVERED" })).items,
+      ["delivered"],
+    );
+    expectIds(
+      (await list({ search: "51965432100", status: "DELIVERED" })).items,
+      ["delivered"],
+    );
+    // “Ana 9” busca solo por nombre: no coincide con ningún nombre.
+    expectIds((await list({ search: "Ana 9" })).items, []);
   });
 
   test("L6 filtra por Entregado y por Despachado", async () => {
@@ -693,6 +774,7 @@ describe("DEL-04 · lista de Delivery", () => {
       "d159",
       "d200",
       "d300",
+      "lateYesterday",
     ]);
   });
 
@@ -785,7 +867,7 @@ describe("DEL-04 · lista de Delivery", () => {
       cursor = page.nextCursor ?? undefined;
     } while (cursor);
     expect(new Set(all.map((i) => i.orderId)).size).toBe(all.length);
-    expect(all).toHaveLength(40 + 1 /* ruido */ + 1 /* ayer */);
+    expect(all).toHaveLength(40 + 1 /* ruido */ + 2 /* ayer, abiertos */);
     for (let i = 1; i < all.length; i++)
       expect(all[i - 1].createdAt >= all[i].createdAt).toBe(true);
   });

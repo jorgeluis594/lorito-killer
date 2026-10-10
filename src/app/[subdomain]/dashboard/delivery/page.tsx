@@ -42,6 +42,7 @@ async function DeliveryContent({
     const value = first(searchParams[key]);
     if (value) next.set(key, value);
   }
+  const home = next.toString();
   if (nextCursor) next.set("cursor", nextCursor);
 
   return (
@@ -50,7 +51,13 @@ async function DeliveryContent({
       <div className="flex justify-between">
         {parsed.data.cursor ? (
           <Button variant="outline" asChild>
-            <Link href="/dashboard/delivery">Volver al inicio</Link>
+            <Link
+              href={
+                home ? `/dashboard/delivery?${home}` : "/dashboard/delivery"
+              }
+            >
+              Volver al inicio
+            </Link>
           </Button>
         ) : (
           <span />
