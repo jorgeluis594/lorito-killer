@@ -7,6 +7,8 @@ export type KitchenTicketContentInput = {
   orderType: "DINE_IN" | "TAKE_AWAY" | "DELIVERY" | "RETAIL";
   orderLabel: string;
   responsibleName: string;
+  /** Solo Delivery: identifica la bolsa; nunca teléfono, dirección ni precios. */
+  customerName?: string | null;
   isReprint?: boolean;
   items: Array<{
     productName: string;
@@ -60,8 +62,10 @@ export function createKitchenTicketContent(
     .align("left")
     .rule()
     .line(`${orderTypeLabels[input.orderType]}: ${input.orderLabel}`)
-    .line(`Responsable: ${input.responsibleName}`)
-    .rule();
+    .line(`Responsable: ${input.responsibleName}`);
+  if (input.customerName)
+    encoder = encoder.line(`Cliente: ${input.customerName}`);
+  encoder = encoder.rule();
 
   for (const item of input.items) {
     encoder = encoder

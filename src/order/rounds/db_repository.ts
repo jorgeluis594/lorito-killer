@@ -19,6 +19,8 @@ import {
   PRODUCTS_LOCKED_MESSAGE,
 } from "@/delivery/use-cases/can-edit-fulfillment-products";
 import { isFulfillmentOrderType } from "@/order/fulfillment-order-types";
+import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
+import { validateCashPaysWithCoversTotal } from "@/delivery/use-cases/validate-delivery-details";
 import type { CancelRoundItemInput } from "./schema";
 import type { OrderItemCancellationResult } from "./use-cases/cancel-round-item";
 
@@ -287,18 +289,15 @@ export async function persistRoundItemCancellation(
             quantity,
             cancellationId: cancellation.id,
           });
-        const totals = await db.orderItem.aggregate({
-          where: { orderId: locked.orderRound.orderId },
-          _sum: { total: true, netTotal: true, discountAmount: true },
-        });
-        await db.order.update({
-          where: { id: locked.orderRound.orderId },
-          data: {
-            total: totals._sum.total ?? 0,
-            netTotal: totals._sum.netTotal ?? 0,
-            discountAmount: totals._sum.discountAmount ?? 0,
-          },
-        });
+        const totals = await recalculateOrderTotals(
+          db,
+          locked.orderRound.orderId,
+        );
+        const coverage = validateCashPaysWithCoversTotal(
+          totals.cashPaysWith?.toNumber(),
+          totals.total.toNumber(),
+        );
+        if (!coverage.success) throw new Error(coverage.message);
         return {
           success: true,
           data: {

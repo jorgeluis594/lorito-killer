@@ -56,4 +56,47 @@ describe("createKitchenTicketContent", () => {
     expect(text).toContain("2 x Lomo");
     expect(text).toContain("1 cancelado(s)");
   });
+
+  describe("customerName", () => {
+    const base = {
+      ticketId: "ticket-1",
+      createdAt: new Date("2026-09-15T18:30:00Z"),
+      kitchenName: "Cocina",
+      orderLabel: "ABC123",
+      responsibleName: "Ana",
+      items: [{ productName: "Lomo", quantity: 1 }],
+    };
+    const profile = {
+      columns: 32,
+      codepageMapping: "epson",
+      cutEnabled: false,
+      feedBeforeCut: 0,
+    };
+    const text = (content: Uint8Array) =>
+      Buffer.from(content).toString("latin1");
+
+    test("Delivery muestra el nombre del cliente, sin precios", () => {
+      const output = text(
+        createKitchenTicketContent(
+          { ...base, orderType: "DELIVERY", customerName: "Maria Quispe" },
+          profile,
+        ),
+      );
+      expect(output).toContain("Cliente: Maria Quispe");
+      expect(output).not.toContain("S/");
+    });
+
+    test("sin nombre la comanda es idéntica a la actual", () => {
+      const without = createKitchenTicketContent(
+        { ...base, orderType: "DINE_IN" },
+        profile,
+      );
+      const withNull = createKitchenTicketContent(
+        { ...base, orderType: "DINE_IN", customerName: null },
+        profile,
+      );
+      expect(Buffer.from(withNull).equals(Buffer.from(without))).toBe(true);
+      expect(text(without)).not.toContain("Cliente:");
+    });
+  });
 });

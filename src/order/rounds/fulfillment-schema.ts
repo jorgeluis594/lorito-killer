@@ -1,9 +1,12 @@
 import { z } from "zod";
+import { DeliveryDetailsSchema } from "@/delivery/schemas";
 
 export const FulfillmentRoundSchema = z.object({
   orderId: z.string().uuid().optional(),
   roundId: z.string().uuid("El envío no es válido"),
   orderType: z.enum(["TAKE_AWAY", "DELIVERY"]),
+  // Solo al crear un Delivery; Para llevar y las adiciones lo ignoran.
+  delivery: DeliveryDetailsSchema.optional(),
   items: z
     .array(
       z.object({

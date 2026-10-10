@@ -230,6 +230,15 @@ async function createOrder(orderType: "DELIVERY" | "TAKE_AWAY", items: Line[]) {
     roundId: randomUUID(),
     orderType,
     items,
+    delivery:
+      orderType === "DELIVERY"
+        ? {
+            name: "Cliente QA",
+            phone: "987654321",
+            address: "Calle QA 123",
+            fee: 5,
+          }
+        : undefined,
   });
   if (!result.success) throw new Error(result.message);
   orderIds.push(result.data.orderId);
@@ -448,7 +457,7 @@ describe("DEL-01 · adiciones a pedidos Para llevar y Delivery", () => {
         (
           await prisma().order.findUniqueOrThrow({ where: { id: orderId } })
         ).total.toNumber(),
-      ).toBe(90);
+      ).toBe(orderType === "DELIVERY" ? 95 : 90);
     }
   });
 });
@@ -538,8 +547,8 @@ describe("DEL-01 · retiro de productos", () => {
       where: { id: orderId },
       include: { orderItems: true },
     });
-    expect(order.total.toNumber()).toBe(50);
-    expect(order.netTotal.toNumber()).toBe(50);
+    expect(order.total.toNumber()).toBe(55);
+    expect(order.netTotal.toNumber()).toBe(55);
     expect(
       order.orderItems
         .find((i) => i.productId === ids.productA)
@@ -808,7 +817,7 @@ describe("DEL-01 · concurrencia", () => {
       (
         await prisma().order.findUniqueOrThrow({ where: { id: orderId } })
       ).total.toNumber(),
-    ).toBe(60);
+    ).toBe(65);
   });
 
   test("X1 gana el despacho: la adición se rechaza por el bloqueo de productos, sin ronda ni stock", async () => {
