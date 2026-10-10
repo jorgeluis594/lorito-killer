@@ -25,6 +25,7 @@ import { hasPermission } from "@/authorization/helpers";
 import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 import { canEditFulfillmentProducts } from "@/delivery/use-cases/can-edit-fulfillment-products";
 import DeliveryActions from "@/delivery/components/delivery-actions";
+import DeliveryContactDetails from "@/delivery/components/delivery-contact-details";
 import { findFulfillmentCashShift } from "@/order/fulfillment-payment-repository";
 import { getDeliveryDetails } from "@/delivery/db_repository";
 import { findOrderRounds } from "@/order/rounds/db_repository";
@@ -152,6 +153,11 @@ export default async function OrderData({ order }: { order: Order }) {
                 delivery={deliveryView}
                 canEditProducts={canEditProducts}
               />
+              {delivery && (
+                <div className="mt-3">
+                  <DeliveryContactDetails {...delivery} total={order.total} />
+                </div>
+              )}
             </div>
           )}
           <table className="table-auto border w-full">

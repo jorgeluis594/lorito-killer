@@ -20,6 +20,23 @@ import {
 } from "@/shared/components/ui/select";
 import { useToast } from "@/shared/components/ui/use-toast";
 import { formatPrice } from "@/lib/utils";
+import {
+  validateDeliveryDetails,
+  type DeliveryDetailsErrors,
+  type DeliveryDetailsField,
+} from "@/delivery/use-cases/validate-delivery-details";
+
+type DeliveryForm = Record<DeliveryDetailsField, string>;
+
+const emptyDeliveryForm: DeliveryForm = {
+  name: "",
+  phone: "",
+  address: "",
+  reference: "",
+  fee: "",
+  expectedPaymentMethod: "",
+  cashPaysWith: "",
+};
 
 export default function FulfillmentOrder({
   initialOrderId,
@@ -41,14 +58,44 @@ export default function FulfillmentOrder({
   );
   const [orderId, setOrderId] = useState<string | undefined>(initialOrderId);
   const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState<DeliveryForm>(emptyDeliveryForm);
+  const [errors, setErrors] = useState<DeliveryDetailsErrors>({});
   const { toast } = useToast();
   const router = useRouter();
 
+  // Los datos de entrega solo se capturan al crear; las adiciones usan los guardados.
+  const showDeliveryForm = orderType === "DELIVERY" && !orderId;
+  const feeAmount =
+    showDeliveryForm && form.fee.trim() !== "" && Number(form.fee) >= 0
+      ? Number(form.fee)
+      : 0;
+  const grandTotal = order.total + feeAmount;
+
+  const setField = (field: DeliveryDetailsField, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrors((current) => ({ ...current, [field]: undefined }));
+  };
+
   async function submit() {
+    if (showDeliveryForm) {
+      const check = validateDeliveryDetails(form, grandTotal);
+      if (!check.success) {
+        setErrors(check.errors);
+        toast({ variant: "destructive", description: check.message });
+        return;
+      }
+    }
     setSubmitting(true);
     const response = await confirmFulfillmentRound({
       orderId,
       orderType,
+      delivery: showDeliveryForm
+        ? {
+            ...form,
+            expectedPaymentMethod: form.expectedPaymentMethod || null,
+            cashPaysWith: form.cashPaysWith || null,
+          }
+        : undefined,
       roundId: crypto.randomUUID(),
       items: order.orderItems.map((item) => ({
         productId: item.productId,
@@ -62,6 +109,7 @@ export default function FulfillmentOrder({
       return;
     }
     setOrderId(response.data.orderId);
+    setForm(emptyDeliveryForm);
     reset();
     toast({
       title:
@@ -98,6 +146,104 @@ export default function FulfillmentOrder({
           </Select>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
+          {showDeliveryForm && (
+            <fieldset className="mb-4 grid gap-3 rounded-lg border p-3 sm:grid-cols-2">
+              <legend className="px-1 text-sm font-medium">
+                Datos de entrega
+              </legend>
+              <DeliveryField label="Nombre del cliente" error={errors.name}>
+                <Input
+                  autoComplete="off"
+                  maxLength={120}
+                  value={form.name}
+                  onChange={(event) => setField("name", event.target.value)}
+                />
+              </DeliveryField>
+              <DeliveryField label="Teléfono" error={errors.phone}>
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="987 654 321"
+                  value={form.phone}
+                  onChange={(event) => setField("phone", event.target.value)}
+                />
+              </DeliveryField>
+              <DeliveryField
+                label="Dirección"
+                error={errors.address}
+                className="sm:col-span-2"
+              >
+                <Input
+                  autoComplete="off"
+                  maxLength={300}
+                  value={form.address}
+                  onChange={(event) => setField("address", event.target.value)}
+                />
+              </DeliveryField>
+              <DeliveryField
+                label="Referencia (opcional)"
+                error={errors.reference}
+                className="sm:col-span-2"
+              >
+                <Input
+                  autoComplete="off"
+                  maxLength={300}
+                  value={form.reference}
+                  onChange={(event) =>
+                    setField("reference", event.target.value)
+                  }
+                />
+              </DeliveryField>
+              <DeliveryField label="Envío (S/)" error={errors.fee}>
+                <Input
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  value={form.fee}
+                  onChange={(event) => setField("fee", event.target.value)}
+                />
+              </DeliveryField>
+              <DeliveryField
+                label="Pago esperado (opcional)"
+                error={errors.expectedPaymentMethod}
+              >
+                <Select
+                  value={form.expectedPaymentMethod || "NONE"}
+                  onValueChange={(value) => {
+                    setField(
+                      "expectedPaymentMethod",
+                      value === "NONE" ? "" : value,
+                    );
+                    if (value !== "CASH") setField("cashPaysWith", "");
+                  }}
+                >
+                  <SelectTrigger aria-label="Pago esperado">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Sin definir</SelectItem>
+                    <SelectItem value="CASH">Efectivo</SelectItem>
+                    <SelectItem value="WALLET">Billetera</SelectItem>
+                  </SelectContent>
+                </Select>
+              </DeliveryField>
+              {form.expectedPaymentMethod === "CASH" && (
+                <DeliveryField
+                  label="Paga con (S/)"
+                  error={errors.cashPaysWith}
+                >
+                  <Input
+                    inputMode="decimal"
+                    placeholder={grandTotal.toFixed(2)}
+                    value={form.cashPaysWith}
+                    onChange={(event) =>
+                      setField("cashPaysWith", event.target.value)
+                    }
+                  />
+                </DeliveryField>
+              )}
+            </fieldset>
+          )}
           {order.orderItems.length ? (
             <ul className="space-y-3">
               {order.orderItems.map((item) => (
@@ -153,9 +299,15 @@ export default function FulfillmentOrder({
           )}
         </div>
         <footer className="border-t p-4">
+          {showDeliveryForm && (
+            <div className="mb-1 flex items-center justify-between text-sm text-muted-foreground">
+              <span>Envío</span>
+              <span>{formatPrice(feeAmount)}</span>
+            </div>
+          )}
           <div className="mb-3 flex items-center justify-between text-lg font-bold">
             <span>Total</span>
-            <span>{formatPrice(order.total)}</span>
+            <span>{formatPrice(grandTotal)}</span>
           </div>
           <Button
             className="w-full"
@@ -176,5 +328,29 @@ export default function FulfillmentOrder({
         <ProductsSearcher />
       </div>
     </div>
+  );
+}
+
+function DeliveryField({
+  label,
+  error,
+  className,
+  children,
+}: {
+  label: string;
+  error?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className={`grid gap-1 text-sm ${className ?? ""}`}>
+      <span className="font-medium">{label}</span>
+      {children}
+      {error && (
+        <span role="alert" className="text-xs text-destructive">
+          {error}
+        </span>
+      )}
+    </label>
   );
 }
