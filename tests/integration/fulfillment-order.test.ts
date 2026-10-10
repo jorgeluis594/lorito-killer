@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma";
 import { submitFulfillmentRound } from "@/order/rounds/fulfillment-repository";
 import { completeTakeAway, transitionDelivery } from "@/delivery/db_repository";
 import { payFulfillmentOrder } from "@/order/fulfillment-payment-repository";
-import { submitFulfillmentRound as addRound } from "@/order/rounds/fulfillment-repository";
 import {
   createFixture,
   type RestaurantFixture,
@@ -440,7 +439,7 @@ describe("§11.2 recorridos completos de Delivery (DEL-03)", () => {
 
   test("R2 cobro tras una segunda ronda: 70 y comanda adicional solo con C", async () => {
     const orderId = await f.createOrder({});
-    const added = await addRound(f.ids.company, f.ids.seller, {
+    const added = await submitFulfillmentRound(f.ids.company, f.ids.seller, {
       orderId,
       roundId: randomUUID(),
       orderType: "DELIVERY",

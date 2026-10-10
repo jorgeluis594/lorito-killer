@@ -41,7 +41,7 @@ describe("§11.9 concurrencia del cobro de Delivery (DEL-03)", () => {
     ).toBe(1);
   });
 
-  test("X3 dos cobros combinados con medios distintos: solo uno gana", async () => {
+  test("X3 dos cobros con medios distintos: un éxito y un rechazo", async () => {
     const orderId = await f.createOrder({});
     const [card, cash] = [
       await f.paymentInput(orderId, { method: "debit_card" }),
@@ -51,9 +51,13 @@ describe("§11.9 concurrencia del cobro de Delivery (DEL-03)", () => {
       payFulfillmentOrder(f.user("cashier"), card),
       payFulfillmentOrder(f.user("admin"), cash),
     ]);
-    // Uno cobra; el otro, ya con el pedido pagado, devuelve ese mismo resultado
-    // o se rechaza, pero nunca se duplican pagos ni documento.
-    expect(results.some((result) => result.success)).toBe(true);
+    // Uno cobra; el otro, que ve el pedido pagado con otro medio, se rechaza.
+    expect(results.filter((result) => result.success)).toHaveLength(1);
+    const loser = results.find((result) => !result.success);
+    expect(loser).toMatchObject({
+      message: "El pedido ya fue cobrado con otro comprobante.",
+    });
+    expect(JSON.stringify(results)).not.toContain("40001");
     expect(await db().payment.count({ where: { orderId } })).toBe(1);
     expect(await db().document.count({ where: { orderId } })).toBe(1);
   });

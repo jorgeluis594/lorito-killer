@@ -155,6 +155,10 @@ export default async function OrderData({ order }: { order: Order }) {
                   delivery?.expectedPaymentMethod,
                   delivery?.cashPaysWith,
                 )}
+                canCollect={
+                  session.user?.role === "ADMIN" ||
+                  session.user?.role === "CASHIER"
+                }
                 delivery={deliveryView}
                 canEditProducts={canEditProducts}
               />

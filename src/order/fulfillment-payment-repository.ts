@@ -19,6 +19,7 @@ export type FulfillmentPaymentResult = {
   documentId: string;
   total: number;
   paymentStatus: "PAID";
+  documentType: "ticket" | "receipt" | "invoice";
 };
 
 export async function findFulfillmentCashShift(companyId: string) {
@@ -48,13 +49,84 @@ const reject = (message: string): never => {
   throw new Error(message);
 };
 
+// Repite la transacción completa ante conflictos de serialización, con un
+// pequeño jitter para no repetir el choque en el mismo instante.
+async function withSerializationRetry<T>(
+  run: () => Promise<response<T>>,
+): Promise<response<T>> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      if (isSerializationConflict(error)) {
+        if (attempt < MAX_SERIALIZATION_RETRIES) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, 5 + Math.random() * 20 * (attempt + 1)),
+          );
+          continue;
+        }
+        return {
+          success: false,
+          message: "El pedido cambió. Consulta su estado antes de reintentar.",
+        };
+      }
+      return {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "No se pudo cobrar el pedido.",
+      };
+    }
+  }
+}
+
+const receiptKind = (documentType: string) =>
+  documentType.toLowerCase() as FulfillmentPaymentResult["documentType"];
+
+const METHOD_NAMES = {
+  cash: "CASH",
+  wallet: "WALLET",
+  credit_card: "CREDIT_CARD",
+  debit_card: "DEBIT_CARD",
+} as const;
+
+/** ¿La solicitud describe el mismo cobro inicial ya persistido? */
+function sameCollection(
+  input: FulfillmentPaymentInput,
+  persisted: {
+    documentType: string;
+    payments: { method: string }[];
+    customer: {
+      documentType: string | null;
+      documentNumber: string | null;
+    } | null;
+  },
+) {
+  if (persisted.documentType.toLowerCase() !== input.receipt.documentType)
+    return false;
+  const wanted =
+    input.method === "combine"
+      ? Object.entries(input.contributions ?? {})
+          .filter(([, amount]) => amount)
+          .map(([method]) => METHOD_NAMES[method as keyof typeof METHOD_NAMES])
+      : [METHOD_NAMES[input.method]];
+  const actual = persisted.payments.map((payment) => payment.method);
+  if ([...wanted].sort().join() !== [...actual].sort().join()) return false;
+  const customer = input.receipt.customer;
+  if (!customer) return !persisted.customer;
+  return (
+    persisted.customer?.documentType === customer.documentType &&
+    persisted.customer?.documentNumber === customer.documentNumber
+  );
+}
+
 export async function payFulfillmentOrder(
   user: AuthorizedUser,
   input: FulfillmentPaymentInput,
-  attempt = 0,
 ): Promise<response<FulfillmentPaymentResult>> {
-  try {
-    return await prisma().$transaction(
+  return withSerializationRetry(() =>
+    prisma().$transaction(
       async (db) => {
         await db.$queryRaw`SELECT id FROM "Order" WHERE id = ${input.orderId} FOR UPDATE`;
         const order = await db.order.findFirst({
@@ -66,21 +138,33 @@ export async function payFulfillmentOrder(
           include: {
             payments: true,
             documents: true,
+            customer: true,
             delivery: { select: { fee: true } },
             orderItems: { include: { product: true } },
           },
         });
         if (!order) return reject("El pedido no está disponible.");
-        if (order.paymentStatus === "PAID" && order.documents[0])
+        if (order.paymentStatus === "PAID" && order.documents[0]) {
+          const existing = order.documents[0];
+          if (
+            !sameCollection(input, {
+              documentType: existing.documentType,
+              payments: order.payments,
+              customer: order.customer,
+            })
+          )
+            return reject("El pedido ya fue cobrado con otro comprobante.");
           return {
             success: true,
             data: {
               orderId: order.id,
-              documentId: order.documents[0].id,
+              documentId: existing.id,
               total: order.total.toNumber(),
               paymentStatus: "PAID",
+              documentType: receiptKind(existing.documentType),
             },
           };
+        }
         if (
           order.status !== "PENDING" ||
           order.payments.length ||
@@ -236,6 +320,7 @@ export async function payFulfillmentOrder(
             documentId: document.data.id,
             total: order.total.toNumber(),
             paymentStatus: "PAID",
+            documentType: receipt.documentType,
           },
         };
       },
@@ -243,17 +328,6 @@ export async function payFulfillmentOrder(
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         timeout: 15000,
       },
-    );
-  } catch (error) {
-    if (isSerializationConflict(error) && attempt < MAX_SERIALIZATION_RETRIES)
-      return payFulfillmentOrder(user, input, attempt + 1);
-    return {
-      success: false,
-      message: isSerializationConflict(error)
-        ? "El pedido cambió. Consulta su estado antes de reintentar."
-        : error instanceof Error
-          ? error.message
-          : "No se pudo cobrar el pedido.",
-    };
-  }
+    ),
+  );
 }

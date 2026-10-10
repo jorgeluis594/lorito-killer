@@ -17,6 +17,8 @@ vi.mock("@/document/tax-dispatch-outbox", () => ({
 }));
 
 import prisma from "@/lib/prisma";
+import { enqueueDocumentTaxDispatch } from "@/document/tax-dispatch-outbox";
+import { formatPriceWithoutCurrency } from "@/lib/utils";
 import { confirmFulfillmentPayment } from "@/order/fulfillment-payment-actions";
 import {
   find as findOrder,
@@ -54,6 +56,43 @@ const sortByName = (items: Record<string, any>[]) =>
 
 const shippingItems = (items: Record<string, any>[]) =>
   items.filter((item) => item.descripcion === "Envío");
+
+const companyView = () =>
+  ({
+    id: f.ids.company,
+    name: "Empresa QA",
+    subName: "QA",
+    ruc: "20000000001",
+    address: "QA",
+  }) as unknown as Company;
+
+const documentView = (
+  document: {
+    id: string;
+    series: string;
+    number: number;
+    dateOfIssue: Date;
+    netTotal: { toNumber(): number };
+    total: { toNumber(): number };
+  },
+  orderId: string,
+) => ({
+  id: document.id,
+  orderId,
+  companyId: f.ids.company,
+  documentType: "receipt" as const,
+  series: document.series,
+  number: String(document.number),
+  dateOfIssue: document.dateOfIssue,
+  status: "registered" as const,
+  netTotal: document.netTotal.toNumber(),
+  discountAmount: 0,
+  taxTotal: 0,
+  total: document.total.toNumber(),
+  xml: "",
+  qr: "",
+  hash: "",
+});
 
 /** Recorre el árbol de elementos de React y reúne los textos renderizados. */
 function collectText(node: unknown): string[] {
@@ -404,7 +443,7 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
         unidad: "NIU",
       };
       expect(sortByName(bodies[0].items)).toEqual([
-        expect.objectContaining({
+        {
           ...base,
           codigo: "PA",
           descripcion: "Producto A",
@@ -413,8 +452,8 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
           precio_unitario: 30,
           total_base_tax: 60,
           total: 60,
-        }),
-        expect.objectContaining({
+        },
+        {
           ...base,
           codigo: "",
           descripcion: "Producto B",
@@ -423,7 +462,7 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
           precio_unitario: 20,
           total_base_tax: 20,
           total: 20,
-        }),
+        },
       ]);
       expect(bodies[0].items.some((i: any) => i.unidad === "ZZ")).toBe(false);
       expect(bodies[0].totales).toEqual({
@@ -435,6 +474,45 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
         total_inafectas: 0,
         total_gratuitas: 0,
       });
+
+      // Salidas locales: ticket, térmica y PDF sin línea extra y con el mismo total.
+      const [printOrder, pdfOrder] = await Promise.all([
+        findReceiptPrintOrder(orderId, f.ids.company),
+        findOrder(orderId, f.ids.company),
+      ]);
+      if (!printOrder.success || !pdfOrder.success)
+        throw new Error("No se pudo leer el pedido");
+      const view = documentView(document, orderId);
+      const printData = buildReceiptPrintData({
+        order: printOrder.data,
+        company: companyView(),
+        document: view,
+      });
+      expect(
+        printData.order.items
+          .map((i) => [i.name, i.quantity, i.unitPrice, i.total])
+          .sort(([x], [y]) => String(x).localeCompare(String(y))),
+      ).toEqual([
+        ["Producto A", 2, 30, 60],
+        ["Producto B", 1, 20, 20],
+      ]);
+      expect(printData.order.total).toBe(80);
+      const thermal = buildThermalReceiptCommands(printData)
+        .flatMap((cmd) => (cmd.type === "text" ? [cmd.value] : []))
+        .join("\n");
+      expect(thermal).not.toContain("Envío");
+      expect(thermal).toContain("80.00");
+      const pdfText = collectText(
+        Voucher({
+          order: pdfOrder.data,
+          company: companyView(),
+          document: view,
+        }),
+      );
+      expect(pdfText).not.toContain("Envío");
+      expect(pdfText).toEqual(
+        expect.arrayContaining(["Producto A", "Producto B"]),
+      );
     },
   );
 
@@ -494,5 +572,101 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
     );
     expect(rejected.success).toBe(false);
     expect(await countFor(orderId)).toEqual({ payments: 0, documents: 0 });
+  });
+
+  test("I1 el precio del catálogo cambia antes del cobro y del reenvío: mismo P.U. en ticket, PDF y FactPro", async () => {
+    const orderId = await f.createOrder({});
+    await db().product.update({
+      where: { id: f.ids.productA },
+      data: { price: 35 },
+    });
+    try {
+      expect((await f.pay(orderId)).success).toBe(true);
+      await db().product.update({
+        where: { id: f.ids.productA },
+        data: { price: 40 },
+      });
+      const document = await f.documentFor(orderId);
+      const [printOrder, pdfOrder] = await Promise.all([
+        findReceiptPrintOrder(orderId, f.ids.company),
+        findOrder(orderId, f.ids.company),
+      ]);
+      if (!printOrder.success || !pdfOrder.success)
+        throw new Error("No se pudo leer el pedido");
+      const view = documentView(document, orderId);
+      const printData = buildReceiptPrintData({
+        order: printOrder.data,
+        company: companyView(),
+        document: view,
+      });
+      const ticketA = printData.order.items.find(
+        (i) => i.name === "Producto A",
+      );
+      expect(ticketA).toMatchObject({ unitPrice: 30, total: 30 });
+      const pdfText = collectText(
+        Voucher({
+          order: pdfOrder.data,
+          company: companyView(),
+          document: view,
+        }),
+      );
+      expect(pdfText).toContain(formatPriceWithoutCurrency(30));
+      expect(pdfText).not.toContain(formatPriceWithoutCurrency(35));
+      expect(pdfText).not.toContain(formatPriceWithoutCurrency(40));
+      const { bodies } = await f.sendToFactpro(document.id);
+      const itemA = bodies[0].items.find(
+        (i: any) => i.descripcion === "Producto A",
+      );
+      expect(itemA).toMatchObject({
+        valor_unitario: 30,
+        precio_unitario: 30,
+        total: 30,
+      });
+    } finally {
+      await db().product.update({
+        where: { id: f.ids.productA },
+        data: { price: 30 },
+      });
+    }
+  });
+
+  test("I2 un segundo cobro con otro comprobante se rechaza y la acción encola según el documento devuelto", async () => {
+    const orderId = await f.createOrder({});
+    const ticket = await f.paymentInput(orderId, {
+      method: "debit_card",
+      receipt: { documentType: "ticket" },
+    });
+    const first = await confirmFulfillmentPayment(ticket);
+    expect(first).toMatchObject({
+      success: true,
+      data: { documentType: "ticket" },
+    });
+    const enqueue = vi.mocked(enqueueDocumentTaxDispatch);
+    enqueue.mockClear();
+    // Misma solicitud: devuelve el mismo documento y no encola (ticket).
+    expect(await confirmFulfillmentPayment(ticket)).toEqual(first);
+    // Otro comprobante o medio: rechazo, sin filas nuevas ni encolado.
+    for (const other of [
+      { ...ticket, receipt: f.invoiceReceipt },
+      { ...ticket, receipt: { documentType: "receipt" as const } },
+      { ...ticket, method: "cash" as const, cashReceived: 60 },
+    ])
+      expect(await confirmFulfillmentPayment(other)).toMatchObject({
+        success: false,
+        message: "El pedido ya fue cobrado con otro comprobante.",
+      });
+    expect(enqueue).not.toHaveBeenCalled();
+    expect(await countFor(orderId)).toEqual({ payments: 1, documents: 1 });
+
+    // Boleta: se encola con el id del documento devuelto.
+    const orderId2 = await f.createOrder({});
+    const receipt = await confirmFulfillmentPayment(
+      await f.paymentInput(orderId2, { method: "debit_card" }),
+    );
+    expect(receipt.success).toBe(true);
+    expect(enqueue).toHaveBeenCalledWith(
+      receipt.success ? receipt.data.documentId : "",
+      f.ids.company,
+    );
   });
 });

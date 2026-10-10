@@ -455,7 +455,7 @@ export async function transformOrdersData(
           quantity: oi.quantity.toNumber(),
           productName: prismaProductsMap[oi.productId].name,
           productSku: prismaProductsMap[oi.productId].sku || undefined,
-          productPrice: prismaProductsMap[oi.productId].price.toNumber(),
+          productPrice: oi.productPrice.toNumber(),
           discount,
           netTotal: oi.netTotal.toNumber(),
           discountAmount: oi.discountAmount?.toNumber(),

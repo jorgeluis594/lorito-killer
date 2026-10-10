@@ -16,6 +16,7 @@ export default function DeliveryActions({
   total,
   cashShiftId,
   initialCashReceived,
+  canCollect,
   delivery,
   canEditProducts,
 }: {
@@ -26,6 +27,7 @@ export default function DeliveryActions({
   total: number;
   cashShiftId?: string;
   initialCashReceived?: string;
+  canCollect: boolean;
   delivery?: {
     status: "PENDING" | "DISPATCHED" | "DELIVERED";
     dispatchedAt: string | null;
@@ -89,13 +91,19 @@ export default function DeliveryActions({
                 </a>
               </Button>
             )}
-            <FulfillmentPaymentButton
-              orderId={orderId}
-              orderVersion={orderVersion}
-              total={total}
-              cashShiftId={cashShiftId}
-              initialCashReceived={initialCashReceived}
-            />
+            {canCollect ? (
+              <FulfillmentPaymentButton
+                orderId={orderId}
+                orderVersion={orderVersion}
+                total={total}
+                cashShiftId={cashShiftId}
+                initialCashReceived={initialCashReceived}
+              />
+            ) : (
+              <span className="self-center text-sm text-muted-foreground">
+                Pide el cobro a caja.
+              </span>
+            )}
           </>
         )}
         {orderType === "DELIVERY" && delivery?.status !== "DELIVERED" && (
