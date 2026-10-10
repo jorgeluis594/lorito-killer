@@ -497,6 +497,7 @@ export async function createManualKitchenTicketPrintJob(
                 order: {
                   select: {
                     orderType: true,
+                    delivery: { select: { name: true } },
                     tableSession: {
                       select: {
                         table: { select: { label: true, number: true } },
@@ -570,6 +571,10 @@ export async function createManualKitchenTicketPrintJob(
             responsibleName:
               ticket.orderRound.responsibleUser.name ||
               ticket.orderRound.responsibleUser.email,
+            customerName:
+              ticket.orderRound.order.orderType === "DELIVERY"
+                ? ticket.orderRound.order.delivery?.name
+                : undefined,
             isReprint: input.isReprint,
             items: items
               .filter(

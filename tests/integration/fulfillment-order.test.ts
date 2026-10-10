@@ -145,6 +145,12 @@ describe("fulfillment orders PostgreSQL integration", () => {
     const input = {
       roundId: randomUUID(),
       orderType: "DELIVERY" as const,
+      delivery: {
+        name: "Cliente QA",
+        phone: "987654321",
+        address: "Calle QA 123",
+        fee: 5,
+      },
       items: [
         { productId: ids.hotDish, quantity: 1, notes: "Sin cebolla" },
         { productId: ids.coldDish, quantity: 1 },

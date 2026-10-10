@@ -124,14 +124,28 @@ export async function completeTakeAway(companyId: string, orderId: string) {
 }
 
 export async function getDeliveryDetails(companyId: string, orderId: string) {
-  return prisma().delivery.findFirst({
+  const delivery = await prisma().delivery.findFirst({
     where: { orderId, order: { companyId } },
     select: {
       status: true,
+      name: true,
+      phone: true,
+      address: true,
+      reference: true,
+      fee: true,
+      expectedPaymentMethod: true,
+      cashPaysWith: true,
       dispatchedAt: true,
       deliveredAt: true,
       dispatchedBy: { select: { name: true } },
       deliveredBy: { select: { name: true } },
     },
   });
+  return delivery
+    ? {
+        ...delivery,
+        fee: delivery.fee.toNumber(),
+        cashPaysWith: delivery.cashPaysWith?.toNumber() ?? null,
+      }
+    : null;
 }

@@ -16,6 +16,13 @@ import {
   canEditFulfillmentProducts,
   PRODUCTS_LOCKED_MESSAGE,
 } from "@/delivery/use-cases/can-edit-fulfillment-products";
+import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
+import {
+  cashPaysWithBelowCreationTotalMessage,
+  validateCashPaysWithCoversTotal,
+  validateDeliveryDetails,
+  type DeliveryDetails,
+} from "@/delivery/use-cases/validate-delivery-details";
 import { sendRound, type PersistedRoundLine } from "./use-cases/send-round";
 import type { FulfillmentRoundInput } from "./fulfillment-schema";
 import type { SendRoundResult } from "./types";
@@ -36,6 +43,10 @@ const hashRequest = (input: FulfillmentRoundInput) =>
         orderId: input.orderId,
         orderType: input.orderType,
         items: input.items,
+        // Solo cuenta el contacto de un Delivery nuevo: es lo único que se guarda.
+        ...(!input.orderId && input.orderType === "DELIVERY"
+          ? { delivery: input.delivery }
+          : {}),
       }),
     )
     .digest("hex");
@@ -153,6 +164,15 @@ export async function submitFulfillmentRound(
                 message: "El identificador de envío ya fue utilizado.",
               };
 
+        let deliveryDetails: DeliveryDetails | null = null;
+        if (!input.orderId && input.orderType === "DELIVERY") {
+          const details = validateDeliveryDetails(input.delivery);
+          if (!details.success)
+            return { success: false, message: details.message };
+          deliveryDetails = details.data;
+        }
+        let customerName: string | null = deliveryDetails?.name ?? null;
+
         let order = input.orderId
           ? await db.order.findFirst({
               where: { id: input.orderId, companyId },
@@ -178,10 +198,11 @@ export async function submitFulfillmentRound(
           const [delivery, documents] = await Promise.all([
             db.delivery.findUnique({
               where: { orderId: order.id },
-              select: { status: true },
+              select: { status: true, name: true },
             }),
             db.document.count({ where: { orderId: order.id } }),
           ]);
+          customerName = delivery?.name ?? null;
           if (
             !canEditFulfillmentProducts({
               orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
@@ -205,8 +226,12 @@ export async function submitFulfillmentRound(
               netTotal: 0,
               total: 0,
               documentType: "ticket",
-              ...(input.orderType === "DELIVERY"
-                ? { delivery: { create: { createdById: userId } } }
+              ...(deliveryDetails
+                ? {
+                    delivery: {
+                      create: { ...deliveryDetails, createdById: userId },
+                    },
+                  }
                 : {}),
             },
           });
@@ -292,17 +317,19 @@ export async function submitFulfillmentRound(
                 order.id,
                 persistedLines,
               );
-              const totals = await db.orderItem.aggregate({
-                where: { orderId: order.id },
-                _sum: { total: true, netTotal: true },
-              });
-              await db.order.update({
-                where: { id: order.id },
-                data: {
-                  total: totals._sum.total ?? 0,
-                  netTotal: totals._sum.netTotal ?? 0,
-                },
-              });
+              const totals = await recalculateOrderTotals(db, order.id);
+              const coverage = validateCashPaysWithCoversTotal(
+                totals.cashPaysWith?.toNumber(),
+                totals.total.toNumber(),
+              );
+              if (!coverage.success)
+                throw new Error(
+                  deliveryDetails
+                    ? cashPaysWithBelowCreationTotalMessage(
+                        totals.total.toNumber(),
+                      )
+                    : coverage.message,
+                );
 
               const kitchenIds = [
                 ...new Set(
@@ -339,6 +366,8 @@ export async function submitFulfillmentRound(
                       orderType: input.orderType,
                       orderLabel: order.id.slice(0, 8).toUpperCase(),
                       responsibleName: responsible.name || responsible.email,
+                      customerName:
+                        input.orderType === "DELIVERY" ? customerName : null,
                       items: lines
                         .filter((line) => line.kitchenId === kitchen.id)
                         .map((line) => ({

@@ -71,6 +71,7 @@ describe("cancelRoundItem", () => {
         }),
       },
       order: { update: vi.fn() },
+      delivery: { findUnique: vi.fn().mockResolvedValue(null) },
     };
     setPrismaClient({
       $transaction: (callback: (db: typeof tx) => unknown) => callback(tx),
