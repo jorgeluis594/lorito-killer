@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import type { DocumentType } from "@/document/types";
 import type { Status } from "@/order/types";
+import { salesOrderStatusFilter } from "@/order/use-cases/sales-order-status-filter";
 import type {
   SalesReportQuery,
   SalesReportRow,
@@ -58,22 +59,7 @@ function buildOrderWhere(query: SellerReportQuery): Prisma.OrderWhereInput {
     companyId: query.companyId,
   };
 
-  if (query.status === "paid") {
-    where.status = ORDER_STATUS_TO_PRISMA.completed;
-  }
-
-  if (query.status === "cancelled") {
-    where.status = ORDER_STATUS_TO_PRISMA.cancelled;
-  }
-
-  if (query.status === "all") {
-    where.status = {
-      in: [
-        ORDER_STATUS_TO_PRISMA.completed,
-        ORDER_STATUS_TO_PRISMA.cancelled,
-      ],
-    };
-  }
+  Object.assign(where, salesOrderStatusFilter(query.status));
 
   if (query.startDate || query.endDate) {
     where.createdAt = dateFilter;
