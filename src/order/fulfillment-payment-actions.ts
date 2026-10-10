@@ -21,7 +21,7 @@ export const confirmFulfillmentPayment = protectedAction(
     const result = await payFulfillmentOrder(user, parsed.data);
     if (result.success) {
       revalidatePath("/[subdomain]/dashboard/orders", "layout");
-      if (parsed.data.receipt.documentType !== "ticket")
+      if (result.data.documentType !== "ticket")
         await enqueueDocumentTaxDispatch(
           result.data.documentId,
           user.companyId,
