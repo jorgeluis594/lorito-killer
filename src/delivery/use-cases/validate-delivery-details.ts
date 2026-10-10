@@ -197,6 +197,10 @@ export function coversTotal(cashPaysWith: number, total: number): boolean {
 export const CASH_PAYS_WITH_BELOW_TOTAL_MESSAGE =
   "“Paga con” quedaría por debajo del nuevo total del pedido.";
 
+/** Mensaje al crear: el pedido aún no existe, así que se indica el total. */
+export const cashPaysWithBelowCreationTotalMessage = (total: number) =>
+  `“Paga con” debe ser al menos el total (S/ ${total.toFixed(2)}).`;
+
 /** Revalida “paga con” tras cambiar el total (adiciones, retiros). */
 export function validateCashPaysWithCoversTotal(
   cashPaysWith: number | null | undefined,

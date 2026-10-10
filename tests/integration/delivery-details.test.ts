@@ -348,6 +348,9 @@ describe("DEL-02 · datos de entrega y totalización", () => {
       ...baseDelivery,
       expectedPaymentMethod: undefined,
     });
+    expect(!below.success && below.message).toBe(
+      "“Paga con” debe ser al menos el total (S/ 55.00).",
+    );
     expect([wallet.success, below.success, noMethod.success]).toEqual([
       false,
       false,
@@ -677,8 +680,7 @@ describe("DEL-02 · seguridad", () => {
     ])
       expect(payloads).not.toContain(sensitive);
     for (const [, , data] of mocks.broadcast.mock.calls)
-      expect(Object.keys(data as object).sort()).toEqual(
-        expect.not.arrayContaining(["phone", "address", "name", "delivery"]),
-      );
+      for (const key of ["phone", "address", "name", "reference", "delivery"])
+        expect(data).not.toHaveProperty(key);
   });
 });

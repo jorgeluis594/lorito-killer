@@ -332,6 +332,12 @@ export default async function OrderData({ order }: { order: Order }) {
                   </div>
                 </>
               )}
+              {delivery && delivery.fee > 0 && (
+                <div className="flex justify-between mt-1">
+                  <p className="text-lg">Envío</p>
+                  <p className="text-lg">{formatPrice(delivery.fee)}</p>
+                </div>
+              )}
               <div className="flex justify-between">
                 <p className="font-bold text-2xl">Total</p>
                 <p className="font-bold text-2xl">{formatPrice(order.total)}</p>

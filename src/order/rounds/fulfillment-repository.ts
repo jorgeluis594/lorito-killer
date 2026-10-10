@@ -18,6 +18,7 @@ import {
 } from "@/delivery/use-cases/can-edit-fulfillment-products";
 import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
 import {
+  cashPaysWithBelowCreationTotalMessage,
   validateCashPaysWithCoversTotal,
   validateDeliveryDetails,
   type DeliveryDetails,
@@ -321,7 +322,14 @@ export async function submitFulfillmentRound(
                 totals.cashPaysWith?.toNumber(),
                 totals.total.toNumber(),
               );
-              if (!coverage.success) throw new Error(coverage.message);
+              if (!coverage.success)
+                throw new Error(
+                  deliveryDetails
+                    ? cashPaysWithBelowCreationTotalMessage(
+                        totals.total.toNumber(),
+                      )
+                    : coverage.message,
+                );
 
               const kitchenIds = [
                 ...new Set(
