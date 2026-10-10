@@ -10,6 +10,38 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lorito_killer_test
+      REDIS_URL: redis://localhost:6379
+      BULLMQ_JOB_PREFIX: ci
+      NEW_RELIC_ENABLED: "false"
+      MAINTENANCE_MODE: "false"
+
+    services:
+      postgres:
+        image: postgres:16-bookworm
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lorito_killer_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lorito_killer_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,5 +55,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare database
+        run: npx prisma migrate deploy && npx prisma generate
+
       - name: Run tests
-        run: npm test
+        run: npm test -- --no-file-parallelism
