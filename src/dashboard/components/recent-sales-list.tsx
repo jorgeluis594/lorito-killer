@@ -23,6 +23,7 @@ const badgeVariant: Record<RecentSaleRow["status"], "default" | "secondary" | "d
   completed: "default",
   cancelled: "destructive",
   pending: "secondary",
+  awaiting_delivery: "default",
 };
 
 export async function RecentSalesList({ query }: { query: DashboardQuery }) {

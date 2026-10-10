@@ -33,6 +33,7 @@ import { findCashShift } from "@/cash-shift/db_repository";
 import type { OpenCashShift } from "@/cash-shift/types";
 import {
   findDashboardKpis,
+  findRecentSales,
   findPaymentBreakdown,
   findSalesTrend,
 } from "@/dashboard/db_repository";
@@ -285,8 +286,8 @@ const dayRange = () => ({
   endDate: new Date(Date.now() + 60 * 60 * 1000),
 });
 
-async function reportTotals() {
-  const { startDate, endDate } = dayRange();
+async function reportTotals(range = dayRange()) {
+  const { startDate, endDate } = range;
   const dashboard = {
     companyId: ids.company,
     period: "today" as const,
@@ -523,5 +524,77 @@ describe("DEL-05 · caja y reportes", () => {
         .status,
     ).toBe("COMPLETED");
     expect(await reportTotals()).toEqual(totals);
+  });
+
+  test("K4 entre días: creado ayer y cobrado hoy cuenta solo hoy, en las tres vistas", async () => {
+    const hour = 60 * 60 * 1000;
+    const yesterday = {
+      startDate: new Date(Date.now() - 48 * hour),
+      endDate: new Date(Date.now() - 12 * hour),
+    };
+    const todayBefore = await reportTotals();
+    const yesterdayBefore = await reportTotals(yesterday);
+
+    const orderId = await create("DELIVERY", "Ana Torres");
+    await prisma().order.update({
+      where: { id: orderId },
+      data: { createdAt: new Date(Date.now() - 36 * hour) },
+    });
+    await pay(orderId, ids.cashShift2);
+
+    const today = await reportTotals();
+    expect(today.dashboardTotal - todayBefore.dashboardTotal).toBe(25);
+    expect(today.dashboardCount - todayBefore.dashboardCount).toBe(1);
+    expect(today.trendTotal - todayBefore.trendTotal).toBe(25);
+    expect(today.paymentTotal - todayBefore.paymentTotal).toBe(25);
+    expect(today.salesRows.filter((id) => id === orderId)).toHaveLength(1);
+    expect(today.exportedOrders.filter((id) => id === orderId)).toHaveLength(1);
+
+    // Ayer no hubo cobro: ninguna vista lo cuenta.
+    expect(await reportTotals(yesterday)).toEqual(yesterdayBefore);
+  });
+
+  test("I2 una orden histórica COMPLETED con paymentStatus PENDING sigue en reportes", async () => {
+    const historic = randomUUID();
+    await prisma().order.create({
+      data: {
+        id: historic,
+        companyId: ids.company,
+        orderType: "RETAIL",
+        status: "COMPLETED",
+        paymentStatus: "PENDING",
+        discountAmount: 0,
+        netTotal: 40,
+        total: 40,
+      },
+    });
+    orderIds.push(historic);
+    const totals = await reportTotals();
+    expect(totals.salesRows).toContain(historic);
+    expect(totals.dashboardTotal).toBeGreaterThanOrEqual(40);
+    // Fuera de su fecha de creación no aparece.
+    const old = await reportTotals({
+      startDate: new Date(Date.now() - 72 * 60 * 60 * 1000),
+      endDate: new Date(Date.now() - 48 * 60 * 60 * 1000),
+    });
+    expect(old.salesRows).not.toContain(historic);
+  });
+
+  test("M3 un Delivery cobrado y por entregar se rotula Cobrado · por entregar", async () => {
+    const orderId = await create("DELIVERY", "Luis Paz");
+    await pay(orderId, ids.cashShift2);
+    const { startDate, endDate } = dayRange();
+    const recent = await findRecentSales({
+      companyId: ids.company,
+      period: "today",
+      startDate,
+      endDate,
+      bucket: "day",
+      timezone: "America/Lima",
+    });
+    if (!recent.success) throw new Error(recent.message);
+    expect(recent.data.find((s) => s.orderId === orderId)?.status).toBe(
+      "awaiting_delivery",
+    );
   });
 });

@@ -3,7 +3,10 @@ import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import type { DocumentType } from "@/document/types";
 import type { Status } from "@/order/types";
-import { salesOrderStatusFilter } from "@/order/use-cases/sales-order-status-filter";
+import {
+  salesOrderStatusFilter,
+  type SalesDateRange,
+} from "@/order/use-cases/sales-order-status-filter";
 import type {
   SalesReportQuery,
   SalesReportRow,
@@ -11,12 +14,6 @@ import type {
   SellerSaleFact,
   SellerStatus,
 } from "@/sale_report/types";
-
-const ORDER_STATUS_TO_PRISMA = {
-  pending: "PENDING",
-  completed: "COMPLETED",
-  cancelled: "CANCELLED",
-} as const;
 
 const PRISMA_ORDER_STATUS_TO_STATUS: Record<string, Status> = {
   PENDING: "pending",
@@ -51,7 +48,7 @@ function toSellerName(
 }
 
 function buildOrderWhere(query: SellerReportQuery): Prisma.OrderWhereInput {
-  const dateFilter: Prisma.DateTimeFilter = {};
+  const dateFilter: SalesDateRange = {};
   if (query.startDate) dateFilter.gte = query.startDate;
   if (query.endDate) dateFilter.lte = query.endDate;
 
@@ -59,11 +56,14 @@ function buildOrderWhere(query: SellerReportQuery): Prisma.OrderWhereInput {
     companyId: query.companyId,
   };
 
-  Object.assign(where, salesOrderStatusFilter(query.status));
-
-  if (query.startDate || query.endDate) {
-    where.createdAt = dateFilter;
-  }
+  // Las ventas cobradas se ubican por la fecha del cobro, no por la de creación.
+  Object.assign(
+    where,
+    salesOrderStatusFilter(
+      query.status,
+      query.startDate || query.endDate ? dateFilter : undefined,
+    ),
+  );
 
   if (query.sellerMode === "specific") {
     where.sellerId = query.sellerId;
