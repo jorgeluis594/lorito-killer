@@ -38,6 +38,7 @@ test.for([
       id: `item-${index}`,
       orderId: "order",
       productId: `product-${index}`,
+      productPrice: amount,
       quantity: new Prisma.Decimal(1),
       netTotal: amount,
       total: amount,

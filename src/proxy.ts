@@ -28,6 +28,10 @@ const routePermissions: Array<{ path: string; permission: RoutePermission }> = [
     permission: { resource: "products", action: "create" },
   },
   {
+    path: "/dashboard/delivery",
+    permission: { resource: "delivery", action: "read" },
+  },
+  {
     path: "/dashboard/sales_reports",
     permission: { resource: "reports", action: "read" },
   },
@@ -106,7 +110,10 @@ export default async function proxy(req: NextRequest) {
 
     if (role) {
       const permission = getRoutePermission(url.pathname);
-      if (permission && !hasPermission(role, permission.resource, permission.action)) {
+      if (
+        permission &&
+        !hasPermission(role, permission.resource, permission.action)
+      ) {
         const defaultRoute = getDefaultRouteForRole(role);
         if (defaultRoute === "/login") {
           return NextResponse.redirect(new URL("/login", req.url));

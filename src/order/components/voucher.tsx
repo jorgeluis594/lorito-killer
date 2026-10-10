@@ -30,6 +30,7 @@ import {
 import { Company } from "@/company/types";
 import { fullName } from "@/customer/utils";
 import { isBillableDocument } from "@/document/utils";
+import { buildDocumentLines } from "@/document/document-lines";
 import { CARNET_EXTRANJERIA, Customer, DNI, RUC } from "@/customer/types";
 
 const styles = StyleSheet.create({
@@ -373,7 +374,7 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
           </Text>
         </View>
 
-        {order.orderItems.map((orderItem, index) => (
+        {buildDocumentLines(order).map((orderItem, index) => (
           <>
             <View
               key={index}
@@ -393,7 +394,7 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
                 {orderItem.quantity}
               </Text>
               <Text style={[styles.listProductsText, { width: "40%" }]}>
-                {orderItem.productName}
+                {orderItem.name}
               </Text>
               <Text
                 style={[
@@ -401,7 +402,7 @@ const Voucher = ({ order, company, document, qrBase64 }: voucherProps) => (
                   { width: "22%", textAlign: "center" },
                 ]}
               >
-                {formatPriceWithoutCurrency(orderItem.productPrice)}
+                {formatPriceWithoutCurrency(orderItem.unitPrice)}
               </Text>
               <Text
                 style={[

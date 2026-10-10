@@ -1,4 +1,4 @@
-import { Order, OrderItem, OrderWithBusinessCustomer } from "@/order/types";
+import { Order, OrderWithBusinessCustomer } from "@/order/types";
 import { ErrorResponse, successResponse, response } from "@/lib/types";
 import {
   Invoice,
@@ -31,6 +31,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { div, errorResponse } from "@/lib/utils";
 import { update as updateDocument } from "@/document/db_repository";
 import { isInvoice, isReceipt } from "@/document/utils";
+import { buildDocumentLines, type DocumentLine } from "@/document/document-lines";
 
 const url = process.env.FACTPRO_URL;
 
@@ -174,36 +175,32 @@ const sendDocument = async (
   return factproDocumentErrorResponse(errorMessage, res, responseBody);
 };
 
-const orderItemToDocumentItem = (
-  orderItem: OrderItem,
-): FactproDocumentItem => {
+const lineToDocumentItem = (line: DocumentLine): FactproDocumentItem => {
   const item: FactproDocumentItem = {
-    unidad: "NIU",
-    codigo: orderItem.productSku || "",
-    descripcion: orderItem.productName,
-    cantidad: orderItem.quantity,
-    valor_unitario: orderItem.productPrice,
-    precio_unitario: orderItem.productPrice,
+    unidad: line.unit,
+    codigo: line.sku || "",
+    descripcion: line.name,
+    cantidad: line.quantity,
+    valor_unitario: line.unitPrice,
+    precio_unitario: line.unitPrice,
     codigo_producto_sunat: "",
     codigo_producto_gsl: "",
     tipo_tax: "20", // Exonerado - Operación Onerosa
-    total_base_tax: orderItem.total,
+    total_base_tax: line.total,
     porcentaje_tax: 0,
     total_tax: 0,
-    total: orderItem.total,
+    total: line.total,
   };
 
-  if (orderItem.discountAmount) {
+  if (line.discountAmount) {
     item.descuentos = {
       codigo: "00",
       descripcion: "Descuento",
-      porcentaje: orderItem.netTotal
-        ? parseFloat(
-            div(orderItem.discountAmount)(orderItem.netTotal).toFixed(4),
-          )
+      porcentaje: line.netTotal
+        ? parseFloat(div(line.discountAmount)(line.netTotal).toFixed(4))
         : 0,
-      monto: orderItem.discountAmount,
-      base: orderItem.netTotal,
+      monto: line.discountAmount,
+      base: line.netTotal,
     };
   }
 
@@ -291,9 +288,7 @@ export default function gateway({
         total_gratuitas: 0,
         descuentos: globalDiscountParams(order),
       },
-      items: order.orderItems.map((orderItem) =>
-        orderItemToDocumentItem(orderItem),
-      ),
+      items: buildDocumentLines(order).map(lineToDocumentItem),
       acciones: {
         formato_pdf: "a4",
       },
@@ -380,9 +375,7 @@ export default function gateway({
         total_gratuitas: 0,
         descuentos: globalDiscountParams(order),
       },
-      items: order.orderItems.map((orderItem) =>
-        orderItemToDocumentItem(orderItem),
-      ),
+      items: buildDocumentLines(order).map(lineToDocumentItem),
       acciones: {
         formato_pdf: "a4",
       },

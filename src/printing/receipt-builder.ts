@@ -5,6 +5,7 @@ import {
   isNaturalCustomer,
 } from "@/customer/utils";
 import type { Document } from "@/document/types";
+import { buildDocumentLines } from "@/document/document-lines";
 import { correlative, isBillableDocument } from "@/document/utils";
 import type { Order, Payment } from "@/order/types";
 import type { ReceiptPrintData } from "@/printing/types";
@@ -111,14 +112,14 @@ export const buildReceiptPrintData = ({
   order: {
     id: order.id!,
     date: toIsoString(order.createdAt)!,
-    items: order.orderItems.map((item) => ({
+    items: buildDocumentLines(order).map((item) => ({
       id: item.id,
       productId: item.productId,
-      sku: item.productSku,
-      name: item.productName,
+      sku: item.sku,
+      name: item.name,
       quantity: item.quantity,
       unitType: item.unitType,
-      unitPrice: item.productPrice,
+      unitPrice: item.unitPrice,
       netTotal: item.netTotal,
       discountAmount: item.discountAmount,
       total: item.total,

@@ -7,7 +7,7 @@ export type FactproDiscount = {
 };
 
 export interface FactproDocumentItem {
-  unidad: "NIU";
+  unidad: "NIU" | "ZZ";
   codigo: string;
   descripcion: string;
   cantidad: number;
