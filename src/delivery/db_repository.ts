@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import { getDeliveryTransition } from "./use-cases/delivery-transition";
+import { describeUnpaidFulfillmentOrder } from "./use-cases/describe-unpaid-fulfillment-order";
 
 export async function transitionDelivery(
   companyId: string,
@@ -148,4 +149,57 @@ export async function getDeliveryDetails(companyId: string, orderId: string) {
         cashPaysWith: delivery.cashPaysWith?.toNumber() ?? null,
       }
     : null;
+}
+
+export type UnpaidFulfillmentOrder = {
+  orderId: string;
+  orderType: "TAKE_AWAY" | "DELIVERY";
+  customerLabel: string;
+  statusLabel: string;
+  total: number;
+  createdAt: Date;
+};
+
+// Por empresa y no por turno: un pedido sin cobrar todavía no pertenece a
+// ninguna caja, así que se incluyen los creados en turnos anteriores.
+export async function listUnpaidFulfillmentOrders(
+  companyId: string,
+): Promise<response<UnpaidFulfillmentOrder[]>> {
+  try {
+    const orders = await prisma().order.findMany({
+      where: {
+        companyId,
+        orderType: { in: ["TAKE_AWAY", "DELIVERY"] },
+        paymentStatus: "PENDING",
+        status: { not: "CANCELLED" },
+      },
+      select: {
+        id: true,
+        orderType: true,
+        total: true,
+        createdAt: true,
+        delivery: { select: { name: true, status: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    return {
+      success: true,
+      data: orders.map((order) => ({
+        orderId: order.id,
+        orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
+        ...describeUnpaidFulfillmentOrder({
+          orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
+          customerName: order.delivery?.name ?? null,
+          deliveryStatus: order.delivery?.status ?? null,
+        }),
+        total: order.total.toNumber(),
+        createdAt: order.createdAt,
+      })),
+    };
+  } catch {
+    return {
+      success: false,
+      message: "No se pudieron consultar los pedidos sin cobrar.",
+    };
+  }
 }
