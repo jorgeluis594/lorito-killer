@@ -45,6 +45,14 @@ export const navItems: NavItem[] = [
     feature: "restaurants",
   },
   {
+    title: "Delivery",
+    href: "/dashboard/delivery",
+    icon: "delivery",
+    label: "delivery",
+    permission: { resource: "delivery", action: "read" },
+    feature: "restaurants",
+  },
+  {
     title: "Movimientos de stock",
     href: "/dashboard/stock_adjustments",
     icon: "stock_adjustments",

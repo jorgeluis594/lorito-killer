@@ -26,6 +26,7 @@ import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
 import { canEditFulfillmentProducts } from "@/delivery/use-cases/can-edit-fulfillment-products";
 import DeliveryActions from "@/delivery/components/delivery-actions";
 import DeliveryContactDetails from "@/delivery/components/delivery-contact-details";
+import DeliveryEditForm from "@/delivery/components/delivery-edit-form";
 import { findFulfillmentCashShift } from "@/order/fulfillment-payment-repository";
 import { getDeliveryDetails } from "@/delivery/db_repository";
 import { findOrderRounds } from "@/order/rounds/db_repository";
@@ -158,6 +159,36 @@ export default async function OrderData({ order }: { order: Order }) {
                   <DeliveryContactDetails {...delivery} total={order.total} />
                 </div>
               )}
+              {delivery &&
+                order.status !== "cancelled" &&
+                session.user &&
+                hasPermission(session.user.role, "delivery", "update") && (
+                  <div className="mt-3">
+                    <DeliveryEditForm
+                      key={(order.updatedAt ?? order.createdAt).toISOString()}
+                      orderId={order.id!}
+                      updatedAt={(
+                        order.updatedAt ?? order.createdAt
+                      ).toISOString()}
+                      logisticsLocked={
+                        documentResponse.success ||
+                        order.paymentStatus === "paid"
+                      }
+                      itemsTotal={
+                        Math.round((order.total - delivery.fee) * 100) / 100
+                      }
+                      initial={{
+                        name: delivery.name,
+                        phone: delivery.phone,
+                        address: delivery.address,
+                        reference: delivery.reference,
+                        fee: delivery.fee,
+                        expectedPaymentMethod: delivery.expectedPaymentMethod,
+                        cashPaysWith: delivery.cashPaysWith,
+                      }}
+                    />
+                  </div>
+                )}
             </div>
           )}
           <table className="table-auto border w-full">

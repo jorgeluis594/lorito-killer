@@ -33,6 +33,7 @@ import {
   ShoppingCart,
   ReceiptText,
   PackageCheck,
+  Bike,
   UtensilsCrossed,
 } from "lucide-react";
 import { FaCashRegister } from "react-icons/fa";
@@ -94,4 +95,5 @@ export const Icons = {
   receipt: ReceiptText,
   stock_adjustments: PackageCheck,
   tables: UtensilsCrossed,
+  delivery: Bike,
 };
