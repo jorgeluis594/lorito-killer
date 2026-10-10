@@ -45,6 +45,7 @@ async function loadDocuments(
         hasDishProduct: document.hasDishProduct,
         documentStatus: document.status,
         orderCreatedAt: document.orderCreatedAt,
+        orderType: document.orderType,
       }),
     })),
     pageCount: Math.ceil(countResponse.data / (query.pageSize ?? 10)),

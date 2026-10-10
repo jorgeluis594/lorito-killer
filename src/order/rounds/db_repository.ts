@@ -12,10 +12,81 @@ import { createKitchenTicketContent } from "@/printing/create-kitchen-ticket-con
 import { createKitchenTickets } from "@/kitchen/use-cases/create-kitchen-tickets";
 import { sendRound } from "./use-cases/send-round";
 import type { OrderRoundView, RoundLineInput, SendRoundResult } from "./types";
+import {
+  canEditFulfillmentProducts,
+  leavesActiveProducts,
+  NO_LAST_PRODUCT_MESSAGE,
+  PRODUCTS_LOCKED_MESSAGE,
+} from "@/delivery/use-cases/can-edit-fulfillment-products";
+import { isFulfillmentOrderType } from "@/order/fulfillment-order-types";
 import type { CancelRoundItemInput } from "./schema";
 import type { OrderItemCancellationResult } from "./use-cases/cancel-round-item";
 
 type Db = Prisma.TransactionClient;
+
+/**
+ * Repone lo consumido al confirmar el pedido, proporcional a la cantidad
+ * retirada y a partir de los movimientos originales (no de la composición
+ * actual del pack). Orden de bloqueo: Order (ya tomado), luego productos por id.
+ */
+async function restoreFulfillmentStock(
+  db: Db,
+  input: {
+    companyId: string;
+    userId: string;
+    orderItemId: string;
+    originalQuantity: Prisma.Decimal;
+    quantity: Prisma.Decimal;
+    cancellationId: string;
+  },
+) {
+  const originals = await db.stockTransfer.findMany({
+    where: {
+      companyId: input.companyId,
+      type: "ORDER",
+      status: "EXECUTED",
+      value: { lt: 0 },
+      data: { path: ["orderItemId"], equals: input.orderItemId },
+    },
+    orderBy: { productId: "asc" },
+  });
+  const restorations = new Map<string, Prisma.Decimal>();
+  for (const transfer of originals) {
+    const restored = transfer.value
+      .negated()
+      .mul(input.quantity)
+      .div(input.originalQuantity);
+    restorations.set(
+      transfer.productId,
+      (restorations.get(transfer.productId) ?? new Prisma.Decimal(0)).add(
+        restored,
+      ),
+    );
+  }
+  for (const productId of [...restorations.keys()].sort()) {
+    const value = restorations.get(productId)!;
+    const updated = await db.product.updateMany({
+      where: { id: productId, companyId: input.companyId },
+      data: { stock: { increment: value } },
+    });
+    if (updated.count !== 1)
+      throw new Error("No se pudo reponer el stock del producto.");
+    await db.stockTransfer.create({
+      data: {
+        userId: input.userId,
+        companyId: input.companyId,
+        productId,
+        value,
+        type: "ORDER",
+        status: "EXECUTED",
+        data: {
+          orderItemId: input.orderItemId,
+          cancellationId: input.cancellationId,
+        },
+      },
+    });
+  }
+}
 
 export async function persistRoundItemCancellation(
   input: CancelRoundItemInput & {
@@ -137,6 +208,40 @@ export async function persistRoundItemCancellation(
             message: "La cantidad supera los platos disponibles.",
           };
 
+        const parentOrder = locked.orderRound.order;
+        const isFulfillment = isFulfillmentOrderType(parentOrder.orderType);
+        if (isFulfillment) {
+          const [delivery, documents, otherItems] = await Promise.all([
+            db.delivery.findUnique({
+              where: { orderId: parentOrder.id },
+              select: { status: true },
+            }),
+            db.document.count({ where: { orderId: parentOrder.id } }),
+            db.orderItem.findMany({
+              where: {
+                orderId: parentOrder.id,
+                id: { not: locked.orderItemId },
+              },
+              select: { quantity: true },
+            }),
+          ]);
+          if (
+            !canEditFulfillmentProducts({
+              orderType: parentOrder.orderType as "TAKE_AWAY" | "DELIVERY",
+              deliveryStatus: delivery?.status,
+              hasDocument: documents > 0,
+            })
+          )
+            return { success: false, message: PRODUCTS_LOCKED_MESSAGE };
+          if (
+            !leavesActiveProducts([
+              locked.orderItem.quantity.sub(quantity).toNumber(),
+              ...otherItems.map((item) => item.quantity.toNumber()),
+            ])
+          )
+            return { success: false, message: NO_LAST_PRODUCT_MESSAGE };
+        }
+
         const newQuantity = locked.orderItem.quantity.sub(quantity);
         const netTotal = locked.orderItem.productPrice.mul(newQuantity);
         let discountAmount = new Prisma.Decimal(0);
@@ -173,6 +278,15 @@ export async function persistRoundItemCancellation(
             userId: input.userId,
           },
         });
+        if (isFulfillment)
+          await restoreFulfillmentStock(db, {
+            companyId: input.companyId,
+            userId: input.userId,
+            orderItemId: locked.orderItemId,
+            originalQuantity: locked.quantity,
+            quantity,
+            cancellationId: cancellation.id,
+          });
         const totals = await db.orderItem.aggregate({
           where: { orderId: locked.orderRound.orderId },
           _sum: { total: true, netTotal: true, discountAmount: true },

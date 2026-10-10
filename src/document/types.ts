@@ -111,6 +111,7 @@ export type SalesReportDocument = Document & {
   paymentStatus: PaymentStatus;
   hasDishProduct: boolean;
   orderCreatedAt: Date;
+  orderType: "RETAIL" | "DINE_IN" | "TAKE_AWAY" | "DELIVERY";
 };
 
 export type Registered<T extends Document> = T & { status: "registered" };

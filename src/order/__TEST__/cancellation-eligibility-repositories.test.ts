@@ -47,6 +47,7 @@ test.for([
       id: "order",
       companyId: "company",
       status: "COMPLETED",
+      orderType: "RETAIL",
       documentType: "ticket",
       paymentStatus,
       createdAt,
@@ -78,6 +79,7 @@ test.for([
         order: {
           status: "COMPLETED",
           paymentStatus,
+          orderType: "RETAIL",
           createdAt,
           payments: [],
           orderItems: items
@@ -104,6 +106,7 @@ test.for([
         ...eligibility,
         orderStatus: order.status,
         orderCreatedAt: order.createdAt,
+        orderType: order.orderType,
         paymentStatus: order.paymentStatus,
         hasDishProduct: order.hasDishProduct!,
       }),

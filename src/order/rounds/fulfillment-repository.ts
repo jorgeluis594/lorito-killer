@@ -12,6 +12,10 @@ import {
 } from "@/product/types";
 import { find as findProduct } from "@/product/db_repository";
 import { generateOrderStocksTransfers } from "@/stock-transfer/use-cases/generate-order-stock-transfer";
+import {
+  canEditFulfillmentProducts,
+  PRODUCTS_LOCKED_MESSAGE,
+} from "@/delivery/use-cases/can-edit-fulfillment-products";
 import { sendRound, type PersistedRoundLine } from "./use-cases/send-round";
 import type { FulfillmentRoundInput } from "./fulfillment-schema";
 import type { SendRoundResult } from "./types";
@@ -106,7 +110,9 @@ async function persistStock(
         transfer.value,
       ),
     );
-  for (const [productId, value] of quantities) {
+  for (const [productId, value] of [...quantities].sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  )) {
     const updated = await db.product.updateMany({
       where: { id: productId, companyId, stock: { gte: value.negated() } },
       data: { stock: { increment: value } },
@@ -168,6 +174,24 @@ export async function submitFulfillmentRound(
             return {
               success: false,
               message: "El pedido ya no admite adicionales.",
+            };
+          const [delivery, documents] = await Promise.all([
+            db.delivery.findUnique({
+              where: { orderId: order.id },
+              select: { status: true },
+            }),
+            db.document.count({ where: { orderId: order.id } }),
+          ]);
+          if (
+            !canEditFulfillmentProducts({
+              orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
+              deliveryStatus: delivery?.status,
+              hasDocument: documents > 0,
+            })
+          )
+            return {
+              success: false,
+              message: PRODUCTS_LOCKED_MESSAGE,
             };
         } else {
           order = await db.order.create({

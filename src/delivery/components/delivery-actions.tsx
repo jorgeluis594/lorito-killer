@@ -4,12 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { useToast } from "@/shared/components/ui/use-toast";
-import {
-  cancelFulfillment,
-  deliverDelivery,
-  deliverTakeAway,
-  dispatchDelivery,
-} from "../actions";
+import { deliverDelivery, deliverTakeAway, dispatchDelivery } from "../actions";
 import FulfillmentPaymentButton from "@/order/components/fulfillment-payment-button";
 import { Badge } from "@/shared/components/ui/badge";
 
@@ -21,6 +16,7 @@ export default function DeliveryActions({
   total,
   cashShiftId,
   delivery,
+  canEditProducts,
 }: {
   orderId: string;
   orderType: "TAKE_AWAY" | "DELIVERY";
@@ -35,6 +31,7 @@ export default function DeliveryActions({
     dispatchedBy: { name: string | null } | null;
     deliveredBy: { name: string | null } | null;
   } | null;
+  canEditProducts: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -81,13 +78,15 @@ export default function DeliveryActions({
       <div className="flex flex-wrap gap-2">
         {paymentStatus === "pending" && (
           <>
-            <Button asChild variant="outline">
-              <a
-                href={`/dashboard/orders/fulfillment?orderId=${orderId}&type=${orderType}`}
-              >
-                Enviar adicionales
-              </a>
-            </Button>
+            {canEditProducts && (
+              <Button asChild variant="outline">
+                <a
+                  href={`/dashboard/orders/fulfillment?orderId=${orderId}&type=${orderType}`}
+                >
+                  Enviar adicionales
+                </a>
+              </Button>
+            )}
             <FulfillmentPaymentButton
               orderId={orderId}
               orderVersion={orderVersion}
@@ -120,17 +119,6 @@ export default function DeliveryActions({
             Registrar entrega
           </Button>
         )}
-        <Button
-          disabled={
-            pending ||
-            paymentStatus !== "pending" ||
-            delivery?.status === "DELIVERED"
-          }
-          variant="destructive"
-          onClick={() => run(cancelFulfillment)}
-        >
-          Cancelar pedido
-        </Button>
       </div>
     </div>
   );

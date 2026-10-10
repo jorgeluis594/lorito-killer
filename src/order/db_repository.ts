@@ -1,4 +1,5 @@
 import type { Order, OrderItem, Status as OrderStatus } from "@/order/types";
+import { FULFILLMENT_ORDER_TYPES } from "@/order/fulfillment-order-types";
 import { response, successResponse } from "@/lib/types";
 import prisma from "@/lib/prisma";
 
@@ -496,13 +497,24 @@ export async function transformOrdersData(
 // For now only updates status
 export async function update(order: Order): Promise<response<Order>> {
   try {
-    await prisma().order.update({
-      where: { id: order.id },
+    const status = STATUS_TO_PRISMA_MAPPER[order.status];
+    const updated = await prisma().order.updateMany({
+      where: {
+        id: order.id,
+        ...(status === "CANCELLED"
+          ? { orderType: { notIn: [...FULFILLMENT_ORDER_TYPES] } }
+          : {}),
+      },
       data: {
-        status: STATUS_TO_PRISMA_MAPPER[order.status],
+        status,
         cancellationReason: order.cancellationReason,
       },
     });
+    if (updated.count !== 1)
+      return {
+        success: false,
+        message: "Los pedidos para llevar y delivery no pueden anularse.",
+      };
 
     return { success: true, data: { ...order } };
   } catch (e: any) {

@@ -7,6 +7,7 @@ const eligible = {
   paymentStatus: "paid" as const,
   hasDishProduct: false,
   orderStatus: "completed" as const,
+  orderType: "RETAIL" as const,
   documentStatus: "registered" as const,
   orderCreatedAt: new Date(now.getTime() - 167 * 60 * 60 * 1000),
   now,
@@ -27,6 +28,11 @@ describe("canCancelOrder", () => {
     ).toBe(true);
   });
 
+  test("keeps allowing retail and dine-in sales", () => {
+    expect(canCancelOrder({ ...eligible, orderType: "RETAIL" })).toBe(true);
+    expect(canCancelOrder({ ...eligible, orderType: "DINE_IN" })).toBe(true);
+  });
+
   test.for([
     { name: "when paid with dishes", values: { hasDishProduct: true } },
     { name: "without permission", values: { hasPermission: false } },
@@ -39,6 +45,8 @@ describe("canCancelOrder", () => {
       name: "when the document is cancelled",
       values: { documentStatus: "cancelled" },
     },
+    { name: "for take away orders", values: { orderType: "TAKE_AWAY" } },
+    { name: "for delivery orders", values: { orderType: "DELIVERY" } },
     {
       name: "at exactly 168 hours",
       values: {

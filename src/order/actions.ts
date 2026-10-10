@@ -236,6 +236,7 @@ export const cancelOrder = protectedAction(
         hasDishProduct: orderResponse.data.hasDishProduct ?? false,
         documentStatus: documentResponse.data.status,
         orderCreatedAt: orderResponse.data.createdAt,
+        orderType: orderResponse.data.orderType,
       })
     ) {
       return { success: false, message: "Esta venta ya no puede anularse" };

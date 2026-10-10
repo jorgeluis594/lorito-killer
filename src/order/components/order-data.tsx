@@ -23,6 +23,7 @@ import ReceiptPrintButton from "@/printing/components/receipt-print-button";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/authorization/helpers";
 import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
+import { canEditFulfillmentProducts } from "@/delivery/use-cases/can-edit-fulfillment-products";
 import DeliveryActions from "@/delivery/components/delivery-actions";
 import { findFulfillmentCashShift } from "@/order/fulfillment-payment-repository";
 import { getDeliveryDetails } from "@/delivery/db_repository";
@@ -58,6 +59,13 @@ export default async function OrderData({ order }: { order: Order }) {
           }) ?? null,
       }
     : null;
+  const canEditProducts =
+    fulfillment &&
+    canEditFulfillmentProducts({
+      orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
+      deliveryStatus: delivery?.status,
+      hasDocument: documentResponse.success,
+    });
   const rounds = fulfillment
     ? await findOrderRounds(order.id!, order.companyId)
     : [];
@@ -120,6 +128,7 @@ export default async function OrderData({ order }: { order: Order }) {
                 hasDishProduct: order.hasDishProduct ?? false,
                 documentStatus: documentResponse.data.status,
                 orderCreatedAt: order.createdAt,
+                orderType: order.orderType,
               }) && (
                 <CancelOrderButton
                   orderId={order.id!}
@@ -141,6 +150,7 @@ export default async function OrderData({ order }: { order: Order }) {
                 total={order.total}
                 cashShiftId={cashShift?.id}
                 delivery={deliveryView}
+                canEditProducts={canEditProducts}
               />
             </div>
           )}
@@ -256,6 +266,7 @@ export default async function OrderData({ order }: { order: Order }) {
                             : ""}
                         </span>
                         {order.paymentStatus === "pending" &&
+                          canEditProducts &&
                           item.currentQuantity > 0 && (
                             <CancelOrderItemDialog
                               channel="fulfillment"

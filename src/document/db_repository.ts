@@ -406,6 +406,7 @@ export const getMany = async ({
         select: {
           status: true,
           paymentStatus: true,
+          orderType: true,
           createdAt: true,
           payments: true,
           orderItems: {
@@ -450,6 +451,7 @@ export const getMany = async ({
         ...document,
         orderStatus: prismaDocument.order.status.toLowerCase() as Status,
         orderCreatedAt: prismaDocument.order.createdAt,
+        orderType: prismaDocument.order.orderType,
         paymentStatus:
           prismaDocument.order.paymentStatus.toLowerCase() as PaymentStatus,
         hasDishProduct: prismaDocument.order.orderItems.length > 0,
