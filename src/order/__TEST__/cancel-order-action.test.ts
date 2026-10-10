@@ -96,6 +96,22 @@ describe("cancelOrder", () => {
     },
   );
 
+  test.for(["TAKE_AWAY", "DELIVERY"] as const)(
+    "rejects %s orders without cancelling",
+    async (orderType) => {
+      mocks.findOrder.mockResolvedValue({
+        success: true,
+        data: { ...order, orderType, paymentStatus: "paid" },
+      });
+
+      await expect(cancelOrder("order-1", "Duplicada")).resolves.toMatchObject({
+        success: false,
+        message: "Esta venta ya no puede anularse",
+      });
+      expect(mocks.cancel).not.toHaveBeenCalled();
+    },
+  );
+
   test("rejects an order from another company", async () => {
     mocks.findOrder.mockResolvedValue({
       success: false,

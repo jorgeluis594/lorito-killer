@@ -7,6 +7,7 @@ import { getMany, rollbackStock, update } from "@/stock-transfer/db_repository";
 import { update as updateOrder } from "@/order/db_repository";
 import { log } from "@/lib/log";
 import { StockTransfer } from "@/stock-transfer/types";
+import { isFulfillmentOrderType } from "@/order/use-cases/can-cancel-order";
 import { createDocument } from "@/document/use_cases/create-document";
 import billingDocumentGateway from "@/document/factpro/gateway";
 import {
@@ -21,6 +22,13 @@ const cancel = async (
   document: Document,
   cancellationReason: string,
 ): Promise<response<Order>> => {
+  if (isFulfillmentOrderType(order.orderType)) {
+    return {
+      success: false,
+      message: "Los pedidos para llevar y delivery no pueden anularse.",
+    };
+  }
+
   const stockTransfersResponse = await getMany({
     companyId: order.companyId,
     orderId: order.id!,

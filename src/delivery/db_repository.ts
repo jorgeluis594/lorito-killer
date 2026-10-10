@@ -78,31 +78,6 @@ export async function transitionDelivery(
   }
 }
 
-export async function cancelFulfillmentOrder(
-  companyId: string,
-  orderId: string,
-) {
-  const updated = await prisma().order.updateMany({
-    where: {
-      id: orderId,
-      companyId,
-      orderType: { in: ["TAKE_AWAY", "DELIVERY"] },
-      status: "PENDING",
-      paymentStatus: "PENDING",
-    },
-    data: { status: "CANCELLED" },
-  });
-  return updated.count === 1
-    ? {
-        success: true as const,
-        data: { orderId, status: "CANCELLED" as const },
-      }
-    : {
-        success: false as const,
-        message: "El pedido pagado o cerrado no puede cancelarse.",
-      };
-}
-
 export async function completeTakeAway(companyId: string, orderId: string) {
   const updated = await prisma().order.updateMany({
     where: {

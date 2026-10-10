@@ -496,13 +496,24 @@ export async function transformOrdersData(
 // For now only updates status
 export async function update(order: Order): Promise<response<Order>> {
   try {
-    await prisma().order.update({
-      where: { id: order.id },
+    const status = STATUS_TO_PRISMA_MAPPER[order.status];
+    const updated = await prisma().order.updateMany({
+      where: {
+        id: order.id,
+        ...(status === "CANCELLED"
+          ? { orderType: { notIn: ["TAKE_AWAY", "DELIVERY"] } }
+          : {}),
+      },
       data: {
-        status: STATUS_TO_PRISMA_MAPPER[order.status],
+        status,
         cancellationReason: order.cancellationReason,
       },
     });
+    if (updated.count !== 1)
+      return {
+        success: false,
+        message: "Los pedidos para llevar y delivery no pueden anularse.",
+      };
 
     return { success: true, data: { ...order } };
   } catch (e: any) {
