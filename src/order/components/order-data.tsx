@@ -150,7 +150,7 @@ export default async function OrderData({ order }: { order: Order }) {
                 total={order.total}
                 cashShiftId={cashShift?.id}
                 delivery={deliveryView}
-                hasDocument={documentResponse.success}
+                canEditProducts={canEditProducts}
               />
             </div>
           )}

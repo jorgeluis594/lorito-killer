@@ -18,7 +18,7 @@ import {
   NO_LAST_PRODUCT_MESSAGE,
   PRODUCTS_LOCKED_MESSAGE,
 } from "@/delivery/use-cases/can-edit-fulfillment-products";
-import { isFulfillmentOrderType } from "@/order/use-cases/can-cancel-order";
+import { isFulfillmentOrderType } from "@/order/fulfillment-order-types";
 import type { CancelRoundItemInput } from "./schema";
 import type { OrderItemCancellationResult } from "./use-cases/cancel-round-item";
 

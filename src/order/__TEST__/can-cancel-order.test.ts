@@ -7,6 +7,7 @@ const eligible = {
   paymentStatus: "paid" as const,
   hasDishProduct: false,
   orderStatus: "completed" as const,
+  orderType: "RETAIL" as const,
   documentStatus: "registered" as const,
   orderCreatedAt: new Date(now.getTime() - 167 * 60 * 60 * 1000),
   now,

@@ -1,4 +1,5 @@
 import type { Order, OrderItem, Status as OrderStatus } from "@/order/types";
+import { FULFILLMENT_ORDER_TYPES } from "@/order/fulfillment-order-types";
 import { response, successResponse } from "@/lib/types";
 import prisma from "@/lib/prisma";
 
@@ -501,7 +502,7 @@ export async function update(order: Order): Promise<response<Order>> {
       where: {
         id: order.id,
         ...(status === "CANCELLED"
-          ? { orderType: { notIn: ["TAKE_AWAY", "DELIVERY"] } }
+          ? { orderType: { notIn: [...FULFILLMENT_ORDER_TYPES] } }
           : {}),
       },
       data: {

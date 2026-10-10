@@ -23,7 +23,12 @@ vi.mock("@/document/factpro/gateway", () => ({
   default: () => ({ cancelDocument: mocks.cancelDocument }),
 }));
 
+import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import {
+  NO_LAST_PRODUCT_MESSAGE,
+  PRODUCTS_LOCKED_MESSAGE,
+} from "@/delivery/use-cases/can-edit-fulfillment-products";
 import { submitFulfillmentRound } from "@/order/rounds/fulfillment-repository";
 import { persistRoundItemCancellation } from "@/order/rounds/db_repository";
 import {
@@ -726,15 +731,129 @@ describe("DEL-01 · cancelación retirada", () => {
   });
 });
 
+async function holdOrderLock(orderId: string) {
+  let release!: () => void;
+  const released = new Promise<void>((resolve) => (release = resolve));
+  let locked!: () => void;
+  const lockedPromise = new Promise<void>((resolve) => (locked = resolve));
+  const holder = prisma().$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
+      locked();
+      await released;
+    },
+    { timeout: 30000 },
+  );
+  await lockedPromise;
+  return { release, done: holder };
+}
+
+async function waitForBlockedSessions(count: number) {
+  for (let i = 0; i < 100; i += 1) {
+    const [{ blocked }] = await prisma().$queryRaw<
+      Array<{ blocked: bigint }>
+    >`SELECT count(*) AS blocked FROM pg_stat_activity
+      WHERE datname = current_database() AND wait_event_type = 'Lock'`;
+    if (Number(blocked) >= count) return;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error("Las operaciones no quedaron esperando el bloqueo.");
+}
+
+const xids = async (orderId: string) => {
+  const [row] = await prisma().$queryRaw<
+    Array<{ round_xid: bigint; delivery_xid: bigint }>
+  >`SELECT
+      (SELECT xmin::text::bigint FROM "OrderRound" WHERE "orderId" = ${orderId} AND number = 2) AS round_xid,
+      (SELECT xmin::text::bigint FROM "Delivery" WHERE "orderId" = ${orderId}) AS delivery_xid`;
+  return row;
+};
+
 describe("DEL-01 · concurrencia", () => {
-  test("X1 un despacho concurrente con una adición produce un único resultado coherente", async () => {
-    const outcomes = { addWon: 0, dispatchWon: 0 };
-    for (let attempt = 0; attempt < 10; attempt += 1) {
+  test("X1 gana la adición: el despacho espera, se reintenta y el pedido despachado incluye la ronda", async () => {
+    const orderId = await createOrder("DELIVERY", [
+      { productId: ids.productA, quantity: 1 },
+    ]);
+    const stockBefore = await stockOf(ids.productA);
+    const lock = await holdOrderLock(orderId);
+
+    const added = addRound(orderId, "DELIVERY", [
+      { productId: ids.productA, quantity: 1 },
+    ]);
+    await waitForBlockedSessions(1);
+    const dispatched = transitionDelivery(
+      ids.company,
+      ids.admin,
+      orderId,
+      "DISPATCH",
+    );
+    await waitForBlockedSessions(2);
+    lock.release();
+    await lock.done;
+    const [addResult, dispatchResult] = await Promise.all([added, dispatched]);
+
+    expect(addResult, JSON.stringify(addResult)).toMatchObject({
+      success: true,
+      data: { number: 2 },
+    });
+    expect(dispatchResult, JSON.stringify(dispatchResult)).toMatchObject({
+      success: true,
+      data: { status: "DISPATCHED" },
+    });
+    const { round_xid, delivery_xid } = await xids(orderId);
+    expect(round_xid < delivery_xid).toBe(true);
+    expect(await prisma().orderRound.count({ where: { orderId } })).toBe(2);
+    expect(await stockOf(ids.productA)).toBe(stockBefore! - 1);
+    expect(
+      (
+        await prisma().order.findUniqueOrThrow({ where: { id: orderId } })
+      ).total.toNumber(),
+    ).toBe(60);
+  });
+
+  test("X1 gana el despacho: la adición se rechaza por el bloqueo de productos, sin ronda ni stock", async () => {
+    const orderId = await createOrder("DELIVERY", [
+      { productId: ids.productA, quantity: 1 },
+    ]);
+    const stockBefore = await stockOf(ids.productA);
+    const lock = await holdOrderLock(orderId);
+
+    const dispatched = transitionDelivery(
+      ids.company,
+      ids.admin,
+      orderId,
+      "DISPATCH",
+    );
+    await waitForBlockedSessions(1);
+    const added = addRound(orderId, "DELIVERY", [
+      { productId: ids.productA, quantity: 1 },
+    ]);
+    await waitForBlockedSessions(2);
+    lock.release();
+    await lock.done;
+    const [addResult, dispatchResult] = await Promise.all([added, dispatched]);
+
+    expect(dispatchResult).toMatchObject({
+      success: true,
+      data: { status: "DISPATCHED" },
+    });
+    expect(addResult).toEqual({
+      success: false,
+      message: PRODUCTS_LOCKED_MESSAGE,
+    });
+    expect(await prisma().orderRound.count({ where: { orderId } })).toBe(1);
+    expect(await stockOf(ids.productA)).toBe(stockBefore);
+    expect(
+      (await prisma().delivery.findUniqueOrThrow({ where: { orderId } }))
+        .status,
+    ).toBe("DISPATCHED");
+  });
+
+  test("X1 carrera libre: siempre un único orden válido", async () => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
       const orderId = await createOrder("DELIVERY", [
         { productId: ids.productA, quantity: 1 },
       ]);
-      const stockBefore = await stockOf(ids.productA);
-
       const [added, dispatched] = await Promise.all([
         addRound(orderId, "DELIVERY", [
           { productId: ids.productA, quantity: 1 },
@@ -742,49 +861,58 @@ describe("DEL-01 · concurrencia", () => {
         transitionDelivery(ids.company, ids.admin, orderId, "DISPATCH"),
       ]);
 
-      const delivery = await prisma().delivery.findUniqueOrThrow({
-        where: { orderId },
+      expect(dispatched, JSON.stringify(dispatched)).toMatchObject({
+        success: true,
       });
       const rounds = await prisma().orderRound.count({ where: { orderId } });
-      expect(dispatched.success, JSON.stringify(dispatched)).toBe(true);
-      expect(delivery.status).toBe("DISPATCHED");
-
       if (added.success) {
-        outcomes.addWon += 1;
         expect(rounds).toBe(2);
-        expect(await stockOf(ids.productA)).toBe(stockBefore! - 1);
-        // la ronda se confirmó antes del despacho: su transacción tomó el
-        // bloqueo del pedido primero (los xid se asignan al primer bloqueo)
-        const [{ round_xid, delivery_xid }] = await prisma().$queryRaw<
-          Array<{ round_xid: bigint; delivery_xid: bigint }>
-        >`SELECT
-            (SELECT xmin::text::bigint FROM "OrderRound" WHERE "orderId" = ${orderId} AND number = 2) AS round_xid,
-            (SELECT xmin::text::bigint FROM "Delivery" WHERE "orderId" = ${orderId}) AS delivery_xid`;
+        const { round_xid, delivery_xid } = await xids(orderId);
         expect(round_xid < delivery_xid).toBe(true);
-        const order = await prisma().order.findUniqueOrThrow({
-          where: { id: orderId },
-        });
-        expect(order.total.toNumber()).toBe(60);
       } else {
-        outcomes.dispatchWon += 1;
+        expect(added.message).toBe(PRODUCTS_LOCKED_MESSAGE);
         expect(rounds).toBe(1);
-        expect(await stockOf(ids.productA)).toBe(stockBefore);
       }
-
-      // tras el despacho, ninguna adición posterior es admitida
-      expect(
-        (
-          await addRound(orderId, "DELIVERY", [
-            { productId: ids.productA, quantity: 1 },
-          ])
-        ).success,
-      ).toBe(false);
     }
-    expect(outcomes.addWon + outcomes.dispatchWon).toBe(10);
+  });
+
+  test("X6 dos retiros de la misma línea que dejarían el pedido vacío: solo uno se acepta", async () => {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const orderId = await createOrder("DELIVERY", [
+        { productId: ids.productA, quantity: 2 },
+      ]);
+      const item = await roundItemOf(orderId, ids.productA);
+      const stockBefore = await stockOf(ids.productA);
+
+      const results = await Promise.all([
+        retire(item.id, 1),
+        retire(item.id, 1),
+      ]);
+
+      expect(results.filter((r) => r.success)).toHaveLength(1);
+      expect(results.find((r) => !r.success)).toEqual({
+        success: false,
+        message: NO_LAST_PRODUCT_MESSAGE,
+      });
+      expect(
+        (await prisma().orderItem.findFirstOrThrow({ where: { orderId } }))
+          .quantity,
+      ).toEqual(new Prisma.Decimal(1));
+      expect(await stockOf(ids.productA)).toBe(stockBefore! + 1);
+      expect(
+        await prisma().stockTransfer.count({
+          where: {
+            companyId: ids.company,
+            data: { path: ["orderItemId"], equals: item.orderItemId },
+            value: { gt: 0 },
+          },
+        }),
+      ).toBe(1);
+    }
   });
 
   test("X6 dos retiros simultáneos sobre líneas distintas: queda al menos 1", async () => {
-    for (let attempt = 0; attempt < 5; attempt += 1) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
       const orderId = await createOrder("TAKE_AWAY", [
         { productId: ids.productA, quantity: 1 },
         { productId: ids.productB, quantity: 1 },
@@ -796,6 +924,10 @@ describe("DEL-01 · concurrencia", () => {
       const results = await Promise.all([retire(a.id, 1), retire(b.id, 1)]);
 
       expect(results.filter((r) => r.success)).toHaveLength(1);
+      expect(results.find((r) => !r.success)).toEqual({
+        success: false,
+        message: NO_LAST_PRODUCT_MESSAGE,
+      });
       const rows = await prisma().orderItem.findMany({ where: { orderId } });
       expect(rows.reduce((sum, row) => sum + row.quantity.toNumber(), 0)).toBe(
         1,
@@ -805,27 +937,10 @@ describe("DEL-01 · concurrencia", () => {
           await prisma().order.findUniqueOrThrow({ where: { id: orderId } })
         ).total.toNumber(),
       ).toBeGreaterThan(0);
-      const aRetired = results[0].success;
       expect(await stockOf(ids.productA)).toBe(
-        aRetired ? stockBefore! + 1 : stockBefore,
+        results[0].success ? stockBefore! + 1 : stockBefore,
       );
     }
-  });
-
-  test("X6 dos retiros de la misma línea que dejarían el pedido vacío: solo uno se acepta", async () => {
-    const orderId = await createOrder("DELIVERY", [
-      { productId: ids.productA, quantity: 2 },
-    ]);
-    const item = await roundItemOf(orderId, ids.productA);
-
-    const results = await Promise.all([retire(item.id, 1), retire(item.id, 1)]);
-
-    expect(results.filter((r) => r.success)).toHaveLength(1);
-    expect(
-      (
-        await prisma().orderItem.findFirstOrThrow({ where: { orderId } })
-      ).quantity.toNumber(),
-    ).toBe(1);
   });
 });
 

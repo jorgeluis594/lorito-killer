@@ -110,7 +110,9 @@ async function persistStock(
         transfer.value,
       ),
     );
-  for (const [productId, value] of quantities) {
+  for (const [productId, value] of [...quantities].sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  )) {
     const updated = await db.product.updateMany({
       where: { id: productId, companyId, stock: { gte: value.negated() } },
       data: { stock: { increment: value } },

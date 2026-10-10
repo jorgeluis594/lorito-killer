@@ -1,14 +1,9 @@
 import type { DocumentStatus } from "@/document/types";
-import type { PaymentStatus, Status } from "@/order/types";
+import type { Order, PaymentStatus, Status } from "@/order/types";
+import { isFulfillmentOrderType } from "@/order/fulfillment-order-types";
 
 const CANCELLATION_WINDOW_MS = 168 * 60 * 60 * 1000;
 
-export const NON_CANCELLABLE_ORDER_TYPES = ["TAKE_AWAY", "DELIVERY"] as const;
-
-export const isFulfillmentOrderType = (
-  orderType: string | null | undefined,
-): orderType is (typeof NON_CANCELLABLE_ORDER_TYPES)[number] =>
-  orderType === "TAKE_AWAY" || orderType === "DELIVERY";
 
 export function canCancelOrder({
   hasPermission,
@@ -26,7 +21,7 @@ export function canCancelOrder({
   hasDishProduct: boolean;
   documentStatus: DocumentStatus;
   orderCreatedAt: Date;
-  orderType?: string | null;
+  orderType: Order["orderType"];
   now?: Date;
 }): boolean {
   return (

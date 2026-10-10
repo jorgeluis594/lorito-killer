@@ -7,7 +7,6 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { deliverDelivery, deliverTakeAway, dispatchDelivery } from "../actions";
 import FulfillmentPaymentButton from "@/order/components/fulfillment-payment-button";
 import { Badge } from "@/shared/components/ui/badge";
-import { canEditFulfillmentProducts } from "../use-cases/can-edit-fulfillment-products";
 
 export default function DeliveryActions({
   orderId,
@@ -17,7 +16,7 @@ export default function DeliveryActions({
   total,
   cashShiftId,
   delivery,
-  hasDocument,
+  canEditProducts,
 }: {
   orderId: string;
   orderType: "TAKE_AWAY" | "DELIVERY";
@@ -32,7 +31,7 @@ export default function DeliveryActions({
     dispatchedBy: { name: string | null } | null;
     deliveredBy: { name: string | null } | null;
   } | null;
-  hasDocument: boolean;
+  canEditProducts: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -50,12 +49,6 @@ export default function DeliveryActions({
       });
       if (result.success) router.refresh();
     });
-
-  const canEditProducts = canEditFulfillmentProducts({
-    orderType,
-    deliveryStatus: delivery?.status,
-    hasDocument,
-  });
 
   return (
     <div className="space-y-3">

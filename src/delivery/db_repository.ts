@@ -8,6 +8,7 @@ export async function transitionDelivery(
   userId: string,
   orderId: string,
   action: "DISPATCH" | "DELIVER",
+  attempt = 0,
 ): Promise<
   response<{
     orderId: string;
@@ -68,12 +69,26 @@ export async function transitionDelivery(
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
   } catch (error) {
+    const code = (error as { code?: string }).code;
+    const transient =
+      code === "P2034" ||
+      (code === "P2010" &&
+        (error as { meta?: { code?: string } }).meta?.code === "40001");
+    // Un conflicto de serialización con una edición concurrente se reintenta
+    // de forma acotada: la nueva transacción relee el pedido ya editado.
+    if (transient && attempt < 2)
+      return transitionDelivery(
+        companyId,
+        userId,
+        orderId,
+        action,
+        attempt + 1,
+      );
     return {
       success: false,
-      message:
-        (error as { code?: string }).code === "P2034"
-          ? "El pedido cambió. Consulta su estado antes de reintentar."
-          : "No se pudo actualizar el pedido.",
+      message: transient
+        ? "El pedido cambió. Consulta su estado antes de reintentar."
+        : "No se pudo actualizar el pedido.",
     };
   }
 }
