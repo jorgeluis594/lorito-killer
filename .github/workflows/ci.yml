@@ -59,4 +59,4 @@ jobs:
         run: npx prisma migrate deploy && npx prisma generate
 
       - name: Run tests
-        run: npm test
+        run: npm test -- --no-file-parallelism
