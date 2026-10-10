@@ -6,6 +6,7 @@ import {
   type PrismaClient,
 } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { salesOrderStatusFilter } from "@/order/use-cases/sales-order-status-filter";
 import type { response } from "@/lib/types";
 import { isFeatureEnabled } from "@/feature-flags";
 import {
@@ -49,6 +50,7 @@ const STATUS_LABELS: Record<RecentSaleRow["status"], string> = {
   completed: "Completada",
   cancelled: "Anulada",
   pending: "Pendiente",
+  awaiting_delivery: "Cobrado · por entregar",
 };
 
 const numberFromDecimal = (
@@ -74,12 +76,17 @@ const buildOrderWhere = (
   ...(query.sellerId ? { sellerId: query.sellerId } : {}),
 });
 
+// Ventas cobradas ubicadas por la fecha del cobro (ver saleDateFilter).
 const buildCompletedOrderWhere = (
   query: DashboardQuery,
 ): Prisma.OrderWhereInput => ({
-  ...buildOrderWhere(query),
-  paymentStatus: "PAID",
-  status: { not: "CANCELLED" },
+  companyId: query.companyId,
+  ...salesOrderStatusFilter("paid", {
+    gte: query.startDate,
+    lte: query.endDate,
+  }),
+  ...(query.cashShiftId ? { cashShiftId: query.cashShiftId } : {}),
+  ...(query.sellerId ? { sellerId: query.sellerId } : {}),
 });
 
 const buildSalesReportHref = (
@@ -151,13 +158,16 @@ const fillSalesTrendBuckets = (
   return points;
 };
 
+// Fecha de la venta: primer pago o, sin pagos (histórico), creación del pedido.
+const SALE_DATE_SQL = Prisma.sql`COALESCE((SELECT MIN(p."createdAt") FROM "Payment" p WHERE p."orderId" = o."id"), o."createdAt")`;
+
 const buildOrderSqlFilters = (query: DashboardQuery) => {
   const filters = [
     Prisma.sql`o."companyId" = ${query.companyId}`,
-    Prisma.sql`o."paymentStatus"::text = 'PAID'`,
     Prisma.sql`o."status"::text <> 'CANCELLED'`,
-    Prisma.sql`o."createdAt" >= ${query.startDate}`,
-    Prisma.sql`o."createdAt" <= ${query.endDate}`,
+    Prisma.sql`(o."paymentStatus"::text = 'PAID' OR o."status"::text = 'COMPLETED')`,
+    Prisma.sql`${SALE_DATE_SQL} >= ${query.startDate}`,
+    Prisma.sql`${SALE_DATE_SQL} <= ${query.endDate}`,
   ];
 
   if (query.cashShiftId) {
@@ -280,12 +290,7 @@ async function findCashSummary(
       where: {
         cashShiftId: { in: cashShiftIds },
         method: "CASH",
-        order: {
-          companyId: query.companyId,
-          paymentStatus: "PAID",
-          status: { not: "CANCELLED" },
-          createdAt: { gte: query.startDate, lte: query.endDate },
-        },
+        order: buildCompletedOrderWhere(query),
       },
       _sum: { amount: true },
     }),
@@ -378,7 +383,7 @@ export async function findSalesTrend(
   try {
     const rows = await prisma().$queryRaw<SalesTrendRawRow[]>(Prisma.sql`
       SELECT
-        date_trunc(${query.bucket}, o."createdAt") AS "periodStart",
+        date_trunc(${query.bucket}, ${SALE_DATE_SQL}) AS "periodStart",
         COALESCE(SUM(o."total"), 0)::float AS "total",
         COUNT(o."id")::int AS "count"
       FROM "Order" o
@@ -495,6 +500,8 @@ export async function findRecentSales(
         createdAt: true,
         total: true,
         status: true,
+        paymentStatus: true,
+        orderType: true,
         seller: { select: { name: true, email: true } },
         payments: { select: { method: true } },
         documents: {
@@ -511,8 +518,15 @@ export async function findRecentSales(
       success: true,
       data: orders.map((order) => {
         const document = order.documents[0];
-        const status =
-          order.status === "COMPLETED"
+        // Un pedido para llevar/Delivery cobrado y aún no entregado ya está en
+        // los totales; se rotula por el cobro para no confundirlo con pendiente.
+        const awaitingDelivery =
+          order.status === "PENDING" &&
+          order.paymentStatus === "PAID" &&
+          (order.orderType === "DELIVERY" || order.orderType === "TAKE_AWAY");
+        const status: RecentSaleRow["status"] = awaitingDelivery
+          ? "awaiting_delivery"
+          : order.status === "COMPLETED"
             ? "completed"
             : order.status === "CANCELLED"
               ? "cancelled"

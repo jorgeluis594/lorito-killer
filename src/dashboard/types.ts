@@ -62,7 +62,11 @@ export type DashboardKpis = {
   cash: DashboardCashSummary;
 };
 
-export type OperationalAlertSeverity = "critical" | "warning" | "neutral" | "success";
+export type OperationalAlertSeverity =
+  | "critical"
+  | "warning"
+  | "neutral"
+  | "success";
 
 export type OperationalAlert = {
   id: string;
@@ -108,7 +112,7 @@ export type RecentSaleRow = {
   documentLabel: string;
   sellerName: string;
   paymentMethods: string;
-  status: "completed" | "cancelled" | "pending";
+  status: "completed" | "cancelled" | "pending" | "awaiting_delivery";
   href: string;
 };
 

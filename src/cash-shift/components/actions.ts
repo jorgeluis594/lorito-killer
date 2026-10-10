@@ -4,6 +4,9 @@ import {OpenCashShift, ClosedCashShift, Expense, GrossProfit} from "@/cash-shift
 import cashShiftCreator from "@/cash-shift/use-cases/cash-shift-creator";
 import * as repository from "@/cash-shift/db_repository";
 import { response } from "@/lib/types";
+import { protectedAction } from "@/authorization/server";
+import { requireFeature } from "@/feature-flags/server";
+import { listUnpaidFulfillmentOrders } from "@/delivery/db_repository";
 
 export const createCashShift = async (
   userId: string,
@@ -87,3 +90,13 @@ export const findOrderItems = async (
 
   return { success: true, data: grossProfit}
 };
+
+// Aviso previo al cierre: la empresa sale de la sesión, nunca del cliente.
+export const getUnpaidFulfillmentOrders = protectedAction(
+  { resource: "cash_shifts", action: "update" },
+  async (user) => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return { success: true as const, data: [] };
+    return listUnpaidFulfillmentOrders(user.companyId);
+  },
+);

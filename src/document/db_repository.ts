@@ -21,6 +21,7 @@ import { log } from "@/lib/log";
 import { Customer } from "@/customer/types";
 import type { PaymentStatus, Status } from "@/order/types";
 import { findCustomer } from "@/customer/db_repository";
+import { salesOrderStatusFilter } from "@/order/use-cases/sales-order-status-filter";
 import { isInvoice, isReceipt } from "@/document/utils";
 
 export const DocumentTypeToPrismaMapper: Record<
@@ -285,17 +286,7 @@ const buildDocumentQuery = ({
     orderFilter.sellerId = null;
   }
 
-  if (orderStatus === "paid") {
-    orderFilter.status = "COMPLETED";
-  }
-
-  if (orderStatus === "cancelled") {
-    orderFilter.status = "CANCELLED";
-  }
-
-  if (orderStatus === "all") {
-    orderFilter.status = { in: ["COMPLETED", "CANCELLED"] };
-  }
+  Object.assign(orderFilter, salesOrderStatusFilter(orderStatus));
 
   return {
     companyId,
