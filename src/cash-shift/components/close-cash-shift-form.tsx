@@ -58,17 +58,34 @@ export default function CloseCashShiftForm({
     [],
   );
 
+  const [checkingUnpaid, setCheckingUnpaid] = useState(false);
+
   // El aviso no bloquea el cierre: si la consulta falla, se cierra igual.
   useEffect(() => {
     if (!open) return;
     let ignore = false;
-    getUnpaidFulfillmentOrders().then((result) => {
-      if (!ignore) setUnpaidOrders(result.success ? result.data : []);
-    });
+    getUnpaidFulfillmentOrders()
+      .then((result) => {
+        if (!ignore) setUnpaidOrders(result.success ? result.data : []);
+      })
+      .catch(() => {
+        if (!ignore) setUnpaidOrders([]);
+      })
+      .finally(() => {
+        if (!ignore) setCheckingUnpaid(false);
+      });
     return () => {
       ignore = true;
     };
   }, [open]);
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      setUnpaidOrders([]);
+      setCheckingUnpaid(true);
+    }
+    setOpen(next);
+  };
 
   const form = useForm<CashShiftFormValues>({
     resolver: zodResolver(CashShiftFormSchema),
@@ -121,7 +138,7 @@ export default function CloseCashShiftForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <CircleDollarSign aria-hidden="true" data-icon="inline-start" />
@@ -154,6 +171,11 @@ export default function CloseCashShiftForm({
                 )}
               />
             </div>
+            {checkingUnpaid && (
+              <p role="status" className="mb-4 text-sm text-muted-foreground">
+                Revisando pedidos sin cobrar…
+              </p>
+            )}
             {unpaidOrders.length > 0 && (
               <section
                 role="status"
