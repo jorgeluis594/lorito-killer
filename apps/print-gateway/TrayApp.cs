@@ -1,6 +1,5 @@
 #if WINDOWS
 using System.Windows.Forms;
-using System.IO.Pipes;
 using System.Text.Json;
 
 namespace Lorito.PrintGateway;
@@ -64,12 +63,7 @@ internal static class TrayApp
             catch { status.Text = "Servicio no disponible"; }
         }
 
-        private static async Task<string> SendAsync(object request)
-        {
-            using var pipe = new NamedPipeClientStream(".", PipeProtocol.Name, PipeDirection.InOut, PipeOptions.Asynchronous);
-            await pipe.ConnectAsync(3000);
-            return await PipeClientExchange.SendAsync(pipe, PipeFactory.ServiceSid, request, CancellationToken.None);
-        }
+        private static Task<string> SendAsync(object request) => ServiceClient.SendAsync(request);
     }
 }
 #endif

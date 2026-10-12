@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -23,12 +24,13 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
             return;
         }
         fileLogger.Cleanup(DateTimeOffset.UtcNow);
-        logger.LogInformation("operation=startup status=started");
+        logger.LogInformation("operation=startup status=started backend={BackendUrl} supabase={SupabaseUrl}", configuration.BackendUrl, configuration.SupabaseUrl);
         _ = CleanupJournal(stoppingToken);
         StartReconciliation(stoppingToken);
         var binding = bindingStore.Read();
         if (binding is not null)
         {
+            logger.LogInformation("operation=binding client={ClientId} company={CompanyName} backend={BackendUrl}", binding.ClientId, binding.CompanyName, binding.BackendUrl);
             await PublishInventory(binding, stoppingToken);
             _ = Listen(binding, stoppingToken);
         }
@@ -152,11 +154,13 @@ public sealed class GatewayConfiguration
     public string DataPath { get; }
     public GatewayConfiguration(string? backendUrl = null, string? supabaseUrl = null, string? supabasePublishableKey = null)
     {
-        BackendUrl = backendUrl ?? Environment.GetEnvironmentVariable("PRINT_BACKEND_URL") ?? "";
-        SupabaseUrl = supabaseUrl ?? Environment.GetEnvironmentVariable("SUPABASE_URL") ?? "";
-        SupabasePublishableKey = supabasePublishableKey ?? Environment.GetEnvironmentVariable("SUPABASE_PUBLISHABLE_KEY") ?? "";
+        BackendUrl = backendUrl ?? Environment.GetEnvironmentVariable("PRINT_BACKEND_URL") ?? Embedded("EmbeddedBackendUrl");
+        SupabaseUrl = supabaseUrl ?? Environment.GetEnvironmentVariable("SUPABASE_URL") ?? Embedded("EmbeddedSupabaseUrl");
+        SupabasePublishableKey = supabasePublishableKey ?? Environment.GetEnvironmentVariable("SUPABASE_PUBLISHABLE_KEY") ?? Embedded("EmbeddedSupabaseKey");
         DataPath = Environment.GetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway");
     }
+    private static string Embedded(string key) => Assembly.GetExecutingAssembly()
+        .GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == key)?.Value ?? "";
     public bool IsValid(out string error)
     {
         if (!Uri.TryCreate(BackendUrl, UriKind.Absolute, out var backend) || backend.Scheme != Uri.UriSchemeHttps) return Fail("PRINT_BACKEND_URL must be HTTPS", out error);
