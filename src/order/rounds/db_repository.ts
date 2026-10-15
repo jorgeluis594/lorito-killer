@@ -503,7 +503,7 @@ export async function submitOrderRound(
                   });
                   if (!kitchen.printer || kitchen.printer.status !== "ACTIVE")
                     return null;
-                  const content = createKitchenTicketContent(
+                  const content = await createKitchenTicketContent(
                     {
                       ticketId: ticket.id,
                       createdAt: round.createdAt,

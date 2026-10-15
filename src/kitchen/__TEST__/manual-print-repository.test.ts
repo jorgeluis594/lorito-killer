@@ -100,7 +100,7 @@ beforeEach(() => {
 
 describe("createManualKitchenTicketPrintJob", () => {
   test("persists one first-print snapshot with only current quantities", async () => {
-    const generate = vi.fn().mockReturnValue(Uint8Array.from([1, 2, 3]));
+    const generate = vi.fn().mockResolvedValue(Uint8Array.from([1, 2, 3]));
     const result = await createManualKitchenTicketPrintJob(input, generate);
 
     expect(result.success).toBe(true);
