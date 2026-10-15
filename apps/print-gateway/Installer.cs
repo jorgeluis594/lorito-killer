@@ -30,13 +30,15 @@ internal static class Installer
     {
         if (!EnsureAdministrator(args)) return;
         if (MessageBox.Show("¿Desinstalar Lorito Print Gateway? Se conservará el vínculo con la empresa.", "Lorito Print Gateway", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-        foreach (var process in Process.GetProcessesByName("Lorito.PrintGateway").Where(p => p.Id != Environment.ProcessId)) { try { process.Kill(); } catch { } }
-        StopAndDeleteService();
+        // Killing the service host first looks like a crash to SCM, which restarts it per the failure actions set on install.
+        try { StopAndDeleteService(); }
+        catch (Exception error) { MessageBox.Show($"No se pudo desinstalar el servicio: {error.Message}", "Lorito Print Gateway", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
+        foreach (var process in Process.GetProcessesByName("Lorito.PrintGateway").Where(p => p.Id != Environment.ProcessId)) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
         try { File.Delete(ShortcutPath); } catch { }
         try { Registry.LocalMachine.DeleteSubKeyTree(UninstallKey, false); } catch { }
-        // The running exe can't delete itself; a detached shell removes the folder once we exit.
-        Process.Start(new ProcessStartInfo("cmd.exe", $"/c ping 127.0.0.1 -n 3 >nul & rmdir /s /q \"{InstallDir}\"") { CreateNoWindow = true, UseShellExecute = false });
         MessageBox.Show("Lorito Print Gateway se desinstaló.", "Lorito Print Gateway");
+        // The running exe can't delete itself; a detached shell removes the folder once we exit. Retry: the exe stays locked for a moment after we go.
+        Process.Start(new ProcessStartInfo("cmd.exe", $"/c for /l %i in (1,1,10) do (ping 127.0.0.1 -n 3 >nul & rmdir /s /q \"{InstallDir}\" 2>nul & if not exist \"{InstallDir}\" exit)") { CreateNoWindow = true, UseShellExecute = false });
     }
 
     private static bool EnsureAdministrator(string[] args)
@@ -67,8 +69,10 @@ internal static class Installer
         var info = new ProcessStartInfo(file) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var argument in arguments) info.ArgumentList.Add(argument);
         using var process = Process.Start(info)!;
-        var output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+        var stdout = process.StandardOutput.ReadToEndAsync();
+        var stderr = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
+        var output = stdout.Result + stderr.Result;
         if (process.ExitCode != 0) throw new InvalidOperationException($"{file} {arguments[0]} falló: {output.Trim()}");
     }
 

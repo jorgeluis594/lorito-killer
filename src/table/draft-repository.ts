@@ -74,7 +74,12 @@ export async function updateTableDraft(input: {
           },
           include: {
             order: {
-              include: { orderItems: true, payments: true, documents: true },
+              include: {
+                // Cancelled round items stay as quantity 0 rows; the UI hides them, so the guards below must too.
+                orderItems: { where: { quantity: { gt: 0 } } },
+                payments: true,
+                documents: true,
+              },
             },
           },
         });
@@ -82,6 +87,8 @@ export async function updateTableDraft(input: {
           return { success: false, message: changed };
         }
         const order = session.order;
+        const closing =
+          input.operation === "leave" || input.operation === "release";
         if (
           session.status !== "OPEN" ||
           !order ||
@@ -168,7 +175,7 @@ export async function updateTableDraft(input: {
           data: {
             draftRevision: { increment: 1 },
             draft: input.operation === "save" ? draft : [],
-            ...(input.operation !== "save"
+            ...(closing
               ? {
                   current: null,
                   status: "CANCELLED",
@@ -179,7 +186,7 @@ export async function updateTableDraft(input: {
           },
         });
         if (updated.count !== 1) return { success: false, message: changed };
-        if (input.operation !== "save") {
+        if (closing) {
           await tx.order.update({
             where: { id: order.id },
             data: { status: "CANCELLED" },

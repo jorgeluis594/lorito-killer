@@ -36,7 +36,7 @@ internal static class TrayApp
                 login.Visible = company is null;
                 logout.Visible = company is not null;
             }
-            catch { status.Text = "Servicio no disponible"; login.Visible = logout.Visible = false; }
+            catch { status.Text = "Servicio no disponible"; login.Visible = true; logout.Visible = false; }
         };
         icon.ContextMenuStrip = menu;
         // NotifyIcon only opens its menu on right click; reuse the private method so left click works too.

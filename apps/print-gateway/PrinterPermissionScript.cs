@@ -16,8 +16,9 @@ internal static class PrinterPermissionScript
                 try {
                   # PermissionSDDL is only populated with -Full; it starts with owner/group (O:/G:), so the ACE goes after the DACL flags.
                   $sddl = (Get-Printer -Name $name -Full).PermissionSDDL
+                  if (-not $sddl) { throw 'sin descriptor de seguridad' }
                   if ($sddl -notmatch [regex]::Escape($sid)) {
-                    Set-Printer -Name $name -PermissionSDDL ($sddl -replace '(D:[^(]*)', "`$1(A;;LCSWSDRCWDWO;;;$sid)")
+                    Set-Printer -Name $name -PermissionSDDL ($sddl -replace '(D:[PAIR]*)', "`$1(A;;LCSWSDRCWDWO;;;$sid)")
                   }
                 } catch { throw "Impresora '$name': $($_.Exception.Message)" }
               }

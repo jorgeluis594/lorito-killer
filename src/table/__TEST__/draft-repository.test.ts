@@ -101,6 +101,16 @@ test("release rejects a table with products", async () => {
   expect(db.updateSession).not.toHaveBeenCalled();
 });
 
+test("release ignores round items cancelled to quantity 0", async () => {
+  db.session.mockResolvedValue({ ...session(), draft: [] });
+  expect(
+    (await updateTableDraft({ ...input, operation: "release" })).success,
+  ).toBe(true);
+  expect(db.session.mock.calls[0][0].include.order.include.orderItems).toEqual({
+    where: { quantity: { gt: 0 } },
+  });
+});
+
 test("draft validation rejects malformed quantities and long notes", () => {
   const base = {
     sessionId: "11111111-1111-4111-8111-111111111111",
