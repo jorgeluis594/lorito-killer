@@ -113,10 +113,11 @@ export async function updateTableDraft(input: {
             },
           };
         }
-        // Leaving an established or non-empty session never releases the table.
+        // Leaving an established or non-empty session never releases the table; a delivery or take-away is only cancelled by an explicit release.
         if (
           input.operation === "leave" &&
-          (stored.length ||
+          (session.tableId === null ||
+            stored.length ||
             order.orderItems.length ||
             session.waiterId !== input.userId)
         ) {

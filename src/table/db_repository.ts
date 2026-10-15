@@ -690,6 +690,7 @@ export async function updateSessionStatus(
   companyId: string,
   status: "OPEN" | "BILL_REQUESTED" | "CLOSED" | "CANCELLED",
   cancellationReason?: string,
+  takeAwayOnly = false,
 ): Promise<response<TableSession>> {
   try {
     const existing = await prisma().tableSession.findFirst({
@@ -703,11 +704,13 @@ export async function updateSessionStatus(
         companyId,
         current: true,
         status: existing.status,
+        ...(takeAwayOnly ? { tableId: null } : {}),
         ...(status === "CLOSED"
           ? {
               order: {
                 status: "PENDING",
                 paymentStatus: "PAID",
+                ...(takeAwayOnly ? { delivery: { is: null } } : {}),
               },
             }
           : {
@@ -936,10 +939,15 @@ export async function findServiceSessions(
 
 /** Último envío usado en un delivery, para precargar el siguiente. */
 export async function findLastDeliveryFee(companyId: string) {
-  const last = await prisma().delivery.findFirst({
-    where: { order: { companyId } },
-    orderBy: { createdAt: "desc" },
-    select: { fee: true },
-  });
-  return last ? last.fee.toNumber() : null;
+  try {
+    const last = await prisma().delivery.findFirst({
+      where: { order: { companyId } },
+      orderBy: { createdAt: "desc" },
+      select: { fee: true },
+    });
+    return last ? last.fee.toNumber() : null;
+  } catch (e) {
+    console.error("findLastDeliveryFee error:", e);
+    return null;
+  }
 }

@@ -441,7 +441,11 @@ export async function payTable(
         for (const payment of payments) {
           const data = {
             confirmedById: user.id,
-            source: "table",
+            source: session.tableId
+              ? "table"
+              : order.delivery
+                ? "delivery"
+                : "takeaway",
             ...(payment.method === "cash"
               ? {
                   received_amount: payment.received_amount,

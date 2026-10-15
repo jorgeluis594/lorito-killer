@@ -555,7 +555,7 @@ export async function submitOrderRound(
                 orderId: order.id,
                 roundId: round.id,
                 number,
-                tableId: session.tableId ?? "",
+                tableId: session.tableId,
                 printJobIds,
               };
             },

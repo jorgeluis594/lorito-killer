@@ -24,6 +24,6 @@ export type SendRoundResult = {
   orderId: string;
   roundId: string;
   number: number;
-  tableId: string;
+  tableId: string | null;
   printJobIds: string[];
 };

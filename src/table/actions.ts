@@ -424,10 +424,13 @@ export const closeServiceSessionAction = protectedAction(
     if (!feature.success) return feature;
     if (!z.string().uuid().safeParse(sessionId).success)
       return { success: false, message: "El pedido no es válido." };
+    // Tables close through closeTable and deliveries through deliverDelivery.
     const result = await updateSessionStatus(
       sessionId,
       user.companyId,
       "CLOSED",
+      undefined,
+      true,
     );
     if (result.success) {
       revalidatePath("/[subdomain]/dashboard/tables", "layout");

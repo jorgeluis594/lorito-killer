@@ -87,6 +87,7 @@ function session() {
   return {
     id: input.sessionId,
     companyId: user.companyId,
+    tableId: "table",
     current: true,
     status: "OPEN",
     draft: [],
