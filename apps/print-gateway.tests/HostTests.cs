@@ -43,6 +43,28 @@ public sealed class HostTests
     }
 
     [Fact]
+    public async Task Pipe_unlink_deletes_binding_and_notifies_worker()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        File.WriteAllText(Path.Combine(root, "binding.dat"), "x");
+        var request = PipeProtocol.Frame("{\"version\":1,\"operation\":\"UNLINK\"}");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var stream = new MemoryStream();
+        await stream.WriteAsync(request, cancellationToken);
+        stream.Position = 0;
+        var unlinked = false;
+
+        await PipeProtocol.HandleAsync(stream, new BindingStore(root), new BackendClient(new HttpClient(), new GatewayConfiguration()), _ => Task.CompletedTask, cancellationToken, () => { unlinked = true; return Task.CompletedTask; });
+
+        stream.Position = request.Length;
+        using var json = System.Text.Json.JsonDocument.Parse(await PipeProtocol.ReadAsync(stream, cancellationToken));
+        Assert.True(json.RootElement.GetProperty("success").GetBoolean());
+        Assert.False(File.Exists(Path.Combine(root, "binding.dat")));
+        Assert.True(unlinked);
+    }
+
+    [Fact]
     [SupportedOSPlatform("windows")]
     public async Task Pipe_exchange_rejects_a_decoy_without_sending_payload()
     {

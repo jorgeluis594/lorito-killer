@@ -14,6 +14,7 @@ namespace Lorito.PrintGateway;
 public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, JournalStore journal, IPrinterEnumerator printers, DailyFileLoggerProvider fileLogger, ILogger<Worker> logger) : BackgroundService
 {
     private int reconciliationStarted;
+    private CancellationTokenSource? listening;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -51,7 +52,12 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
                     _ = Listen(binding, stoppingToken);
                     StartReconciliation(stoppingToken);
                     return Task.CompletedTask;
-                }, stoppingToken);
+                }, stoppingToken, () =>
+                {
+                    listening?.Cancel();
+                    logger.LogInformation("operation=connection status=unlinked");
+                    return Task.CompletedTask;
+                });
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
             catch (Exception exception) { logger.LogWarning(exception, "operation=pipe status=failed"); }
@@ -104,8 +110,11 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
 
     private async Task Listen(Binding binding, CancellationToken cancellationToken)
     {
-        try { logger.LogInformation("operation=connection status=connecting client={ClientId}", binding.ClientId); await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), jobId => processor.ProcessAsync(binding, jobId, cancellationToken), cancellationToken); }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        // Logout cancels only the realtime session; in-flight jobs keep the service token so a print is never cut mid-way.
+        var session = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        Interlocked.Exchange(ref listening, session)?.Cancel();
+        try { logger.LogInformation("operation=connection status=connecting client={ClientId}", binding.ClientId); await realtime.ListenAsync(binding.ClientId, () => PublishInventory(binding, cancellationToken), jobId => processor.ProcessAsync(binding, jobId, cancellationToken), session.Token); }
+        catch (OperationCanceledException) when (session.IsCancellationRequested) { }
         catch (Exception exception) { logger.LogError(exception, "operation=connection status=failed client={ClientId}", binding.ClientId); }
     }
 }
@@ -195,6 +204,10 @@ public sealed class BindingStore
             using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None)) { stream.Write(Protect(JsonSerializer.SerializeToUtf8Bytes(binding, JsonOptions))); stream.Flush(true); }
             File.Move(temporary, path, true);
         }
+    }
+    public void Delete()
+    {
+        lock (gate) File.Delete(path);
     }
     private static byte[] Protect(byte[] value) => WindowsDataProtection.Protect(value);
     private static byte[] Unprotect(byte[] value) => WindowsDataProtection.Unprotect(value);

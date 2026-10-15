@@ -9,6 +9,8 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- No console window for the tray/installer; the service never needed one. -->
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(EmbeddedBackendUrl)' != ''">

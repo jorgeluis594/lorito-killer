@@ -34,7 +34,7 @@ El servicio `LoritoPrintGateway` usa la cuenta virtual `NT SERVICE\LoritoPrintGa
 .\install-tray-startup.ps1 -ExecutablePath 'C:\Lorito\win-x64\Lorito.PrintGateway.exe'
 ```
 
-La bandeja se abre desde su icono; cerrar la ventana solo la oculta y no requiere elevación.
+La bandeja vive en el área de notificaciones, sin consola: su menú (clic izquierdo o derecho) muestra la empresa y permite "Iniciar sesión" con un código nuevo o "Cerrar sesión", que borra el vínculo local y detiene la escucha de trabajos. No requiere elevación.
 
 ## Diagnóstico
 
