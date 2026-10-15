@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Loader2 } from "lucide-react";
 import type { Zone, TableWithSession } from "../types";
+import { getTableDerivedStatus } from "../types";
 import { ZoneTabs } from "./zone-tabs";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { openTable } from "../actions";
@@ -27,8 +28,12 @@ export function TableGrid({
   const visible = tables
     .filter((table) => !zoneId || table.zoneId === zoneId)
     .sort((a, b) => a.number - b.number);
-  const occupied = visible.filter((table) => table.activeSession);
-  const available = visible.filter((table) => !table.activeSession);
+  const occupied = visible.filter(
+    (table) => getTableDerivedStatus(table) !== "AVAILABLE",
+  );
+  const available = visible.filter(
+    (table) => getTableDerivedStatus(table) === "AVAILABLE",
+  );
 
   async function attend(table: TableWithSession) {
     if (openingRef.current) return;
