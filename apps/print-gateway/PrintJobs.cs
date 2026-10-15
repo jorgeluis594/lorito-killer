@@ -46,7 +46,7 @@ public sealed class BackendClient(HttpClient httpClient, GatewayConfiguration co
         using var request = Authorized(HttpMethod.Post, $"/api/printing/jobs/{Uri.EscapeDataString(jobId)}/claim", binding);
         using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var body = await ReadLimitedAsync(response, 2 * 1024 * 1024, cancellationToken);
-        if (!response.IsSuccessStatusCode) return null;
+        if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Claim rejected: HTTP {(int)response.StatusCode} {System.Text.Encoding.UTF8.GetString(body, 0, Math.Min(body.Length, 500))}");
         var envelope = JsonSerializer.Deserialize<ClaimEnvelope>(body, JsonOptions);
         var data = envelope?.Data ?? throw new InvalidDataException("Claim response has no data");
         if (data.AttemptNumber <= 0 || string.IsNullOrWhiteSpace(data.JobId) || data.JobId != jobId || string.IsNullOrWhiteSpace(data.PrinterId) || string.IsNullOrWhiteSpace(data.PrinterLocalName) || data.AttemptExpiresAt.Offset != TimeSpan.Zero || data.ServerNow.Offset != TimeSpan.Zero)

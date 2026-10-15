@@ -152,7 +152,7 @@ export function TableOrderView({
     );
   }
 
-  async function finish(send: boolean) {
+  async function finish(send: boolean, release = false) {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
@@ -166,7 +166,7 @@ export function TableOrderView({
               draft.revision.current,
               (roundIdRef.current ??= crypto.randomUUID()),
             )
-          : await leaveEmptyTable(session.id, draft.revision.current);
+          : await leaveEmptyTable(session.id, draft.revision.current, release);
         if (!result.success) {
           setError(result.message);
           return;
@@ -762,6 +762,16 @@ export function TableOrderView({
               )}
               Enviar pedido
             </Button>
+            {editable && !count && !sentItems.length ? (
+              <Button
+                variant="outline"
+                className="min-h-12 w-full"
+                disabled={busy}
+                onClick={() => finish(false, true)}
+              >
+                Liberar mesa
+              </Button>
+            ) : null}
           </footer>
         </section>
       </div>

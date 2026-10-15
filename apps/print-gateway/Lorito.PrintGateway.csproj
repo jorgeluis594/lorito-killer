@@ -9,7 +9,24 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- No console window for the tray/installer; the service never needed one. -->
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(EmbeddedBackendUrl)' != ''">
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>EmbeddedBackendUrl</_Parameter1>
+      <_Parameter2>$(EmbeddedBackendUrl)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>EmbeddedSupabaseUrl</_Parameter1>
+      <_Parameter2>$(EmbeddedSupabaseUrl)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>EmbeddedSupabaseKey</_Parameter1>
+      <_Parameter2>$(EmbeddedSupabaseKey)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />

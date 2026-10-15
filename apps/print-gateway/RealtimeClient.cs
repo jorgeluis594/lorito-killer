@@ -57,16 +57,24 @@ public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<R
         while (socket.State == WebSocketState.Open)
         {
             var result = await socket.ReceiveAsync(buffer, cancellationToken);
-            if (result.MessageType == WebSocketMessageType.Close) return;
+            if (result.MessageType == WebSocketMessageType.Close) { logger.LogWarning("operation=connection status=closed code={Code} reason={Reason}", result.CloseStatus, result.CloseStatusDescription); return; }
             message.Write(buffer, 0, result.Count);
             if (!result.EndOfMessage) continue;
             try
             {
                 using var json = JsonDocument.Parse(message.ToArray());
                 var root = json.RootElement;
-                if (heartbeat is not null && root.TryGetProperty("topic", out var topic) && topic.GetString() == "phoenix" && root.TryGetProperty("event", out var replyEvent) && replyEvent.GetString() == "phx_reply" && root.TryGetProperty("ref", out var replyRef)) heartbeat.Confirm(replyRef.GetString());
+                if (root.TryGetProperty("event", out var joinEvent) && joinEvent.GetString() == "phx_reply" && root.TryGetProperty("ref", out var joinRef) && joinRef.GetString() == "1")
+                {
+                    var joinStatus = root.TryGetProperty("payload", out var joinPayload) && joinPayload.TryGetProperty("status", out var s) ? s.GetString() : null;
+                    if (joinStatus == "ok") logger.LogInformation("operation=join status=ok");
+                    else logger.LogError("operation=join status={Status} reply={Reply}", joinStatus, root.GetRawText());
+                }
+                else if (root.TryGetProperty("event", out var errorEvent) && errorEvent.GetString() is "phx_error" or "phx_close" or "system") logger.LogWarning("operation=realtime event={Event} message={Message}", errorEvent.GetString(), root.GetRawText());
+                else if (heartbeat is not null && root.TryGetProperty("topic", out var topic) && topic.GetString() == "phoenix" && root.TryGetProperty("event", out var replyEvent) && replyEvent.GetString() == "phx_reply" && root.TryGetProperty("ref", out var replyRef)) heartbeat.Confirm(replyRef.GetString());
                 else if (root.TryGetProperty("event", out var eventName) && eventName.GetString() == "broadcast" && root.TryGetProperty("payload", out var payload) && payload.TryGetProperty("payload", out var body) && body.TryGetProperty("type", out var type) && body.TryGetProperty("version", out var version) && version.GetInt32() == 1)
                 {
+                    logger.LogInformation("operation=broadcast type={Type} job={JobId}", type.GetString(), body.TryGetProperty("jobId", out var logJobId) ? logJobId.GetString() : null);
                     if (type.GetString() == "REFRESH_PRINTER_INVENTORY") await refreshInventory();
                     else if (type.GetString() == "PRINT_JOB_AVAILABLE" && body.TryGetProperty("jobId", out var jobId) && Guid.TryParse(jobId.GetString(), out _)) StartJob(processJob, jobId.GetString()!, jobCancellationToken);
                 }
