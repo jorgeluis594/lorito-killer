@@ -17,7 +17,7 @@ export async function recalculateOrderTotals(
     }),
     db.delivery.findUnique({
       where: { orderId },
-      select: { fee: true, cashPaysWith: true },
+      select: { fee: true },
     }),
   ]);
   const totals = calculateOrderTotals(
@@ -29,5 +29,5 @@ export async function recalculateOrderTotals(
     delivery?.fee,
   );
   await db.order.update({ where: { id: orderId }, data: totals });
-  return { ...totals, cashPaysWith: delivery?.cashPaysWith ?? null };
+  return totals;
 }

@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -22,7 +28,7 @@ import { cn, formatPrice, shortLocalizeDate } from "@/lib/utils";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { getMany } from "@/product/api_repository";
 import { isDishProduct, type Product } from "@/product/types";
-import type { TableWithSession } from "../types";
+import type { TableSession } from "../types";
 import { leaveEmptyTable, sendTableDraft } from "../actions";
 import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
@@ -34,18 +40,29 @@ import {
   reprintKitchenTicketAction,
 } from "@/kitchen/actions";
 
+/**
+ * Toma de pedido de una sesión: mesa, delivery o para llevar. Lo propio de cada
+ * una llega por `title`, `details` y `headerAction`.
+ */
 export function TableOrderView({
-  table,
+  session,
+  title,
+  details,
+  headerAction,
+  paymentHref,
   canEdit = true,
   kitchenTickets = [],
 }: {
-  table: TableWithSession;
+  session: TableSession;
+  title: string;
+  details?: ReactNode;
+  headerAction?: ReactNode;
+  paymentHref: string;
   canEdit?: boolean;
   kitchenTickets?: KitchenTicketView[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const session = table.activeSession!;
   const draft = useTableDraft(session);
   const categories = useCategoryStore((state) => state.categories);
   const [query, setQuery] = useState("");
@@ -66,12 +83,18 @@ export function TableOrderView({
   const [error, setError] = useState("");
   const [printingTicketId, setPrintingTicketId] = useState<string | null>(null);
   const printRequestIds = useRef(new Map<string, string>());
-  const editable = canEdit && session.status === "OPEN";
+  const deliveryFee = session.delivery?.fee ?? 0;
+  // Un delivery despachado ya salió del local: no admite más productos.
+  const dispatched = !!session.delivery && session.delivery.status !== "PENDING";
+  const editable = canEdit && session.status === "OPEN" && !dispatched;
   const refresh = useCallback(() => router.refresh(), [router]);
   const sentItems = session.order?.orderItems ?? [];
   const sentTotal =
     sentItems.reduce((sum, item) => sum + Math.round(item.total * 100), 0) /
     100;
+  const accountTotal = sentItems.length
+    ? (Math.round(sentTotal * 100) + Math.round(deliveryFee * 100)) / 100
+    : 0;
   const draftTotal =
     draft.items.reduce(
       (sum, item) => sum + Math.round(item.productPrice * 100) * item.quantity,
@@ -174,7 +197,7 @@ export function TableOrderView({
       }
       if (send)
         toast({
-          title: `Pedido de mesa ${table.label || table.number} enviado`,
+          title: `Pedido de ${title} enviado`,
           description: "Cocina y barra ya pueden prepararlo.",
         });
       router.push("/dashboard/tables");
@@ -195,9 +218,7 @@ export function TableOrderView({
     setBusy(true);
     try {
       if (editable && !(await draft.flush())) return;
-      router.push(
-        `/dashboard/tables/${table.id}/payment?session=${session.id}`,
-      );
+      router.push(paymentHref);
     } catch {
       setError("No se pudo abrir la cuenta. Vuelve a intentarlo.");
     } finally {
@@ -252,15 +273,16 @@ export function TableOrderView({
             <span className="hidden sm:inline">Mesas</span>
           </Button>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold break-words">
-              Mesa {table.label || table.number}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {session.status === "BILL_REQUESTED"
-                ? "Cuenta pedida · pedido de solo lectura"
-                : "Toma de pedido"}
-            </p>
+            <h1 className="text-xl font-bold break-words">{title}</h1>
+            {details ?? (
+              <p className="text-xs text-muted-foreground">
+                {session.status === "BILL_REQUESTED"
+                  ? "Cuenta pedida · pedido de solo lectura"
+                  : "Toma de pedido"}
+              </p>
+            )}
           </div>
+          {headerAction}
         </div>
         <span
           className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
@@ -462,6 +484,11 @@ export function TableOrderView({
         >
           <div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-4">
             <h2 className="text-lg font-bold">Pedido</h2>
+            {dispatched ? (
+              <span className="text-xs text-muted-foreground">
+                Despachado · ya no admite productos
+              </span>
+            ) : null}
             <Button
               variant="ghost"
               size="sm"
@@ -581,7 +608,7 @@ export function TableOrderView({
                 <h3 id="sent-heading" className="text-sm font-bold">
                   Ya enviado{" "}
                   <span className="float-right font-normal tabular-nums">
-                    {formatPrice(sentTotal)}
+                    {formatPrice(accountTotal)}
                   </span>
                 </h3>
                 {rounds.map((round) => {
@@ -728,6 +755,14 @@ export function TableOrderView({
                     </div>
                   );
                 })}
+                {deliveryFee > 0 ? (
+                  <p className="flex justify-between gap-2 border-b pb-3 text-sm">
+                    <span>Envío</span>
+                    <span className="tabular-nums">
+                      {formatPrice(deliveryFee)}
+                    </span>
+                  </p>
+                ) : null}
               </section>
             ) : null}
           </div>
@@ -735,14 +770,14 @@ export function TableOrderView({
             <Button
               variant="outline"
               className="min-h-12 w-full"
-              disabled={busy || sentTotal <= 0}
+              disabled={busy || accountTotal <= 0}
               onClick={openPayment}
             >
               <ReceiptText aria-hidden />
               {session.status === "BILL_REQUESTED"
                 ? "Ver cobro en caja"
                 : "Cobrar cuenta"}{" "}
-              · {formatPrice(sentTotal)}
+              · {formatPrice(accountTotal)}
             </Button>
             <div className="flex items-center justify-between text-sm">
               <span>Total por enviar</span>
@@ -786,7 +821,7 @@ export function TableOrderView({
             {count
               ? ` · ${count} · ${formatPrice(draftTotal)}`
               : sentItems.length
-                ? ` · ${formatPrice(sentTotal)}`
+                ? ` · ${formatPrice(accountTotal)}`
                 : ""}
           </Button>
         </div>

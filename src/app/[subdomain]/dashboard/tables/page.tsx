@@ -3,7 +3,16 @@ import Link from "next/link";
 import { Button } from "@/shared/components/ui/button";
 import { hasPermission } from "@/authorization/helpers";
 import { requirePermission } from "@/authorization/server";
-import { findTables, findZones } from "@/table/db_repository";
+import {
+  findLastDeliveryFee,
+  findServiceSessions,
+  findTables,
+  findZones,
+} from "@/table/db_repository";
+import {
+  DeliverySection,
+  NewServiceButtons,
+} from "@/delivery/components/delivery-section";
 import { ArrowLeft, Settings2 } from "lucide-react";
 import { TableGrid } from "@/table/components/table-grid";
 import { TableGridSkeleton } from "@/table/components/table-grid-skeleton";
@@ -19,12 +28,13 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
     return <p className="p-4 text-destructive">{auth.message}</p>;
   }
 
-  const [tablesRes, zonesRes] = await Promise.all([
+  const [tablesRes, zonesRes, servicesRes] = await Promise.all([
     findTables(auth.data.companyId),
     findZones(auth.data.companyId),
+    findServiceSessions(auth.data.companyId),
   ]);
 
-  if (!tablesRes.success || !zonesRes.success) {
+  if (!tablesRes.success || !zonesRes.success || !servicesRes.success) {
     return (
       <p role="alert">
         No se pudieron cargar las mesas. Actualiza la página para volver a
@@ -35,15 +45,19 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
   const tables = tablesRes.data;
   const zones = zonesRes.data;
   const canConfigure = hasPermission(auth.data.role, "tables", "create");
+  const canAttend = hasPermission(auth.data.role, "tables", "update");
 
   const attention = (
-    <KitchenAttentionPanel userId={auth.data.id} role={auth.data.role} />
+    <>
+      <KitchenAttentionPanel userId={auth.data.id} role={auth.data.role} />
+      <DeliverySection sessions={servicesRes.data} canAttend={canAttend} />
+    </>
   );
 
   if (tables.length === 0) {
     return (
       <div className="flex flex-col items-start gap-4">
-        <div className="w-full">{attention}</div>
+        <div className="flex w-full flex-col gap-4">{attention}</div>
         <div className="flex flex-col items-start gap-4 py-12">
           <h3 className="text-2xl font-bold">Prepara tus mesas para empezar</h3>
           <p className="text-muted-foreground">
@@ -76,12 +90,18 @@ async function TablesContent({ subdomain }: { subdomain: string }) {
           </div>
         </details>
       ) : null}
-      <TableGrid
-        tables={tables}
-        zones={zones}
-        canAttend={hasPermission(auth.data.role, "tables", "update")}
-      />
+      <TableGrid tables={tables} zones={zones} canAttend={canAttend} />
     </div>
+  );
+}
+
+async function ServiceActions() {
+  const auth = await requirePermission("tables", "update");
+  if (!auth.success) return null;
+  return (
+    <NewServiceButtons
+      lastFee={await findLastDeliveryFee(auth.data.companyId)}
+    />
   );
 }
 
@@ -89,7 +109,7 @@ export default async function TablesPage(props: PageProps) {
   const params = await props.params;
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col gap-4 px-4 py-5 md:px-8 md:py-8">
-      <header className="flex items-center gap-3">
+      <header className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard" aria-label="Volver al dashboard">
             <ArrowLeft aria-hidden />
@@ -100,6 +120,11 @@ export default async function TablesPage(props: PageProps) {
           <p className="text-sm text-muted-foreground">
             Toca una mesa para atender
           </p>
+        </div>
+        <div className="ml-auto">
+          <Suspense fallback={null}>
+            <ServiceActions />
+          </Suspense>
         </div>
       </header>
       <Suspense fallback={<TableGridSkeleton />}>

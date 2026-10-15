@@ -60,7 +60,7 @@ export async function updateTableDraft(input: {
   operation: "save" | "read" | "leave" | "release";
   items?: RoundItem[];
 }): Promise<
-  response<{ revision: number; tableId: string; items?: RoundItem[] }>
+  response<{ revision: number; tableId: string | null; items?: RoundItem[] }>
 > {
   try {
     return await prisma().$transaction(
@@ -70,7 +70,7 @@ export async function updateTableDraft(input: {
             id: input.sessionId,
             companyId: input.companyId,
             current: true,
-            table: { active: true },
+            OR: [{ tableId: null }, { table: { active: true } }],
           },
           include: {
             order: {
@@ -113,10 +113,11 @@ export async function updateTableDraft(input: {
             },
           };
         }
-        // Leaving an established or non-empty session never releases the table.
+        // Leaving an established or non-empty session never releases the table; a delivery or take-away is only cancelled by an explicit release.
         if (
           input.operation === "leave" &&
-          (stored.length ||
+          (session.tableId === null ||
+            stored.length ||
             order.orderItems.length ||
             session.waiterId !== input.userId)
         ) {

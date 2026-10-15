@@ -2,32 +2,27 @@ import { describe, expect, test } from "vitest";
 import { getDeliveryTransition } from "../use-cases/delivery-transition";
 
 describe("getDeliveryTransition", () => {
-  test("despacha sin exigir pago ni preparación digital", () => {
-    expect(getDeliveryTransition("PENDING", "DISPATCH", "PENDING")).toEqual({
+  test("despacha un pedido pendiente", () => {
+    expect(getDeliveryTransition("PENDING", "DISPATCH")).toEqual({
       success: true,
       data: "DISPATCHED",
     });
   });
 
-  test("exige despacho y pago para entregar", () => {
-    expect(getDeliveryTransition("PENDING", "DELIVER", "PAID").success).toBe(
-      false,
-    );
-    expect(
-      getDeliveryTransition("DISPATCHED", "DELIVER", "PENDING").success,
-    ).toBe(false);
-    expect(getDeliveryTransition("DISPATCHED", "DELIVER", "PAID")).toEqual({
+  test("exige despacho para entregar, pero no cobro", () => {
+    expect(getDeliveryTransition("PENDING", "DELIVER").success).toBe(false);
+    expect(getDeliveryTransition("DISPATCHED", "DELIVER")).toEqual({
       success: true,
       data: "DELIVERED",
     });
   });
 
   test("recupera transiciones ya registradas", () => {
-    expect(getDeliveryTransition("DISPATCHED", "DISPATCH", "PENDING")).toEqual({
+    expect(getDeliveryTransition("DISPATCHED", "DISPATCH")).toEqual({
       success: true,
       data: "DISPATCHED",
     });
-    expect(getDeliveryTransition("DELIVERED", "DELIVER", "PAID")).toEqual({
+    expect(getDeliveryTransition("DELIVERED", "DELIVER")).toEqual({
       success: true,
       data: "DELIVERED",
     });

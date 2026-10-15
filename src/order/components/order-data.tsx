@@ -23,15 +23,6 @@ import ReceiptPrintButton from "@/printing/components/receipt-print-button";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/authorization/helpers";
 import { canCancelOrder } from "@/order/use-cases/can-cancel-order";
-import { canEditFulfillmentProducts } from "@/delivery/use-cases/can-edit-fulfillment-products";
-import DeliveryActions from "@/delivery/components/delivery-actions";
-import DeliveryContactDetails from "@/delivery/components/delivery-contact-details";
-import DeliveryEditForm from "@/delivery/components/delivery-edit-form";
-import { findFulfillmentCashShift } from "@/order/fulfillment-payment-repository";
-import { getDeliveryDetails } from "@/delivery/db_repository";
-import { initialCashReceived } from "@/delivery/use-cases/initial-cash-received";
-import { findOrderRounds } from "@/order/rounds/db_repository";
-import { CancelOrderItemDialog } from "@/table/components/cancel-order-item-dialog";
 
 export default async function OrderData({ order }: { order: Order }) {
   const session = await getSession();
@@ -42,36 +33,6 @@ export default async function OrderData({ order }: { order: Order }) {
 
   const fulfillment =
     order.orderType === "TAKE_AWAY" || order.orderType === "DELIVERY";
-  const cashShift = fulfillment
-    ? await findFulfillmentCashShift(order.companyId)
-    : null;
-  const delivery =
-    order.orderType === "DELIVERY"
-      ? await getDeliveryDetails(order.companyId, order.id!)
-      : null;
-  const deliveryView = delivery
-    ? {
-        ...delivery,
-        dispatchedAt:
-          delivery.dispatchedAt?.toLocaleString("es-PE", {
-            timeZone: "America/Lima",
-          }) ?? null,
-        deliveredAt:
-          delivery.deliveredAt?.toLocaleString("es-PE", {
-            timeZone: "America/Lima",
-          }) ?? null,
-      }
-    : null;
-  const canEditProducts =
-    fulfillment &&
-    canEditFulfillmentProducts({
-      orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
-      deliveryStatus: delivery?.status,
-      hasDocument: documentResponse.success,
-    });
-  const rounds = fulfillment
-    ? await findOrderRounds(order.id!, order.companyId)
-    : [];
 
   const hasADiscount = order.orderItems.some(
     (orderItem) => orderItem.discountAmount > 0,
@@ -141,65 +102,6 @@ export default async function OrderData({ order }: { order: Order }) {
           </div>
         </CardHeader>
         <CardContent>
-          {fulfillment && (
-            <div className="mb-6">
-              <DeliveryActions
-                orderId={order.id!}
-                orderType={order.orderType as "TAKE_AWAY" | "DELIVERY"}
-                paymentStatus={order.paymentStatus ?? "pending"}
-                orderVersion={(
-                  order.updatedAt ?? order.createdAt
-                ).toISOString()}
-                total={order.total}
-                cashShiftId={cashShift?.id}
-                initialCashReceived={initialCashReceived(
-                  delivery?.expectedPaymentMethod,
-                  delivery?.cashPaysWith,
-                )}
-                canCollect={
-                  session.user?.role === "ADMIN" ||
-                  session.user?.role === "CASHIER"
-                }
-                delivery={deliveryView}
-                canEditProducts={canEditProducts}
-              />
-              {delivery && (
-                <div className="mt-3">
-                  <DeliveryContactDetails {...delivery} total={order.total} />
-                </div>
-              )}
-              {delivery &&
-                order.status !== "cancelled" &&
-                session.user &&
-                hasPermission(session.user.role, "delivery", "update") && (
-                  <div className="mt-3">
-                    <DeliveryEditForm
-                      key={(order.updatedAt ?? order.createdAt).toISOString()}
-                      orderId={order.id!}
-                      updatedAt={(
-                        order.updatedAt ?? order.createdAt
-                      ).toISOString()}
-                      logisticsLocked={
-                        documentResponse.success ||
-                        order.paymentStatus === "paid"
-                      }
-                      itemsTotal={
-                        Math.round((order.total - delivery.fee) * 100) / 100
-                      }
-                      initial={{
-                        name: delivery.name,
-                        phone: delivery.phone,
-                        address: delivery.address,
-                        reference: delivery.reference,
-                        fee: delivery.fee,
-                        expectedPaymentMethod: delivery.expectedPaymentMethod,
-                        cashPaysWith: delivery.cashPaysWith,
-                      }}
-                    />
-                  </div>
-                )}
-            </div>
-          )}
           <table className="table-auto border w-full">
             <tbody>
               <tr>
@@ -286,47 +188,6 @@ export default async function OrderData({ order }: { order: Order }) {
               </tbody>
             </table>
           </div>
-          {fulfillment && rounds.length > 0 && (
-            <section className="mt-8 space-y-4" aria-label="Rondas enviadas">
-              <h4 className="text-lg font-semibold">Rondas y comandas</h4>
-              {rounds.map((round) => (
-                <div key={round.id} className="rounded-lg border p-4">
-                  <p className="mb-2 font-medium">
-                    Ronda {round.number} ·{" "}
-                    {round.responsible.name ?? "Responsable"}
-                  </p>
-                  <ul className="space-y-2">
-                    {round.items.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex flex-wrap items-center gap-2 text-sm"
-                      >
-                        <span className="min-w-0 flex-1">
-                          {item.currentQuantity} × {item.productName}
-                          {item.kitchen
-                            ? ` · ${item.kitchen.name}`
-                            : " · Sin Kitchen"}
-                          {item.notes ? ` · ${item.notes}` : ""}
-                          {item.cancelledQuantity > 0
-                            ? ` · ${item.cancelledQuantity} cancelado(s)`
-                            : ""}
-                        </span>
-                        {order.paymentStatus === "pending" &&
-                          canEditProducts &&
-                          item.currentQuantity > 0 && (
-                            <CancelOrderItemDialog
-                              channel="fulfillment"
-                              orderRoundItemId={item.id}
-                              availableQuantity={item.currentQuantity}
-                            />
-                          )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </section>
-          )}
           <div className="w-full flex justify-between mt-8">
             <table className="table-auto border w-64">
               <thead>
@@ -372,12 +233,12 @@ export default async function OrderData({ order }: { order: Order }) {
                   </div>
                 </>
               )}
-              {delivery && delivery.fee > 0 && (
+              {order.deliveryFee ? (
                 <div className="flex justify-between mt-1">
                   <p className="text-lg">Envío</p>
-                  <p className="text-lg">{formatPrice(delivery.fee)}</p>
+                  <p className="text-lg">{formatPrice(order.deliveryFee)}</p>
                 </div>
-              )}
+              ) : null}
               <div className="flex justify-between">
                 <p className="font-bold text-2xl">Total</p>
                 <p className="font-bold text-2xl">{formatPrice(order.total)}</p>

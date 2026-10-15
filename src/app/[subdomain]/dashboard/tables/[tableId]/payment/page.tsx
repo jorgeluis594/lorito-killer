@@ -21,7 +21,9 @@ export default async function TablePaymentPage({
         {auth.message}
       </p>
     );
-  const result = await loadTablePayment(route.tableId, query.session);
+  const result = await loadTablePayment(
+    query.session ? { sessionId: query.session } : { tableId: route.tableId },
+  );
   if (!result.success)
     return (
       <main className="flex flex-col gap-4 p-6">

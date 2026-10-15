@@ -12,18 +12,18 @@ import { z } from "zod";
 const roles = ["ADMIN", "WAITER", "CASHIER"] as const;
 export const loadTablePayment = protectedAction(
   { roles: [...roles] },
-  async (user, tableId: string, sessionId?: string) => {
+  async (user, where: { sessionId: string } | { tableId: string }) => {
     const feature = await requireFeature(user.companyId, "restaurants");
     if (!feature.success) return feature;
     const parsed = z
-      .object({
-        tableId: z.string().uuid(),
-        sessionId: z.string().uuid().optional(),
-      })
-      .safeParse({ tableId, sessionId });
+      .union([
+        z.object({ sessionId: z.string().uuid() }),
+        z.object({ tableId: z.string().uuid() }),
+      ])
+      .safeParse(where);
     if (!parsed.success)
-      return { success: false, message: "La mesa no es válida." };
-    return getTablePaymentData(user.companyId, tableId, sessionId);
+      return { success: false, message: "La cuenta no es válida." };
+    return getTablePaymentData(user.companyId, parsed.data);
   },
 );
 
@@ -46,7 +46,11 @@ export const confirmTablePayment = protectedAction(
       await broadcast(user.companyId, "tables", "table-session-changed", {
         sessionId: input.sessionId,
       }).catch(() => console.warn("Payment notification failed"));
-      if (result.data.documentId && input.receipt.documentType !== "ticket")
+      if (
+        result.data.documentId &&
+        result.data.documentType &&
+        result.data.documentType !== "ticket"
+      )
         await enqueueDocumentTaxDispatch(
           result.data.documentId,
           user.companyId,

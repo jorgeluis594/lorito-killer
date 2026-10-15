@@ -86,6 +86,15 @@ test("release frees an empty table opened by another waiter", async () => {
   expect(db.updateOrder).toHaveBeenCalledOnce();
 });
 
+test("leaving an empty delivery keeps it open", async () => {
+  db.session.mockResolvedValue({ ...session(), tableId: null, draft: [] });
+  expect(
+    (await updateTableDraft({ ...input, operation: "leave" })).success,
+  ).toBe(true);
+  expect(db.updateSession).not.toHaveBeenCalled();
+  expect(db.updateOrder).not.toHaveBeenCalled();
+});
+
 test("release rejects a table with products", async () => {
   expect(
     (await updateTableDraft({ ...input, operation: "release" })).success,

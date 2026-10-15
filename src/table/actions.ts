@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { response } from "@/lib/types";
 import { protectedAction } from "@/authorization/server";
 import { requireFeature } from "@/feature-flags/server";
@@ -19,6 +20,7 @@ import {
   updateTable as dbUpdateTable,
   deleteTable as dbDeleteTable,
   getWaiters,
+  updateSessionStatus,
 } from "./db_repository";
 import { closeTableSession } from "./use-cases/close-table-session";
 import { requestBill } from "./use-cases/request-bill";
@@ -409,6 +411,32 @@ export const closeTable = protectedAction(
         tableId: parsed.data.tableId,
         sessionStatus: parsed.data.cancelled ? "CANCELLED" : "CLOSED",
       });
+    }
+    return result;
+  },
+);
+
+/** Cierra un pedido para llevar ya cobrado, cuando el cliente lo recoge. */
+export const closeServiceSessionAction = protectedAction(
+  { resource: "tables", action: "update" },
+  async (user, sessionId: string): Promise<response<TableSession>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    if (!z.string().uuid().safeParse(sessionId).success)
+      return { success: false, message: "El pedido no es válido." };
+    // Tables close through closeTable and deliveries through deliverDelivery.
+    const result = await updateSessionStatus(
+      sessionId,
+      user.companyId,
+      "CLOSED",
+      undefined,
+      true,
+    );
+    if (result.success) {
+      revalidatePath("/[subdomain]/dashboard/tables", "layout");
+      await broadcast(user.companyId, "tables", "table-session-changed", {
+        sessionId,
+      }).catch(() => console.warn("Table session notification failed"));
     }
     return result;
   },

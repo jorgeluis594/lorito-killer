@@ -20,75 +20,10 @@ import {
 } from "@/delivery/use-cases/can-edit-fulfillment-products";
 import { isFulfillmentOrderType } from "@/order/fulfillment-order-types";
 import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
-import { validateCashPaysWithCoversTotal } from "@/delivery/use-cases/validate-delivery-details";
 import type { CancelRoundItemInput } from "./schema";
 import type { OrderItemCancellationResult } from "./use-cases/cancel-round-item";
 
 type Db = Prisma.TransactionClient;
-
-/**
- * Repone lo consumido al confirmar el pedido, proporcional a la cantidad
- * retirada y a partir de los movimientos originales (no de la composición
- * actual del pack). Orden de bloqueo: Order (ya tomado), luego productos por id.
- */
-async function restoreFulfillmentStock(
-  db: Db,
-  input: {
-    companyId: string;
-    userId: string;
-    orderItemId: string;
-    originalQuantity: Prisma.Decimal;
-    quantity: Prisma.Decimal;
-    cancellationId: string;
-  },
-) {
-  const originals = await db.stockTransfer.findMany({
-    where: {
-      companyId: input.companyId,
-      type: "ORDER",
-      status: "EXECUTED",
-      value: { lt: 0 },
-      data: { path: ["orderItemId"], equals: input.orderItemId },
-    },
-    orderBy: { productId: "asc" },
-  });
-  const restorations = new Map<string, Prisma.Decimal>();
-  for (const transfer of originals) {
-    const restored = transfer.value
-      .negated()
-      .mul(input.quantity)
-      .div(input.originalQuantity);
-    restorations.set(
-      transfer.productId,
-      (restorations.get(transfer.productId) ?? new Prisma.Decimal(0)).add(
-        restored,
-      ),
-    );
-  }
-  for (const productId of [...restorations.keys()].sort()) {
-    const value = restorations.get(productId)!;
-    const updated = await db.product.updateMany({
-      where: { id: productId, companyId: input.companyId },
-      data: { stock: { increment: value } },
-    });
-    if (updated.count !== 1)
-      throw new Error("No se pudo reponer el stock del producto.");
-    await db.stockTransfer.create({
-      data: {
-        userId: input.userId,
-        companyId: input.companyId,
-        productId,
-        value,
-        type: "ORDER",
-        status: "EXECUTED",
-        data: {
-          orderItemId: input.orderItemId,
-          cancellationId: input.cancellationId,
-        },
-      },
-    });
-  }
-}
 
 export async function persistRoundItemCancellation(
   input: CancelRoundItemInput & {
@@ -280,24 +215,8 @@ export async function persistRoundItemCancellation(
             userId: input.userId,
           },
         });
-        if (isFulfillment)
-          await restoreFulfillmentStock(db, {
-            companyId: input.companyId,
-            userId: input.userId,
-            orderItemId: locked.orderItemId,
-            originalQuantity: locked.quantity,
-            quantity,
-            cancellationId: cancellation.id,
-          });
-        const totals = await recalculateOrderTotals(
-          db,
-          locked.orderRound.orderId,
-        );
-        const coverage = validateCashPaysWithCoversTotal(
-          totals.cashPaysWith?.toNumber(),
-          totals.total.toNumber(),
-        );
-        if (!coverage.success) throw new Error(coverage.message);
+        // El stock se descuenta al cobrar, así que retirar antes no lo repone.
+        await recalculateOrderTotals(db, locked.orderRound.orderId);
         return {
           success: true,
           data: {
@@ -426,10 +345,12 @@ export async function submitOrderRound(
           },
           include: {
             table: { select: { number: true, label: true, active: true } },
-            order: { include: { payments: true, documents: true } },
+            order: {
+              include: { payments: true, documents: true, delivery: true },
+            },
           },
         });
-        if (!session?.order || !session.table.active)
+        if (!session?.order || session.table?.active === false)
           return { success: false, message: "La mesa ya no está disponible." };
 
         await db.$queryRaw`SELECT id FROM "Order" WHERE id = ${session.order.id} FOR UPDATE`;
@@ -484,6 +405,8 @@ export async function submitOrderRound(
                 order.documents.length
               )
                 throw new Error("Esta mesa ya no admite cambios en el pedido.");
+              if (order.delivery && order.delivery.status !== "PENDING")
+                throw new Error(PRODUCTS_LOCKED_MESSAGE);
               if (
                 input.sessionId &&
                 (input.draftRevision === undefined ||
@@ -539,17 +462,7 @@ export async function submitOrderRound(
                 });
               }
 
-              const totals = await db.orderItem.aggregate({
-                where: { orderId: order.id },
-                _sum: { total: true, netTotal: true },
-              });
-              await db.order.update({
-                where: { id: order.id },
-                data: {
-                  total: totals._sum.total ?? 0,
-                  netTotal: totals._sum.netTotal ?? 0,
-                },
-              });
+              await recalculateOrderTotals(db, order.id);
 
               const kitchenIds = [
                 ...new Set(
@@ -596,9 +509,11 @@ export async function submitOrderRound(
                       createdAt: round.createdAt,
                       kitchenName: kitchen.name,
                       orderType: order.orderType,
-                      orderLabel:
-                        session.table.label || String(session.table.number),
+                      orderLabel: session.table
+                        ? session.table.label || String(session.table.number)
+                        : order.id.slice(0, 8).toUpperCase(),
                       responsibleName: responsible.name || responsible.email,
+                      customerName: order.delivery?.name,
                       items: lines
                         .filter((line) => line.kitchenId === kitchen.id)
                         .map((line) => ({

@@ -52,7 +52,9 @@ async function TableOrderContent({ tableId }: { tableId: string }) {
   return (
     <TableOrderView
       key={table.activeSession.id}
-      table={table}
+      session={table.activeSession}
+      title={`Mesa ${table.label || table.number}`}
+      paymentHref={`/dashboard/tables/${table.id}/payment?session=${table.activeSession.id}`}
       canEdit={hasPermission(auth.data.role, "tables", "update")}
       kitchenTickets={tickets.success ? tickets.data : []}
     />

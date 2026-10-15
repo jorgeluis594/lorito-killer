@@ -28,10 +28,6 @@ const routePermissions: Array<{ path: string; permission: RoutePermission }> = [
     permission: { resource: "products", action: "create" },
   },
   {
-    path: "/dashboard/delivery",
-    permission: { resource: "delivery", action: "read" },
-  },
-  {
     path: "/dashboard/sales_reports",
     permission: { resource: "reports", action: "read" },
   },

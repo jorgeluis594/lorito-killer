@@ -21,10 +21,14 @@ vi.mock("@/lib/realtime/config", () => ({
 }));
 
 import prisma from "@/lib/prisma";
-import { submitFulfillmentRound } from "@/order/rounds/fulfillment-repository";
-import { confirmFulfillmentPayment } from "@/order/fulfillment-payment-actions";
+import { submitOrderRound } from "@/order/rounds/db_repository";
+import { updateTableDraft } from "@/table/draft-repository";
+import { confirmTablePayment } from "@/table/payment-actions";
 import { deliverDelivery, dispatchDelivery } from "@/delivery/actions";
-import { listUnpaidFulfillmentOrders } from "@/delivery/db_repository";
+import {
+  listUnpaidFulfillmentOrders,
+  openServiceSession,
+} from "@/delivery/db_repository";
 import {
   closeCashShift,
   getUnpaidFulfillmentOrders,
@@ -78,41 +82,74 @@ const deliveryData = (name: string) => ({
   name,
   phone: "987654321",
   address: "Av. Los Olivos 123, Lima",
+  reference: null,
   fee: 5,
-  expectedPaymentMethod: "CASH" as const,
-  cashPaysWith: 100,
 });
 
+const sessionIds = new Map<string, string>();
+
+/** Abre la sesión sin mesa y, salvo `empty`, envía una ronda con B. */
 async function create(
   orderType: "DELIVERY" | "TAKE_AWAY",
   name = "Maria Quispe",
-  companyId = ids.company,
-  userId = ids.admin,
+  empty = false,
 ) {
-  const result = await submitFulfillmentRound(companyId, userId, {
+  const opened = await openServiceSession({
+    companyId: ids.company,
+    userId: ids.admin,
+    delivery: orderType === "DELIVERY" ? deliveryData(name) : null,
+  });
+  if (!opened.success) throw new Error(opened.message);
+  const { sessionId } = opened.data;
+  const order = await prisma().order.findFirstOrThrow({
+    where: { tableSessionId: sessionId },
+  });
+  orderIds.push(order.id);
+  sessionIds.set(order.id, sessionId);
+  if (empty) return order.id;
+  const items = [{ productId: ids.productB, quantity: 1 }];
+  const saved = await updateTableDraft({
+    companyId: ids.company,
+    userId: ids.admin,
+    sessionId,
+    revision: 0,
+    operation: "save",
+    items,
+  });
+  if (!saved.success) throw new Error(saved.message);
+  const sent = await submitOrderRound({
+    companyId: ids.company,
+    userId: ids.admin,
     roundId: randomUUID(),
-    orderType,
-    items: [{ productId: ids.productB, quantity: 1 }],
-    delivery: orderType === "DELIVERY" ? deliveryData(name) : undefined,
-  } as Parameters<typeof submitFulfillmentRound>[2]);
-  if (!result.success) throw new Error(result.message);
-  orderIds.push(result.data.orderId);
-  return result.data.orderId;
+    items,
+    sessionId,
+    draftRevision: saved.data.revision,
+  });
+  if (!sent.success) throw new Error(sent.message);
+  return order.id;
 }
 
-async function pay(orderId: string, cashShiftId: string) {
+async function paymentInput(orderId: string, cashShiftId: string) {
   const order = await prisma().order.findUniqueOrThrow({
     where: { id: orderId },
+    include: { tableSession: true },
   });
-  const paid = await confirmFulfillmentPayment({
-    orderId,
+  return {
+    sessionId: order.tableSessionId!,
+    revision: order.tableSession!.draftRevision,
     orderVersion: order.updatedAt.toISOString(),
     expectedTotal: order.total.toNumber(),
     cashShiftId,
-    method: "cash",
+    method: "cash" as const,
     cashReceived: 100,
-    receipt: { documentType: "ticket" },
-  });
+    receipt: { documentType: "ticket" as const },
+  };
+}
+
+async function pay(orderId: string, cashShiftId: string) {
+  const paid = await confirmTablePayment(
+    await paymentInput(orderId, cashShiftId),
+  );
   expect(paid.success, JSON.stringify(paid)).toBe(true);
 }
 
@@ -220,6 +257,16 @@ beforeAll(async () => {
       discountAmount: 0,
       netTotal: 20,
       total: 20,
+      orderItems: {
+        create: {
+          productId: ids.productB,
+          productPrice: 20,
+          quantity: 1,
+          netTotal: 20,
+          discountAmount: 0,
+          total: 20,
+        },
+      },
       delivery: {
         create: {
           ...deliveryData("Cliente Ajeno"),
@@ -254,6 +301,8 @@ afterAll(async () => {
   await db.orderRound.deleteMany({ where: { orderId: { in: orderIds } } });
   await db.delivery.deleteMany({ where: { orderId: { in: orderIds } } });
   await db.order.deleteMany({ where: { id: { in: orderIds } } });
+  await db.tableSession.deleteMany({ where: { companyId: ids.company } });
+  await db.orderItem.deleteMany({ where: { orderId: ids.otherOrder } });
   await db.delivery.deleteMany({ where: { orderId: ids.otherOrder } });
   await db.order.deleteMany({ where: { companyId: ids.otherCompany } });
   await db.cashShift.deleteMany({
@@ -365,18 +414,22 @@ describe("DEL-05 · caja y reportes", () => {
       where: { id: cancelled },
       data: { status: "CANCELLED" },
     });
+    // Una sesión abierta sin productos aún no es un pedido.
+    await create("DELIVERY", "Sin Productos", true);
 
     const result = await listUnpaidFulfillmentOrders(ids.company);
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.data.map((o) => o.orderId)).toEqual([takeAway, delivery1]);
     expect(result.data[0]).toMatchObject({
+      sessionId: sessionIds.get(takeAway),
       orderType: "TAKE_AWAY",
       customerLabel: "Para llevar",
       statusLabel: "Pendiente",
       total: 20,
     });
     expect(result.data[1]).toMatchObject({
+      sessionId: sessionIds.get(delivery1),
       orderType: "DELIVERY",
       customerLabel: "Maria Quispe",
       statusLabel: "Pendiente",
@@ -450,18 +503,9 @@ describe("DEL-05 · caja y reportes", () => {
       },
     });
     // La caja cerrada ya no sirve para cobrar.
-    const order = await prisma().order.findUniqueOrThrow({
-      where: { id: delivery1 },
-    });
-    const rejected = await confirmFulfillmentPayment({
-      orderId: delivery1,
-      orderVersion: order.updatedAt.toISOString(),
-      expectedTotal: order.total.toNumber(),
-      cashShiftId: ids.cashShift,
-      method: "cash",
-      cashReceived: 100,
-      receipt: { documentType: "ticket" },
-    });
+    const rejected = await confirmTablePayment(
+      await paymentInput(delivery1, ids.cashShift),
+    );
     expect(rejected.success).toBe(false);
 
     await pay(delivery1, ids.cashShift2);
@@ -523,6 +567,12 @@ describe("DEL-05 · caja y reportes", () => {
       (await prisma().order.findUniqueOrThrow({ where: { id: orderId } }))
         .status,
     ).toBe("COMPLETED");
+    // Cobrado y entregado: la sesión se cierra como una mesa liberada.
+    expect(
+      await prisma().tableSession.findUniqueOrThrow({
+        where: { id: sessionIds.get(orderId) },
+      }),
+    ).toMatchObject({ status: "CLOSED", current: null });
     expect(await reportTotals()).toEqual(totals);
   });
 

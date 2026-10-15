@@ -4,35 +4,20 @@ import type { DeliveryDetails } from "./validate-delivery-details";
 export const LOCKED_BY_DOCUMENT_MESSAGE =
   "El pedido ya tiene comprobante: solo se puede corregir el contacto. No se guardó ningún cambio.";
 
-export type DeliveryEditPlan = {
-  /** Cambió el envío, el medio esperado o “paga con”. */
-  logisticsChanged: boolean;
-  /** Cambió el envío: obliga a recalcular `Order.total`. */
-  feeChanged: boolean;
-};
-
 const cents = (value: number) => Math.round(value * 100);
 
 /**
- * Decide qué cambia una edición y si el pedido la admite. El contacto se edita
- * siempre; envío, medio esperado y “paga con” solo mientras no haya comprobante.
- * Una solicitud que toca la logística de un pedido bloqueado se rechaza entera,
- * aunque también cambie el contacto.
+ * Decide si el pedido admite la edición. El contacto se edita siempre; el
+ * envío, solo mientras no haya comprobante. Una solicitud que cambia el envío
+ * de un pedido bloqueado se rechaza entera, aunque también cambie el contacto.
  */
 export function planDeliveryEdit(
-  current: DeliveryDetails,
-  next: DeliveryDetails,
+  current: Pick<DeliveryDetails, "fee">,
+  next: Pick<DeliveryDetails, "fee">,
   locked: boolean,
-): response<DeliveryEditPlan> {
+): response<{ feeChanged: boolean }> {
   const feeChanged = cents(current.fee) !== cents(next.fee);
-  const logisticsChanged =
-    feeChanged ||
-    current.expectedPaymentMethod !== next.expectedPaymentMethod ||
-    (current.cashPaysWith === null) !== (next.cashPaysWith === null) ||
-    (current.cashPaysWith !== null &&
-      next.cashPaysWith !== null &&
-      cents(current.cashPaysWith) !== cents(next.cashPaysWith));
-  if (locked && logisticsChanged)
+  if (locked && feeChanged)
     return { success: false, message: LOCKED_BY_DOCUMENT_MESSAGE };
-  return { success: true, data: { logisticsChanged, feeChanged } };
+  return { success: true, data: { feeChanged } };
 }

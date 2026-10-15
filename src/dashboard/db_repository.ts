@@ -594,6 +594,7 @@ export async function findOperationalAlerts(
             where: {
               companyId: query.companyId,
               current: true,
+              tableId: { not: null },
               status: { in: ["OPEN", "BILL_REQUESTED"] },
             },
           })

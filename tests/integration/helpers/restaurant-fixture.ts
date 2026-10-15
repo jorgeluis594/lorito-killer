@@ -2,9 +2,12 @@ import { randomUUID } from "node:crypto";
 import { vi } from "vitest";
 import prisma from "@/lib/prisma";
 import type { AuthorizedUser } from "@/authorization/server";
-import { submitFulfillmentRound } from "@/order/rounds/fulfillment-repository";
-import { payFulfillmentOrder } from "@/order/fulfillment-payment-repository";
-import type { FulfillmentPaymentInput } from "@/order/fulfillment-payment-schema";
+import { openServiceSession } from "@/delivery/db_repository";
+import { validateDeliveryDetails } from "@/delivery/use-cases/validate-delivery-details";
+import { updateTableDraft } from "@/table/draft-repository";
+import { submitOrderRound } from "@/order/rounds/db_repository";
+import { payTable } from "@/table/payment-repository";
+import type { TablePaymentInput } from "@/table/payment-schema";
 import { sendToTaxEntity } from "@/document/use_cases/send-to-tax-entity";
 import { findDocumentById, updateDocument } from "@/document/db_repository";
 import { find as findOrder } from "@/order/db_repository";
@@ -156,6 +159,8 @@ export async function createFixture(label: string) {
     }) satisfies AuthorizedUser;
 
   const orderIds: string[] = [];
+  const sessionIds = new Map<string, string>();
+  const sessionOf = (orderId: string) => sessionIds.get(orderId)!;
 
   type Line = { productId: string; quantity: number; notes?: string };
   const defaultDelivery = {
@@ -166,37 +171,95 @@ export async function createFixture(label: string) {
     fee: 5,
   };
 
+  /** Guarda el borrador y lo envía, como la toma de pedido de Mesas. */
+  async function addRound(
+    orderId: string,
+    items: Line[],
+    by: "admin" | "seller" | "waiter" = "seller",
+  ) {
+    const sessionId = sessionOf(orderId);
+    const session = await db.tableSession.findUniqueOrThrow({
+      where: { id: sessionId },
+    });
+    const saved = await updateTableDraft({
+      companyId: ids.company,
+      userId: ids[by],
+      sessionId,
+      revision: session.draftRevision,
+      operation: "save",
+      items,
+    });
+    if (!saved.success) return saved;
+    return submitOrderRound({
+      companyId: ids.company,
+      userId: ids[by],
+      roundId: randomUUID(),
+      items,
+      sessionId,
+      draftRevision: saved.data.revision,
+    });
+  }
+
+  /** Abre la sesión sin mesa; sin productos queda como una apertura vacía. */
+  async function openOrder(
+    options: {
+      orderType?: "DELIVERY" | "TAKE_AWAY";
+      delivery?: Record<string, unknown>;
+      by?: "admin" | "seller" | "waiter";
+    } = {},
+  ) {
+    let delivery = null;
+    if ((options.orderType ?? "DELIVERY") === "DELIVERY") {
+      const details = validateDeliveryDetails(
+        options.delivery ?? defaultDelivery,
+      );
+      if (!details.success) throw new Error(details.message);
+      delivery = details.data;
+    }
+    const opened = await openServiceSession({
+      companyId: ids.company,
+      userId: ids[options.by ?? "seller"],
+      delivery,
+    });
+    if (!opened.success) throw new Error(opened.message);
+    const order = await db.order.findFirstOrThrow({
+      where: { tableSessionId: opened.data.sessionId },
+    });
+    orderIds.push(order.id);
+    sessionIds.set(order.id, opened.data.sessionId);
+    return order.id;
+  }
+
   async function createOrder(options: {
     items?: Line[];
     orderType?: "DELIVERY" | "TAKE_AWAY";
     delivery?: Record<string, unknown>;
-    by?: "admin" | "seller";
+    by?: "admin" | "seller" | "waiter";
   }) {
-    const result = await submitFulfillmentRound(
-      ids.company,
-      ids[options.by ?? "seller"],
-      {
-        roundId: randomUUID(),
-        orderType: options.orderType ?? "DELIVERY",
-        items: options.items ?? [
-          { productId: ids.productA, quantity: 1 },
-          { productId: ids.productB, quantity: 1 },
-        ],
-        delivery: options.delivery ?? defaultDelivery,
-      } as Parameters<typeof submitFulfillmentRound>[2],
+    const orderId = await openOrder(options);
+    const result = await addRound(
+      orderId,
+      options.items ?? [
+        { productId: ids.productA, quantity: 1 },
+        { productId: ids.productB, quantity: 1 },
+      ],
+      options.by,
     );
     if (!result.success) throw new Error(result.message);
-    orderIds.push(result.data.orderId);
-    return result.data.orderId;
+    return orderId;
   }
 
   async function paymentInput(
     orderId: string,
-    overrides: Partial<FulfillmentPaymentInput> = {},
-  ): Promise<FulfillmentPaymentInput> {
-    const order = await db.order.findUniqueOrThrow({ where: { id: orderId } });
+    overrides: Partial<TablePaymentInput> = {},
+  ): Promise<TablePaymentInput> {
+    const order = await db.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: { tableSession: true },
+    });
     return {
-      orderId,
+      sessionId: order.tableSessionId!,
+      revision: order.tableSession!.draftRevision,
       orderVersion: order.updatedAt.toISOString(),
       expectedTotal: order.total.toNumber(),
       cashShiftId: ids.cashShift,
@@ -208,9 +271,9 @@ export async function createFixture(label: string) {
 
   const pay = async (
     orderId: string,
-    overrides: Partial<FulfillmentPaymentInput> = {},
+    overrides: Partial<TablePaymentInput> = {},
     by: "admin" | "cashier" = "cashier",
-  ) => payFulfillmentOrder(user(by), await paymentInput(orderId, overrides));
+  ) => payTable(user(by), await paymentInput(orderId, overrides));
 
   const invoiceReceipt = {
     documentType: "invoice" as const,
@@ -296,6 +359,7 @@ export async function createFixture(label: string) {
     await db.orderRound.deleteMany({ where: { orderId: { in: orderIds } } });
     await db.delivery.deleteMany({ where: { orderId: { in: orderIds } } });
     await db.order.deleteMany({ where: { id: { in: orderIds } } });
+    await db.tableSession.deleteMany({ where: { companyId: ids.company } });
     await db.customer.deleteMany({ where: { companyId: ids.company } });
     await db.cashShift.deleteMany({ where: { companyId: ids.company } });
     await db.product.deleteMany({ where: { companyId: ids.company } });
@@ -310,7 +374,10 @@ export async function createFixture(label: string) {
   return {
     ids,
     orderIds,
+    sessionOf,
     user,
+    openOrder,
+    addRound,
     createOrder,
     paymentInput,
     pay,

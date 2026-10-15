@@ -2,21 +2,16 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
+import { closeServiceSession } from "@/table/payment-repository";
 import { getDeliveryTransition } from "./use-cases/delivery-transition";
 import { describeUnpaidFulfillmentOrder } from "./use-cases/describe-unpaid-fulfillment-order";
-import { isDeliveryOverdue } from "./use-cases/is-delivery-overdue";
-import { parseDeliverySearch } from "./use-cases/parse-delivery-search";
 import { planDeliveryEdit } from "./use-cases/plan-delivery-edit";
+import { limaDayRange, todayInLima } from "./use-cases/lima-day";
 import {
-  CASH_PAYS_WITH_BELOW_TOTAL_MESSAGE,
-  coversTotal,
   validateDeliveryDetails,
+  type DeliveryDetails,
 } from "./use-cases/validate-delivery-details";
-import {
-  DELIVERY_LIST_PAGE_SIZE,
-  type DeliveryListFilters,
-  type UpdateDeliveryDetailsInput,
-} from "./schemas";
+import type { UpdateDeliveryDetailsInput } from "./schemas";
 
 const isSerializationConflict = (error: unknown) => {
   const code = (error as { code?: string }).code;
@@ -29,6 +24,58 @@ const isSerializationConflict = (error: unknown) => {
 
 class EditRejected extends Error {}
 
+/**
+ * Abre una sesión sin mesa: delivery si trae datos de entrega, para llevar si
+ * no. Se pueden abrir todas las que haga falta a la vez.
+ */
+export async function openServiceSession(input: {
+  companyId: string;
+  userId: string;
+  delivery: DeliveryDetails | null;
+}): Promise<response<{ sessionId: string }>> {
+  try {
+    const sessionId = await prisma().$transaction(async (db) => {
+      const session = await db.tableSession.create({
+        data: {
+          companyId: input.companyId,
+          waiterId: input.userId,
+          order: {
+            create: {
+              companyId: input.companyId,
+              orderType: input.delivery ? "DELIVERY" : "TAKE_AWAY",
+              status: "PENDING",
+              discountAmount: 0,
+              netTotal: 0,
+              total: 0,
+              ...(input.delivery
+                ? {
+                    delivery: {
+                      create: { ...input.delivery, createdById: input.userId },
+                    },
+                  }
+                : {}),
+            },
+          },
+        },
+        include: { order: { select: { id: true } } },
+      });
+      await recalculateOrderTotals(db, session.order!.id);
+      return session.id;
+    });
+    return { success: true, data: { sessionId } };
+  } catch (error) {
+    console.error("openServiceSession failed", error);
+    return {
+      success: false,
+      message: "No se pudo crear el pedido. Vuelve a intentarlo.",
+    };
+  }
+}
+
+/**
+ * Despacha o entrega. Entregar no exige cobro; si el pedido ya está cobrado,
+ * la entrega cierra la sesión (equivale a liberar la mesa).
+ */
 export async function transitionDelivery(
   companyId: string,
   userId: string,
@@ -39,7 +86,7 @@ export async function transitionDelivery(
   response<{
     orderId: string;
     status: "PENDING" | "DISPATCHED" | "DELIVERED";
-    paymentStatus: "PENDING" | "PAID";
+    closed: boolean;
   }>
 > {
   try {
@@ -48,17 +95,13 @@ export async function transitionDelivery(
         await db.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
         const order = await db.order.findFirst({
           where: { id: orderId, companyId, orderType: "DELIVERY" },
-          include: { delivery: true },
+          include: { delivery: true, tableSession: true },
         });
         if (!order?.delivery)
           return { success: false, message: "El pedido no está disponible." };
         if (order.status === "CANCELLED")
           return { success: false, message: "El pedido fue cancelado." };
-        const transition = getDeliveryTransition(
-          order.delivery.status,
-          action,
-          order.paymentStatus,
-        );
+        const transition = getDeliveryTransition(order.delivery.status, action);
         if (!transition.success) return transition;
         if (transition.data !== order.delivery.status) {
           const now = new Date();
@@ -77,31 +120,23 @@ export async function transitionDelivery(
                     deliveredById: userId,
                   },
           });
-          if (action === "DELIVER")
-            await db.order.update({
-              where: { id: orderId },
-              data: { status: "COMPLETED" },
-            });
         }
+        const closed =
+          transition.data === "DELIVERED" &&
+          order.paymentStatus === "PAID" &&
+          !!order.tableSession?.current;
+        if (closed) await closeServiceSession(db, order.tableSession!.id, orderId);
         return {
           success: true,
-          data: {
-            orderId,
-            status: transition.data,
-            paymentStatus: order.paymentStatus,
-          },
+          data: { orderId, status: transition.data, closed },
         };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
   } catch (error) {
-    const code = (error as { code?: string }).code;
-    const transient =
-      code === "P2034" ||
-      (code === "P2010" &&
-        (error as { meta?: { code?: string } }).meta?.code === "40001");
-    // Un conflicto de serialización con una edición concurrente se reintenta
-    // de forma acotada: la nueva transacción relee el pedido ya editado.
+    const transient = isSerializationConflict(error);
+    // Un conflicto con un cobro o edición concurrente se reintenta de forma
+    // acotada: la nueva transacción relee el pedido ya cambiado.
     if (transient && attempt < 2)
       return transitionDelivery(
         companyId,
@@ -119,65 +154,9 @@ export async function transitionDelivery(
   }
 }
 
-export async function completeTakeAway(companyId: string, orderId: string) {
-  const updated = await prisma().order.updateMany({
-    where: {
-      id: orderId,
-      companyId,
-      orderType: "TAKE_AWAY",
-      status: "PENDING",
-      paymentStatus: "PAID",
-    },
-    data: { status: "COMPLETED" },
-  });
-  if (updated.count === 1)
-    return {
-      success: true as const,
-      data: { orderId, status: "COMPLETED" as const },
-    };
-  const existing = await prisma().order.findFirst({
-    where: { id: orderId, companyId, orderType: "TAKE_AWAY" },
-  });
-  return existing?.status === "COMPLETED"
-    ? {
-        success: true as const,
-        data: { orderId, status: "COMPLETED" as const },
-      }
-    : {
-        success: false as const,
-        message: "El pedido debe estar pagado antes de entregarlo.",
-      };
-}
-
-export async function getDeliveryDetails(companyId: string, orderId: string) {
-  const delivery = await prisma().delivery.findFirst({
-    where: { orderId, order: { companyId } },
-    select: {
-      status: true,
-      name: true,
-      phone: true,
-      address: true,
-      reference: true,
-      fee: true,
-      expectedPaymentMethod: true,
-      cashPaysWith: true,
-      dispatchedAt: true,
-      deliveredAt: true,
-      dispatchedBy: { select: { name: true } },
-      deliveredBy: { select: { name: true } },
-    },
-  });
-  return delivery
-    ? {
-        ...delivery,
-        fee: delivery.fee.toNumber(),
-        cashPaysWith: delivery.cashPaysWith?.toNumber() ?? null,
-      }
-    : null;
-}
-
 export type UnpaidFulfillmentOrder = {
   orderId: string;
+  sessionId: string | null;
   orderType: "TAKE_AWAY" | "DELIVERY";
   customerLabel: string;
   statusLabel: string;
@@ -197,13 +176,16 @@ export async function listUnpaidFulfillmentOrders(
         orderType: { in: ["TAKE_AWAY", "DELIVERY"] },
         paymentStatus: "PENDING",
         status: { not: "CANCELLED" },
+        // Una sesión abierta sin productos aún no es un pedido.
+        orderItems: { some: { quantity: { gt: 0 } } },
       },
       select: {
         id: true,
+        tableSessionId: true,
         orderType: true,
         total: true,
         createdAt: true,
-        delivery: { select: { name: true, status: true } },
+        delivery: { select: { name: true, phone: true, status: true } },
       },
       orderBy: { createdAt: "asc" },
     });
@@ -211,10 +193,11 @@ export async function listUnpaidFulfillmentOrders(
       success: true,
       data: orders.map((order) => ({
         orderId: order.id,
+        sessionId: order.tableSessionId,
         orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
         ...describeUnpaidFulfillmentOrder({
           orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
-          customerName: order.delivery?.name ?? null,
+          customerName: order.delivery?.name || order.delivery?.phone || null,
           deliveryStatus: order.delivery?.status ?? null,
         }),
         total: order.total.toNumber(),
@@ -236,10 +219,9 @@ export type UpdateDeliveryDetailsResult = {
 };
 
 /**
- * Edita contacto y, mientras no haya comprobante, envío, medio esperado y
- * “paga con”. Bloquea Order, relee documento y versión bajo el bloqueo y deja
- * `Order.total` coherente con el envío en la misma transacción. Cualquier
- * rechazo revierte todo: la solicitud se guarda completa o no se guarda.
+ * Edita contacto y, mientras no haya comprobante, envío. Bloquea Order, relee
+ * documento y versión bajo el bloqueo y deja `Order.total` coherente con el
+ * envío en la misma transacción. Un rechazo revierte todo.
  */
 export async function updateDeliveryDetails(
   companyId: string,
@@ -263,22 +245,13 @@ export async function updateDeliveryDetails(
           throw new EditRejected("El pedido fue cancelado.");
         if (order.updatedAt.toISOString() !== input.updatedAt)
           throw new EditRejected(
-            "El pedido cambió desde que abriste la pantalla. Recarga la página para ver los datos vigentes.",
+            "El pedido cambió en otro dispositivo. Cierra esta ventana para ver los datos vigentes.",
           );
 
-        const current = order.delivery;
         const locked =
           order.documents.length > 0 || order.paymentStatus === "PAID";
         const plan = planDeliveryEdit(
-          {
-            name: current.name,
-            phone: current.phone,
-            address: current.address,
-            reference: current.reference,
-            fee: current.fee.toNumber(),
-            expectedPaymentMethod: current.expectedPaymentMethod,
-            cashPaysWith: current.cashPaysWith?.toNumber() ?? null,
-          },
+          { fee: order.delivery.fee.toNumber() },
           next,
           locked,
         );
@@ -291,26 +264,13 @@ export async function updateDeliveryDetails(
             phone: next.phone,
             address: next.address,
             reference: next.reference,
-            ...(locked
-              ? {}
-              : {
-                  fee: next.fee,
-                  expectedPaymentMethod: next.expectedPaymentMethod,
-                  cashPaysWith: next.cashPaysWith,
-                }),
+            ...(locked ? {} : { fee: next.fee }),
           },
         });
 
-        let total = order.total.toNumber();
-        if (!locked) {
-          const totals = await recalculateOrderTotals(db, order.id);
-          total = totals.total.toNumber();
-          if (
-            next.cashPaysWith !== null &&
-            !coversTotal(next.cashPaysWith, total)
-          )
-            throw new EditRejected(CASH_PAYS_WITH_BELOW_TOTAL_MESSAGE);
-        }
+        const total = locked
+          ? order.total.toNumber()
+          : (await recalculateOrderTotals(db, order.id)).total.toNumber();
         // Toda edición, también la de contacto, cambia la versión del pedido.
         const touched = await db.order.update({
           where: { id: order.id },
@@ -331,129 +291,74 @@ export async function updateDeliveryDetails(
   } catch (error) {
     if (error instanceof EditRejected)
       return { success: false, message: error.message };
-    // Un cobro o despacho concurrente ganó la carrera: se relee el pedido ya
-    // cambiado y se decide de nuevo, de forma acotada.
     if (isSerializationConflict(error) && attempt < 2)
       return updateDeliveryDetails(companyId, input, attempt + 1);
     return {
       success: false,
       message: isSerializationConflict(error)
-        ? "El pedido cambió. Recarga la página antes de reintentar."
+        ? "El pedido cambió. Vuelve a intentarlo."
         : "No se pudo guardar la edición.",
     };
   }
 }
 
-const OPEN_STATUSES: Array<"PENDING" | "DISPATCHED"> = [
-  "PENDING",
-  "DISPATCHED",
-];
-
-const LIMA_OFFSET = "-05:00";
-
-/** Rango [inicio, fin) de un día calendario de Lima (sin horario de verano). */
-export function limaDayRange(date: string): { from: Date; to: Date } {
-  const from = new Date(`${date}T00:00:00.000${LIMA_OFFSET}`);
-  return { from, to: new Date(from.getTime() + 24 * 60 * 60 * 1000) };
-}
-
-export function todayInLima(now: Date = new Date()): string {
-  return new Date(now.getTime() - 5 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
-}
-
-export type DeliveryListItem = {
+export type DeliveredItem = {
+  sessionId: string;
   orderId: string;
-  name: string;
-  phone: string;
-  address: string;
+  title: string;
+  address: string | null;
   total: number;
-  status: "PENDING" | "DISPATCHED" | "DELIVERED";
-  paymentStatus: "PENDING" | "PAID";
-  createdAt: string;
-  dispatchedAt: string | null;
-  isOverdue: boolean;
+  closedAt: Date;
 };
 
-export async function listDeliveryOrders(
+/** Deliveries y pedidos para llevar cerrados hoy (hora de Lima). */
+export async function listDeliveredToday(
   companyId: string,
-  filters: DeliveryListFilters = {},
   now: Date = new Date(),
-): Promise<response<{ items: DeliveryListItem[]; nextCursor: string | null }>> {
-  const date = filters.date ?? todayInLima(now);
-  if (Number.isNaN(Date.parse(`${date}T00:00:00Z`)))
-    return { success: false, message: "La fecha no es válida." };
-  const { from, to } = limaDayRange(date);
-  const { text: search, phoneDigits } = parseDeliverySearch(filters.search);
-  const rows = await prisma().delivery.findMany({
-    where: {
-      status: filters.status ?? { in: OPEN_STATUSES },
-      order: {
+): Promise<response<DeliveredItem[]>> {
+  try {
+    const { from, to } = limaDayRange(todayInLima(now));
+    const sessions = await prisma().tableSession.findMany({
+      where: {
         companyId,
-        orderType: "DELIVERY",
-        status: { not: "CANCELLED" },
-        // Con fecha explícita solo ese día; sin fecha, hoy más los Pendientes
-        // y Despachados de días anteriores, para que un atraso no se pierda.
-        ...(filters.date ? { createdAt: { gte: from, lt: to } } : {}),
+        tableId: null,
+        status: "CLOSED",
+        closedAt: { gte: from, lt: to },
       },
-      AND: [
-        ...(filters.date
-          ? []
-          : [
-              {
-                OR: [
-                  { order: { createdAt: { gte: from, lt: to } } },
-                  {
-                    status: { in: OPEN_STATUSES },
-                    order: { createdAt: { lt: from } },
-                  },
-                ],
-              },
-            ]),
-        ...(search
+      include: {
+        order: {
+          select: {
+            id: true,
+            total: true,
+            delivery: { select: { name: true, phone: true, address: true } },
+          },
+        },
+      },
+      orderBy: { closedAt: "desc" },
+    });
+    return {
+      success: true,
+      data: sessions.flatMap((session) =>
+        session.order
           ? [
               {
-                OR: [
-                  { name: { contains: search, mode: "insensitive" as const } },
-                  ...(phoneDigits
-                    ? [{ phone: { contains: phoneDigits } }]
-                    : []),
-                ],
+                sessionId: session.id,
+                orderId: session.order.id,
+                title: session.order.delivery
+                  ? session.order.delivery.name || session.order.delivery.phone
+                  : "Para llevar",
+                address: session.order.delivery?.address ?? null,
+                total: session.order.total.toNumber(),
+                closedAt: session.closedAt!,
               },
             ]
-          : []),
-      ],
-    },
-    orderBy: [{ order: { createdAt: "desc" } }, { orderId: "desc" }],
-    take: DELIVERY_LIST_PAGE_SIZE + 1,
-    ...(filters.cursor ? { cursor: { orderId: filters.cursor }, skip: 1 } : {}),
-    include: {
-      order: {
-        select: { total: true, paymentStatus: true, createdAt: true },
-      },
-    },
-  });
-  const page = rows.slice(0, DELIVERY_LIST_PAGE_SIZE);
-  return {
-    success: true,
-    data: {
-      items: page.map((row) => ({
-        orderId: row.orderId,
-        name: row.name,
-        phone: row.phone,
-        address: row.address,
-        total: row.order.total.toNumber(),
-        status: row.status,
-        paymentStatus: row.order.paymentStatus,
-        createdAt: row.order.createdAt.toISOString(),
-        dispatchedAt: row.dispatchedAt?.toISOString() ?? null,
-        isOverdue: isDeliveryOverdue(row, now),
-      })),
-      nextCursor:
-        rows.length > DELIVERY_LIST_PAGE_SIZE
-          ? page[page.length - 1].orderId
-          : null,
-    },
-  };
+          : [],
+      ),
+    };
+  } catch {
+    return {
+      success: false,
+      message: "No se pudieron cargar los pedidos entregados.",
+    };
+  }
 }

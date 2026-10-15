@@ -7,7 +7,7 @@ import type {
   TableWithSession,
   TableConfiguration,
 } from "./types";
-import { $Enums } from "@prisma/client";
+import { $Enums, Prisma } from "@prisma/client";
 import { CreateTablesSchema } from "./schemas";
 
 // -- Mapper types --
@@ -17,7 +17,7 @@ type PrismaSessionResult = {
   draftRevision?: number;
   id: string;
   companyId: string;
-  tableId: string;
+  tableId: string | null;
   waiterId: string;
   status: $Enums.TableSessionStatus;
   current: boolean | null;
@@ -31,6 +31,19 @@ type PrismaSessionResult = {
   waiter?: { id: string; name: string | null } | null;
   order?: {
     id: string;
+    orderType?: $Enums.OrderType;
+    updatedAt?: Date;
+    total?: { toNumber(): number } | number;
+    paymentStatus?: $Enums.OrderPaymentStatus;
+    delivery?: {
+      status: $Enums.DeliveryStatus;
+      name: string | null;
+      phone: string;
+      address: string;
+      reference: string | null;
+      fee: { toNumber(): number } | number;
+      dispatchedAt: Date | null;
+    } | null;
     rounds?: Array<{
       id: string;
       number: number;
@@ -150,6 +163,13 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
         }
       : null,
     orderId: s.order?.id ?? null,
+    orderType: s.order?.orderType,
+    orderVersion: s.order?.updatedAt?.toISOString(),
+    total: s.order?.total === undefined ? undefined : Number(s.order.total),
+    paymentStatus: s.order?.paymentStatus,
+    delivery: s.order?.delivery
+      ? { ...s.order.delivery, fee: Number(s.order.delivery.fee) }
+      : null,
     currentRound: maxRound,
     openedAt: s.openedAt,
     closedAt: s.closedAt,
@@ -670,6 +690,7 @@ export async function updateSessionStatus(
   companyId: string,
   status: "OPEN" | "BILL_REQUESTED" | "CLOSED" | "CANCELLED",
   cancellationReason?: string,
+  takeAwayOnly = false,
 ): Promise<response<TableSession>> {
   try {
     const existing = await prisma().tableSession.findFirst({
@@ -683,11 +704,13 @@ export async function updateSessionStatus(
         companyId,
         current: true,
         status: existing.status,
+        ...(takeAwayOnly ? { tableId: null } : {}),
         ...(status === "CLOSED"
           ? {
               order: {
                 status: "PENDING",
                 paymentStatus: "PAID",
+                ...(takeAwayOnly ? { delivery: { is: null } } : {}),
               },
             }
           : {
@@ -847,5 +870,84 @@ export async function findUserByIdAndCompany(
   } catch (e: any) {
     console.error("findUserByIdAndCompany error:", e);
     return { success: false, message: "Error interno del servidor" };
+  }
+}
+
+// -- Sesiones sin mesa (delivery y para llevar) --
+
+const serviceSessionInclude = {
+  waiter: { select: { id: true, name: true } },
+  order: {
+    include: {
+      delivery: true,
+      rounds: {
+        include: {
+          responsibleUser: { select: { id: true, name: true } },
+          items: {
+            select: {
+              id: true,
+              orderItemId: true,
+              quantity: true,
+              cancellations: { select: { quantity: true } },
+              kitchen: { select: { id: true, name: true } },
+            },
+          },
+        },
+        orderBy: { number: "asc" },
+      },
+      orderItems: {
+        include: { product: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  },
+} satisfies Prisma.TableSessionInclude;
+
+export async function findSessionById(
+  sessionId: string,
+  companyId: string,
+): Promise<response<TableSession>> {
+  try {
+    const session = await prisma().tableSession.findFirst({
+      where: { id: sessionId, companyId },
+      include: serviceSessionInclude,
+    });
+    if (!session) return { success: false, message: "Pedido no encontrado" };
+    return { success: true, data: mapPrismaSession(session) };
+  } catch (e) {
+    console.error("findSessionById error:", e);
+    return { success: false, message: "Error interno del servidor" };
+  }
+}
+
+/** Deliveries y pedidos para llevar abiertos, del más antiguo al más reciente. */
+export async function findServiceSessions(
+  companyId: string,
+): Promise<response<TableSession[]>> {
+  try {
+    const sessions = await prisma().tableSession.findMany({
+      where: { companyId, tableId: null, current: true },
+      include: serviceSessionInclude,
+      orderBy: { openedAt: "asc" },
+    });
+    return { success: true, data: sessions.map(mapPrismaSession) };
+  } catch (e) {
+    console.error("findServiceSessions error:", e);
+    return { success: false, message: "Error interno del servidor" };
+  }
+}
+
+/** Último envío usado en un delivery, para precargar el siguiente. */
+export async function findLastDeliveryFee(companyId: string) {
+  try {
+    const last = await prisma().delivery.findFirst({
+      where: { order: { companyId } },
+      orderBy: { createdAt: "desc" },
+      select: { fee: true },
+    });
+    return last ? last.fee.toNumber() : null;
+  } catch (e) {
+    console.error("findLastDeliveryFee error:", e);
+    return null;
   }
 }
