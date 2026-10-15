@@ -199,7 +199,11 @@ export default function CloseCashShiftForm({
                       className="flex items-center justify-between gap-2"
                     >
                       <Link
-                        href={`/dashboard/orders/${order.orderId}`}
+                        href={
+                          order.sessionId
+                            ? `/dashboard/tables/delivery/${order.sessionId}/order`
+                            : `/dashboard/orders/${order.orderId}`
+                        }
                         target="_blank"
                         className="min-w-0 truncate underline"
                       >

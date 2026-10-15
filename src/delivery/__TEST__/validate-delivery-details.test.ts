@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
-  coversTotal,
   normalizeDeliveryPhone,
-  validateCashPaysWithCoversTotal,
   validateDeliveryDetails,
 } from "../use-cases/validate-delivery-details";
 
@@ -45,18 +43,23 @@ describe("validateDeliveryDetails", () => {
         address: "Av. Lima 123",
         reference: "Portón verde",
         fee: 5,
-        expectedPaymentMethod: null,
-        cashPaysWith: null,
       },
     });
   });
 
-  test("la referencia es opcional", () => {
-    const result = validateDeliveryDetails({ ...valid, reference: "  " });
-    expect(result.success && result.data.reference).toBeNull();
+  test("la referencia y el nombre son opcionales", () => {
+    const result = validateDeliveryDetails({
+      ...valid,
+      reference: "  ",
+      name: undefined,
+    });
+    expect(result).toMatchObject({
+      success: true,
+      data: { reference: null, name: null },
+    });
   });
 
-  test.each(["name", "phone", "address", "fee"] as const)(
+  test.each(["phone", "address", "fee"] as const)(
     "rechaza sin %s e indica el campo",
     (field) => {
       const result = validateDeliveryDetails({ ...valid, [field]: undefined });
@@ -70,7 +73,7 @@ describe("validateDeliveryDetails", () => {
   test("indica todos los campos faltantes en el mensaje", () => {
     const result = validateDeliveryDetails({});
     expect(result).toMatchObject({ success: false });
-    expect(!result.success && result.message).toContain("nombre");
+    expect(!result.success && result.message).not.toContain("nombre");
     expect(!result.success && result.message).toContain("teléfono");
     expect(!result.success && result.message).toContain("dirección");
     expect(!result.success && result.message).toContain("envío");
@@ -97,54 +100,5 @@ describe("validateDeliveryDetails", () => {
     expect(errorsOf({ ...valid, fee: 5.555 })).toHaveProperty("fee");
     expect(errorsOf({ ...valid, fee: "abc" })).toHaveProperty("fee");
     expect(errorsOf({ ...valid, fee: Number.NaN })).toHaveProperty("fee");
-  });
-
-  test("“paga con” solo con efectivo y positivo", () => {
-    expect(
-      errorsOf({
-        ...valid,
-        expectedPaymentMethod: "WALLET",
-        cashPaysWith: 100,
-      }),
-    ).toHaveProperty("cashPaysWith");
-    expect(errorsOf({ ...valid, cashPaysWith: 100 })).toHaveProperty(
-      "cashPaysWith",
-    );
-    expect(
-      errorsOf({ ...valid, expectedPaymentMethod: "CASH", cashPaysWith: 0 }),
-    ).toHaveProperty("cashPaysWith");
-    expect(
-      validateDeliveryDetails({
-        ...valid,
-        expectedPaymentMethod: "CASH",
-        cashPaysWith: "100",
-      }),
-    ).toMatchObject({ success: true, data: { cashPaysWith: 100 } });
-  });
-
-  test("“paga con” debe cubrir el total cuando se conoce", () => {
-    const cash = { ...valid, expectedPaymentMethod: "CASH", cashPaysWith: 50 };
-    expect(validateDeliveryDetails(cash, 55)).toMatchObject({ success: false });
-    expect(validateDeliveryDetails(cash, 50).success).toBe(true);
-  });
-
-  test("rechaza un medio esperado desconocido", () => {
-    expect(
-      errorsOf({ ...valid, expectedPaymentMethod: "CARD" }),
-    ).toHaveProperty("expectedPaymentMethod");
-  });
-});
-
-describe("“paga con” contra el total", () => {
-  test("compara en centavos", () => {
-    expect(coversTotal(55, 55)).toBe(true);
-    expect(coversTotal(54.99, 55)).toBe(false);
-    expect(coversTotal(0.3, 0.1 + 0.2)).toBe(true);
-  });
-
-  test("sin “paga con” siempre es válido", () => {
-    expect(validateCashPaysWithCoversTotal(null, 999).success).toBe(true);
-    expect(validateCashPaysWithCoversTotal(60, 55).success).toBe(true);
-    expect(validateCashPaysWithCoversTotal(60, 85).success).toBe(false);
   });
 });

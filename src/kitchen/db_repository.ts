@@ -272,6 +272,7 @@ export async function findKitchenTickets(input: {
             select: {
               id: true,
               orderType: true,
+              delivery: { select: { name: true } },
               tableSession: {
                 select: { table: { select: { label: true, number: true } } },
               },
@@ -313,11 +314,13 @@ export async function findKitchenTickets(input: {
         type: ticket.orderRound.order
           .orderType as KitchenTicketView["order"]["type"],
         label:
-          ticket.orderRound.order.tableSession?.table.label ||
+          ticket.orderRound.order.tableSession?.table?.label ||
           (ticket.orderRound.order.orderType === "DINE_IN"
-            ? `Mesa ${ticket.orderRound.order.tableSession?.table.number ?? ""}`.trim()
+            ? `Mesa ${ticket.orderRound.order.tableSession?.table?.number ?? ""}`.trim()
             : ticket.orderRound.order.orderType === "DELIVERY"
-              ? "Delivery"
+              ? ["Delivery", ticket.orderRound.order.delivery?.name]
+                  .filter(Boolean)
+                  .join(" · ")
               : "Para llevar"),
       },
       kitchen: { id: ticket.kitchen.id, name: ticket.kitchen.name },
@@ -496,6 +499,7 @@ export async function createManualKitchenTicketPrintJob(
                 responsibleUser: { select: { name: true, email: true } },
                 order: {
                   select: {
+                    id: true,
                     orderType: true,
                     delivery: { select: { name: true } },
                     tableSession: {
@@ -564,17 +568,15 @@ export async function createManualKitchenTicketPrintJob(
             kitchenName: ticket.kitchen.name,
             orderType: ticket.orderRound.order.orderType,
             orderLabel:
-              ticket.orderRound.order.tableSession?.table.label ||
+              ticket.orderRound.order.tableSession?.table?.label ||
               String(
-                ticket.orderRound.order.tableSession?.table.number ?? "Pedido",
+                ticket.orderRound.order.tableSession?.table?.number ??
+                  ticket.orderRound.order.id.slice(0, 8).toUpperCase(),
               ),
             responsibleName:
               ticket.orderRound.responsibleUser.name ||
               ticket.orderRound.responsibleUser.email,
-            customerName:
-              ticket.orderRound.order.orderType === "DELIVERY"
-                ? ticket.orderRound.order.delivery?.name
-                : undefined,
+            customerName: ticket.orderRound.order.delivery?.name,
             isReprint: input.isReprint,
             items: items
               .filter(

@@ -1,17 +1,9 @@
-import type { response } from "@/lib/types";
-
-export const DELIVERY_EXPECTED_PAYMENTS = ["CASH", "WALLET"] as const;
-export type DeliveryExpectedPayment =
-  (typeof DELIVERY_EXPECTED_PAYMENTS)[number];
-
 export type DeliveryDetailsField =
   | "name"
   | "phone"
   | "address"
   | "reference"
-  | "fee"
-  | "expectedPaymentMethod"
-  | "cashPaysWith";
+  | "fee";
 
 export type DeliveryDetailsInput = {
   name?: unknown;
@@ -19,18 +11,14 @@ export type DeliveryDetailsInput = {
   address?: unknown;
   reference?: unknown;
   fee?: unknown;
-  expectedPaymentMethod?: unknown;
-  cashPaysWith?: unknown;
 };
 
 export type DeliveryDetails = {
-  name: string;
+  name: string | null;
   phone: string;
   address: string;
   reference: string | null;
   fee: number;
-  expectedPaymentMethod: DeliveryExpectedPayment | null;
-  cashPaysWith: number | null;
 };
 
 export type DeliveryDetailsErrors = Partial<
@@ -47,8 +35,6 @@ const FIELD_LABELS: Record<DeliveryDetailsField, string> = {
   address: "dirección",
   reference: "referencia",
   fee: "envío",
-  expectedPaymentMethod: "medio de pago esperado",
-  cashPaysWith: "paga con",
 };
 
 const NAME_MAX = 120;
@@ -90,18 +76,23 @@ function requiredText(
     : { value: text };
 }
 
-/**
- * Reglas puras de los datos de entrega. `total` (ítems + envío) permite validar
- * “paga con” cuando ya se conoce; sin él solo se valida la forma.
- */
+function optionalText(value: unknown, max: number) {
+  if (isMissing(value)) return { value: null };
+  if (typeof value !== "string") return { error: "El valor no es válido." };
+  const text = value.trim();
+  return text.length > max
+    ? { error: `Máximo ${max} caracteres.` }
+    : { value: text || null };
+}
+
+/** Reglas puras de los datos de entrega: teléfono y dirección obligatorios. */
 export function validateDeliveryDetails(
   input: DeliveryDetailsInput | null | undefined,
-  total?: number,
 ): DeliveryDetailsResult {
   const errors: DeliveryDetailsErrors = {};
   const raw = input ?? {};
 
-  const name = requiredText(raw.name, NAME_MAX, "el nombre del cliente");
+  const name = optionalText(raw.name, NAME_MAX);
   if (name.error) errors.name = name.error;
 
   const phone = normalizeDeliveryPhone(raw.phone);
@@ -112,17 +103,8 @@ export function validateDeliveryDetails(
   const address = requiredText(raw.address, ADDRESS_MAX, "la dirección");
   if (address.error) errors.address = address.error;
 
-  let reference: string | null = null;
-  if (!isMissing(raw.reference)) {
-    if (typeof raw.reference !== "string")
-      errors.reference = "La referencia no es válida.";
-    else {
-      const text = raw.reference.trim();
-      if (text.length > REFERENCE_MAX)
-        errors.reference = `Máximo ${REFERENCE_MAX} caracteres.`;
-      else reference = text || null;
-    }
-  }
+  const reference = optionalText(raw.reference, REFERENCE_MAX);
+  if (reference.error) errors.reference = reference.error;
 
   const fee = isMissing(raw.fee) ? Number.NaN : toAmount(raw.fee);
   if (isMissing(raw.fee))
@@ -132,38 +114,6 @@ export function validateDeliveryDetails(
   else if (!hasAtMostTwoDecimals(fee))
     errors.fee = "El envío admite hasta dos decimales.";
   else if (fee > 99999999.99) errors.fee = "El envío es demasiado alto.";
-
-  let expectedPaymentMethod: DeliveryExpectedPayment | null = null;
-  if (!isMissing(raw.expectedPaymentMethod)) {
-    if (
-      !DELIVERY_EXPECTED_PAYMENTS.includes(
-        raw.expectedPaymentMethod as DeliveryExpectedPayment,
-      )
-    )
-      errors.expectedPaymentMethod = "Elige efectivo o billetera.";
-    else
-      expectedPaymentMethod =
-        raw.expectedPaymentMethod as DeliveryExpectedPayment;
-  }
-
-  let cashPaysWith: number | null = null;
-  if (!isMissing(raw.cashPaysWith)) {
-    const amount = toAmount(raw.cashPaysWith);
-    if (expectedPaymentMethod !== "CASH")
-      errors.cashPaysWith = "“Paga con” solo aplica al pago en efectivo.";
-    else if (!Number.isFinite(amount) || amount <= 0)
-      errors.cashPaysWith = "“Paga con” debe ser mayor a 0.";
-    else if (!hasAtMostTwoDecimals(amount))
-      errors.cashPaysWith = "“Paga con” admite hasta dos decimales.";
-    else if (amount > 99999999.99)
-      errors.cashPaysWith = "“Paga con” es demasiado alto.";
-    else {
-      cashPaysWith = amount;
-      const toPay = total ?? undefined;
-      if (toPay !== undefined && !coversTotal(amount, toPay))
-        errors.cashPaysWith = `“Paga con” debe ser al menos el total (${toPay.toFixed(2)}).`;
-    }
-  }
 
   const fields = Object.keys(errors) as DeliveryDetailsField[];
   if (fields.length)
@@ -178,35 +128,11 @@ export function validateDeliveryDetails(
   return {
     success: true,
     data: {
-      name: name.value!,
+      name: name.value ?? null,
       phone: phone!,
       address: address.value!,
-      reference,
+      reference: reference.value ?? null,
       fee,
-      expectedPaymentMethod,
-      cashPaysWith,
     },
   };
-}
-
-/** “Paga con” cubre el total (comparación en centavos, sin error de flotantes). */
-export function coversTotal(cashPaysWith: number, total: number): boolean {
-  return Math.round(cashPaysWith * 100) >= Math.round(total * 100);
-}
-
-export const CASH_PAYS_WITH_BELOW_TOTAL_MESSAGE =
-  "“Paga con” quedaría por debajo del nuevo total del pedido.";
-
-/** Mensaje al crear: el pedido aún no existe, así que se indica el total. */
-export const cashPaysWithBelowCreationTotalMessage = (total: number) =>
-  `“Paga con” debe ser al menos el total (S/ ${total.toFixed(2)}).`;
-
-/** Revalida “paga con” tras cambiar el total (adiciones, retiros). */
-export function validateCashPaysWithCoversTotal(
-  cashPaysWith: number | null | undefined,
-  total: number,
-): response<null> {
-  if (cashPaysWith == null || coversTotal(cashPaysWith, total))
-    return { success: true, data: null };
-  return { success: false, message: CASH_PAYS_WITH_BELOW_TOTAL_MESSAGE };
 }

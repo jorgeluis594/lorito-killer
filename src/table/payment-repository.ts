@@ -20,6 +20,7 @@ const include = {
   table: true,
   order: {
     include: {
+      delivery: true,
       customer: true,
       payments: true,
       documents: true,
@@ -33,13 +34,20 @@ export type TablePaymentResult = {
   state: "paid" | "register";
   orderId: string;
   documentId?: string;
+  /** Tipo del comprobante emitido (o recuperado), no el elegido al reintentar. */
+  documentType?: string;
   total: number;
   method: string;
 };
 export type TablePaymentData = {
   sessionId: string;
-  tableId: string;
-  tableLabel: string;
+  /** Null en delivery y para llevar. */
+  tableId: string | null;
+  kind: "table" | "delivery" | "takeaway";
+  /** "Mesa 4", "Delivery · Ana" o "Para llevar". */
+  title: string;
+  deliveryFee: number | null;
+  deliveryStatus: "PENDING" | "DISPATCHED" | "DELIVERED" | null;
   revision: number;
   orderVersion: string;
   total: number;
@@ -69,6 +77,7 @@ function paidResult(session: Session): TablePaymentResult | null {
     state: "paid",
     orderId: order.id,
     documentId: order.documents[0].id,
+    documentType: order.documentType ?? undefined,
     total: Number(order.total),
     method:
       order.payments.length > 1
@@ -92,18 +101,30 @@ async function sharedCashShift(
   });
 }
 
+export function sessionTitle(session: {
+  table: { label: string | null; number: number } | null;
+  order: { delivery: { name: string | null; phone: string } | null } | null;
+}) {
+  if (session.table)
+    return `Mesa ${session.table.label || session.table.number}`;
+  const delivery = session.order?.delivery;
+  return delivery
+    ? `Delivery · ${delivery.name || delivery.phone}`
+    : "Para llevar";
+}
+
 export async function getTablePaymentData(
   companyId: string,
-  tableId: string,
-  sessionId?: string,
+  where: { sessionId: string } | { tableId: string },
 ): Promise<response<TablePaymentData>> {
   const db = prisma();
   const [session, shift, company] = await Promise.all([
     db.tableSession.findFirst({
       where: {
         companyId,
-        tableId,
-        ...(sessionId ? { id: sessionId } : { current: true }),
+        ...("sessionId" in where
+          ? { id: where.sessionId }
+          : { tableId: where.tableId, current: true }),
       },
       include,
     }),
@@ -126,8 +147,11 @@ export async function getTablePaymentData(
     success: true,
     data: {
       sessionId: session.id,
-      tableId,
-      tableLabel: session.table.label || String(session.table.number),
+      tableId: session.tableId,
+      kind: session.table ? "table" : order.delivery ? "delivery" : "takeaway",
+      title: sessionTitle(session),
+      deliveryFee: order.delivery ? order.delivery.fee.toNumber() : null,
+      deliveryStatus: order.delivery?.status ?? null,
       revision: session.draftRevision,
       orderVersion: order.updatedAt.toISOString(),
       total: Number(order.total),
@@ -168,6 +192,22 @@ export async function getTablePaymentData(
   };
 }
 
+/** Cierra una sesión sin mesa ya cobrada y completa su pedido. */
+export async function closeServiceSession(
+  db: Prisma.TransactionClient,
+  sessionId: string,
+  orderId: string,
+) {
+  await db.tableSession.update({
+    where: { id: sessionId },
+    data: { status: "CLOSED", current: null, closedAt: new Date() },
+  });
+  await db.order.update({
+    where: { id: orderId },
+    data: { status: "COMPLETED" },
+  });
+}
+
 function reject(message: string): never {
   throw new Error(message);
 }
@@ -175,6 +215,7 @@ function reject(message: string): never {
 export async function payTable(
   user: AuthorizedUser,
   input: TablePaymentInput,
+  attempt = 0,
 ): Promise<response<TablePaymentResult>> {
   try {
     return await prisma().$transaction(
@@ -351,6 +392,7 @@ export async function payTable(
           total: Number(order.total),
           netTotal: Number(order.netTotal),
           discountAmount: Number(order.discountAmount),
+          deliveryFee: order.delivery?.fee.toNumber(),
           payments,
           orderItems: items.map(mapReceiptPrintOrderItem),
         };
@@ -440,12 +482,16 @@ export async function payTable(
           await tx.documentTaxDispatch.create({
             data: { documentId: document.data.id, companyId: user.companyId },
           });
+        // Entregado y cobrado: el delivery termina, como una mesa liberada.
+        if (order.delivery?.status === "DELIVERED")
+          await closeServiceSession(tx, session.id, order.id);
         return {
           success: true,
           data: {
             state: "paid",
             orderId: order.id,
             documentId: document.data.id,
+            documentType: receipt.documentType,
             total: Number(order.total),
             method: input.method,
           },
@@ -455,6 +501,14 @@ export async function payTable(
     );
   } catch (error) {
     const code = (error as { code?: string }).code;
+    // Cobros simultáneos en la misma caja o serie chocan al serializar. El cobro
+    // es idempotente (recupera el comprobante ya emitido), así que se reintenta.
+    const transient =
+      code === "P2034" ||
+      code === "P2002" ||
+      (code === "P2010" &&
+        (error as { meta?: { code?: string } }).meta?.code === "40001");
+    if (transient && attempt < 2) return payTable(user, input, attempt + 1);
     return {
       success: false,
       message:

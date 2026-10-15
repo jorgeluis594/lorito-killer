@@ -60,7 +60,7 @@ export async function updateTableDraft(input: {
   operation: "save" | "read" | "leave";
   items?: RoundItem[];
 }): Promise<
-  response<{ revision: number; tableId: string; items?: RoundItem[] }>
+  response<{ revision: number; tableId: string | null; items?: RoundItem[] }>
 > {
   try {
     return await prisma().$transaction(
@@ -70,7 +70,7 @@ export async function updateTableDraft(input: {
             id: input.sessionId,
             companyId: input.companyId,
             current: true,
-            table: { active: true },
+            OR: [{ tableId: null }, { table: { active: true } }],
           },
           include: {
             order: {

@@ -69,7 +69,8 @@ export type TableSession = {
   draftRevision?: number;
   id: string;
   companyId: string;
-  tableId: string;
+  /** Null en delivery y para llevar: sesiones sin mesa. */
+  tableId: string | null;
   table?: Table;
   waiterId: string;
   waiter?: { id: string; name?: string | null };
@@ -80,11 +81,27 @@ export type TableSession = {
   cancellationReason?: string | null;
   order?: TableOrder | null;
   orderId?: string | null;
+  orderType?: OrderType;
+  /** `Order.updatedAt`: versión para editar los datos de entrega. */
+  orderVersion?: string;
+  total?: number;
+  paymentStatus?: "PENDING" | "PAID";
+  delivery?: SessionDelivery | null;
   currentRound: number;
   openedAt: Date;
   closedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type SessionDelivery = {
+  status: "PENDING" | "DISPATCHED" | "DELIVERED";
+  name: string | null;
+  phone: string;
+  address: string;
+  reference: string | null;
+  fee: number;
+  dispatchedAt: Date | null;
 };
 
 export type TableDraftItem = {

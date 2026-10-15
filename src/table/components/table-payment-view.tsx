@@ -34,7 +34,7 @@ import type {
   TablePaymentResult,
 } from "../payment-repository";
 import { confirmTablePayment, loadTablePayment } from "../payment-actions";
-import { closeTable } from "../actions";
+import { closeServiceSessionAction, closeTable } from "../actions";
 import { TableRealtimeListener } from "./table-realtime-listener";
 
 const labels: Record<string, string> = {
@@ -64,6 +64,9 @@ export function TablePaymentView({
   canCollectCash: boolean;
 }) {
   const [data, setData] = useState(initialData);
+  const orderHref = data.tableId
+    ? `/dashboard/tables/${data.tableId}/order`
+    : `/dashboard/tables/delivery/${data.sessionId}/order`;
   const [step, setStep] = useState<"review" | "payment">("review");
   const [receipt, setReceipt] = useState<TableReceiptInput>(
     initialData.receipt,
@@ -121,10 +124,9 @@ export function TablePaymentView({
   const refresh = useCallback(async () => {
     const current = dataRef.current;
     try {
-      const response = await loadTablePayment(
-        current.tableId,
-        current.sessionId,
-      );
+      const response = await loadTablePayment({
+        sessionId: current.sessionId,
+      });
       if (!response.success) {
         setError(response.message);
         return false;
@@ -297,7 +299,9 @@ export function TablePaymentView({
 
   async function releaseTable() {
     setBusy(true);
-    const response = await closeTable(data.tableId, false);
+    const response = data.tableId
+      ? await closeTable(data.tableId, false)
+      : await closeServiceSessionAction(data.sessionId);
     setBusy(false);
     if (response.success) window.location.href = "/dashboard/tables";
     else setError(response.message);
@@ -308,11 +312,7 @@ export function TablePaymentView({
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
         <Button asChild variant="ghost" size="icon">
           <Link
-            href={
-              result || waitingAtRegister
-                ? "/dashboard/tables"
-                : `/dashboard/tables/${data.tableId}/order`
-            }
+            href={result || waitingAtRegister ? "/dashboard/tables" : orderHref}
             aria-label={
               result || waitingAtRegister
                 ? "Volver a mesas"
@@ -323,7 +323,7 @@ export function TablePaymentView({
           </Link>
         </Button>
         <div>
-          <h1 className="text-xl font-bold">Mesa {data.tableLabel}</h1>
+          <h1 className="text-xl font-bold">{data.title}</h1>
           <p className="text-sm text-muted-foreground">
             {result?.state === "paid" ? "Cuenta pagada" : "Cobro de la cuenta"}
           </p>
@@ -357,9 +357,17 @@ export function TablePaymentView({
               {paid ? "Pago confirmado" : "Pendiente de cobro en caja"}
             </h2>
             <p className="text-muted-foreground">
-              {paid
-                ? "El cobro está registrado. Libera la mesa cuando termine la atención."
-                : "Caja completará el cobro. La mesa sigue ocupada."}
+              {!paid
+                ? data.kind === "table"
+                  ? "Caja completará el cobro. La mesa sigue ocupada."
+                  : "Caja completará el cobro. El pedido sigue en Mesas."
+                : data.kind === "table"
+                  ? "El cobro está registrado. Libera la mesa cuando termine la atención."
+                  : data.kind === "takeaway"
+                    ? "El cobro está registrado. Marca la entrega cuando el cliente recoja su pedido."
+                    : data.deliveryStatus === "DELIVERED" || closed
+                      ? "El cobro está registrado y el pedido ya fue entregado. Quedó cerrado."
+                      : "El cobro está registrado. El pedido sigue en Mesas hasta que lo entregues."}
             </p>
           </div>
           <dl className="flex flex-col gap-3 border-y py-5">
@@ -376,9 +384,11 @@ export function TablePaymentView({
               </div>
             ) : null}
           </dl>
-          {paid ? (
+          {paid && data.kind !== "delivery" && !closed ? (
             <Button className="min-h-12" onClick={releaseTable} disabled={busy}>
-              Liberar mesa
+              {data.kind === "table"
+                ? "Liberar mesa"
+                : "Entregado · cerrar pedido"}
               <ArrowRight aria-hidden />
             </Button>
           ) : (
@@ -459,6 +469,14 @@ export function TablePaymentView({
               </li>
             ))}
           </ul>
+          {data.deliveryFee ? (
+            <div className="flex items-center justify-between border-b py-4 text-sm">
+              <span>Envío</span>
+              <span className="tabular-nums">
+                {formatPrice(data.deliveryFee)}
+              </span>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between py-5">
             <span className="font-semibold">Total a cobrar</span>
             <strong className="text-2xl tabular-nums">
@@ -475,9 +493,7 @@ export function TablePaymentView({
                 para resolverlos antes de cobrar.
               </p>
               <Button asChild variant="outline">
-                <Link href={`/dashboard/tables/${data.tableId}/order`}>
-                  Volver al pedido
-                </Link>
+                <Link href={orderHref}>Volver al pedido</Link>
               </Button>
             </div>
           ) : null}
@@ -885,7 +901,7 @@ export function TablePaymentView({
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-bold">Mesa {data.tableLabel}</p>
+                <p className="text-sm font-bold">{data.title}</p>
                 <p className="text-xs text-muted-foreground">
                   {method ? labels[method] : "Elige el medio de pago"}
                 </p>
@@ -896,7 +912,9 @@ export function TablePaymentView({
             </div>
             <p className="text-xs text-muted-foreground">
               {method === "register"
-                ? "La solicitud no registra un pago ni libera la mesa."
+                ? data.kind === "table"
+                  ? "La solicitud no registra un pago ni libera la mesa."
+                  : "La solicitud no registra un pago ni cierra el pedido."
                 : "Confirma después de verificar que recibiste el pago."}
             </p>
             <Button

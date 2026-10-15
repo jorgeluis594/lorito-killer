@@ -15,11 +15,15 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/document/tax-dispatch-outbox", () => ({
   enqueueDocumentTaxDispatch: vi.fn(),
 }));
+vi.mock("@/lib/realtime/config", () => ({
+  getRealtimeProvider: async () => ({ broadcast: vi.fn() }),
+}));
 
 import prisma from "@/lib/prisma";
 import { enqueueDocumentTaxDispatch } from "@/document/tax-dispatch-outbox";
 import { formatPriceWithoutCurrency } from "@/lib/utils";
-import { confirmFulfillmentPayment } from "@/order/fulfillment-payment-actions";
+import { confirmTablePayment } from "@/table/payment-actions";
+import { payTable } from "@/table/payment-repository";
 import {
   find as findOrder,
   findReceiptPrintOrder,
@@ -354,10 +358,7 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
         data: { total: 58, netTotal: 58 },
       }),
     ]);
-    const { payFulfillmentOrder } = await import(
-      "@/order/fulfillment-payment-repository"
-    );
-    const rejected = await payFulfillmentOrder(f.user("cashier"), stale);
+    const rejected = await payTable(f.user("cashier"), stale);
     expect(rejected).toMatchObject({ success: false });
     expect(await countFor(orderId)).toEqual({ payments: 0, documents: 0 });
     expect(
@@ -367,9 +368,9 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
 
     // Solo el total viejo (con versión vigente) también se rechaza.
     const versionOnly = await f.paymentInput(orderId, { expectedTotal: 55 });
-    expect(
-      await payFulfillmentOrder(f.user("cashier"), versionOnly),
-    ).toMatchObject({ success: false });
+    expect(await payTable(f.user("cashier"), versionOnly)).toMatchObject({
+      success: false,
+    });
     expect(await countFor(orderId)).toEqual({ payments: 0, documents: 0 });
 
     // Con el total vigente (58) el cobro procede y el documento lo refleja.
@@ -526,31 +527,29 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
     expect(bodies[0].items).toHaveLength(2);
     expect(shippingItems(bodies[0].items)).toHaveLength(0);
     expect(bodies[0].totales.total_venta).toBe(50);
-    expect(await f.stockA()).toBe(stockBefore);
+    // Solo se descuenta la unidad de A cobrada.
+    expect(await f.stockA()).toBe(stockBefore! - 1);
     expect(await db().orderItem.count({ where: { orderId } })).toBe(2);
   });
 
-  test("el cobro del envío no genera ni repone stock", async () => {
+  test("el stock se descuenta al cobrar, solo por los productos y no por el envío", async () => {
     await f.setStockA(10);
     const orderId = await f.createOrder({});
-    expect(await f.stockA()).toBe(9);
+    expect(await f.stockA()).toBe(10);
     const transfers = await db().stockTransfer.count({
       where: { companyId: f.ids.company },
     });
     expect((await f.pay(orderId)).success).toBe(true);
     expect(await f.stockA()).toBe(9);
+    // Solo A controla stock: un movimiento, ninguno por el envío.
     expect(
       await db().stockTransfer.count({ where: { companyId: f.ids.company } }),
-    ).toBe(transfers);
+    ).toBe(transfers + 1);
   });
 
   test("el efectivo con vuelto se calcula sobre 55 y el vuelto no es ingreso de caja", async () => {
     const orderId = await f.createOrder({
-      delivery: {
-        ...f.defaultDelivery,
-        expectedPaymentMethod: "CASH",
-        cashPaysWith: 100,
-      },
+      delivery: { ...f.defaultDelivery, reference: "Paga con 100" },
     });
     const paid = await f.pay(orderId, { method: "cash", cashReceived: 100 });
     expect(paid.success, JSON.stringify(paid)).toBe(true);
@@ -567,7 +566,7 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
   test("SELLER no puede cobrar ni por llamada directa a la acción", async () => {
     const orderId = await f.createOrder({});
     mocks.getSession.mockResolvedValue({ user: f.user("seller") });
-    const rejected = await confirmFulfillmentPayment(
+    const rejected = await confirmTablePayment(
       await f.paymentInput(orderId, { receipt: { documentType: "ticket" } }),
     );
     expect(rejected.success).toBe(false);
@@ -630,37 +629,31 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
     }
   });
 
-  test("I2 un segundo cobro con otro comprobante se rechaza y la acción encola según el documento devuelto", async () => {
+  test("I2 un segundo cobro devuelve el ya registrado y la acción encola solo comprobantes electrónicos", async () => {
     const orderId = await f.createOrder({});
     const ticket = await f.paymentInput(orderId, {
       method: "debit_card",
       receipt: { documentType: "ticket" },
     });
-    const first = await confirmFulfillmentPayment(ticket);
-    expect(first).toMatchObject({
-      success: true,
-      data: { documentType: "ticket" },
-    });
     const enqueue = vi.mocked(enqueueDocumentTaxDispatch);
     enqueue.mockClear();
-    // Misma solicitud: devuelve el mismo documento y no encola (ticket).
-    expect(await confirmFulfillmentPayment(ticket)).toEqual(first);
-    // Otro comprobante o medio: rechazo, sin filas nuevas ni encolado.
-    for (const other of [
-      { ...ticket, receipt: f.invoiceReceipt },
-      { ...ticket, receipt: { documentType: "receipt" as const } },
-      { ...ticket, method: "cash" as const, cashReceived: 60 },
-    ])
-      expect(await confirmFulfillmentPayment(other)).toMatchObject({
-        success: false,
-        message: "El pedido ya fue cobrado con otro comprobante.",
-      });
+    const first = await confirmTablePayment(ticket);
+    expect(first).toMatchObject({ success: true, data: { state: "paid" } });
     expect(enqueue).not.toHaveBeenCalled();
+    // Reintentos, aun con otro medio: mismo resultado y sin filas nuevas.
+    expect(await confirmTablePayment(ticket)).toEqual(first);
+    expect(
+      await payTable(f.user("cashier"), {
+        ...ticket,
+        method: "cash",
+        cashReceived: 60,
+      }),
+    ).toEqual(first);
     expect(await countFor(orderId)).toEqual({ payments: 1, documents: 1 });
 
     // Boleta: se encola con el id del documento devuelto.
     const orderId2 = await f.createOrder({});
-    const receipt = await confirmFulfillmentPayment(
+    const receipt = await confirmTablePayment(
       await f.paymentInput(orderId2, { method: "debit_card" }),
     );
     expect(receipt.success).toBe(true);
