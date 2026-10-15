@@ -173,7 +173,9 @@ describe("Delivery en Mesas · creación", () => {
         f.orderIds.push(row.id);
       }
 
-    mocks.getSession.mockResolvedValue({ user: f.user("seller") });
+    mocks.getSession.mockResolvedValue({
+      user: { ...f.user("seller"), role: "KITCHEN" },
+    });
     expect(await openDelivery(null)).toMatchObject({ success: false });
   });
 
@@ -350,7 +352,9 @@ describe("Delivery en Mesas · entrega y cierre", () => {
       success: false,
       message: "El pedido no está disponible.",
     });
-    mocks.getSession.mockResolvedValue({ user: f.user("seller") });
+    mocks.getSession.mockResolvedValue({
+      user: { ...f.user("seller"), role: "KITCHEN" },
+    });
     expect((await dispatchDelivery({ orderId })).success).toBe(false);
     mocks.getSession.mockResolvedValue({ user: f.user("waiter") });
     expect(await dispatchDelivery({ orderId })).toMatchObject({
