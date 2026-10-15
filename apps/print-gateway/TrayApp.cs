@@ -1,6 +1,5 @@
 #if WINDOWS
 using System.Windows.Forms;
-using System.IO.Pipes;
 using System.Text.Json;
 
 namespace Lorito.PrintGateway;
@@ -9,13 +8,46 @@ internal static class TrayApp
 {
     public static void Run()
     {
+        Application.EnableVisualStyles();
         using var icon = new NotifyIcon { Text = "Lorito Print Gateway", Visible = true, Icon = SystemIcons.Application };
         using var menu = new ContextMenuStrip();
-        var open = new ToolStripMenuItem("Abrir");
-        open.Click += (_, _) => new LinkForm().ShowDialog();
-        menu.Items.Add(open);
+        var status = new ToolStripMenuItem("Consultando...") { Enabled = false };
+        var login = new ToolStripMenuItem("Iniciar sesión") { Visible = false };
+        var logout = new ToolStripMenuItem("Cerrar sesión") { Visible = false };
+        login.Click += (_, _) => new LinkForm().ShowDialog();
+        logout.Click += async (_, _) =>
+        {
+            if (MessageBox.Show("¿Cerrar sesión? Esta PC dejará de imprimir hasta que vuelvas a iniciar sesión.", "Lorito Print Gateway", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            try
+            {
+                using var json = JsonDocument.Parse(await ServiceClient.SendAsync(new { version = 1, operation = "UNLINK" }));
+                if (!json.RootElement.GetProperty("success").GetBoolean()) throw new InvalidOperationException();
+                icon.ShowBalloonTip(3000, "Lorito Print Gateway", "Sesión cerrada", ToolTipIcon.Info);
+            }
+            catch { MessageBox.Show("Servicio no disponible", "Lorito Print Gateway", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        };
+        menu.Items.AddRange([status, new ToolStripSeparator(), login, logout]);
+        menu.Opening += async (_, _) =>
+        {
+            try
+            {
+                var company = await CompanyAsync();
+                status.Text = company is null ? "Sin sesión" : $"Empresa: {company}";
+                login.Visible = company is null;
+                logout.Visible = company is not null;
+            }
+            catch { status.Text = "Servicio no disponible"; login.Visible = true; logout.Visible = false; }
+        };
         icon.ContextMenuStrip = menu;
+        // NotifyIcon only opens its menu on right click; reuse the private method so left click works too.
+        icon.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) typeof(NotifyIcon).GetMethod("ShowContextMenu", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.Invoke(icon, null); };
         Application.Run();
+    }
+
+    private static async Task<string?> CompanyAsync()
+    {
+        using var json = JsonDocument.Parse(await ServiceClient.SendAsync(new { version = 1, operation = "GET_STATUS" }));
+        return json.RootElement.TryGetProperty("status", out var binding) && binding.ValueKind != JsonValueKind.Null ? binding.GetProperty("companyName").GetString() : null;
     }
 
     private sealed class LinkForm : Form
@@ -64,12 +96,7 @@ internal static class TrayApp
             catch { status.Text = "Servicio no disponible"; }
         }
 
-        private static async Task<string> SendAsync(object request)
-        {
-            using var pipe = new NamedPipeClientStream(".", PipeProtocol.Name, PipeDirection.InOut, PipeOptions.Asynchronous);
-            await pipe.ConnectAsync(3000);
-            return await PipeClientExchange.SendAsync(pipe, PipeFactory.ServiceSid, request, CancellationToken.None);
-        }
+        private static Task<string> SendAsync(object request) => ServiceClient.SendAsync(request);
     }
 }
 #endif

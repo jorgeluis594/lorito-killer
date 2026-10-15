@@ -125,6 +125,8 @@ export type TableConfiguration = {
 
 export function getTableDerivedStatus(table: Table): TableDerivedStatus {
   if (!table.activeSession) return "AVAILABLE";
-  if (table.activeSession.status === "BILL_REQUESTED") return "BILL_REQUESTED";
-  return "OCCUPIED";
+  const { status, draft, order } = table.activeSession;
+  if (status === "BILL_REQUESTED") return "BILL_REQUESTED";
+  // An opened table stays available until a product is added.
+  return draft?.length || order?.orderItems.length ? "OCCUPIED" : "AVAILABLE";
 }

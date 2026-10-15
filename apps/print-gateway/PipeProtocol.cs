@@ -23,7 +23,7 @@ public static class PipeProtocol
         return frame;
     }
 
-    public static async Task HandleAsync(Stream stream, BindingStore store, BackendClient backend, Func<Binding, Task> onLinked, CancellationToken cancellationToken)
+    public static async Task HandleAsync(Stream stream, BindingStore store, BackendClient backend, Func<Binding, Task> onLinked, CancellationToken cancellationToken, Func<Task>? onUnlinked = null)
     {
         var lengthBytes = new byte[4];
         await stream.ReadExactlyAsync(lengthBytes, cancellationToken);
@@ -50,6 +50,12 @@ public static class PipeProtocol
             var linked = await backend.LinkAsync(request.Code, Environment.MachineName, cancellationToken);
             if (linked is null) response = new(false, null, "Code invalid or expired");
             else { store.Write(linked); await onLinked(linked); response = new(true, new(linked.CompanyId, string.IsNullOrWhiteSpace(linked.CompanyName) ? "Empresa vinculada" : linked.CompanyName)); }
+        }
+        else if (request.Operation == "UNLINK")
+        {
+            store.Delete();
+            if (onUnlinked is not null) await onUnlinked();
+            response = new(true, null);
         }
         else throw new InvalidDataException("Unsupported pipe operation");
 

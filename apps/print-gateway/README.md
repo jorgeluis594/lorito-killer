@@ -1,6 +1,16 @@
 # Lorito Print Gateway para Windows
 
-## Publicar e instalar
+## Instalación para clientes (un solo .exe)
+
+Compilar desde Mac o Windows con la configuración de producción incrustada (lee Supabase de `../../.env`; backend `https://kogoz.net`, o `PRINT_BACKEND_URL` para otro):
+
+```bash
+./publish-prod.sh            # win-x64 y win-x86 en publish/
+```
+
+El cliente solo hace doble clic en `Lorito.PrintGateway.exe`: acepta el aviso de administrador, marca las impresoras, escribe el código de 4 dígitos generado en la web y pulsa Instalar. El instalador copia el programa a `%ProgramFiles%\Lorito\PrintGateway`, registra el servicio con reinicio automático, da acceso a las colas, crea el inicio automático de la bandeja y lo registra en "Aplicaciones". Volver a ejecutarlo actualiza la instalación. Desinstalar: "Aplicaciones" de Windows o `Lorito.PrintGateway.exe --uninstall` (conserva el vínculo en `%ProgramData%`). Sin argumentos el exe abre el instalador; `--service` y `--tray` son internos.
+
+## Publicar e instalar manualmente
 
 En una máquina con .NET 10 SDK y PowerShell:
 
@@ -24,7 +34,7 @@ El servicio `LoritoPrintGateway` usa la cuenta virtual `NT SERVICE\LoritoPrintGa
 .\install-tray-startup.ps1 -ExecutablePath 'C:\Lorito\win-x64\Lorito.PrintGateway.exe'
 ```
 
-La bandeja se abre desde su icono; cerrar la ventana solo la oculta y no requiere elevación.
+La bandeja vive en el área de notificaciones, sin consola: su menú (clic izquierdo o derecho) muestra la empresa y permite "Iniciar sesión" con un código nuevo o "Cerrar sesión", que borra el vínculo local y detiene la escucha de trabajos. No requiere elevación.
 
 ## Diagnóstico
 

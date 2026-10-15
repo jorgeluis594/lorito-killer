@@ -27,7 +27,8 @@ public sealed class DailyFileLoggerProvider(string directory) : ILoggerProvider
         public void Log<TState>(LogLevel level, EventId id, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
             if (!IsEnabled(level)) return;
-            var message = System.Text.RegularExpressions.Regex.Replace(formatter(state, exception), @"(?i)(authorization|credential|contentBase64)\s*[=:]\s*\S+", "$1=[redacted]");
+            // The default formatter drops the exception, which hides why connections or prints fail.
+            var message = System.Text.RegularExpressions.Regex.Replace(formatter(state, exception) + (exception is null ? "" : $" | {exception}"), @"(?i)(authorization|credential|contentBase64)\s*[=:]\s*\S+", "$1=[redacted]");
             message = System.Text.RegularExpressions.Regex.Replace(message, @"(?i)Bearer\s+\S+", "Bearer [redacted]");
             var line = $"{DateTimeOffset.UtcNow:O}\t{level}\t{category}\t{id.Id}\t{message}{Environment.NewLine}";
             try

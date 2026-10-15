@@ -45,6 +45,11 @@ public static class Program
             throw new PlatformNotSupportedException("The tray requires Windows");
 #endif
         }
+#if WINDOWS
+        if (args.Contains("--uninstall", StringComparer.OrdinalIgnoreCase)) { Installer.Uninstall(args); return Task.CompletedTask; }
+        // Double-clicking the exe (no arguments) installs it; the service passes --service.
+        if (args.Length == 0 || args.Contains("--install", StringComparer.OrdinalIgnoreCase)) { Installer.Run(args); return Task.CompletedTask; }
+#endif
         return CreateHost(args).RunAsync();
     }
 }
