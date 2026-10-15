@@ -6,6 +6,7 @@ import { closeServiceSession } from "@/table/payment-repository";
 import { getDeliveryTransition } from "./use-cases/delivery-transition";
 import { describeUnpaidFulfillmentOrder } from "./use-cases/describe-unpaid-fulfillment-order";
 import { planDeliveryEdit } from "./use-cases/plan-delivery-edit";
+import { limaDayRange, todayInLima } from "./use-cases/lima-day";
 import {
   validateDeliveryDetails,
   type DeliveryDetails,
@@ -299,20 +300,6 @@ export async function updateDeliveryDetails(
         : "No se pudo guardar la edición.",
     };
   }
-}
-
-const LIMA_OFFSET = "-05:00";
-
-/** Rango [inicio, fin) de un día calendario de Lima (sin horario de verano). */
-export function limaDayRange(date: string): { from: Date; to: Date } {
-  const from = new Date(`${date}T00:00:00.000${LIMA_OFFSET}`);
-  return { from, to: new Date(from.getTime() + 24 * 60 * 60 * 1000) };
-}
-
-export function todayInLima(now: Date = new Date()): string {
-  return new Date(now.getTime() - 5 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
 }
 
 export type DeliveredItem = {
