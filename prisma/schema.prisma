@@ -399,7 +399,9 @@ model Company {
   features               CompanyFeature[]
   printClientLinkCodes   PrintClientLinkCode[]
   printClients           PrintClient[]
-  printers               Printer[]
+  printers               Printer[]               @relation("CompanyPrinters")
+  invoicePrinterId       String?                 @unique
+  invoicePrinter         Printer?                @relation("CompanyInvoicePrinter", fields: [invoicePrinterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   kitchens               Kitchen[]
   kitchenTicketPrintJobs KitchetTicketPrintJob[]
   subdomain              String?                 @unique
@@ -498,7 +500,8 @@ model PrintClient {
 model Printer {
   id                     String                  @id @default(uuid())
   companyId              String
-  company                Company                 @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  company                Company                 @relation("CompanyPrinters", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  invoiceCompany         Company?                @relation("CompanyInvoicePrinter")
   printClientId          String
   printClient            PrintClient             @relation(fields: [printClientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   localName              String

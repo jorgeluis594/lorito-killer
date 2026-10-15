@@ -154,7 +154,11 @@ export const updatePrinterProfile = async (
         await db.$queryRaw`SELECT id FROM "Printer" WHERE id = ${input.id} FOR UPDATE`;
         const current = await db.printer.findFirst({
           where: { id: input.id, companyId },
-          select: { id: true, kitchen: { select: { id: true } } },
+          select: {
+            id: true,
+            kitchen: { select: { id: true } },
+            invoiceCompany: { select: { id: true } },
+          },
         });
         if (!current)
           return {
@@ -165,6 +169,12 @@ export const updatePrinterProfile = async (
           return {
             success: false as const,
             message: "Retira la impresora de su Kitchen antes de desactivarla",
+          };
+        if (input.status === "INACTIVE" && current.invoiceCompany)
+          return {
+            success: false as const,
+            message:
+              "Retira la impresora de comprobantes antes de desactivarla",
           };
         const updated = await db.printer.update({
           where: { id: input.id },
@@ -184,6 +194,50 @@ export const updatePrinterProfile = async (
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
     return printer;
+  } catch (error) {
+    return {
+      success: false as const,
+      message:
+        error instanceof Error ? error.message : "Error interno del servidor",
+    };
+  }
+};
+
+export const getInvoicePrinterId = async (companyId: string) =>
+  (
+    await prisma().company.findUnique({
+      where: { id: companyId },
+      select: { invoicePrinterId: true },
+    })
+  )?.invoicePrinterId ?? null;
+
+export const setInvoicePrinter = async (
+  companyId: string,
+  printerId: string | null,
+) => {
+  try {
+    return await prisma().$transaction(
+      async (db) => {
+        if (printerId) {
+          await db.$queryRaw`SELECT id FROM "Printer" WHERE id = ${printerId} FOR UPDATE`;
+          const printer = await db.printer.findFirst({
+            where: { id: printerId, companyId, status: "ACTIVE" },
+            select: { id: true },
+          });
+          if (!printer)
+            return {
+              success: false as const,
+              message: "La impresora no está activa o pertenece a otra empresa",
+            };
+        }
+        await db.company.update({
+          where: { id: companyId },
+          data: { invoicePrinterId: printerId },
+        });
+        return { success: true as const, data: { printerId } };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   } catch (error) {
     return {
       success: false as const,

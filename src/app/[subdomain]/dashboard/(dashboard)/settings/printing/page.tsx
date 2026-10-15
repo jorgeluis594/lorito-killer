@@ -1,6 +1,10 @@
 import { requireRole } from "@/authorization/server";
-import { getPrintClients } from "@/printing/clients/db_repository";
+import {
+  getInvoicePrinterId,
+  getPrintClients,
+} from "@/printing/clients/db_repository";
 import { PrintClientSettings } from "@/printing/clients/components/print-client-settings";
+import { InvoicePrinterSettings } from "@/printing/clients/components/invoice-printer-settings";
 import { Separator } from "@/shared/components/ui/separator";
 import { listKitchens } from "@/kitchen/db_repository";
 import { KitchenSettings } from "@/kitchen/components/kitchen-settings";
@@ -16,10 +20,12 @@ export default async function PrintingSettingsPage() {
   const feature = await requireFeature(auth.data.companyId, "restaurants");
   if (!feature.success)
     return <p className="p-4 text-destructive">{feature.message}</p>;
-  const [clients, kitchens] = await Promise.all([
+  const [clients, kitchens, invoicePrinterId] = await Promise.all([
     getPrintClients(auth.data.companyId),
     listKitchens(auth.data.companyId, false),
+    getInvoicePrinterId(auth.data.companyId),
   ]);
+  const printers = clients.flatMap((client) => client.printers);
 
   return (
     <div>
@@ -32,7 +38,11 @@ export default async function PrintingSettingsPage() {
       <div className="flex flex-col gap-8">
         <KitchenSettings
           kitchens={kitchens as Kitchen[]}
-          printers={clients.flatMap((client) => client.printers)}
+          printers={printers}
+        />
+        <InvoicePrinterSettings
+          invoicePrinterId={invoicePrinterId}
+          printers={printers}
         />
         <PrintClientSettings clients={clients} />
       </div>

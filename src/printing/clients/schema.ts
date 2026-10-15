@@ -22,6 +22,10 @@ export const UpdatePrinterSchema = z.object({
   feedBeforeCut: z.coerce.number().int().nonnegative(),
 });
 
+export const InvoicePrinterSchema = z.object({
+  printerId: z.string().uuid().nullable(),
+});
+
 export const PrintJobResultSchema = z.object({
   attemptNumber: z.number().int().positive(),
   result: z.enum(["DELIVERED", "RETRYABLE_FAILURE", "FAILED"]),

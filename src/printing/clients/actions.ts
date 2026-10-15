@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { generateLinkCode, hashLinkCode } from "./crypto";
 import * as repository from "./db_repository";
 import { createPrintClientLinkCode } from "./use-cases/create-print-client-link-code";
-import { UpdatePrinterSchema } from "./schema";
+import { InvoicePrinterSchema, UpdatePrinterSchema } from "./schema";
 import { updatePrinter } from "./use-cases/update-printer";
 import type { PrinterProfile } from "./types";
 
@@ -47,6 +47,24 @@ export const updatePrinterAction = protectedAction(
       repository.updatePrinterProfile,
       user.companyId,
       parsed.data,
+    );
+    if (result.success) revalidatePath("/dashboard/settings/printing");
+    return result;
+  },
+);
+
+export const setInvoicePrinterAction = protectedAction(
+  { roles: ["ADMIN"] },
+  async (
+    user,
+    input: unknown,
+  ): Promise<response<{ printerId: string | null }>> => {
+    const parsed = InvoicePrinterSchema.safeParse(input);
+    if (!parsed.success)
+      return { success: false, message: "Impresora inválida" };
+    const result = await repository.setInvoicePrinter(
+      user.companyId,
+      parsed.data.printerId,
     );
     if (result.success) revalidatePath("/dashboard/settings/printing");
     return result;
