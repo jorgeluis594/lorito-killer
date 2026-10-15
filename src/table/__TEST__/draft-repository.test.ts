@@ -73,6 +73,34 @@ test("saves an empty draft", async () => {
   expect(db.updateSession).toHaveBeenCalledOnce();
 });
 
+test("release frees an empty table opened by another waiter", async () => {
+  db.session.mockResolvedValue({
+    ...session(),
+    draft: [],
+    waiterId: "waiter-b",
+  });
+  expect(
+    (await updateTableDraft({ ...input, operation: "release" })).success,
+  ).toBe(true);
+  expect(db.updateSession.mock.calls[0][0].data.status).toBe("CANCELLED");
+  expect(db.updateOrder).toHaveBeenCalledOnce();
+});
+
+test("release rejects a table with products", async () => {
+  expect(
+    (await updateTableDraft({ ...input, operation: "release" })).success,
+  ).toBe(false);
+  db.session.mockResolvedValue({
+    ...session(),
+    draft: [],
+    order: { ...session().order, orderItems: [{ id: "item" }] },
+  });
+  expect(
+    (await updateTableDraft({ ...input, operation: "release" })).success,
+  ).toBe(false);
+  expect(db.updateSession).not.toHaveBeenCalled();
+});
+
 test("draft validation rejects malformed quantities and long notes", () => {
   const base = {
     sessionId: "11111111-1111-4111-8111-111111111111",

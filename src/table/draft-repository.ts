@@ -57,7 +57,7 @@ export async function updateTableDraft(input: {
   userId: string;
   sessionId: string;
   revision: number;
-  operation: "save" | "read" | "leave";
+  operation: "save" | "read" | "leave" | "release";
   items?: RoundItem[];
 }): Promise<
   response<{ revision: number; tableId: string; items?: RoundItem[] }>
@@ -118,6 +118,16 @@ export async function updateTableDraft(input: {
             data: { revision: session.draftRevision, tableId: session.tableId },
           };
         }
+        // An explicit release frees any empty table, whoever opened it.
+        if (
+          input.operation === "release" &&
+          (stored.length || order.orderItems.length)
+        ) {
+          return {
+            success: false,
+            message: "La mesa tiene productos y no se puede liberar.",
+          };
+        }
         const products = await tx.product.findMany({
           where: {
             id: { in: items.map((item) => item.productId) },
@@ -158,7 +168,7 @@ export async function updateTableDraft(input: {
           data: {
             draftRevision: { increment: 1 },
             draft: input.operation === "save" ? draft : [],
-            ...(input.operation === "leave"
+            ...(input.operation !== "save"
               ? {
                   current: null,
                   status: "CANCELLED",
@@ -169,7 +179,7 @@ export async function updateTableDraft(input: {
           },
         });
         if (updated.count !== 1) return { success: false, message: changed };
-        if (input.operation === "leave") {
+        if (input.operation !== "save") {
           await tx.order.update({
             where: { id: order.id },
             data: { status: "CANCELLED" },

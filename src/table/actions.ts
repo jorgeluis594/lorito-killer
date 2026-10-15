@@ -130,7 +130,7 @@ export const sendTableDraft = protectedAction(
 
 export const leaveEmptyTable = protectedAction(
   { resource: "tables", action: "update" },
-  async (user, sessionId: string, revision: number) => {
+  async (user, sessionId: string, revision: number, release?: boolean) => {
     const feature = await requireFeature(user.companyId, "restaurants");
     if (!feature.success) return feature;
     const parsed = TableDraftSchema.safeParse({ sessionId, revision });
@@ -140,7 +140,7 @@ export const leaveEmptyTable = protectedAction(
       ...parsed.data,
       companyId: user.companyId,
       userId: user.id,
-      operation: "leave",
+      operation: release === true ? "release" : "leave",
     });
     if (result.success) {
       revalidatePath("/[subdomain]/dashboard/tables", "layout");
