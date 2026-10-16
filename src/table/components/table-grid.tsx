@@ -2,12 +2,11 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { Zone, TableWithSession } from "../types";
 import { getTableDerivedStatus } from "../types";
 import { ZoneTabs } from "./zone-tabs";
 import { TableRealtimeListener } from "./table-realtime-listener";
-import { openTable } from "../actions";
 import { formatPrice } from "@/lib/utils";
 
 export function TableGrid({
@@ -21,10 +20,11 @@ export function TableGrid({
 }) {
   const router = useRouter();
   const [zoneId, setZoneId] = useState<string | null>(null);
-  const [opening, setOpening] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const openingRef = useRef(false);
-  const refresh = useCallback(() => router.refresh(), [router]);
+  // A realtime refresh dispatched while leaving replaces the route with the stale tables URL.
+  const leavingRef = useRef(false);
+  const refresh = useCallback(() => {
+    if (!leavingRef.current) router.refresh();
+  }, [router]);
   const visible = tables
     .filter((table) => !zoneId || table.zoneId === zoneId)
     .sort((a, b) => a.number - b.number);
@@ -35,31 +35,13 @@ export function TableGrid({
     (table) => getTableDerivedStatus(table) === "AVAILABLE",
   );
 
-  async function attend(table: TableWithSession) {
-    if (openingRef.current) return;
-    openingRef.current = true;
-    setOpening(table.id);
-    setError("");
-    try {
-      if (!table.activeSession) {
-        const result = await openTable(table.id);
-        if (!result.success) {
-          setError(result.message);
-          router.refresh();
-          return;
-        }
-      }
-      router.push(
-        table.activeSession?.status === "BILL_REQUESTED"
-          ? `/dashboard/tables/${table.id}/payment?session=${table.activeSession.id}`
-          : `/dashboard/tables/${table.id}/order`,
-      );
-    } catch {
-      setError("No se pudo abrir la mesa. Vuelve a intentarlo.");
-    } finally {
-      openingRef.current = false;
-      setOpening(null);
-    }
+  function attend(table: TableWithSession) {
+    leavingRef.current = true;
+    router.push(
+      table.activeSession?.status === "BILL_REQUESTED"
+        ? `/dashboard/tables/${table.id}/payment?session=${table.activeSession.id}`
+        : `/dashboard/tables/${table.id}/order`,
+    );
   }
 
   return (
@@ -72,14 +54,6 @@ export function TableGrid({
           selectedZoneId={zoneId}
           onSelect={setZoneId}
         />
-      ) : null}
-      {error ? (
-        <p
-          role="alert"
-          className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {error}
-        </p>
       ) : null}
       <section
         aria-labelledby="occupied-tables"
@@ -109,7 +83,6 @@ export function TableGrid({
                 <button
                   key={table.id}
                   onClick={() => attend(table)}
-                  disabled={!!opening}
                   aria-label={`Atender mesa ${table.label || table.number}, número ${table.number}, ${session.status === "BILL_REQUESTED" ? "cuenta pedida" : "en atención"}, ${formatPrice(total)}${draftCount ? `, pedido sin enviar: ${draftCount} productos` : ""}`}
                   className="flex min-h-28 w-full items-center gap-4 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 sm:gap-6 sm:p-5"
                 >
@@ -137,14 +110,10 @@ export function TableGrid({
                     <span className="text-base font-bold tabular-nums sm:text-xl">
                       {formatPrice(total)}
                     </span>
-                    {opening === table.id ? (
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
-                    ) : (
-                      <ChevronRight
-                        className="size-4 text-muted-foreground"
-                        aria-hidden
-                      />
-                    )}
+                    <ChevronRight
+                      className="size-4 text-muted-foreground"
+                      aria-hidden
+                    />
                   </span>
                 </button>
               );
@@ -169,7 +138,7 @@ export function TableGrid({
               <button
                 key={table.id}
                 onClick={() => attend(table)}
-                disabled={!!opening || !canAttend}
+                disabled={!canAttend}
                 aria-label={`Atender mesa ${table.label || table.number}, libre`}
                 className="flex min-h-28 items-center justify-between gap-3 rounded-xl border bg-card p-5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
               >
@@ -182,14 +151,10 @@ export function TableGrid({
                   ) : null}
                   <span className="text-sm text-muted-foreground">Libre</span>
                 </span>
-                {opening === table.id ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                ) : (
-                  <ChevronRight
-                    className="size-4 text-muted-foreground"
-                    aria-hidden
-                  />
-                )}
+                <ChevronRight
+                  className="size-4 text-muted-foreground"
+                  aria-hidden
+                />
               </button>
             ))}
           </div>
