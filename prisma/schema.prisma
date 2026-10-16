@@ -402,6 +402,8 @@ model Company {
   printers               Printer[]               @relation("CompanyPrinters")
   invoicePrinterId       String?                 @unique
   invoicePrinter         Printer?                @relation("CompanyInvoicePrinter", fields: [invoicePrinterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  cashierPrinterId       String?                 @unique
+  cashierPrinter         Printer?                @relation("CompanyCashierPrinter", fields: [cashierPrinterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   kitchens               Kitchen[]
   kitchenTicketPrintJobs KitchetTicketPrintJob[]
   subdomain              String?                 @unique
@@ -502,6 +504,7 @@ model Printer {
   companyId              String
   company                Company                 @relation("CompanyPrinters", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   invoiceCompany         Company?                @relation("CompanyInvoicePrinter")
+  cashierCompany         Company?                @relation("CompanyCashierPrinter")
   printClientId          String
   printClient            PrintClient             @relation(fields: [printClientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   localName              String

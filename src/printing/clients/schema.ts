@@ -22,7 +22,8 @@ export const UpdatePrinterSchema = z.object({
   feedBeforeCut: z.coerce.number().int().nonnegative(),
 });
 
-export const InvoicePrinterSchema = z.object({
+export const CompanyPrinterSchema = z.object({
+  kind: z.enum(["invoice", "cashier"]),
   printerId: z.string().uuid().nullable(),
 });
 

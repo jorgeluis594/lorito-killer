@@ -1,10 +1,10 @@
 import { requireRole } from "@/authorization/server";
 import {
-  getInvoicePrinterId,
+  getCompanyPrinterIds,
   getPrintClients,
 } from "@/printing/clients/db_repository";
 import { PrintClientSettings } from "@/printing/clients/components/print-client-settings";
-import { InvoicePrinterSettings } from "@/printing/clients/components/invoice-printer-settings";
+import { CompanyPrinterSettings } from "@/printing/clients/components/company-printer-settings";
 import { Separator } from "@/shared/components/ui/separator";
 import { listKitchens } from "@/kitchen/db_repository";
 import { KitchenSettings } from "@/kitchen/components/kitchen-settings";
@@ -20,10 +20,10 @@ export default async function PrintingSettingsPage() {
   const feature = await requireFeature(auth.data.companyId, "restaurants");
   if (!feature.success)
     return <p className="p-4 text-destructive">{feature.message}</p>;
-  const [clients, kitchens, invoicePrinterId] = await Promise.all([
+  const [clients, kitchens, companyPrinterIds] = await Promise.all([
     getPrintClients(auth.data.companyId),
     listKitchens(auth.data.companyId, false),
-    getInvoicePrinterId(auth.data.companyId),
+    getCompanyPrinterIds(auth.data.companyId),
   ]);
   const printers = clients.flatMap((client) => client.printers);
 
@@ -40,8 +40,18 @@ export default async function PrintingSettingsPage() {
           kitchens={kitchens as Kitchen[]}
           printers={printers}
         />
-        <InvoicePrinterSettings
-          invoicePrinterId={invoicePrinterId}
+        <CompanyPrinterSettings
+          kind="invoice"
+          title="Impresora de comprobantes"
+          description="Impresora donde se imprimirán las boletas y facturas."
+          currentPrinterId={companyPrinterIds.invoice}
+          printers={printers}
+        />
+        <CompanyPrinterSettings
+          kind="cashier"
+          title="Impresora de caja"
+          description="Impresora asociada a la caja."
+          currentPrinterId={companyPrinterIds.cashier}
           printers={printers}
         />
         <PrintClientSettings clients={clients} />

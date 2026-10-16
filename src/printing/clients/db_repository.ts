@@ -158,6 +158,7 @@ export const updatePrinterProfile = async (
             id: true,
             kitchen: { select: { id: true } },
             invoiceCompany: { select: { id: true } },
+            cashierCompany: { select: { id: true } },
           },
         });
         if (!current)
@@ -175,6 +176,11 @@ export const updatePrinterProfile = async (
             success: false as const,
             message:
               "Retira la impresora de comprobantes antes de desactivarla",
+          };
+        if (input.status === "INACTIVE" && current.cashierCompany)
+          return {
+            success: false as const,
+            message: "Retira la impresora de caja antes de desactivarla",
           };
         const updated = await db.printer.update({
           where: { id: input.id },
@@ -203,16 +209,20 @@ export const updatePrinterProfile = async (
   }
 };
 
-export const getInvoicePrinterId = async (companyId: string) =>
-  (
-    await prisma().company.findUnique({
-      where: { id: companyId },
-      select: { invoicePrinterId: true },
-    })
-  )?.invoicePrinterId ?? null;
+export const getCompanyPrinterIds = async (companyId: string) => {
+  const company = await prisma().company.findUnique({
+    where: { id: companyId },
+    select: { invoicePrinterId: true, cashierPrinterId: true },
+  });
+  return {
+    invoice: company?.invoicePrinterId ?? null,
+    cashier: company?.cashierPrinterId ?? null,
+  };
+};
 
-export const setInvoicePrinter = async (
+export const setCompanyPrinter = async (
   companyId: string,
+  kind: "invoice" | "cashier",
   printerId: string | null,
 ) => {
   try {
@@ -232,7 +242,10 @@ export const setInvoicePrinter = async (
         }
         await db.company.update({
           where: { id: companyId },
-          data: { invoicePrinterId: printerId },
+          data: {
+            [kind === "invoice" ? "invoicePrinterId" : "cashierPrinterId"]:
+              printerId,
+          },
         });
         return { success: true as const, data: { printerId } };
       },
