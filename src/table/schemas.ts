@@ -122,7 +122,12 @@ export const CreateTablesSchema = z.object({
 export const UpdateTableSchema = z.object({
   id: z.string().min(1, "El ID de mesa es requerido"),
   data: z.object({
-    number: z.number().int().min(1).optional(),
+    number: z
+      .number({ invalid_type_error: "Ingresa un número" })
+      .int("Ingresa un número entero")
+      .min(1, "El número debe ser mayor a 0")
+      .max(2147483647, "El número es demasiado grande")
+      .optional(),
     label: z.string().max(20).optional().or(z.literal("")),
     capacity: z.number().int().min(1).max(20).optional(),
     zoneId: z.string().min(1).optional(),

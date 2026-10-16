@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, MoreVertical, Trash2 } from "lucide-react";
+import { ArrowRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -24,9 +24,21 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from "@/shared/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { createTablesAction, deleteTableAction } from "../actions";
-import { CreateTablesSchema } from "../schemas";
+import {
+  createTablesAction,
+  deleteTableAction,
+  updateTableAction,
+} from "../actions";
+import { CreateTablesSchema, UpdateTableSchema } from "../schemas";
 import type { TableConfiguration } from "../types";
 
 interface TableConfigFormProps {
@@ -49,6 +61,11 @@ export function TableConfigForm({
     TableConfiguration["tables"][number] | null
   >(null);
   const [removeError, setRemoveError] = useState("");
+  const [renumbering, setRenumbering] = useState<
+    TableConfiguration["tables"][number] | null
+  >(null);
+  const [newNumber, setNewNumber] = useState("");
+  const [renumberError, setRenumberError] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const parsed = CreateTablesSchema.safeParse({
     quantity: Number(quantity),
@@ -117,6 +134,44 @@ export function TableConfigForm({
     });
   };
 
+  const renumber = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!renumbering || pending) return;
+    const parsedNumber = UpdateTableSchema.shape.data.shape.number.safeParse(
+      newNumber.trim() === "" ? NaN : Number(newNumber),
+    );
+    if (!parsedNumber.success || parsedNumber.data === undefined) {
+      setRenumberError(
+        parsedNumber.success
+          ? "Ingresa un número"
+          : parsedNumber.error.errors[0].message,
+      );
+      return;
+    }
+    const number = parsedNumber.data;
+    if (number === renumbering.number) {
+      setRenumbering(null);
+      return;
+    }
+    setRenumberError("");
+    startTransition(async () => {
+      try {
+        const result = await updateTableAction(renumbering.id, { number });
+        if (!result.success) {
+          setRenumberError(result.message);
+          return;
+        }
+        setNotice(`Mesa ${renumbering.number} ahora es la mesa ${number}.`);
+        setRenumbering(null);
+        router.refresh();
+      } catch {
+        setRenumberError(
+          "No pudimos confirmar el cambio. Actualiza la página para revisar la mesa.",
+        );
+      }
+    });
+  };
+
   return (
     <section
       aria-labelledby="table-config-title"
@@ -178,20 +233,30 @@ export function TableConfigForm({
                     <p className="text-sm text-muted-foreground">En atención</p>
                   ) : null}
                 </div>
-                {canDelete ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Opciones de mesa ${table.number}`}
-                        disabled={pending}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Opciones de mesa ${table.number}`}
+                      disabled={pending}
+                    >
+                      <MoreVertical className="size-4" aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setRenumbering(table);
+                          setNewNumber(String(table.number));
+                          setRenumberError("");
+                        }}
                       >
-                        <MoreVertical className="size-4" aria-hidden="true" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuGroup>
+                        <Pencil className="mr-2 size-4" aria-hidden="true" />
+                        Cambiar número
+                      </DropdownMenuItem>
+                      {canDelete ? (
                         <DropdownMenuItem
                           disabled={table.inService}
                           onSelect={() => {
@@ -204,10 +269,10 @@ export function TableConfigForm({
                             ? "En atención: no se puede retirar"
                             : "Retirar mesa"}
                         </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : null}
+                      ) : null}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </li>
             ))}
           </ul>
@@ -269,6 +334,69 @@ export function TableConfigForm({
           </div>
         </form>
       </div>
+      <Dialog
+        open={!!renumbering}
+        onOpenChange={(open) => {
+          if (!open && !pending) setRenumbering(null);
+        }}
+      >
+        <DialogContent>
+          <form onSubmit={renumber} noValidate className="flex flex-col gap-4">
+            <DialogHeader>
+              <DialogTitle>
+                Cambiar número de la mesa {renumbering?.number}
+              </DialogTitle>
+              <DialogDescription>
+                El nuevo número no puede estar en uso por otra mesa.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="table-new-number">Nuevo número</Label>
+              <Input
+                className="w-28 tabular-nums"
+                id="table-new-number"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                step={1}
+                value={newNumber}
+                onChange={(event) => {
+                  setNewNumber(event.target.value);
+                  setRenumberError("");
+                }}
+                disabled={pending}
+                required
+                autoFocus
+                aria-invalid={!!renumberError}
+                aria-describedby="table-new-number-error"
+              />
+              <p
+                id="table-new-number-error"
+                role="alert"
+                className={cn(
+                  "text-sm text-destructive",
+                  !renumberError && "sr-only",
+                )}
+              >
+                {renumberError}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => setRenumbering(null)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Guardando…" : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <AlertDialog
         open={!!removing}
         onOpenChange={(open) => {
