@@ -5,11 +5,11 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 public static class PipeProtocol
 {
-    public const string Name = "LoritoPrintGateway.v1";
+    public const string Name = "KogozPrintGateway.v1";
     public const int MaxMessageBytes = 8 * 1024;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 

@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 public sealed class RealtimeClient(GatewayConfiguration configuration, ILogger<RealtimeClient> logger)
 {

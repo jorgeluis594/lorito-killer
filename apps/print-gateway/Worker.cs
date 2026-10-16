@@ -9,7 +9,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 #endif
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 public sealed class Worker(GatewayConfiguration configuration, BindingStore bindingStore, BackendClient backend, RealtimeClient realtime, PrintJobProcessor processor, JournalStore journal, IPrinterEnumerator printers, DailyFileLoggerProvider fileLogger, ILogger<Worker> logger) : BackgroundService
 {
@@ -122,7 +122,7 @@ public sealed class Worker(GatewayConfiguration configuration, BindingStore bind
 internal static class PipeFactory
 {
 #if WINDOWS
-    internal static SecurityIdentifier ServiceSid => (SecurityIdentifier)new NTAccount(@"NT SERVICE\LoritoPrintGateway").Translate(typeof(SecurityIdentifier));
+    internal static SecurityIdentifier ServiceSid => (SecurityIdentifier)new NTAccount(@"NT SERVICE\KogozPrintGateway").Translate(typeof(SecurityIdentifier));
 #endif
     internal static Func<CancellationToken, Task<Stream>> AcceptAsync { get; set; } = AcceptPipeAsync;
 
@@ -166,7 +166,7 @@ public sealed class GatewayConfiguration
         BackendUrl = backendUrl ?? Environment.GetEnvironmentVariable("PRINT_BACKEND_URL") ?? Embedded("EmbeddedBackendUrl");
         SupabaseUrl = supabaseUrl ?? Environment.GetEnvironmentVariable("SUPABASE_URL") ?? Embedded("EmbeddedSupabaseUrl");
         SupabasePublishableKey = supabasePublishableKey ?? Environment.GetEnvironmentVariable("SUPABASE_PUBLISHABLE_KEY") ?? Embedded("EmbeddedSupabaseKey");
-        DataPath = Environment.GetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway");
+        DataPath = Environment.GetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Kogoz", "PrintGateway");
     }
     private static string Embedded(string key) => Assembly.GetExecutingAssembly()
         .GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == key)?.Value ?? "";
@@ -185,7 +185,7 @@ public sealed class BindingStore
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly string path;
     private readonly object gate = new();
-    public BindingStore(string? root = null) => path = Path.Combine(root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway"), "binding.dat");
+    public BindingStore(string? root = null) => path = Path.Combine(root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Kogoz", "PrintGateway"), "binding.dat");
     internal string Root => Path.GetDirectoryName(path)!;
     public Binding? Read()
     {
@@ -223,7 +223,7 @@ internal static class WindowsDataProtection
         if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("DPAPI is Windows-only");
         var input = new Blob(data);
         var output = new Blob();
-        var success = protect ? CryptProtectData(ref input.Value, "Lorito PrintGateway", IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 4, ref output.Value) : CryptUnprotectData(ref input.Value, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 4, ref output.Value);
+        var success = protect ? CryptProtectData(ref input.Value, "Kogoz PrintGateway", IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 4, ref output.Value) : CryptUnprotectData(ref input.Value, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, 4, ref output.Value);
         if (!success) throw new System.ComponentModel.Win32Exception();
         try { return output.ToArray(); } finally { LocalFree(output.Value.pbData); }
     }
