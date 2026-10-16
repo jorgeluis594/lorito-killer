@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 public static class Program
 {
@@ -12,7 +12,7 @@ public static class Program
         var fileLogger = new DailyFileLoggerProvider(Path.Combine(configuration.DataPath, "logs"));
         builder.Logging.AddProvider(fileLogger);
         builder.Services.AddSingleton(fileLogger);
-        builder.Services.AddWindowsService(options => options.ServiceName = "LoritoPrintGateway");
+        builder.Services.AddWindowsService(options => options.ServiceName = "KogozPrintGateway");
         builder.Services.AddSingleton(configuration);
         builder.Services.AddSingleton(_ => new BindingStore(configuration.DataPath));
 #if WINDOWS

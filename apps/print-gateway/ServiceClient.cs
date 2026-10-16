@@ -1,7 +1,7 @@
 #if WINDOWS
 using System.IO.Pipes;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 internal static class ServiceClient
 {

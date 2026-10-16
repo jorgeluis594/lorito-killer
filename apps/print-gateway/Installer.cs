@@ -8,16 +8,18 @@ using System.Text.Json;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 internal static class Installer
 {
-    private const string ServiceName = "LoritoPrintGateway";
-    private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\LoritoPrintGateway";
-    private static readonly string InstallDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Lorito", "PrintGateway");
-    private static readonly string InstalledExe = Path.Combine(InstallDir, "Lorito.PrintGateway.exe");
-    private static readonly string DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway");
-    private static readonly string ShortcutPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "Lorito Print Gateway.lnk");
+    private const string ServiceName = "KogozPrintGateway";
+    // Pre-rebrand install; removed on install so two services don't claim the same jobs.
+    private const string LegacyName = "LoritoPrintGateway";
+    private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\KogozPrintGateway";
+    private static readonly string InstallDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Kogoz", "PrintGateway");
+    private static readonly string InstalledExe = Path.Combine(InstallDir, "Kogoz.PrintGateway.exe");
+    private static readonly string DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Kogoz", "PrintGateway");
+    private static readonly string ShortcutPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "Kogoz Print Gateway.lnk");
 
     public static void Run(string[] args)
     {
@@ -29,14 +31,14 @@ internal static class Installer
     public static void Uninstall(string[] args)
     {
         if (!EnsureAdministrator(args)) return;
-        if (MessageBox.Show("¿Desinstalar Lorito Print Gateway? Se conservará el vínculo con la empresa.", "Lorito Print Gateway", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+        if (MessageBox.Show("¿Desinstalar Kogoz Print Gateway? Se conservará el vínculo con la empresa.", "Kogoz Print Gateway", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
         // Killing the service host first looks like a crash to SCM, which restarts it per the failure actions set on install.
         try { StopAndDeleteService(); }
-        catch (Exception error) { MessageBox.Show($"No se pudo desinstalar el servicio: {error.Message}", "Lorito Print Gateway", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
-        foreach (var process in Process.GetProcessesByName("Lorito.PrintGateway").Where(p => p.Id != Environment.ProcessId)) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
+        catch (Exception error) { MessageBox.Show($"No se pudo desinstalar el servicio: {error.Message}", "Kogoz Print Gateway", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
+        foreach (var process in Process.GetProcessesByName("Kogoz.PrintGateway").Where(p => p.Id != Environment.ProcessId)) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
         try { File.Delete(ShortcutPath); } catch { }
         try { Registry.LocalMachine.DeleteSubKeyTree(UninstallKey, false); } catch { }
-        MessageBox.Show("Lorito Print Gateway se desinstaló.", "Lorito Print Gateway");
+        MessageBox.Show("Kogoz Print Gateway se desinstaló.", "Kogoz Print Gateway");
         // The running exe can't delete itself; a detached shell removes the folder once we exit. Retry: the exe stays locked for a moment after we go.
         Process.Start(new ProcessStartInfo("cmd.exe", $"/c for /l %i in (1,1,10) do (ping 127.0.0.1 -n 3 >nul & rmdir /s /q \"{InstallDir}\" 2>nul & if not exist \"{InstallDir}\" exit)") { CreateNoWindow = true, UseShellExecute = false });
     }
@@ -49,19 +51,19 @@ internal static class Installer
         {
             Process.Start(new ProcessStartInfo(Environment.ProcessPath!, string.Join(" ", args)) { UseShellExecute = true, Verb = "runas" });
         }
-        catch (Win32Exception) { MessageBox.Show("Se necesitan permisos de administrador para instalar.", "Lorito Print Gateway", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+        catch (Win32Exception) { MessageBox.Show("Se necesitan permisos de administrador para instalar.", "Kogoz Print Gateway", MessageBoxButtons.OK, MessageBoxIcon.Warning); }
         return false;
     }
 
-    private static void StopAndDeleteService()
+    private static void StopAndDeleteService(string name = ServiceName)
     {
         try
         {
-            using var service = new ServiceController(ServiceName);
+            using var service = new ServiceController(name);
             if (service.Status != ServiceControllerStatus.Stopped) { service.Stop(); service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(20)); }
         }
         catch (InvalidOperationException) { return; } // service does not exist
-        RunTool("sc.exe", "delete", ServiceName);
+        RunTool("sc.exe", "delete", name);
     }
 
     private static void RunTool(string file, params string[] arguments)
@@ -92,18 +94,28 @@ internal static class Installer
     private static void RegisterUninstall()
     {
         using var key = Registry.LocalMachine.CreateSubKey(UninstallKey);
-        key.SetValue("DisplayName", "Lorito Print Gateway");
-        key.SetValue("Publisher", "Lorito");
+        key.SetValue("DisplayName", "Kogoz Print Gateway");
+        key.SetValue("Publisher", "Kogoz");
         key.SetValue("InstallLocation", InstallDir);
         key.SetValue("UninstallString", $"\"{InstalledExe}\" --uninstall");
         key.SetValue("NoModify", 1);
         key.SetValue("NoRepair", 1);
     }
 
+    private static void RemoveLegacyInstall()
+    {
+        StopAndDeleteService(LegacyName);
+        foreach (var process in Process.GetProcessesByName("Lorito.PrintGateway")) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
+        try { File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "Lorito Print Gateway.lnk")); } catch { }
+        try { Registry.LocalMachine.DeleteSubKeyTree($@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{LegacyName}", false); } catch { }
+        try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Lorito"), true); } catch { }
+    }
+
     private static void Install(IReadOnlyList<string> printers)
     {
+        RemoveLegacyInstall();
         StopAndDeleteService();
-        foreach (var process in Process.GetProcessesByName("Lorito.PrintGateway").Where(p => p.Id != Environment.ProcessId)) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
+        foreach (var process in Process.GetProcessesByName("Kogoz.PrintGateway").Where(p => p.Id != Environment.ProcessId)) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
         Directory.CreateDirectory(InstallDir);
         if (!string.Equals(Path.GetFullPath(Environment.ProcessPath!), InstalledExe, StringComparison.OrdinalIgnoreCase)) File.Copy(Environment.ProcessPath!, InstalledExe, true);
         Directory.CreateDirectory(DataDir);
@@ -161,12 +173,12 @@ internal static class Installer
 
         public InstallForm()
         {
-            Text = "Instalar Lorito Print Gateway";
+            Text = "Instalar Kogoz Print Gateway";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
             ClientSize = new Size(380, 285);
-            Controls.Add(new Label { Text = "Impresoras que usará Lorito:", Left = 15, Top = 15, Width = 350 });
+            Controls.Add(new Label { Text = "Impresoras que usará Kogoz:", Left = 15, Top = 15, Width = 350 });
             Controls.Add(printerList);
             Controls.Add(new Label { Text = "Código de 4 dígitos (generado en la web):", Left = 15, Top = 167, Width = 350 });
             Controls.Add(code);
@@ -186,15 +198,15 @@ internal static class Installer
             try
             {
                 await Task.Run(() => Install(printers));
-                var message = "Instalado. Lorito Print Gateway ya se ejecuta en segundo plano.";
+                var message = "Instalado. Kogoz Print Gateway ya se ejecuta en segundo plano.";
                 if (code.Text.Length == 4)
                 {
                     status.Text = "Vinculando...";
                     var linkError = await LinkAsync(code.Text);
-                    message = linkError ?? "Instalado y vinculado. Ya puedes imprimir desde Lorito.";
+                    message = linkError ?? "Instalado y vinculado. Ya puedes imprimir desde Kogoz.";
                 }
                 else if (!await IsLinkedAsync()) message += " Falta vincular: abre el icono de la bandeja e ingresa el código.";
-                MessageBox.Show(message, "Lorito Print Gateway");
+                MessageBox.Show(message, "Kogoz Print Gateway");
                 Close();
             }
             catch (Exception exception)

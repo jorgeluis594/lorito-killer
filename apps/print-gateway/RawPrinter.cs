@@ -1,4 +1,4 @@
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 #if WINDOWS
 using System.Runtime.InteropServices;
@@ -13,7 +13,7 @@ public sealed class WindowsRawPrinter : IRawPrinter
             if (!OpenPrinter(printerLocalName, out var handle, IntPtr.Zero)) return new NativePrintResult("RETRYABLE_FAILURE", "No se pudo abrir la impresora");
             try
             {
-                var document = new DOCINFO { pDocName = "Lorito Kitchen Ticket", pDataType = "RAW" };
+                var document = new DOCINFO { pDocName = "Kogoz Kitchen Ticket", pDataType = "RAW" };
                 if (StartDocPrinter(handle, 1, ref document) == 0) return new NativePrintResult("RETRYABLE_FAILURE", "No se pudo abrir el documento");
                 var pageStarted = StartPagePrinter(handle);
                 var written = 0;

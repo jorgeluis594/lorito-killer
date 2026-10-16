@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 public sealed record PrintClaim(string JobId, int AttemptNumber, string PrinterId, string PrinterLocalName, byte[] Content, DateTimeOffset AttemptExpiresAt, DateTimeOffset ServerNow);
 public sealed class InvalidClaimException(int attemptNumber, string message) : Exception(message) { public int AttemptNumber { get; } = attemptNumber; }
@@ -102,7 +102,7 @@ public sealed class JournalStore
     private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
     private readonly string root;
     private readonly object gate = new();
-    public JournalStore(string? root = null) => this.root = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Lorito", "PrintGateway", "jobs");
+    public JournalStore(string? root = null) => this.root = root ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Kogoz", "PrintGateway", "jobs");
     public string Root => root;
     public void EnsureReady()
     {

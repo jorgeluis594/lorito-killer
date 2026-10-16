@@ -1,7 +1,7 @@
 #if WINDOWS
 using System.Drawing.Printing;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 public sealed class WindowsPrinterEnumerator : IPrinterEnumerator
 {

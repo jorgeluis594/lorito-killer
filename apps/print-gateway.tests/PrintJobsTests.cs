@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lorito.PrintGateway;
+using Kogoz.PrintGateway;
 using Xunit;
 
-namespace Lorito.PrintGateway.Tests;
+namespace Kogoz.PrintGateway.Tests;
 
 public sealed class PrintJobsTests
 {
@@ -15,7 +15,7 @@ public sealed class PrintJobsTests
             var handler = new StubHandler(bytes);
             var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
             var printer = new CapturingPrinter();
-            var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+            var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             var store = new JournalStore(root);
             var processor = new PrintJobProcessor(backend, store, printer, NullLogger<PrintJobProcessor>.Instance);
@@ -38,7 +38,7 @@ public sealed class PrintJobsTests
         var handler = new DuplicateAttemptHandler(Encoding.UTF8.GetBytes("ESC/POS"));
         var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
         var printer = new CapturingPrinter { Result = new("RETRYABLE_FAILURE", "offline") };
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         var processor = new PrintJobProcessor(backend, store, printer, NullLogger<PrintJobProcessor>.Instance);
@@ -59,7 +59,7 @@ public sealed class PrintJobsTests
         var handler = new StubHandler(Encoding.UTF8.GetBytes("ESC/POS"));
         var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
         var printer = new CapturingPrinter();
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         store.Write(new PrintJournal("job", 1, "printer-1", "Kitchen", "hash", "SENDING", null, null, false));
@@ -77,7 +77,7 @@ public sealed class PrintJobsTests
         var handler = new SequencedHandler();
         var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
         var printer = new CapturingPrinter { Result = new("RETRYABLE_FAILURE", "offline") };
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         var processor = new PrintJobProcessor(backend, store, printer, NullLogger<PrintJobProcessor>.Instance);
@@ -99,7 +99,7 @@ public sealed class PrintJobsTests
         var handler = new TwoPrinterHandler();
         var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
         var printer = new BlockingPrinter();
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         var processor = new PrintJobProcessor(backend, store, printer, NullLogger<PrintJobProcessor>.Instance);
@@ -119,7 +119,7 @@ public sealed class PrintJobsTests
     [Fact]
     public void Journal_scan_returns_only_valid_unconfirmed_json_records()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         store.Write(new PrintJournal("pending", 1, "p", "P", "hash", "RESULT", "DELIVERED", null, false));
@@ -139,7 +139,7 @@ public sealed class PrintJobsTests
         var handler = new ReconciliationHandler("DELIVERED") { FailReports = 1 };
         var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
         var printer = new CapturingPrinter();
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "RESULT", "DELIVERED", null, false));
@@ -160,7 +160,7 @@ public sealed class PrintJobsTests
         var handler = new ReconciliationHandler("FAILED");
         var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
         var printer = new CapturingPrinter();
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "SENDING", null, null, false));
@@ -178,7 +178,7 @@ public sealed class PrintJobsTests
     {
         var handler = new ReconciliationHandler("PENDING");
         var backend = new BackendClient(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         store.Write(new PrintJournal("job", 1, "printer", "Kitchen", "hash", "RESULT", "RETRYABLE_FAILURE", "offline", false));
@@ -239,7 +239,7 @@ public sealed class PrintJobsTests
     private static BackendClient Backend(HttpMessageHandler handler) => new(new HttpClient(handler), new GatewayConfiguration("https://backend.test", "https://supabase.test", "key"));
     private static JournalStore Store()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         return new(root);
     }

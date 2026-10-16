@@ -1,11 +1,11 @@
 param(
   [Parameter(Mandatory = $true)][string]$ExecutablePath,
-  [string]$DataPath = "$env:ProgramData\Lorito\PrintGateway",
+  [string]$DataPath = "$env:ProgramData\Kogoz\PrintGateway",
   [string[]]$PrinterName = @()
 )
 
 $ErrorActionPreference = "Stop"
-$serviceName = "LoritoPrintGateway"
+$serviceName = "KogozPrintGateway"
 $JobsPath = Join-Path $DataPath "jobs"
 New-Item -ItemType Directory -Force -Path $DataPath | Out-Null
 New-Item -ItemType Directory -Force -Path $JobsPath | Out-Null

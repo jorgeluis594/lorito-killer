@@ -182,14 +182,19 @@ export function TableOrderView({
     setError("");
     try {
       if (editable && !(await draft.flush())) return;
-      if (editable) {
+      // Without a session nothing was added, so leaving records nothing.
+      if (editable && draft.sessionId.current) {
         const result = send
           ? await sendTableDraft(
-              session.id,
+              draft.sessionId.current,
               draft.revision.current,
               (roundIdRef.current ??= crypto.randomUUID()),
             )
-          : await leaveEmptyTable(session.id, draft.revision.current, release);
+          : await leaveEmptyTable(
+              draft.sessionId.current,
+              draft.revision.current,
+              release,
+            );
         if (!result.success) {
           setError(result.message);
           return;
@@ -797,7 +802,7 @@ export function TableOrderView({
               )}
               Enviar pedido
             </Button>
-            {editable && !count && !sentItems.length ? (
+            {editable && session.id && !count && !sentItems.length ? (
               <Button
                 variant="outline"
                 className="min-h-12 w-full"

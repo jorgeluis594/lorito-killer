@@ -408,7 +408,7 @@ export async function createManualKitchenTicketPrintJob(
   generate: (
     content: KitchenTicketContentInput,
     profile: KitchenTicketPrinterProfile,
-  ) => Uint8Array,
+  ) => Promise<Uint8Array>,
   attempt = 0,
 ): Promise<response<ManualPrintJob>> {
   try {
@@ -561,7 +561,7 @@ export async function createManualKitchenTicketPrintJob(
             };
         }
 
-        const content = generate(
+        const content = await generate(
           {
             ticketId: ticket.id,
             createdAt: ticket.createdAt,
