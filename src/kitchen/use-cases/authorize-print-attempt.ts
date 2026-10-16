@@ -16,7 +16,6 @@ const attempt = (job: PrintJob, timeoutMs: number, serverNow: Date): PrintAttemp
   attemptNumber: job.attempts,
   printerId: job.printerId,
   printerLocalName: job.printerLocalName,
-  content: job.content,
   timeoutMs,
   attemptExpiresAt: new Date((job.processingStartedAt ?? serverNow).getTime() + timeoutMs),
   serverNow,

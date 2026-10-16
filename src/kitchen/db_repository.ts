@@ -6,9 +6,9 @@ import type { PrintJob, PrintJobStatus } from "./types";
 import type { KitchenTicketView, ManualPrintJob } from "./types";
 import type { KitchenPrinterActivity } from "./use-cases/check-kitchen-printers";
 import type { ManualPrintInput } from "./use-cases/print-kitchen-ticket";
-import type {
-  KitchenTicketContentInput,
-  KitchenTicketPrinterProfile,
+import {
+  createKitchenTicketContent,
+  type KitchenTicketContentInput,
 } from "@/printing/create-kitchen-ticket-content";
 import type { KitchenInput } from "./use-cases/configure-kitchens";
 
@@ -25,7 +25,6 @@ const toPrintJob = (job: {
   companyId: string;
   kitchenTicketId: string;
   printerId: string;
-  content: Uint8Array;
   status: PrintJobStatus;
   attempts: number;
   nextAttemptAt: Date | null;
@@ -39,7 +38,6 @@ const toPrintJob = (job: {
   printerId: job.printerId,
   printClientId: job.printer.printClientId,
   printerLocalName: job.printer.localName,
-  content: job.content,
   status: job.status,
   attempts: job.attempts,
   nextAttemptAt: job.nextAttemptAt,
@@ -50,6 +48,23 @@ const toPrintJob = (job: {
 const printJobInclude = {
   printer: { select: { printClientId: true, localName: true } },
 } satisfies Prisma.KitchetTicketPrintJobInclude;
+
+/** Genera los bytes al tomar el trabajo, fuera de la transacción que creó el pedido. */
+export async function renderPrintJobContent(
+  jobId: string,
+): Promise<Uint8Array> {
+  const job = await prisma().kitchetTicketPrintJob.findUniqueOrThrow({
+    where: { id: jobId },
+    select: { content: true, ticket: true, printer: true },
+  });
+  // Trabajos creados antes del snapshot ya traen sus bytes.
+  if (job.content) return job.content;
+  const ticket = job.ticket as unknown as KitchenTicketContentInput;
+  return createKitchenTicketContent(
+    { ...ticket, createdAt: new Date(ticket.createdAt) },
+    job.printer,
+  );
+}
 
 export const findPrintJob = async (jobId: string): Promise<PrintJob | null> => {
   const job = await prisma().kitchetTicketPrintJob.findUnique({
@@ -405,10 +420,6 @@ const manualPrintError = (error: unknown) => {
 
 export async function createManualKitchenTicketPrintJob(
   input: ManualPrintInput & { isReprint: boolean },
-  generate: (
-    content: KitchenTicketContentInput,
-    profile: KitchenTicketPrinterProfile,
-  ) => Promise<Uint8Array>,
   attempt = 0,
 ): Promise<response<ManualPrintJob>> {
   try {
@@ -561,42 +572,37 @@ export async function createManualKitchenTicketPrintJob(
             };
         }
 
-        const content = await generate(
-          {
-            ticketId: ticket.id,
-            createdAt: ticket.createdAt,
-            kitchenName: ticket.kitchen.name,
-            orderType: ticket.orderRound.order.orderType,
-            orderLabel:
-              ticket.orderRound.order.tableSession?.table?.label ||
-              String(
-                ticket.orderRound.order.tableSession?.table?.number ??
-                  ticket.orderRound.order.id.slice(0, 8).toUpperCase(),
-              ),
-            responsibleName:
-              ticket.orderRound.responsibleUser.name ||
-              ticket.orderRound.responsibleUser.email,
-            customerName: ticket.orderRound.order.delivery?.name,
-            isReprint: input.isReprint,
-            items: items
-              .filter(
-                (item) => input.isReprint || item.orderItem.quantity.gt(0),
-              )
-              .map((item) => ({
-                productName: item.productName,
-                quantity: item.orderItem.quantity.toNumber(),
-                cancelledQuantity: input.isReprint
-                  ? item.cancellations.reduce(
-                      (sum, cancellation) =>
-                        sum + cancellation.quantity.toNumber(),
-                      0,
-                    )
-                  : undefined,
-                notes: item.notes,
-              })),
-          },
-          printer,
-        );
+        const snapshot: KitchenTicketContentInput = {
+          ticketId: ticket.id,
+          createdAt: ticket.createdAt,
+          kitchenName: ticket.kitchen.name,
+          orderType: ticket.orderRound.order.orderType,
+          orderLabel:
+            ticket.orderRound.order.tableSession?.table?.label ||
+            String(
+              ticket.orderRound.order.tableSession?.table?.number ??
+                ticket.orderRound.order.id.slice(0, 8).toUpperCase(),
+            ),
+          responsibleName:
+            ticket.orderRound.responsibleUser.name ||
+            ticket.orderRound.responsibleUser.email,
+          customerName: ticket.orderRound.order.delivery?.name,
+          isReprint: input.isReprint,
+          items: items
+            .filter((item) => input.isReprint || item.orderItem.quantity.gt(0))
+            .map((item) => ({
+              productName: item.productName,
+              quantity: item.orderItem.quantity.toNumber(),
+              cancelledQuantity: input.isReprint
+                ? item.cancellations.reduce(
+                    (sum, cancellation) =>
+                      sum + cancellation.quantity.toNumber(),
+                    0,
+                  )
+                : undefined,
+              notes: item.notes,
+            })),
+        };
         const job = await db.kitchetTicketPrintJob.create({
           data: {
             id: input.jobId,
@@ -605,7 +611,7 @@ export async function createManualKitchenTicketPrintJob(
             printerId: printer.id,
             requestedById: input.userId,
             isReprint: input.isReprint,
-            content: Buffer.from(content),
+            ticket: snapshot,
           },
         });
         return {
@@ -624,7 +630,7 @@ export async function createManualKitchenTicketPrintJob(
   } catch (error) {
     const code = (error as { code?: string }).code;
     if ((code === "P2034" || code === "P2010") && attempt < 2)
-      return createManualKitchenTicketPrintJob(input, generate, attempt + 1);
+      return createManualKitchenTicketPrintJob(input, attempt + 1);
     return { success: false, message: manualPrintError(error) };
   }
 }

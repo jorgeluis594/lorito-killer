@@ -616,7 +616,10 @@ model KitchetTicketPrintJob {
   kitchenTicket       KitchenTicket               @relation(fields: [kitchenTicketId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   printerId           String
   printer             Printer                     @relation(fields: [printerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  content             Bytes
+  /// Bytes ESC/POS de trabajos creados antes de `ticket`; los nuevos se generan al tomarlos.
+  content             Bytes?
+  /// Snapshot de la comanda (KitchenTicketContentInput) guardado en la misma transacción que el pedido.
+  ticket              Json?
   isReprint           Boolean                     @default(false)
   requestedById       String
   requestedBy         User                        @relation("KitchenTicketPrintRequester", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Cascade)

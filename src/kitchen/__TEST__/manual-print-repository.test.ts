@@ -9,18 +9,21 @@ const mocks = vi.hoisted(() => ({
   ticketFindFirst: vi.fn(),
   ticketFind: vi.fn(),
   ticketList: vi.fn(),
+  jobFindOrThrow: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   default: () => ({
     $transaction: mocks.transaction,
     kitchenTicket: { findMany: mocks.ticketList },
+    kitchetTicketPrintJob: { findUniqueOrThrow: mocks.jobFindOrThrow },
   }),
 }));
 
 import {
   createManualKitchenTicketPrintJob,
   findKitchenTickets,
+  renderPrintJobContent,
 } from "../db_repository";
 
 const input = {
@@ -100,28 +103,23 @@ beforeEach(() => {
 
 describe("createManualKitchenTicketPrintJob", () => {
   test("persists one first-print snapshot with only current quantities", async () => {
-    const generate = vi.fn().mockResolvedValue(Uint8Array.from([1, 2, 3]));
-    const result = await createManualKitchenTicketPrintJob(input, generate);
+    const result = await createManualKitchenTicketPrintJob(input);
 
     expect(result.success).toBe(true);
-    expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isReprint: false,
-        items: [
-          expect.objectContaining({
-            productName: "Lomo",
-            quantity: 2,
-            cancelledQuantity: undefined,
-          }),
-        ],
-      }),
-      expect.objectContaining({ id: "printer-1" }),
-    );
     expect(mocks.jobCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         id: "job-1",
         isReprint: false,
-        content: Buffer.from([1, 2, 3]),
+        ticket: expect.objectContaining({
+          isReprint: false,
+          items: [
+            expect.objectContaining({
+              productName: "Lomo",
+              quantity: 2,
+              cancelledQuantity: undefined,
+            }),
+          ],
+        }),
       }),
     });
     expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
@@ -139,32 +137,33 @@ describe("createManualKitchenTicketPrintJob", () => {
       status: "PENDING",
       isReprint: true,
     });
-    const generate = vi.fn().mockReturnValue(Uint8Array.from([4]));
-    const result = await createManualKitchenTicketPrintJob(
-      { ...input, jobId: "job-2", isReprint: true },
-      generate,
-    );
+    const result = await createManualKitchenTicketPrintJob({
+      ...input,
+      jobId: "job-2",
+      isReprint: true,
+    });
 
     expect(result.success).toBe(true);
-    expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isReprint: true,
-        items: [
-          expect.objectContaining({ quantity: 2, cancelledQuantity: 1 }),
-          expect.objectContaining({ quantity: 0, cancelledQuantity: 2 }),
-        ],
+    expect(mocks.jobCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        ticket: expect.objectContaining({
+          isReprint: true,
+          items: [
+            expect.objectContaining({ quantity: 2, cancelledQuantity: 1 }),
+            expect.objectContaining({ quantity: 0, cancelledQuantity: 2 }),
+          ],
+        }),
       }),
-      expect.anything(),
-    );
+    });
   });
 
   test("rejects another waiter and an active reprint before writing", async () => {
     mocks.ticketFindFirst.mockResolvedValue({
       orderRound: { orderId: "order-1", responsibleUserId: "other" },
     });
-    expect(
-      (await createManualKitchenTicketPrintJob(input, vi.fn())).success,
-    ).toBe(false);
+    expect((await createManualKitchenTicketPrintJob(input)).success).toBe(
+      false,
+    );
     expect(mocks.jobCreate).not.toHaveBeenCalled();
 
     mocks.ticketFindFirst.mockResolvedValue({
@@ -173,10 +172,10 @@ describe("createManualKitchenTicketPrintJob", () => {
     mocks.ticketFind.mockResolvedValue(
       ticket([{ id: "active", status: "PROCESSING" }]),
     );
-    const result = await createManualKitchenTicketPrintJob(
-      { ...input, isReprint: true },
-      vi.fn(),
-    );
+    const result = await createManualKitchenTicketPrintJob({
+      ...input,
+      isReprint: true,
+    });
     expect(result).toEqual({
       success: false,
       message: "La comanda ya tiene una impresión en curso.",
@@ -188,7 +187,7 @@ describe("createManualKitchenTicketPrintJob", () => {
       ...ticket(),
       orderRound: { ...ticket().orderRound, items: [item(0, 3)] },
     });
-    const result = await createManualKitchenTicketPrintJob(input, vi.fn());
+    const result = await createManualKitchenTicketPrintJob(input);
     expect(result).toEqual({
       success: false,
       message: "La comanda no tiene platos vigentes para imprimir.",
@@ -206,10 +205,8 @@ describe("createManualKitchenTicketPrintJob", () => {
       status: "DELIVERED",
       printer: { printClientId: "client-1" },
     });
-    const generate = vi.fn();
-    const result = await createManualKitchenTicketPrintJob(input, generate);
+    const result = await createManualKitchenTicketPrintJob(input);
     expect(result.success && result.data.status).toBe("DELIVERED");
-    expect(generate).not.toHaveBeenCalled();
     expect(mocks.jobCreate).not.toHaveBeenCalled();
   });
 
@@ -240,7 +237,7 @@ describe("createManualKitchenTicketPrintJob", () => {
         });
       });
 
-    const result = await createManualKitchenTicketPrintJob(input, vi.fn());
+    const result = await createManualKitchenTicketPrintJob(input);
     expect(result.success && result.data.id).toBe("job-1");
     expect(mocks.transaction).toHaveBeenCalledTimes(2);
   });
@@ -303,5 +300,48 @@ describe("findKitchenTickets", () => {
       canPrint: true,
       canReprint: false,
     });
+  });
+});
+
+describe("renderPrintJobContent", () => {
+  const printer = {
+    columns: 32,
+    codepageMapping: "epson",
+    cutEnabled: true,
+    feedBeforeCut: 3,
+  };
+
+  test("renders the stored snapshot after its JSON round trip", async () => {
+    mocks.jobFindOrThrow.mockResolvedValue({
+      content: null,
+      printer,
+      ticket: JSON.parse(
+        JSON.stringify({
+          ticketId: "ticket-1",
+          createdAt: new Date("2026-09-15T18:30:00Z"),
+          kitchenName: "Cocina",
+          orderType: "DINE_IN",
+          orderLabel: "7",
+          responsibleName: "Ana",
+          items: [{ productName: "Lomo", quantity: 2 }],
+        }),
+      ),
+    });
+    const content = await renderPrintJobContent("job-1");
+    // ESC * 33: la comanda se envía como imagen.
+    expect(
+      Buffer.from(content).indexOf(Buffer.from([0x1b, 0x2a, 0x21])),
+    ).toBeGreaterThanOrEqual(0);
+  });
+
+  test("returns the bytes of jobs created before the snapshot", async () => {
+    mocks.jobFindOrThrow.mockResolvedValue({
+      content: Uint8Array.from([1, 2]),
+      ticket: null,
+      printer,
+    });
+    expect(await renderPrintJobContent("job-1")).toEqual(
+      Uint8Array.from([1, 2]),
+    );
   });
 });

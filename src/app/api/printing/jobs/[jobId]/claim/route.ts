@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { authenticatePrintClient } from "@/printing/clients/authenticate";
-import { authorizePrintJob, findPrintJob } from "@/kitchen/db_repository";
+import {
+  authorizePrintJob,
+  findPrintJob,
+  renderPrintJobContent,
+} from "@/kitchen/db_repository";
 import { getPrintRecoveryPolicy } from "@/kitchen/print-policy";
 import { authorizePrintAttempt } from "@/kitchen/use-cases/authorize-print-attempt";
 
@@ -23,8 +27,9 @@ export async function POST(
     success: true,
     data: {
       ...result.data,
-      content: undefined,
-      contentBase64: Buffer.from(result.data.content).toString("base64"),
+      contentBase64: Buffer.from(await renderPrintJobContent(jobId)).toString(
+        "base64",
+      ),
     },
   });
 }

@@ -30,7 +30,6 @@ import {
 import { getKitchenTickets } from "./use-cases/get-kitchen-tickets";
 import { printKitchenTicket } from "./use-cases/print-kitchen-ticket";
 import { reprintKitchenTicket } from "./use-cases/reprint-kitchen-ticket";
-import { createKitchenTicketContent } from "@/printing/create-kitchen-ticket-content";
 import { processPrintJobs } from "./process-print-jobs";
 import { checkKitchenPrinters } from "./use-cases/check-kitchen-printers";
 import { notifyKitchenChanged, requestPrinterInventory } from "./notifications";
@@ -160,12 +159,8 @@ async function requestManualPrint(
     ...parsed.data,
   };
   const result = isReprint
-    ? await reprintKitchenTicket(params, (request) =>
-        createManualKitchenTicketPrintJob(request, createKitchenTicketContent),
-      )
-    : await printKitchenTicket(params, (request) =>
-        createManualKitchenTicketPrintJob(request, createKitchenTicketContent),
-      );
+    ? await reprintKitchenTicket(params, createManualKitchenTicketPrintJob)
+    : await printKitchenTicket(params, createManualKitchenTicketPrintJob);
   if (result.success) {
     revalidatePath("/[subdomain]/dashboard/tables", "layout");
     await notifyKitchenChanged(user.companyId, "print-job-changed").catch(

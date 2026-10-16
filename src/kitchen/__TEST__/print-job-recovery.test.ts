@@ -17,7 +17,6 @@ const job = (overrides: Partial<PrintJob> = {}): PrintJob => ({
   printerId: "printer-1",
   printClientId: "client-1",
   printerLocalName: "COCINA",
-  content: Uint8Array.from([0, 1, 255]),
   status: "PENDING",
   attempts: 0,
   nextAttemptAt: null,

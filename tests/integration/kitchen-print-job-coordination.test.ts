@@ -158,7 +158,6 @@ test("parallel workers reserve only the oldest job per free printer", async () =
     claimRequestedAt: null,
     processingStartedAt: null,
   });
-  expect(Buffer.from(retried!.content)).toEqual(Buffer.from([0, 255]));
 });
 
 test("the partial index rejects another active job for the same ticket", async () => {

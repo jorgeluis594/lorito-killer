@@ -8,8 +8,8 @@ import {
   ServiceProductType,
   SingleProductType,
 } from "@/product/types";
-import { createKitchenTicketContent } from "@/printing/create-kitchen-ticket-content";
 import { createKitchenTickets } from "@/kitchen/use-cases/create-kitchen-tickets";
+import type { KitchenTicketContentInput } from "@/printing/create-kitchen-ticket-content";
 import { sendRound } from "./use-cases/send-round";
 import type { OrderRoundView, RoundLineInput, SendRoundResult } from "./types";
 import {
@@ -503,34 +503,31 @@ export async function submitOrderRound(
                   });
                   if (!kitchen.printer || kitchen.printer.status !== "ACTIVE")
                     return null;
-                  const content = await createKitchenTicketContent(
-                    {
-                      ticketId: ticket.id,
-                      createdAt: round.createdAt,
-                      kitchenName: kitchen.name,
-                      orderType: order.orderType,
-                      orderLabel: session.table
-                        ? session.table.label || String(session.table.number)
-                        : order.id.slice(0, 8).toUpperCase(),
-                      responsibleName: responsible.name || responsible.email,
-                      customerName: order.delivery?.name,
-                      items: lines
-                        .filter((line) => line.kitchenId === kitchen.id)
-                        .map((line) => ({
-                          productName: line.productName,
-                          quantity: line.quantity,
-                          notes: line.notes,
-                        })),
-                    },
-                    kitchen.printer,
-                  );
+                  const snapshot: KitchenTicketContentInput = {
+                    ticketId: ticket.id,
+                    createdAt: round.createdAt,
+                    kitchenName: kitchen.name,
+                    orderType: order.orderType,
+                    orderLabel: session.table
+                      ? session.table.label || String(session.table.number)
+                      : order.id.slice(0, 8).toUpperCase(),
+                    responsibleName: responsible.name || responsible.email,
+                    customerName: order.delivery?.name,
+                    items: lines
+                      .filter((line) => line.kitchenId === kitchen.id)
+                      .map((line) => ({
+                        productName: line.productName,
+                        quantity: line.quantity,
+                        notes: line.notes,
+                      })),
+                  };
                   const job = await db.kitchetTicketPrintJob.create({
                     data: {
                       companyId: input.companyId,
                       kitchenTicketId: ticket.id,
                       printerId: kitchen.printer.id,
                       requestedById: input.userId,
-                      content: Buffer.from(content),
+                      ticket: snapshot,
                     },
                   });
                   return job.id;

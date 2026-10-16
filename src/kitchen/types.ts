@@ -19,7 +19,6 @@ export type PrintJob = {
   printerId: string;
   printClientId: string;
   printerLocalName: string;
-  content: Uint8Array;
   status: PrintJobStatus;
   attempts: number;
   nextAttemptAt: Date | null;
@@ -38,7 +37,6 @@ export type PrintAttempt = {
   attemptNumber: number;
   printerId: string;
   printerLocalName: string;
-  content: Uint8Array;
   timeoutMs: number;
   attemptExpiresAt: Date;
   serverNow: Date;
