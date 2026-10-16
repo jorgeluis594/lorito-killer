@@ -1,13 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, Loader2, Printer } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2, Printer } from "lucide-react";
 import type { UserRole } from "@/authorization/types";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/shared/components/ui/alert";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -61,16 +56,39 @@ export function KitchenAttentionPanel({
   );
   const tableRealtime = useRealtime<TableEvents>("tables");
   const { toast } = useToast();
-  const [printers, setPrinters] = useState<KitchenPrinterAttention[]>([]);
+  const lastPrinterAlert = useRef("");
   const [tickets, setTickets] = useState<KitchenTicketView[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [printing, setPrinting] = useState<string | null>(null);
 
+  const notifyPrinters = useCallback(
+    (printers: KitchenPrinterAttention[]) => {
+      const lines = printers.map(
+        ({ name, reason }) =>
+          `${name}: ${
+            reason === "MISSING_FROM_INVENTORY"
+              ? "no apareció en el último inventario"
+              : "actividad desactualizada"
+          }.`,
+      );
+      // Inventory updates arrive often; only toast when the problem changes.
+      const key = lines.join("\n");
+      if (key === lastPrinterAlert.current) return;
+      lastPrinterAlert.current = key;
+      if (!lines.length) return;
+      toast({
+        title: "Revisa las impresoras",
+        description: lines.map((line) => <p key={line}>{line}</p>),
+      });
+    },
+    [toast],
+  );
+
   const refreshPrinters = useCallback(async () => {
     const result = await checkKitchenPrintersAction();
-    if (result.success) setPrinters(result.data);
-  }, []);
+    if (result.success) notifyPrinters(result.data);
+  }, [notifyPrinters]);
 
   const refreshTickets = useCallback(async () => {
     if (!canReadTickets) return;
@@ -81,10 +99,8 @@ export function KitchenAttentionPanel({
   }, [canReadTickets]);
 
   useEffect(() => {
-    void checkKitchenPrintersAction().then((result) => {
-      if (result.success) setPrinters(result.data);
-    });
-  }, []);
+    void refreshPrinters();
+  }, [refreshPrinters]);
 
   useEffect(() => {
     const inventory = realtime.on("printer-inventory-updated", refreshPrinters);
@@ -139,24 +155,6 @@ export function KitchenAttentionPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      {printers.length ? (
-        <Alert>
-          <AlertTriangle aria-hidden />
-          <AlertTitle>Revisa las impresoras</AlertTitle>
-          <AlertDescription>
-            {printers.map(({ id, name, reason }) => (
-              <p key={id}>
-                {name}:{" "}
-                {reason === "MISSING_FROM_INVENTORY"
-                  ? "no apareció en el último inventario"
-                  : "actividad desactualizada"}
-                .
-              </p>
-            ))}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
       {canReadTickets ? (
         <Dialog
           open={open}
