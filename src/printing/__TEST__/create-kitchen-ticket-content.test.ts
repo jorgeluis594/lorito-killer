@@ -75,6 +75,28 @@ describe("createKitchenTicketContent", () => {
     expect(bytes.includes(Buffer.from([0x1d, 0x56]))).toBe(true);
   });
 
+  test("fits notes with many line breaks and long unbroken words", async () => {
+    const content = await createKitchenTicketContent(
+      {
+        ...base,
+        items: [
+          {
+            productName: "Chicharrón-de-pescado-con-yuca-frita-extra-grande",
+            quantity: 1,
+            notes: Array.from({ length: 12 }, (_, i) => `nota ${i}`).join("\n"),
+          },
+        ],
+      },
+      {
+        columns: 32,
+        codepageMapping: "epson",
+        cutEnabled: true,
+        feedBeforeCut: 3,
+      },
+    );
+    expect(content.length).toBeGreaterThan(0);
+  });
+
   test("omits the cut when disabled", async () => {
     const content = await createKitchenTicketContent(base, {
       columns: 32,

@@ -223,7 +223,13 @@ export function TableOrderView({
     setBusy(true);
     try {
       if (editable && !(await draft.flush())) return;
-      router.push(paymentHref);
+      // A free table gets its session on the first save, after the page built paymentHref.
+      router.push(
+        paymentHref.replace(
+          /session=[^&]*/,
+          `session=${draft.sessionId.current}`,
+        ),
+      );
     } catch {
       setError("No se pudo abrir la cuenta. Vuelve a intentarlo.");
     } finally {

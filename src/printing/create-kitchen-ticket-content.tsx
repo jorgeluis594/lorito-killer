@@ -98,16 +98,24 @@ function loadFonts() {
 async function renderLines(lines: KitchenTicketLine[], width: number) {
   const [regular, bold] = await loadFonts();
   // Cota superior generosa: cada línea puede partirse en varias; luego se recorta lo blanco.
+  // Cada salto de línea de las notas (pre-wrap) abre un renglón propio.
   const estimatedHeight =
     lines.reduce(
       (sum, line) =>
         sum +
         (line === "rule"
           ? LINE_HEIGHT
-          : Math.ceil(((line.text.length + 1) * FONT_SIZE * 0.75) / width) *
-            LINE_HEIGHT),
+          : line.text
+              .split("\n")
+              .reduce(
+                (rows, segment) =>
+                  rows +
+                  Math.ceil(((segment.length + 1) * FONT_SIZE * 0.75) / width),
+                0,
+              ) * LINE_HEIGHT),
       0,
-    ) + 4 * LINE_HEIGHT;
+    ) +
+    4 * LINE_HEIGHT;
 
   const png = await new ImageResponse(
     (
@@ -145,6 +153,8 @@ async function renderLines(lines: KitchenTicketLine[], width: number) {
                 textAlign: line.center ? "center" : "left",
                 fontWeight: line.bold ? 700 : 400,
                 whiteSpace: "pre-wrap",
+                // Sin esto una palabra más ancha que el papel se recorta en el borde.
+                wordBreak: "break-word",
               }}
             >
               {line.text}

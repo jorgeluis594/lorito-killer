@@ -76,9 +76,18 @@ export function useTableDraft(session: TableSession) {
   useEffect(() => {
     // Follows the table's session as it opens, changes or closes on the server.
     if (session.id === sessionId.current) return;
+    const replaced = sessionId.current !== "";
     sessionId.current = session.id;
     revision.current = session.draftRevision ?? 0;
-  }, [session.id, session.draftRevision]);
+    // The session these items belonged to closed or changed: they must not be saved into the next one.
+    if (replaced) {
+      current.current = session.draft ?? [];
+      saved.current = current.current;
+      setItems(current.current);
+      setStatus("saved");
+      setError("");
+    }
+  }, [session.id, session.draftRevision, session.draft]);
 
   useEffect(() => {
     if (current.current === saved.current) return;
