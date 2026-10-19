@@ -4,11 +4,15 @@ const mocks = vi.hoisted(() => ({
   broadcast: vi.fn(),
   findSource: vi.fn(),
   ticketFind: vi.fn(),
+  sessionFind: vi.fn(),
 }));
 
 vi.mock("@/lib/realtime/broadcast", () => ({ broadcast: mocks.broadcast }));
 vi.mock("@/lib/prisma", () => ({
-  default: () => ({ kitchenTicket: { findUniqueOrThrow: mocks.ticketFind } }),
+  default: () => ({
+    kitchenTicket: { findUniqueOrThrow: mocks.ticketFind },
+    tableSession: { findUniqueOrThrow: mocks.sessionFind },
+  }),
 }));
 vi.mock("../db_repository", () => ({ findPrintJobSource: mocks.findSource }));
 
@@ -47,7 +51,7 @@ describe("notifyPrintJobFailed", () => {
     const failureAudience = vi
       .fn()
       .mockResolvedValue({ channels: ["print-user-cashier-1"] });
-    const original = printJobStrategies.KITCHEN_TICKET!;
+    const original = printJobStrategies.KITCHEN_TICKET;
     printJobStrategies.KITCHEN_TICKET = { ...original, failureAudience };
     try {
       const job = {
@@ -87,6 +91,29 @@ describe("notifyPrintJobFailed", () => {
         "print-job-failed",
         { jobId: "job-1", sourceType: "TAX_DOCUMENT", message: "Sin papel" },
       ],
+    ]);
+  });
+
+  test("tells whoever requested a pre-bill and the table's waiter", async () => {
+    mocks.findSource.mockResolvedValue({
+      companyId: "company-1",
+      sourceType: "PRE_BILL",
+      sourceId: "session-1",
+      requestedById: "cashier-1",
+      lastError: "Sin papel",
+    });
+    mocks.sessionFind.mockResolvedValue({ waiterId: "waiter-1" });
+
+    await notifyPrintJobFailed("job-1");
+
+    const payload = {
+      jobId: "job-1",
+      sourceType: "PRE_BILL",
+      message: "Sin papel",
+    };
+    expect(mocks.broadcast.mock.calls).toEqual([
+      ["company-1", "print-user-cashier-1", "print-job-failed", payload],
+      ["company-1", "print-user-waiter-1", "print-job-failed", payload],
     ]);
   });
 

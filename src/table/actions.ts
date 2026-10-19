@@ -24,6 +24,7 @@ import {
 } from "./db_repository";
 import { closeTableSession } from "./use-cases/close-table-session";
 import { requestBill } from "./use-cases/request-bill";
+import { printPreBill } from "./use-cases/print-pre-bill";
 import type { RoundItem } from "./types";
 import { transferTable } from "./use-cases/transfer-table";
 import {
@@ -467,6 +468,18 @@ export const requestBillAction = protectedAction(
       });
     }
     return result;
+  },
+);
+
+/** Reimprime la precuenta con el estado actual de la mesa. */
+export const printPreBillAction = protectedAction(
+  { resource: "tables", action: "update" },
+  async (user, sessionId: string): Promise<response<{ jobId: string }>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    if (!z.string().uuid().safeParse(sessionId).success)
+      return { success: false, message: "La mesa no es válida." };
+    return printPreBill(user.companyId, user.id, sessionId);
   },
 );
 

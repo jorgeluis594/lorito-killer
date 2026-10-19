@@ -1,18 +1,14 @@
 import { taxDocumentPrintStrategy } from "@/document/print-strategy";
 import { kitchenTicketPrintStrategy } from "@/kitchen/print-strategy";
+import { preBillPrintStrategy } from "@/table/print-strategy";
 import type { PrintJobSourceType, PrintJobStrategy } from "./types";
 
-// shortcut: PRE_BILL se agrega en la tarea 3
-export const printJobStrategies: Partial<
-  Record<PrintJobSourceType, PrintJobStrategy<any>>
-> = {
+export const printJobStrategies = {
   KITCHEN_TICKET: kitchenTicketPrintStrategy,
   TAX_DOCUMENT: taxDocumentPrintStrategy,
-};
+  PRE_BILL: preBillPrintStrategy,
+} satisfies Record<PrintJobSourceType, PrintJobStrategy<any>>;
 
-export function getPrintJobStrategy(sourceType: PrintJobSourceType) {
-  const strategy = printJobStrategies[sourceType];
-  if (!strategy)
-    throw new Error(`No hay estrategia de impresión para ${sourceType}`);
-  return strategy;
-}
+export const getPrintJobStrategy = (
+  sourceType: PrintJobSourceType,
+): PrintJobStrategy<any> => printJobStrategies[sourceType];

@@ -99,6 +99,7 @@ export const printJobStrategies = {
 
 - **Comprobante:** una server action `printTaxDocument(orderId)` busca el `Document` del pedido. Sin `cashierPrinterId` devuelve `{ mode: "pdf" }` y el cliente abre `/api/orders/[id]/documents`. Con impresora, crea un `TAX_DOCUMENT`. La usan `payment-modal.tsx`, `table-payment-view.tsx` y `receipt-print-button.tsx` (detalle de pedido y reporte de ventas).
 - **Precuenta:** se crea al terminar bien `requestBillAction`, y con el botón "Imprimir precuenta" del panel de la mesa (permiso `tables:update`).
+- Desvío (Tarea 3): `requestBillAction`, `table-session-panel.tsx` y `table-actions-menu.tsx` son código muerto. La precuenta se crea cuando `confirmTablePayment` con método `register` (Enviar a caja) deja la sesión en `BILL_REQUESTED`, después de la transacción del pago y sin hacerlo fallar; el botón está en `table-order-view.tsx`.
 - **Consultas que pierden la relación `KitchenTicket.printJobs`** pasan a buscar los trabajos por `sourceType` y `sourceId`: `src/order/rounds/db_repository.ts:294`, `src/kitchen/db_repository.ts:304` y `:507`. La actividad de impresoras de cocina (`kitchen/db_repository.ts:383`) filtra `sourceType: "KITCHEN_TICKET"`.
 
 ## 4. Fallos por realtime

@@ -16,7 +16,7 @@ const documentTypeToText: Record<DocumentType, string> = {
   [TICKET]: "NOTA DE VENTA ELECTRONICA",
 };
 
-const text = (
+export const text = (
   value: string,
   options: Omit<Extract<PrintCommand, { type: "text" }>, "type" | "value"> = {},
 ): PrintCommand => ({
@@ -25,7 +25,8 @@ const text = (
   ...options,
 });
 
-const separator = (columns: number, char = "-") => text(char.repeat(columns));
+export const separator = (columns: number, char = "-") =>
+  text(char.repeat(columns));
 
 const clean = (value: string | number | undefined | null): string =>
   String(value ?? "")
@@ -34,7 +35,7 @@ const clean = (value: string | number | undefined | null): string =>
 
 const money = (value: number): string => formatPriceWithoutCurrency(value);
 
-const currency = (value: number): string => clean(formatPrice(value));
+export const currency = (value: number): string => clean(formatPrice(value));
 
 const formatDate = (value: string): string =>
   shortLocalizeDate(new Date(value));
@@ -74,7 +75,7 @@ const chunkText = (value: string, width: number): string[] => {
   });
 };
 
-const pushWrappedLabel = (
+export const pushWrappedLabel = (
   commands: PrintCommand[],
   columns: number,
   label: string,
@@ -88,7 +89,7 @@ const pushWrappedLabel = (
   });
 };
 
-const pushWrappedText = (
+export const pushWrappedText = (
   commands: PrintCommand[],
   columns: number,
   value: string | undefined,
@@ -101,7 +102,7 @@ const pushWrappedText = (
   });
 };
 
-const pushAmountLine = (
+export const pushAmountLine = (
   commands: PrintCommand[],
   columns: number,
   label: string,
@@ -212,10 +213,17 @@ const addDocumentData = (
   }
 };
 
-const addItems = (
+export const addItems = (
   commands: PrintCommand[],
   columns: number,
-  data: ReceiptPrintData,
+  data: {
+    order: {
+      items: Pick<
+        ReceiptPrintData["order"]["items"][number],
+        "name" | "quantity" | "unitPrice" | "netTotal" | "discountAmount"
+      >[];
+    };
+  },
 ) => {
   commands.push(separator(columns));
   commands.push(text("Detalle", { bold: true }));

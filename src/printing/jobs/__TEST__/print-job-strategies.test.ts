@@ -6,8 +6,10 @@ vi.mock("@/lib/prisma", () => ({
   default: () => ({ printJob: { findUniqueOrThrow: mocks.jobFindOrThrow } }),
 }));
 
+import { PrintJobSourceType } from "@prisma/client";
 import { taxDocumentPrintStrategy } from "@/document/print-strategy";
 import { kitchenTicketPrintStrategy } from "@/kitchen/print-strategy";
+import { preBillPrintStrategy } from "@/table/print-strategy";
 import { renderPrintJobContent } from "../db_repository";
 import { getPrintRecoveryPolicy } from "../policy";
 import { getPrintJobStrategy } from "../strategies";
@@ -24,14 +26,19 @@ afterEach(() => {
 });
 
 describe("printJobStrategies", () => {
-  test("returns each type's strategy and rejects a type without one", () => {
-    expect(getPrintJobStrategy("KITCHEN_TICKET")).toBe(
-      kitchenTicketPrintStrategy,
-    );
-    expect(getPrintJobStrategy("TAX_DOCUMENT")).toBe(taxDocumentPrintStrategy);
-    expect(() => getPrintJobStrategy("PRE_BILL")).toThrow(
-      "No hay estrategia de impresión para PRE_BILL",
-    );
+  test("every source type has its strategy", () => {
+    expect(
+      Object.fromEntries(
+        Object.values(PrintJobSourceType).map((type) => [
+          type,
+          getPrintJobStrategy(type),
+        ]),
+      ),
+    ).toEqual({
+      KITCHEN_TICKET: kitchenTicketPrintStrategy,
+      TAX_DOCUMENT: taxDocumentPrintStrategy,
+      PRE_BILL: preBillPrintStrategy,
+    });
   });
 });
 
@@ -39,6 +46,7 @@ describe("getPrintRecoveryPolicy", () => {
   test("uses the strategy's maxAttempts and falls back to PRINT_JOB_MAX_ATTEMPTS", () => {
     vi.stubEnv("PRINT_JOB_MAX_ATTEMPTS", "5");
     expect(getPrintRecoveryPolicy("TAX_DOCUMENT").maxAttempts).toBe(3);
+    expect(getPrintRecoveryPolicy("PRE_BILL").maxAttempts).toBe(3);
     expect(getPrintRecoveryPolicy("KITCHEN_TICKET").maxAttempts).toBe(5);
     expect(getPrintRecoveryPolicy().maxAttempts).toBe(5);
   });

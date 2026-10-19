@@ -29,7 +29,11 @@ import { useCategoryStore } from "@/category/components/category-store-provider"
 import { getMany } from "@/product/api_repository";
 import { isDishProduct, type Product } from "@/product/types";
 import type { TableSession } from "../types";
-import { leaveEmptyTable, sendTableDraft } from "../actions";
+import {
+  leaveEmptyTable,
+  printPreBillAction,
+  sendTableDraft,
+} from "../actions";
 import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
@@ -82,6 +86,7 @@ export function TableOrderView({
   const roundIdRef = useRef<string | null>(null);
   const [error, setError] = useState("");
   const [printingTicketId, setPrintingTicketId] = useState<string | null>(null);
+  const [printingPreBill, setPrintingPreBill] = useState(false);
   const printRequestIds = useRef(new Map<string, string>());
   const deliveryFee = session.delivery?.fee ?? 0;
   // Un delivery despachado ya salió del local: no admite más productos.
@@ -238,6 +243,27 @@ export function TableOrderView({
     }
   }
 
+  async function printPreBill() {
+    setPrintingPreBill(true);
+    try {
+      const result = await printPreBillAction(session.id);
+      if (!result.success)
+        toast({
+          title: "No se pudo imprimir la precuenta",
+          description: result.message,
+          variant: "destructive",
+        });
+    } catch {
+      toast({
+        title: "No se pudo imprimir la precuenta",
+        description: "Vuelve a intentarlo.",
+        variant: "destructive",
+      });
+    } finally {
+      setPrintingPreBill(false);
+    }
+  }
+
   async function requestPrint(ticket: KitchenTicketView, reprint: boolean) {
     if (printingTicketId) return;
     setPrintingTicketId(ticket.id);
@@ -294,6 +320,20 @@ export function TableOrderView({
             )}
           </div>
           {headerAction}
+          {canEdit && session.tableId && sentItems.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={printPreBill}
+              disabled={printingPreBill}
+            >
+              {printingPreBill ? (
+                <Loader2 className="animate-spin" aria-hidden />
+              ) : (
+                <ReceiptText aria-hidden />
+              )}
+              <span className="sr-only sm:not-sr-only">Imprimir precuenta</span>
+            </Button>
+          )}
         </div>
         <span
           className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"

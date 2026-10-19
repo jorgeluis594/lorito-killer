@@ -14,9 +14,12 @@ export function PrintJobFailureListener({ userId }: { userId: string }) {
 
   useEffect(
     () =>
-      realtime.on("print-job-failed", ({ message }) =>
+      realtime.on("print-job-failed", ({ message, sourceType }) =>
         toast({
-          title: "No se pudo imprimir el comprobante",
+          title:
+            sourceType === "PRE_BILL"
+              ? "No se pudo imprimir la precuenta"
+              : "No se pudo imprimir el comprobante",
           description: message,
           variant: "destructive",
         }),
