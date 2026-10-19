@@ -19,9 +19,18 @@ export const notifyPrintJobFailed = async (jobId: string) => {
   const { channels } = await getPrintJobStrategy(
     job.sourceType,
   ).failureAudience(job);
+  // Las comandas solo avisan; el resto lleva el detalle para el toast de quien pidió.
+  const payload =
+    job.sourceType === "KITCHEN_TICKET"
+      ? {}
+      : {
+          jobId,
+          sourceType: job.sourceType,
+          message: job.lastError ?? "No se pudo imprimir.",
+        };
   await Promise.all(
     channels.map((channel) =>
-      broadcast(job.companyId, channel, "print-job-failed", {}),
+      broadcast(job.companyId, channel, "print-job-failed", payload),
     ),
   );
 };

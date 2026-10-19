@@ -270,5 +270,15 @@ export const findPrintJobSource = (jobId: string) =>
       sourceType: true,
       sourceId: true,
       requestedById: true,
+      lastError: true,
     },
+  });
+
+export const findPrintJobsFor = (
+  sourceType: PrintJobSourceType,
+  sourceId: string,
+) =>
+  prisma().printJob.findMany({
+    where: { sourceType, sourceId },
+    select: { id: true, status: true },
   });

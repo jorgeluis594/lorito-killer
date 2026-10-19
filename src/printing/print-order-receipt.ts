@@ -1,147 +1,22 @@
 "use client";
 
-import { iminPrinter } from "@/printing/printers/imin/imin-printer";
-import { requestIminLocalNetworkAccess } from "@/printing/request-local-network-access";
-import {
-  getPrintingRuntimeState,
-  isFalconPrintingEnabled,
-  waitForPrinterInitialization,
-} from "@/printing/printing-runtime";
-import type {
-  PrintFailureReason,
-  PrintResult,
-  ReceiptPrintData,
-} from "@/printing/types";
-
-type PrintDataResponse =
-  | {
-      success: true;
-      data: ReceiptPrintData;
-    }
-  | {
-      success: false;
-      message?: string;
-    };
+import { printTaxDocument } from "@/printing/actions";
+import type { PrintResult } from "@/printing/types";
 
 export const orderDocumentPdfUrl = (orderId: string) =>
   `/api/orders/${orderId}/documents`;
 
-export const orderPrintDataUrl = (orderId: string) =>
-  `/api/orders/${orderId}/print-data`;
-
-const openPdfFallback = (url: string) => {
-  window.open(url, "_blank");
-};
-
-const pdfFallbackResult = (
-  reason: PrintFailureReason,
-  message = "Se abrio el comprobante en PDF.",
-): PrintResult => ({
-  success: true,
-  mode: "pdf",
-  fallbackReason: reason,
-  message,
-});
-
-export const printOrderReceipt = async (orderId: string): Promise<PrintResult> => {
-  const defaultPdfUrl = orderDocumentPdfUrl(orderId);
-
-  if (!isFalconPrintingEnabled()) {
-    await requestIminLocalNetworkAccess();
-  }
-
-  if (
-    !isFalconPrintingEnabled() &&
-    !(await waitForPrinterInitialization())
-  ) {
-    const runtimeHealth = getPrintingRuntimeState().result?.printers.imin;
-    const fallbackReason = runtimeHealth?.reason ?? "sdk_unavailable";
-
-    openPdfFallback(defaultPdfUrl);
-    return pdfFallbackResult(
-      fallbackReason,
-      `${runtimeHealth?.message ?? "Impresora iMin no disponible."} Se abrio el PDF.`,
-    );
-  }
-
-  let receiptData: ReceiptPrintData;
-
-  try {
-    const response = await fetch(orderPrintDataUrl(orderId), {
-      method: "GET",
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
-        "Cache-Control": "no-store",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Print data request failed");
-    }
-
-    const payload = (await response.json()) as PrintDataResponse;
-
-    if (!payload.success) {
-      throw new Error(payload.message ?? "Print data response failed");
-    }
-
-    const data = payload.data;
-
-    console.log("[printing] order print-data response", {
-      orderId,
-      itemCount: data.order.items.length,
-      items: data.order.items,
-      document: data.document,
-      totals: {
-        subtotal: data.order.subtotal,
-        discount: data.order.discount,
-        total: data.order.total,
-        documentNetTotal: data.document.netTotal,
-        documentDiscountAmount: data.document.discountAmount,
-        documentTotal: data.document.total,
-      },
-      data,
-    });
-
-    receiptData = data;
-  } catch {
-    openPdfFallback(defaultPdfUrl);
-    return pdfFallbackResult(
-      "data_fetch_failed",
-      "No se pudo preparar la impresion directa. Se abrio el PDF.",
-    );
-  }
-
-  const fallbackPdfUrl = receiptData.fallbackPdfUrl || defaultPdfUrl;
-
-  if (!iminPrinter.isAvailable()) {
-    openPdfFallback(fallbackPdfUrl);
-    return pdfFallbackResult(
-      "sdk_unavailable",
-      "Impresora iMin no disponible. Se abrio el PDF.",
-    );
-  }
-
-  let printResult: PrintResult;
-
-  try {
-    printResult = await iminPrinter.printReceipt(receiptData);
-  } catch {
-    openPdfFallback(fallbackPdfUrl);
-    return pdfFallbackResult(
-      "print_failed",
-      "La impresion directa fallo. Se abrio el PDF.",
-    );
-  }
-
-  if (!printResult.success) {
-    openPdfFallback(fallbackPdfUrl);
-    return pdfFallbackResult(
-      printResult.reason,
-      `${printResult.message} Se abrio el PDF.`,
-    );
-  }
-
-  return printResult;
+/** El error de impresión llega después por realtime; aquí solo se encola o se abre el PDF. */
+export const printOrderReceipt = async (
+  orderId: string,
+): Promise<PrintResult> => {
+  const result = await printTaxDocument(orderId);
+  if (!result.success) return { success: false, message: result.message };
+  if (result.data.mode === "gateway") return { success: true, mode: "gateway" };
+  window.open(orderDocumentPdfUrl(orderId), "_blank");
+  return {
+    success: true,
+    mode: "pdf",
+    message: "Se abrio el comprobante en PDF.",
+  };
 };

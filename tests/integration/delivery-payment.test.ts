@@ -29,7 +29,7 @@ import {
   findReceiptPrintOrder,
 } from "@/order/db_repository";
 import { buildReceiptPrintData } from "@/printing/receipt-builder";
-import { buildThermalReceiptCommands } from "@/printing/printers/imin/thermal-receipt-renderer";
+import { buildThermalReceiptCommands } from "@/printing/thermal-receipt-renderer";
 import Voucher from "@/order/components/voucher";
 import type { Company } from "@/company/types";
 import {
@@ -273,7 +273,7 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
     expect(printData.document.total).toBe(55);
 
     // Térmica.
-    const commands = buildThermalReceiptCommands(printData);
+    const commands = buildThermalReceiptCommands(printData, 48);
     const lines = commands.flatMap((cmd) =>
       cmd.type === "text" ? [cmd.value] : [],
     );
@@ -498,7 +498,7 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
         ["Producto B", 1, 20, 20],
       ]);
       expect(printData.order.total).toBe(80);
-      const thermal = buildThermalReceiptCommands(printData)
+      const thermal = buildThermalReceiptCommands(printData, 48)
         .flatMap((cmd) => (cmd.type === "text" ? [cmd.value] : []))
         .join("\n");
       expect(thermal).not.toContain("Envío");

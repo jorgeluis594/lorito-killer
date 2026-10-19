@@ -6,10 +6,11 @@ vi.mock("@/lib/prisma", () => ({
   default: () => ({ printJob: { findUniqueOrThrow: mocks.jobFindOrThrow } }),
 }));
 
+import { taxDocumentPrintStrategy } from "@/document/print-strategy";
 import { kitchenTicketPrintStrategy } from "@/kitchen/print-strategy";
 import { renderPrintJobContent } from "../db_repository";
 import { getPrintRecoveryPolicy } from "../policy";
-import { getPrintJobStrategy, printJobStrategies } from "../strategies";
+import { getPrintJobStrategy } from "../strategies";
 
 const printer = {
   columns: 32,
@@ -20,16 +21,16 @@ const printer = {
 
 afterEach(() => {
   vi.unstubAllEnvs();
-  delete printJobStrategies.TAX_DOCUMENT;
 });
 
 describe("printJobStrategies", () => {
-  test("returns the kitchen ticket strategy and rejects a type without one", () => {
+  test("returns each type's strategy and rejects a type without one", () => {
     expect(getPrintJobStrategy("KITCHEN_TICKET")).toBe(
       kitchenTicketPrintStrategy,
     );
-    expect(() => getPrintJobStrategy("TAX_DOCUMENT")).toThrow(
-      "No hay estrategia de impresión para TAX_DOCUMENT",
+    expect(getPrintJobStrategy("TAX_DOCUMENT")).toBe(taxDocumentPrintStrategy);
+    expect(() => getPrintJobStrategy("PRE_BILL")).toThrow(
+      "No hay estrategia de impresión para PRE_BILL",
     );
   });
 });
@@ -37,10 +38,6 @@ describe("printJobStrategies", () => {
 describe("getPrintRecoveryPolicy", () => {
   test("uses the strategy's maxAttempts and falls back to PRINT_JOB_MAX_ATTEMPTS", () => {
     vi.stubEnv("PRINT_JOB_MAX_ATTEMPTS", "5");
-    printJobStrategies.TAX_DOCUMENT = {
-      ...kitchenTicketPrintStrategy,
-      maxAttempts: 3,
-    };
     expect(getPrintRecoveryPolicy("TAX_DOCUMENT").maxAttempts).toBe(3);
     expect(getPrintRecoveryPolicy("KITCHEN_TICKET").maxAttempts).toBe(5);
     expect(getPrintRecoveryPolicy().maxAttempts).toBe(5);

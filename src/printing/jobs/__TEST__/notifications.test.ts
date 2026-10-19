@@ -69,6 +69,27 @@ describe("notifyPrintJobFailed", () => {
     }
   });
 
+  test("tells whoever requested a tax document why it failed", async () => {
+    mocks.findSource.mockResolvedValue({
+      companyId: "company-1",
+      sourceType: "TAX_DOCUMENT",
+      sourceId: "document-1",
+      requestedById: "cashier-1",
+      lastError: "Sin papel",
+    });
+
+    await notifyPrintJobFailed("job-1");
+
+    expect(mocks.broadcast.mock.calls).toEqual([
+      [
+        "company-1",
+        "print-user-cashier-1",
+        "print-job-failed",
+        { jobId: "job-1", sourceType: "TAX_DOCUMENT", message: "Sin papel" },
+      ],
+    ]);
+  });
+
   test("ignores a job that no longer exists", async () => {
     mocks.findSource.mockResolvedValue(null);
     await notifyPrintJobFailed("job-1");

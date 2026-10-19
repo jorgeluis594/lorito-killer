@@ -15,14 +15,15 @@ const items = [
 export default function NavItems({ isAdmin }: { isAdmin: boolean }) {
   const path = usePathname();
   const restaurantsEnabled = useFeatureEnabled("restaurants");
-  const visibleItems =
-    isAdmin && restaurantsEnabled
-      ? [
-          ...items,
-          { title: "Mesas", href: "/dashboard/tables/configure" },
-          { title: "Impresión", href: "/dashboard/settings/printing" },
-        ]
-      : items;
+  const visibleItems = isAdmin
+    ? [
+        ...items,
+        ...(restaurantsEnabled
+          ? [{ title: "Mesas", href: "/dashboard/tables/configure" }]
+          : []),
+        { title: "Impresión", href: "/dashboard/settings/printing" },
+      ]
+    : items;
 
   return (
     <nav className="flex flex-wrap gap-2 lg:flex-col lg:flex-nowrap">

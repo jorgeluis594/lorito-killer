@@ -17,29 +17,31 @@ export default async function PrintingSettingsPage() {
   const auth = await requireRole("ADMIN");
   if (!auth.success)
     return <p className="p-4 text-destructive">{auth.message}</p>;
-  const feature = await requireFeature(auth.data.companyId, "restaurants");
-  if (!feature.success)
-    return <p className="p-4 text-destructive">{feature.message}</p>;
-  const [clients, kitchens, companyPrinterIds] = await Promise.all([
+  const [clients, restaurants, companyPrinterIds] = await Promise.all([
     getPrintClients(auth.data.companyId),
-    listKitchens(auth.data.companyId, false),
+    requireFeature(auth.data.companyId, "restaurants"),
     getCompanyPrinterIds(auth.data.companyId),
   ]);
+  const kitchens = restaurants.success
+    ? await listKitchens(auth.data.companyId, false)
+    : null;
   const printers = clients.flatMap((client) => client.printers);
 
   return (
     <div>
-      <h3 className="text-lg font-medium">Impresión de comandas</h3>
+      <h3 className="text-lg font-medium">Impresión</h3>
       <p className="text-sm text-muted-foreground">
-        Vincula las instalaciones que envían comandas a las impresoras del
-        local.
+        Vincula las instalaciones que envían comprobantes y comandas a las
+        impresoras del local.
       </p>
       <Separator className="my-4" />
       <div className="flex flex-col gap-8">
-        <KitchenSettings
-          kitchens={kitchens as Kitchen[]}
-          printers={printers}
-        />
+        {kitchens && (
+          <KitchenSettings
+            kitchens={kitchens as Kitchen[]}
+            printers={printers}
+          />
+        )}
         <CompanyPrinterSettings
           currentPrinterId={companyPrinterIds.cashier}
           printers={printers}

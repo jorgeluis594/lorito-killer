@@ -5,71 +5,14 @@ import type { KG_UNIT_TYPE, UNIT_UNIT_TYPE } from "@/product/types";
 
 type UnitType = typeof KG_UNIT_TYPE | typeof UNIT_UNIT_TYPE;
 
-export type PrintFailureReason =
-  | "sdk_unavailable"
-  | "plugin_unavailable"
-  | "printer_not_connected"
-  | "printer_head_open"
-  | "paper_out"
-  | "paper_low"
-  | "printer_unknown_error"
-  | "data_fetch_failed"
-  | "render_failed"
-  | "print_failed";
-
-export type PrintMode = "imin" | "pdf";
-
-export type PrinterId = "imin";
-
-export type PrinterInitializationStatus = "ready" | "unavailable" | "error";
+export type PrintMode = "gateway" | "pdf";
 
 export type PrintResult =
-  | {
-      success: true;
-      mode: "imin";
-      message?: string;
-    }
-  | {
-      success: true;
-      mode: "pdf";
-      fallbackReason?: PrintFailureReason;
-      message: string;
-    }
-  | {
-      success: false;
-      mode: PrintMode;
-      reason: PrintFailureReason;
-      message: string;
-    };
-
-export type PrinterAdapter = {
-  isAvailable: () => boolean;
-  initialize?: () => Promise<PrinterStatus>;
-  getStatus?: () => Promise<PrinterStatus>;
-  printReceipt: (data: ReceiptPrintData) => Promise<PrintResult>;
-};
+  | { success: true; mode: "gateway"; message?: string }
+  | { success: true; mode: "pdf"; message: string }
+  | { success: false; message: string };
 
 export type PrintAlignment = "left" | "center" | "right";
-
-export type PrinterStatus = {
-  code?: number;
-  ready: boolean;
-  reason?: PrintFailureReason;
-  message: string;
-};
-
-export type PrinterHealth = {
-  id: PrinterId;
-  status: PrinterInitializationStatus;
-  ready: boolean;
-  reason?: PrintFailureReason;
-  message: string;
-};
-
-export type PrintersInitializationResult = {
-  initializedAt: string;
-  printers: Record<PrinterId, PrinterHealth>;
-};
 
 export type PrintCommand =
   | {
@@ -162,9 +105,4 @@ export type ReceiptPrintData = {
     discount: number;
     total: number;
   };
-  paper: {
-    widthMm: 80;
-    columns: 48;
-  };
-  fallbackPdfUrl: string;
 };

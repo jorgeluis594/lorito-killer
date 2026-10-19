@@ -1,11 +1,13 @@
+import { taxDocumentPrintStrategy } from "@/document/print-strategy";
 import { kitchenTicketPrintStrategy } from "@/kitchen/print-strategy";
 import type { PrintJobSourceType, PrintJobStrategy } from "./types";
 
-// shortcut: TAX_DOCUMENT y PRE_BILL se agregan en las tareas 2 y 3
+// shortcut: PRE_BILL se agrega en la tarea 3
 export const printJobStrategies: Partial<
   Record<PrintJobSourceType, PrintJobStrategy<any>>
 > = {
   KITCHEN_TICKET: kitchenTicketPrintStrategy,
+  TAX_DOCUMENT: taxDocumentPrintStrategy,
 };
 
 export function getPrintJobStrategy(sourceType: PrintJobSourceType) {
