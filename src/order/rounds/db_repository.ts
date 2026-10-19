@@ -534,7 +534,7 @@ export async function submitOrderRound(
                     sourceId: ticket.id,
                     printerId: kitchen.printer.id,
                     requestedById: input.userId,
-                    ticket: snapshot,
+                    snapshot,
                   });
                   return job.id;
                 },

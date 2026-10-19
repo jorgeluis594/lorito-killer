@@ -36,7 +36,7 @@ vi.mock("@/lib/prisma", () => ({
   }),
 }));
 vi.mock("@/printing/clients/db_repository", () => ({
-  getCompanyPrinterIds: mocks.printerIds,
+  getCashierPrinterId: mocks.printerIds,
 }));
 vi.mock("@/printing/jobs/use-cases/enqueue-print-job", () => ({
   enqueuePrintJob: mocks.enqueue,
@@ -140,7 +140,7 @@ describe("preBillPrintStrategy.failureAudience", () => {
 
 describe("printPreBill", () => {
   test("asks to configure the cashier printer when there is none", async () => {
-    mocks.printerIds.mockResolvedValue({ cashier: null });
+    mocks.printerIds.mockResolvedValue(null);
     const result = await printPreBill("company-1", "cashier-1", sessionId);
     expect(result).toMatchObject({ success: false });
     expect(!result.success && result.message).toContain("impresora de caja");
@@ -148,7 +148,7 @@ describe("printPreBill", () => {
   });
 
   test("queues the pre-bill of an open table on the cashier printer", async () => {
-    mocks.printerIds.mockResolvedValue({ cashier: "printer-1" });
+    mocks.printerIds.mockResolvedValue("printer-1");
     expect(await printPreBill("company-1", "cashier-1", sessionId)).toEqual({
       success: true,
       data: { jobId: "job-1" },
@@ -172,7 +172,7 @@ describe("printPreBill", () => {
   });
 
   test("rejects a session that is not an open table", async () => {
-    mocks.printerIds.mockResolvedValue({ cashier: "printer-1" });
+    mocks.printerIds.mockResolvedValue("printer-1");
     mocks.findSession.mockResolvedValue(null);
     expect(
       await printPreBill("company-1", "cashier-1", sessionId),
@@ -180,6 +180,15 @@ describe("printPreBill", () => {
       success: false,
     });
     expect(mocks.enqueue).not.toHaveBeenCalled();
+  });
+
+  test("reports a failure to queue instead of throwing", async () => {
+    mocks.printerIds.mockResolvedValue("printer-1");
+    mocks.enqueue.mockRejectedValue(new Error("db down"));
+    expect(await printPreBill("company-1", "cashier-1", sessionId)).toEqual({
+      success: false,
+      message: "No se pudo enviar a la impresora.",
+    });
   });
 });
 
@@ -200,7 +209,7 @@ describe("confirmTablePayment sending the bill to the register", () => {
   });
 
   test("prints the pre-bill on the cashier printer", async () => {
-    mocks.printerIds.mockResolvedValue({ cashier: "printer-1" });
+    mocks.printerIds.mockResolvedValue("printer-1");
     expect(await confirmTablePayment(input)).toEqual(registered);
     expect(mocks.enqueue).toHaveBeenCalledWith(
       expect.objectContaining({ sourceType: "PRE_BILL", sourceId: sessionId }),
@@ -208,13 +217,22 @@ describe("confirmTablePayment sending the bill to the register", () => {
   });
 
   test("still succeeds without a cashier printer or when printing fails", async () => {
-    mocks.printerIds.mockResolvedValue({ cashier: null });
+    mocks.printerIds.mockResolvedValue(null);
     expect(await confirmTablePayment(input)).toEqual(registered);
     expect(mocks.enqueue).not.toHaveBeenCalled();
 
-    mocks.printerIds.mockResolvedValue({ cashier: "printer-1" });
+    mocks.printerIds.mockResolvedValue("printer-1");
     mocks.enqueue.mockRejectedValue(new Error("db down"));
     expect(await confirmTablePayment(input)).toEqual(registered);
+  });
+
+  test("does not print again when the bill was already requested", async () => {
+    mocks.payTable.mockResolvedValue({
+      success: true,
+      data: { ...registered.data, alreadyRequested: true },
+    });
+    await confirmTablePayment(input);
+    expect(mocks.printerIds).not.toHaveBeenCalled();
   });
 
   test("does not print when the payment is collected", async () => {

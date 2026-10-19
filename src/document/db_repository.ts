@@ -70,7 +70,7 @@ const statusAttributesForPrismaDocument = (
   return { status: "registered" };
 };
 
-const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
+export const prismaDocumentToDocument = (prismaDocument: PrismaDocument): Document => {
   let document: Document;
   if (prismaDocument.documentType == "TICKET") {
     document = {

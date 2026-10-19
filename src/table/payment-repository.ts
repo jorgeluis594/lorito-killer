@@ -38,6 +38,8 @@ export type TablePaymentResult = {
   documentType?: string;
   total: number;
   method: string;
+  /** La cuenta ya estaba enviada a caja; no se vuelve a imprimir la precuenta. */
+  alreadyRequested?: boolean;
 };
 export type TablePaymentData = {
   sessionId: string;
@@ -297,6 +299,7 @@ export async function payTable(
               orderId: order.id,
               total: Number(order.total),
               method: "register",
+              alreadyRequested: true,
             },
           };
         let customerId: string | null = null;

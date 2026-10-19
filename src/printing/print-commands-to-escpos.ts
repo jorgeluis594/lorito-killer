@@ -62,6 +62,8 @@ export function printCommandsToEscpos(
         break;
       case "cut":
         if (printer.cutEnabled) encoder.cut("partial");
+        // Sin cortador, igual se avanza el papel para poder rasgarlo bajo la barra.
+        else if (printer.feedBeforeCut) encoder.newline(printer.feedBeforeCut);
         break;
     }
   }

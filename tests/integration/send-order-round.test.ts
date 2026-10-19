@@ -190,7 +190,7 @@ describe("submitOrderRound PostgreSQL integration", () => {
       status: "PENDING",
       attempts: 0,
     });
-    expect(printJobs[0].ticket).not.toBeNull();
+    expect(printJobs[0].snapshot).not.toBeNull();
   });
 
   test("serializes different concurrent sends with consecutive numbers", async () => {

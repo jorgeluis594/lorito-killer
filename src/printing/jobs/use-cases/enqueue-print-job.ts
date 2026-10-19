@@ -1,7 +1,12 @@
 import prisma from "@/lib/prisma";
 import { log } from "@/lib/log";
-import { createPrintJob, findPrintJobsFor } from "../db_repository";
+import {
+  createPrintJob,
+  findPrintJobsFor,
+  updatePendingPrintJobSnapshot,
+} from "../db_repository";
 import { processPrintJobs } from "../process-print-jobs";
+import { getPrintJobStrategy } from "../strategies";
 import type { PrintJobSourceType } from "../types";
 
 const isActive = (job: { status: string }) =>
@@ -18,7 +23,20 @@ export async function enqueuePrintJob(input: {
   const jobs = await findPrintJobsFor(input.sourceType, input.sourceId);
   // Un índice único admite un solo trabajo activo por origen: se reusa sin avisar.
   const active = jobs.find(isActive);
-  if (active) return active.id;
+  if (active) {
+    // La precuenta cambia entre impresiones: el pendiente imprime la foto actual.
+    if (active.status === "PENDING")
+      await updatePendingPrintJobSnapshot(
+        active.id,
+        await getPrintJobStrategy(input.sourceType).buildSnapshot(
+          prisma(),
+          input.companyId,
+          input.sourceId,
+          { isReprint: active.isReprint },
+        ),
+      );
+    return active.id;
+  }
 
   let job: { id: string };
   try {

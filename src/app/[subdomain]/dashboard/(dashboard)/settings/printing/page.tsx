@@ -1,6 +1,6 @@
 import { requireRole } from "@/authorization/server";
 import {
-  getCompanyPrinterIds,
+  getCashierPrinterId,
   getPrintClients,
 } from "@/printing/clients/db_repository";
 import { PrintClientSettings } from "@/printing/clients/components/print-client-settings";
@@ -17,10 +17,10 @@ export default async function PrintingSettingsPage() {
   const auth = await requireRole("ADMIN");
   if (!auth.success)
     return <p className="p-4 text-destructive">{auth.message}</p>;
-  const [clients, restaurants, companyPrinterIds] = await Promise.all([
+  const [clients, restaurants, cashierPrinterId] = await Promise.all([
     getPrintClients(auth.data.companyId),
     requireFeature(auth.data.companyId, "restaurants"),
-    getCompanyPrinterIds(auth.data.companyId),
+    getCashierPrinterId(auth.data.companyId),
   ]);
   const kitchens = restaurants.success
     ? await listKitchens(auth.data.companyId, false)
@@ -43,7 +43,7 @@ export default async function PrintingSettingsPage() {
           />
         )}
         <CompanyPrinterSettings
-          currentPrinterId={companyPrinterIds.cashier}
+          currentPrinterId={cashierPrinterId}
           printers={printers}
         />
         <PrintClientSettings clients={clients} />

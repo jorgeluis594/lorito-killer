@@ -58,7 +58,7 @@ describe("renderPrintJobContent", () => {
       content: null,
       sourceType: "KITCHEN_TICKET",
       printer,
-      ticket: JSON.parse(
+      snapshot: JSON.parse(
         JSON.stringify({
           ticketId: "ticket-1",
           createdAt: new Date("2026-09-15T18:30:00Z"),
@@ -81,7 +81,7 @@ describe("renderPrintJobContent", () => {
     mocks.jobFindOrThrow.mockResolvedValue({
       content: Uint8Array.from([1, 2]),
       sourceType: "TAX_DOCUMENT",
-      ticket: null,
+      snapshot: null,
       printer,
     });
     expect(await renderPrintJobContent("job-1")).toEqual(

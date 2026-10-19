@@ -69,7 +69,7 @@ export const buildPreBillCommands = (
     align: "center",
     bold: true,
   });
-  commands.push({ type: "feed", lines: 4 }, { type: "cut" });
+  commands.push({ type: "cut" });
   return commands;
 };
 

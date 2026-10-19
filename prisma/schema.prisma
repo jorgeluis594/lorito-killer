@@ -624,10 +624,10 @@ model PrintJob {
   sourceId            String
   printerId           String
   printer             Printer            @relation(fields: [printerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  /// Bytes ESC/POS de trabajos creados antes de `ticket`; los nuevos se generan al tomarlos.
+  /// Bytes ESC/POS de trabajos creados antes de `snapshot`; los nuevos se generan al tomarlos.
   content             Bytes?
   /// Snapshot del origen guardado al crear el trabajo.
-  ticket              Json?
+  snapshot            Json?
   isReprint           Boolean            @default(false)
   requestedById       String
   requestedBy         User               @relation("PrintJobRequester", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Cascade)

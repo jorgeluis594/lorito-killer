@@ -349,7 +349,6 @@ const addFooter = (commands: PrintCommand[], data: ReceiptPrintData) => {
   }
 
   commands.push(text("Gracias por su compra", { align: "center" }));
-  commands.push({ type: "feed", lines: 4 });
   commands.push({ type: "cut" });
 };
 

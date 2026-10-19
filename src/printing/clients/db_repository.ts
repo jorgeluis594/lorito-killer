@@ -202,12 +202,14 @@ export const updatePrinterProfile = async (
   }
 };
 
-export const getCompanyPrinterIds = async (companyId: string) => {
+export const getCashierPrinterId = async (
+  companyId: string,
+): Promise<string | null> => {
   const company = await prisma().company.findUnique({
     where: { id: companyId },
     select: { cashierPrinterId: true },
   });
-  return { cashier: company?.cashierPrinterId ?? null };
+  return company?.cashierPrinterId ?? null;
 };
 
 export const setCompanyPrinter = async (

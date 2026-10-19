@@ -199,7 +199,7 @@ describe("Delivery en Mesas · creación", () => {
     });
     expect(jobs).toHaveLength(1);
     // La comanda se imprime como imagen: se revisan las líneas que la dibujan.
-    const ticket = jobs[0].ticket as unknown as KitchenTicketContentInput;
+    const ticket = jobs[0].snapshot as unknown as KitchenTicketContentInput;
     const text = kitchenTicketLines({
       ...ticket,
       createdAt: new Date(ticket.createdAt),

@@ -49,7 +49,7 @@ export const confirmTablePayment = protectedAction(
         sessionId: input.sessionId,
       }).catch(() => console.warn("Payment notification failed"));
       // Enviar a caja imprime la precuenta si hay impresora; nunca hace fallar el envío.
-      if (result.data.state === "register")
+      if (result.data.state === "register" && !result.data.alreadyRequested)
         await printPreBill(user.companyId, user.id, input.sessionId).catch(
           (error) =>
             log.warn("pre_bill_print_failed", {

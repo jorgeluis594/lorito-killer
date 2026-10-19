@@ -2,8 +2,9 @@
 
 import { getAuthorizedUser } from "@/authorization/server";
 import { findBillingDocumentFor } from "@/document/db_repository";
+import { log } from "@/lib/log";
 import type { response } from "@/lib/types";
-import { getCompanyPrinterIds } from "@/printing/clients/db_repository";
+import { getCashierPrinterId } from "@/printing/clients/db_repository";
 import { enqueuePrintJob } from "@/printing/jobs/use-cases/enqueue-print-job";
 
 /** Encola el comprobante del pedido en la impresora de caja, o pide abrir el PDF si no hay. */
@@ -17,15 +18,20 @@ export async function printTaxDocument(
 
   const document = await findBillingDocumentFor(orderId, companyId);
   if (!document.success) return document;
-  const { cashier } = await getCompanyPrinterIds(companyId);
+  const cashier = await getCashierPrinterId(companyId);
   if (!cashier) return { success: true, data: { mode: "pdf" } };
 
-  const jobId = await enqueuePrintJob({
-    companyId,
-    sourceType: "TAX_DOCUMENT",
-    sourceId: document.data.id,
-    printerId: cashier,
-    requestedById: userId,
-  });
-  return { success: true, data: { mode: "gateway", jobId } };
+  try {
+    const jobId = await enqueuePrintJob({
+      companyId,
+      sourceType: "TAX_DOCUMENT",
+      sourceId: document.data.id,
+      printerId: cashier,
+      requestedById: userId,
+    });
+    return { success: true, data: { mode: "gateway", jobId } };
+  } catch (error) {
+    log.warn("tax_document_print_enqueue_failed", { orderId, error });
+    return { success: false, message: "No se pudo enviar a la impresora." };
+  }
 }

@@ -40,11 +40,11 @@ export async function renderPrintJobContent(
 ): Promise<Uint8Array> {
   const job = await prisma().printJob.findUniqueOrThrow({
     where: { id: jobId },
-    select: { content: true, ticket: true, sourceType: true, printer: true },
+    select: { content: true, snapshot: true, sourceType: true, printer: true },
   });
   // Trabajos creados antes del snapshot ya traen sus bytes.
   if (job.content) return job.content;
-  return getPrintJobStrategy(job.sourceType).render(job.ticket, job.printer);
+  return getPrintJobStrategy(job.sourceType).render(job.snapshot, job.printer);
 }
 
 /** Usa el snapshot recibido o lo arma con la estrategia del origen. */
@@ -52,7 +52,7 @@ export async function createPrintJob(
   db: Prisma.TransactionClient,
   {
     isReprint = false,
-    ticket,
+    snapshot,
     ...data
   }: {
     id?: string;
@@ -62,15 +62,15 @@ export async function createPrintJob(
     printerId: string;
     requestedById: string;
     isReprint?: boolean;
-    ticket?: Prisma.InputJsonValue;
+    snapshot?: Prisma.InputJsonValue;
   },
 ) {
   return db.printJob.create({
     data: {
       ...data,
       isReprint,
-      ticket:
-        ticket ??
+      snapshot:
+        snapshot ??
         (await getPrintJobStrategy(data.sourceType).buildSnapshot(
           db,
           data.companyId,
@@ -280,5 +280,15 @@ export const findPrintJobsFor = (
 ) =>
   prisma().printJob.findMany({
     where: { sourceType, sourceId },
-    select: { id: true, status: true },
+    select: { id: true, status: true, isReprint: true },
+  });
+
+/** Cambia el snapshot solo si la impresora aún no tomó el trabajo. */
+export const updatePendingPrintJobSnapshot = (
+  jobId: string,
+  snapshot: Prisma.InputJsonValue,
+) =>
+  prisma().printJob.updateMany({
+    where: { id: jobId, status: "PENDING" },
+    data: { snapshot },
   });

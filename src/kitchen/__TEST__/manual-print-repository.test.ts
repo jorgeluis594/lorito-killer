@@ -112,7 +112,7 @@ describe("createManualKitchenTicketPrintJob", () => {
         sourceType: "KITCHEN_TICKET",
         sourceId: "ticket-1",
         isReprint: false,
-        ticket: expect.objectContaining({
+        snapshot: expect.objectContaining({
           isReprint: false,
           items: [
             expect.objectContaining({
@@ -146,7 +146,7 @@ describe("createManualKitchenTicketPrintJob", () => {
     expect(result.success).toBe(true);
     expect(mocks.jobCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        ticket: expect.objectContaining({
+        snapshot: expect.objectContaining({
           isReprint: true,
           items: [
             expect.objectContaining({ quantity: 2, cancelledQuantity: 1 }),
