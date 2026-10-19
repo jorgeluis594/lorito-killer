@@ -15,3 +15,6 @@ WHERE "cashierPrinterId" IS NULL AND "invoicePrinterId" IS NOT NULL;
 ALTER TABLE "Company" DROP CONSTRAINT "Company_invoicePrinterId_fkey";
 DROP INDEX "Company_invoicePrinterId_key";
 ALTER TABLE "Company" DROP COLUMN "invoicePrinterId";
+
+-- El snapshot ya no es solo de comandas.
+ALTER TABLE "KitchetTicketPrintJob" RENAME COLUMN "ticket" TO "snapshot";
