@@ -1,3 +1,5 @@
+import type { PrintJobStatus } from "@/printing/jobs/types";
+
 export type KitchenStatus = "ACTIVE" | "INACTIVE";
 
 export type Kitchen = {
@@ -9,40 +11,6 @@ export type Kitchen = {
 };
 
 export type KitchenOption = Pick<Kitchen, "id" | "name">;
-
-export type PrintJobStatus = "PENDING" | "PROCESSING" | "DELIVERED" | "FAILED";
-
-export type PrintJob = {
-  id: string;
-  companyId: string;
-  kitchenTicketId: string;
-  printerId: string;
-  printClientId: string;
-  printerLocalName: string;
-  status: PrintJobStatus;
-  attempts: number;
-  nextAttemptAt: Date | null;
-  claimRequestedAt: Date | null;
-  processingStartedAt: Date | null;
-};
-
-export type PrintRecoveryPolicy = {
-  timeoutMs: number;
-  maxAttempts: number;
-  retryDelaysMs: number[];
-};
-
-export type PrintAttempt = {
-  jobId: string;
-  attemptNumber: number;
-  printerId: string;
-  printerLocalName: string;
-  timeoutMs: number;
-  attemptExpiresAt: Date;
-  serverNow: Date;
-};
-
-export type PrintResult = "DELIVERED" | "RETRYABLE_FAILURE" | "FAILED";
 
 export type KitchenTicketView = {
   id: string;

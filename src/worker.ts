@@ -5,7 +5,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import express from "express";
-import { processPrintJobs } from "@/kitchen/process-print-jobs";
+import { processPrintJobs } from "@/printing/jobs/process-print-jobs";
 
 log.info("worker_starting", { pid: process.pid });
 

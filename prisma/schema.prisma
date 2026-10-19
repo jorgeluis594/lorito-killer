@@ -373,44 +373,42 @@ model Customer {
 }
 
 model Company {
-  id                     String                  @id @default(uuid())
-  name                   String?
-  subName                String?
-  department             String?
-  district               String?
-  provincial             String?
-  email                  String?
-  phone                  String?
-  address                String
-  ruc                    String?
-  customers              Customer[]
-  users                  User[]
-  products               Product[]
-  cashShifts             CashShift[]
-  orders                 Order[]
-  categories             Category[]
-  logos                  Logo[]
-  stockTransfers         StockTransfer[]
-  documents              Document[]
-  documentTaxDispatches  DocumentTaxDispatch[]
-  zones                  Zone[]
-  tables                 Table[]
-  tableSessions          TableSession[]
-  features               CompanyFeature[]
-  printClientLinkCodes   PrintClientLinkCode[]
-  printClients           PrintClient[]
-  printers               Printer[]               @relation("CompanyPrinters")
-  invoicePrinterId       String?                 @unique
-  invoicePrinter         Printer?                @relation("CompanyInvoicePrinter", fields: [invoicePrinterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  cashierPrinterId       String?                 @unique
-  cashierPrinter         Printer?                @relation("CompanyCashierPrinter", fields: [cashierPrinterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  kitchens               Kitchen[]
-  kitchenTicketPrintJobs KitchetTicketPrintJob[]
-  subdomain              String?                 @unique
-  billingCredentials     Json?
-  active                 Boolean                 @default(true)
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
+  id                    String                @id @default(uuid())
+  name                  String?
+  subName               String?
+  department            String?
+  district              String?
+  provincial            String?
+  email                 String?
+  phone                 String?
+  address               String
+  ruc                   String?
+  customers             Customer[]
+  users                 User[]
+  products              Product[]
+  cashShifts            CashShift[]
+  orders                Order[]
+  categories            Category[]
+  logos                 Logo[]
+  stockTransfers        StockTransfer[]
+  documents             Document[]
+  documentTaxDispatches DocumentTaxDispatch[]
+  zones                 Zone[]
+  tables                Table[]
+  tableSessions         TableSession[]
+  features              CompanyFeature[]
+  printClientLinkCodes  PrintClientLinkCode[]
+  printClients          PrintClient[]
+  printers              Printer[]             @relation("CompanyPrinters")
+  cashierPrinterId      String?               @unique
+  cashierPrinter        Printer?              @relation("CompanyCashierPrinter", fields: [cashierPrinterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  kitchens              Kitchen[]
+  printJobs             PrintJob[]
+  subdomain             String?               @unique
+  billingCredentials    Json?
+  active                Boolean               @default(true)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model CompanyFeature {
@@ -456,7 +454,7 @@ model User {
   soldOrders             Order[]                 @relation("SellerOrders")
   printClientLinkCodes   PrintClientLinkCode[]
   orderRounds            OrderRound[]            @relation("OrderRoundResponsible")
-  kitchenTicketPrintJobs KitchetTicketPrintJob[] @relation("KitchenTicketPrintRequester")
+  printJobs              PrintJob[]              @relation("PrintJobRequester")
   orderItemCancellations OrderItemCancellation[]
   deliveriesCreated      Delivery[]              @relation("DeliveryCreatedBy")
   deliveriesDispatched   Delivery[]              @relation("DeliveryDispatchedBy")
@@ -500,25 +498,24 @@ model PrintClient {
 }
 
 model Printer {
-  id                     String                  @id @default(uuid())
-  companyId              String
-  company                Company                 @relation("CompanyPrinters", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  invoiceCompany         Company?                @relation("CompanyInvoicePrinter")
-  cashierCompany         Company?                @relation("CompanyCashierPrinter")
-  printClientId          String
-  printClient            PrintClient             @relation(fields: [printClientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  localName              String
-  status                 PrinterStatus           @default(ACTIVE)
-  lastDetectedAt         DateTime
-  paperWidth             PrinterPaperWidth       @default(MM58)
-  columns                Int                     @default(32)
-  codepageMapping        String                  @default("epson")
-  cutEnabled             Boolean                 @default(true)
-  feedBeforeCut          Int                     @default(3)
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  kitchen                Kitchen?
-  kitchenTicketPrintJobs KitchetTicketPrintJob[]
+  id              String            @id @default(uuid())
+  companyId       String
+  company         Company           @relation("CompanyPrinters", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  cashierCompany  Company?          @relation("CompanyCashierPrinter")
+  printClientId   String
+  printClient     PrintClient       @relation(fields: [printClientId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  localName       String
+  status          PrinterStatus     @default(ACTIVE)
+  lastDetectedAt  DateTime
+  paperWidth      PrinterPaperWidth @default(MM58)
+  columns         Int               @default(32)
+  codepageMapping String            @default("epson")
+  cutEnabled      Boolean           @default(true)
+  feedBeforeCut   Int               @default(3)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  kitchen         Kitchen?
+  printJobs       PrintJob[]
 
   @@unique([printClientId, localName])
   @@index([companyId])
@@ -592,54 +589,63 @@ model OrderItemCancellation {
 }
 
 model KitchenTicket {
-  id           String                  @id @default(uuid())
+  id           String     @id @default(uuid())
   orderRoundId String
-  orderRound   OrderRound              @relation(fields: [orderRoundId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  orderRound   OrderRound @relation(fields: [orderRoundId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   kitchenId    String
-  kitchen      Kitchen                 @relation(fields: [kitchenId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  printJobs    KitchetTicketPrintJob[]
-  createdAt    DateTime                @default(now())
+  kitchen      Kitchen    @relation(fields: [kitchenId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdAt    DateTime   @default(now())
 
   @@unique([orderRoundId, kitchenId])
   @@index([kitchenId, createdAt])
 }
 
-enum KitchenTicketPrintJobStatus {
+enum PrintJobStatus {
   PENDING
   PROCESSING
   DELIVERED
   FAILED
+
+  @@map("KitchenTicketPrintJobStatus")
 }
 
-model KitchetTicketPrintJob {
-  id                  String                      @id @default(uuid())
+enum PrintJobSourceType {
+  KITCHEN_TICKET // sourceId → KitchenTicket.id
+  TAX_DOCUMENT // sourceId → Document.id
+  PRE_BILL // sourceId → TableSession.id
+}
+
+model PrintJob {
+  id                  String             @id @default(uuid())
   companyId           String
-  company             Company                     @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  kitchenTicketId     String
-  kitchenTicket       KitchenTicket               @relation(fields: [kitchenTicketId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  company             Company            @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sourceType          PrintJobSourceType
+  /// Sin FK: ningún código borra Order, KitchenTicket ni TableSession.
+  sourceId            String
   printerId           String
-  printer             Printer                     @relation(fields: [printerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  printer             Printer            @relation(fields: [printerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   /// Bytes ESC/POS de trabajos creados antes de `ticket`; los nuevos se generan al tomarlos.
   content             Bytes?
-  /// Snapshot de la comanda (KitchenTicketContentInput) guardado en la misma transacción que el pedido.
+  /// Snapshot del origen guardado al crear el trabajo.
   ticket              Json?
-  isReprint           Boolean                     @default(false)
+  isReprint           Boolean            @default(false)
   requestedById       String
-  requestedBy         User                        @relation("KitchenTicketPrintRequester", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  status              KitchenTicketPrintJobStatus @default(PENDING)
-  attempts            Int                         @default(0)
+  requestedBy         User               @relation("PrintJobRequester", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  status              PrintJobStatus     @default(PENDING)
+  attempts            Int                @default(0)
   nextAttemptAt       DateTime?
   claimRequestedAt    DateTime?
   processingStartedAt DateTime?
   lastError           String?
-  createdAt           DateTime                    @default(now())
-  updatedAt           DateTime                    @updatedAt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
   @@index([companyId, status, nextAttemptAt])
   @@index([status, nextAttemptAt])
   @@index([status, claimRequestedAt])
   @@index([status, processingStartedAt])
-  @@index([kitchenTicketId, createdAt])
+  @@index([sourceType, sourceId, createdAt])
+  @@map("KitchetTicketPrintJob")
 }
 
 enum PaymentMethod {

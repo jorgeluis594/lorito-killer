@@ -18,11 +18,15 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/realtime/config", () => ({
   getRealtimeProvider: async () => ({ broadcast: mocks.broadcast }),
 }));
-vi.mock("@/kitchen/notifications", () => ({
+vi.mock("@/printing/jobs/notifications", () => ({
   notifyPrintJobAvailable: vi.fn(),
 }));
 
 import prisma from "@/lib/prisma";
+import {
+  kitchenTicketLines,
+  type KitchenTicketContentInput,
+} from "@/printing/create-kitchen-ticket-content";
 import {
   NO_LAST_PRODUCT_MESSAGE,
   PRODUCTS_LOCKED_MESSAGE,
@@ -183,11 +187,25 @@ describe("Delivery en Mesas · creación", () => {
     const orderId = await f.createOrder({
       delivery: { ...f.defaultDelivery, name: "Luis Rojas" },
     });
-    const jobs = await db().kitchetTicketPrintJob.findMany({
-      where: { kitchenTicket: { orderRound: { orderId } } },
+    const tickets = await db().kitchenTicket.findMany({
+      where: { orderRound: { orderId } },
+      select: { id: true },
+    });
+    const jobs = await db().printJob.findMany({
+      where: {
+        sourceType: "KITCHEN_TICKET",
+        sourceId: { in: tickets.map((ticket) => ticket.id) },
+      },
     });
     expect(jobs).toHaveLength(1);
-    const text = Buffer.from(jobs[0].content).toString("latin1");
+    // La comanda se imprime como imagen: se revisan las líneas que la dibujan.
+    const ticket = jobs[0].ticket as unknown as KitchenTicketContentInput;
+    const text = kitchenTicketLines({
+      ...ticket,
+      createdAt: new Date(ticket.createdAt),
+    })
+      .map((line) => (line === "rule" ? "" : line.text))
+      .join("\n");
     expect(text).toContain("Cliente: Luis Rojas");
     expect(text).toContain("Producto A");
     for (const forbidden of [

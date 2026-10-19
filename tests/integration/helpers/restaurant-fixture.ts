@@ -337,7 +337,7 @@ export async function createFixture(label: string) {
     db.product.update({ where: { id: ids.productA }, data: { stock } });
 
   async function destroy() {
-    await db.kitchetTicketPrintJob.deleteMany({
+    await db.printJob.deleteMany({
       where: { companyId: ids.company },
     });
     await db.kitchenTicket.deleteMany({

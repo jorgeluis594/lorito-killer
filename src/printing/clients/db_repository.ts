@@ -157,7 +157,6 @@ export const updatePrinterProfile = async (
           select: {
             id: true,
             kitchen: { select: { id: true } },
-            invoiceCompany: { select: { id: true } },
             cashierCompany: { select: { id: true } },
           },
         });
@@ -170,12 +169,6 @@ export const updatePrinterProfile = async (
           return {
             success: false as const,
             message: "Retira la impresora de su Kitchen antes de desactivarla",
-          };
-        if (input.status === "INACTIVE" && current.invoiceCompany)
-          return {
-            success: false as const,
-            message:
-              "Retira la impresora de comprobantes antes de desactivarla",
           };
         if (input.status === "INACTIVE" && current.cashierCompany)
           return {
@@ -212,17 +205,13 @@ export const updatePrinterProfile = async (
 export const getCompanyPrinterIds = async (companyId: string) => {
   const company = await prisma().company.findUnique({
     where: { id: companyId },
-    select: { invoicePrinterId: true, cashierPrinterId: true },
+    select: { cashierPrinterId: true },
   });
-  return {
-    invoice: company?.invoicePrinterId ?? null,
-    cashier: company?.cashierPrinterId ?? null,
-  };
+  return { cashier: company?.cashierPrinterId ?? null };
 };
 
 export const setCompanyPrinter = async (
   companyId: string,
-  kind: "invoice" | "cashier",
   printerId: string | null,
 ) => {
   try {
@@ -242,10 +231,7 @@ export const setCompanyPrinter = async (
         }
         await db.company.update({
           where: { id: companyId },
-          data: {
-            [kind === "invoice" ? "invoicePrinterId" : "cashierPrinterId"]:
-              printerId,
-          },
+          data: { cashierPrinterId: printerId },
         });
         return { success: true as const, data: { printerId } };
       },

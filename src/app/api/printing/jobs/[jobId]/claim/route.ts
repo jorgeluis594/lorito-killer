@@ -4,9 +4,9 @@ import {
   authorizePrintJob,
   findPrintJob,
   renderPrintJobContent,
-} from "@/kitchen/db_repository";
-import { getPrintRecoveryPolicy } from "@/kitchen/print-policy";
-import { authorizePrintAttempt } from "@/kitchen/use-cases/authorize-print-attempt";
+} from "@/printing/jobs/db_repository";
+import { getPrintRecoveryPolicy } from "@/printing/jobs/policy";
+import { authorizePrintAttempt } from "@/printing/jobs/use-cases/authorize-print-attempt";
 
 export async function POST(
   request: Request,
@@ -20,7 +20,7 @@ export async function POST(
   const result = await authorizePrintAttempt(
     { findJob: findPrintJob, authorize: authorizePrintJob },
     { ...auth.data, clientId: auth.data.id, jobId, now: new Date() },
-    getPrintRecoveryPolicy(),
+    getPrintRecoveryPolicy,
   );
   if (!result.success) return NextResponse.json(result, { status: 409 });
   return NextResponse.json({

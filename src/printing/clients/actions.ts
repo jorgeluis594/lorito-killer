@@ -64,7 +64,6 @@ export const setCompanyPrinterAction = protectedAction(
       return { success: false, message: "Impresora inválida" };
     const result = await repository.setCompanyPrinter(
       user.companyId,
-      parsed.data.kind,
       parsed.data.printerId,
     );
     if (result.success) revalidatePath("/dashboard/settings/printing");

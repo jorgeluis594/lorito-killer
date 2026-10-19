@@ -30,7 +30,7 @@ import {
 import { getKitchenTickets } from "./use-cases/get-kitchen-tickets";
 import { printKitchenTicket } from "./use-cases/print-kitchen-ticket";
 import { reprintKitchenTicket } from "./use-cases/reprint-kitchen-ticket";
-import { processPrintJobs } from "./process-print-jobs";
+import { processPrintJobs } from "@/printing/jobs/process-print-jobs";
 import { checkKitchenPrinters } from "./use-cases/check-kitchen-printers";
 import { notifyKitchenChanged, requestPrinterInventory } from "./notifications";
 import { requireFeature } from "@/feature-flags/server";

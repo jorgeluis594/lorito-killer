@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { authenticatePrintClient } from "@/printing/clients/authenticate";
-import { findPrintJob, recordPrintJobResult } from "@/kitchen/db_repository";
 import {
-  notifyKitchenChanged,
-  notifyPrintJobFailed,
-} from "@/kitchen/notifications";
-import { getPrintRecoveryPolicy } from "@/kitchen/print-policy";
-import { recordPrintResult } from "@/kitchen/use-cases/record-print-result";
+  findPrintJob,
+  recordPrintJobResult,
+} from "@/printing/jobs/db_repository";
+import { notifyKitchenChanged } from "@/kitchen/notifications";
+import { notifyPrintJobFailed } from "@/printing/jobs/notifications";
+import { getPrintRecoveryPolicy } from "@/printing/jobs/policy";
+import { recordPrintResult } from "@/printing/jobs/use-cases/record-print-result";
 import { PrintJobResultSchema } from "@/printing/clients/schema";
 
 export async function POST(
@@ -35,7 +36,7 @@ export async function POST(
       ...parsed.data,
       now: new Date(),
     },
-    getPrintRecoveryPolicy(),
+    getPrintRecoveryPolicy,
   );
   if (result.success && result.data.status === "FAILED" && result.data.applied)
     await notifyPrintJobFailed(jobId).catch(() => undefined);

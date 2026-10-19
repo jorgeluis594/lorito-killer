@@ -114,7 +114,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const db = prisma();
-  await db.kitchetTicketPrintJob.deleteMany({
+  await db.printJob.deleteMany({
     where: { companyId: ids.company },
   });
   await db.kitchenTicket.deleteMany({
@@ -167,7 +167,13 @@ describe("submitOrderRound PostgreSQL integration", () => {
       where: { id: roundId },
       include: {
         items: true,
-        kitchenTickets: { include: { printJobs: true } },
+        kitchenTickets: true,
+      },
+    });
+    const printJobs = await prisma().printJob.findMany({
+      where: {
+        sourceType: "KITCHEN_TICKET",
+        sourceId: { in: persisted.kitchenTickets.map((ticket) => ticket.id) },
       },
     });
     expect(persisted.items).toHaveLength(3);
@@ -175,17 +181,16 @@ describe("submitOrderRound PostgreSQL integration", () => {
       persisted.items.filter((item) => item.productId === ids.dish),
     ).toHaveLength(2);
     expect(persisted.kitchenTickets).toHaveLength(1);
-    expect(persisted.kitchenTickets[0].printJobs).toHaveLength(1);
-    expect(persisted.kitchenTickets[0].printJobs[0]).toMatchObject({
+    expect(printJobs).toHaveLength(1);
+    expect(printJobs[0]).toMatchObject({
+      sourceId: persisted.kitchenTickets[0].id,
       printerId: ids.printer,
       requestedById: ids.user,
       isReprint: false,
       status: "PENDING",
       attempts: 0,
     });
-    expect(
-      persisted.kitchenTickets[0].printJobs[0].content.length,
-    ).toBeGreaterThan(20);
+    expect(printJobs[0].ticket).not.toBeNull();
   });
 
   test("serializes different concurrent sends with consecutive numbers", async () => {

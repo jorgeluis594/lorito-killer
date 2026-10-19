@@ -28,15 +28,9 @@ type PrinterOption = {
 };
 
 export function CompanyPrinterSettings({
-  kind,
-  title,
-  description,
   currentPrinterId,
   printers,
 }: {
-  kind: "invoice" | "cashier";
-  title: string;
-  description: string;
   currentPrinterId: string | null;
   printers: PrinterOption[];
 }) {
@@ -48,7 +42,6 @@ export function CompanyPrinterSettings({
   const save = () =>
     startTransition(async () => {
       const result = await setCompanyPrinterAction({
-        kind,
         printerId: printerId === "none" ? null : printerId,
       });
       if (!result.success) {
@@ -66,8 +59,8 @@ export function CompanyPrinterSettings({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle className="text-base">Impresora de caja</CardTitle>
+        <CardDescription>Impresora asociada a la caja.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <label className="flex flex-col gap-1 text-sm">

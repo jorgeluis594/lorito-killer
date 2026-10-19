@@ -41,16 +41,6 @@ export default async function PrintingSettingsPage() {
           printers={printers}
         />
         <CompanyPrinterSettings
-          kind="invoice"
-          title="Impresora de comprobantes"
-          description="Impresora donde se imprimirán las boletas y facturas."
-          currentPrinterId={companyPrinterIds.invoice}
-          printers={printers}
-        />
-        <CompanyPrinterSettings
-          kind="cashier"
-          title="Impresora de caja"
-          description="Impresora asociada a la caja."
           currentPrinterId={companyPrinterIds.cashier}
           printers={printers}
         />

@@ -23,7 +23,6 @@ export const UpdatePrinterSchema = z.object({
 });
 
 export const CompanyPrinterSchema = z.object({
-  kind: z.enum(["invoice", "cashier"]),
   printerId: z.string().uuid().nullable(),
 });
 
