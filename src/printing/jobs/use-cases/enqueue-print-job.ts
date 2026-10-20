@@ -25,7 +25,8 @@ export async function enqueuePrintJob(input: {
   const active = jobs.find(isActive);
   if (active) {
     // La precuenta cambia entre impresiones: el pendiente imprime la foto actual.
-    if (active.status === "PENDING")
+    if (active.status === "PENDING") {
+      const retarget = active.printerId !== input.printerId;
       await updatePendingPrintJobSnapshot(
         active.id,
         await getPrintJobStrategy(input.sourceType).buildSnapshot(
@@ -34,7 +35,10 @@ export async function enqueuePrintJob(input: {
           input.sourceId,
           { isReprint: active.isReprint },
         ),
+        retarget ? input.printerId : undefined,
       );
+      if (retarget) dispatch(active.id, input.sourceType);
+    }
     return active.id;
   }
 
@@ -53,12 +57,11 @@ export async function enqueuePrintJob(input: {
     if (!concurrent) throw error;
     return concurrent.id;
   }
-  void processPrintJobs().catch((error) =>
-    log.warn("print_job_dispatch_failed", {
-      jobId: job.id,
-      sourceType: input.sourceType,
-      error,
-    }),
-  );
+  dispatch(job.id, input.sourceType);
   return job.id;
 }
+
+const dispatch = (jobId: string, sourceType: PrintJobSourceType) =>
+  void processPrintJobs().catch((error) =>
+    log.warn("print_job_dispatch_failed", { jobId, sourceType, error }),
+  );

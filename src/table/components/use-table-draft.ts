@@ -4,6 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { TableDraftItem, TableSession } from "../types";
 import { openTable, saveTableDraft } from "../actions";
 
+/** A free-table placeholder rendered before this client opened the table is stale, not a close. */
+export const isStaleFreeTable = (
+  session: Pick<TableSession, "id" | "createdAt">,
+  openedAt: Date | null,
+) =>
+  session.id === "" &&
+  openedAt !== null &&
+  new Date(session.createdAt) < new Date(openedAt);
+
 /** A table without a session (`id` "") is opened by its first save, never by just viewing it. */
 export function useTableDraft(session: TableSession) {
   const [items, setItems] = useState<TableDraftItem[]>(session.draft ?? []);
@@ -15,6 +24,7 @@ export function useTableDraft(session: TableSession) {
   const saved = useRef(items);
   const revision = useRef(session.draftRevision ?? 0);
   const sessionId = useRef(session.id);
+  const openedAt = useRef<Date | null>(null);
   const inFlight = useRef<Promise<boolean> | null>(null);
 
   const edit = (next: TableDraftItem[]) => {
@@ -39,6 +49,7 @@ export function useTableDraft(session: TableSession) {
               return false;
             }
             sessionId.current = opened.data.id;
+            openedAt.current = opened.data.openedAt;
             revision.current = opened.data.draftRevision ?? 0;
           }
           const result = await saveTableDraft({
@@ -76,6 +87,13 @@ export function useTableDraft(session: TableSession) {
   useEffect(() => {
     // Follows the table's session as it opens, changes or closes on the server.
     if (session.id === sessionId.current) return;
+    if (
+      isStaleFreeTable(
+        { id: session.id, createdAt: session.createdAt },
+        openedAt.current,
+      )
+    )
+      return;
     const replaced = sessionId.current !== "";
     sessionId.current = session.id;
     revision.current = session.draftRevision ?? 0;
@@ -87,7 +105,7 @@ export function useTableDraft(session: TableSession) {
       setStatus("saved");
       setError("");
     }
-  }, [session.id, session.draftRevision, session.draft]);
+  }, [session.id, session.createdAt, session.draftRevision, session.draft]);
 
   useEffect(() => {
     if (current.current === saved.current) return;

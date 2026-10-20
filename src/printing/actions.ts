@@ -17,7 +17,11 @@ export async function printTaxDocument(
   const { companyId, id: userId } = auth.data;
 
   const document = await findBillingDocumentFor(orderId, companyId);
-  if (!document.success) return document;
+  if (!document.success)
+    return {
+      success: false,
+      message: "Este pedido aún no tiene comprobante para imprimir.",
+    };
   const cashier = await getCashierPrinterId(companyId);
   if (!cashier) return { success: true, data: { mode: "pdf" } };
 

@@ -169,6 +169,29 @@ export const failTimedOutPrintJob = async (input: {
   return changed.count === 1 ? findPrintJob(input.jobId) : null;
 };
 
+/** Un render que falla no se arregla reintentando: el trabajo falla con el motivo real. */
+export const failUnrenderablePrintJob = async (input: {
+  jobId: string;
+  clientId: string;
+  error: string;
+}): Promise<boolean> => {
+  const changed = await prisma().printJob.updateMany({
+    where: {
+      id: input.jobId,
+      status: { in: ["PENDING", "PROCESSING"] },
+      printer: { printClientId: input.clientId },
+    },
+    data: {
+      status: "FAILED",
+      nextAttemptAt: null,
+      claimRequestedAt: null,
+      processingStartedAt: null,
+      lastError: input.error,
+    },
+  });
+  return changed.count === 1;
+};
+
 export const failRevokedPrintJobs = async (now: Date): Promise<string[]> => {
   const jobs = await prisma().$queryRaw<{ id: string }[]>(Prisma.sql`
     UPDATE "KitchetTicketPrintJob" job
@@ -280,15 +303,24 @@ export const findPrintJobsFor = (
 ) =>
   prisma().printJob.findMany({
     where: { sourceType, sourceId },
-    select: { id: true, status: true, isReprint: true },
+    select: { id: true, status: true, isReprint: true, printerId: true },
   });
 
 /** Cambia el snapshot solo si la impresora aún no tomó el trabajo. */
 export const updatePendingPrintJobSnapshot = (
   jobId: string,
   snapshot: Prisma.InputJsonValue,
+  retargetPrinterId?: string,
 ) =>
   prisma().printJob.updateMany({
     where: { id: jobId, status: "PENDING" },
-    data: { snapshot },
+    // Cambió la impresora de caja: el aviso a la anterior ya no vale y la espera se reinicia.
+    data: retargetPrinterId
+      ? {
+          snapshot,
+          printerId: retargetPrinterId,
+          claimRequestedAt: null,
+          nextAttemptAt: null,
+        }
+      : { snapshot },
   });

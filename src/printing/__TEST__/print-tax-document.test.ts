@@ -84,7 +84,12 @@ describe("printTaxDocument", () => {
   test("returns the pending job with a fresh snapshot instead of queueing another", async () => {
     mocks.printerIds.mockResolvedValue("printer-1");
     mocks.findJobs.mockResolvedValue([
-      { id: "job-0", status: "PENDING", isReprint: true },
+      {
+        id: "job-0",
+        status: "PENDING",
+        isReprint: true,
+        printerId: "printer-1",
+      },
     ]);
     mocks.buildSnapshot.mockResolvedValue({ total: 10 });
 
@@ -98,8 +103,37 @@ describe("printTaxDocument", () => {
       "document-1",
       { isReprint: true },
     );
-    expect(mocks.updateTicket).toHaveBeenCalledWith("job-0", { total: 10 });
+    expect(mocks.updateTicket).toHaveBeenCalledWith(
+      "job-0",
+      { total: 10 },
+      undefined,
+    );
     expect(mocks.createJob).not.toHaveBeenCalled();
+    expect(mocks.process).not.toHaveBeenCalled();
+  });
+
+  test("moves the pending job to the current cashier printer and dispatches it", async () => {
+    mocks.printerIds.mockResolvedValue("printer-2");
+    mocks.findJobs.mockResolvedValue([
+      {
+        id: "job-0",
+        status: "PENDING",
+        isReprint: false,
+        printerId: "printer-1",
+      },
+    ]);
+    mocks.buildSnapshot.mockResolvedValue({ total: 10 });
+
+    expect(await printTaxDocument("order-1")).toEqual({
+      success: true,
+      data: { mode: "gateway", jobId: "job-0" },
+    });
+    expect(mocks.updateTicket).toHaveBeenCalledWith(
+      "job-0",
+      { total: 10 },
+      "printer-2",
+    );
+    expect(mocks.process).toHaveBeenCalled();
   });
 
   test("returns the job the printer is processing untouched", async () => {

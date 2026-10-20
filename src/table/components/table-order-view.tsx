@@ -228,6 +228,10 @@ export function TableOrderView({
     setBusy(true);
     try {
       if (editable && !(await draft.flush())) return;
+      if (!draft.sessionId.current) {
+        setError("Agrega un producto antes de cobrar.");
+        return;
+      }
       // A free table gets its session on the first save, after the page built paymentHref.
       router.push(
         paymentHref.replace(

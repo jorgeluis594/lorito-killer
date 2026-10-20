@@ -13,8 +13,6 @@ namespace Kogoz.PrintGateway;
 internal static class Installer
 {
     private const string ServiceName = "KogozPrintGateway";
-    // Pre-rebrand install; removed on install so two services don't claim the same jobs.
-    private const string LegacyName = "LoritoPrintGateway";
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\KogozPrintGateway";
     private static readonly string InstallDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Kogoz", "PrintGateway");
     private static readonly string InstalledExe = Path.Combine(InstallDir, "Kogoz.PrintGateway.exe");
@@ -55,15 +53,15 @@ internal static class Installer
         return false;
     }
 
-    private static void StopAndDeleteService(string name = ServiceName)
+    private static void StopAndDeleteService()
     {
         try
         {
-            using var service = new ServiceController(name);
+            using var service = new ServiceController(ServiceName);
             if (service.Status != ServiceControllerStatus.Stopped) { service.Stop(); service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(20)); }
         }
         catch (InvalidOperationException) { return; } // service does not exist
-        RunTool("sc.exe", "delete", name);
+        RunTool("sc.exe", "delete", ServiceName);
     }
 
     private static void RunTool(string file, params string[] arguments)
@@ -102,18 +100,8 @@ internal static class Installer
         key.SetValue("NoRepair", 1);
     }
 
-    private static void RemoveLegacyInstall()
-    {
-        StopAndDeleteService(LegacyName);
-        foreach (var process in Process.GetProcessesByName("Lorito.PrintGateway")) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
-        try { File.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "Lorito Print Gateway.lnk")); } catch { }
-        try { Registry.LocalMachine.DeleteSubKeyTree($@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{LegacyName}", false); } catch { }
-        try { Directory.Delete(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Lorito"), true); } catch { }
-    }
-
     private static void Install(IReadOnlyList<string> printers)
     {
-        RemoveLegacyInstall();
         StopAndDeleteService();
         foreach (var process in Process.GetProcessesByName("Kogoz.PrintGateway").Where(p => p.Id != Environment.ProcessId)) { try { process.Kill(); process.WaitForExit(5000); } catch { } }
         Directory.CreateDirectory(InstallDir);

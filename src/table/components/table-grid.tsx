@@ -37,6 +37,8 @@ export function TableGrid({
 
   function attend(table: TableWithSession) {
     leavingRef.current = true;
+    // Still mounted after this means the navigation never happened: resume realtime.
+    setTimeout(() => (leavingRef.current = false), 5000);
     router.push(
       table.activeSession?.status === "BILL_REQUESTED"
         ? `/dashboard/tables/${table.id}/payment?session=${table.activeSession.id}`
