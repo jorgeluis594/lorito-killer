@@ -3,6 +3,8 @@
 Fecha: 10 de septiembre de 2026 (America/Lima).
 Resultado funcional: **PASS**. Gates globales: **bloqueos preexistentes**.
 
+> **Deprecado (2026-10-19):** iMin se eliminó. Los comprobantes y la precuenta ahora salen por la impresora de caja del Print Gateway, o como PDF si no hay una configurada (PR #116). Lo que este documento dice de iMin ya no aplica; ver `docs/impresoras.md`.
+
 Se aplicó `qa-tester` con Playwright CLI y el diseño/plan aprobado por el usuario.
 No se enviaron mensajes a Telegram; la autorización cubrió implementación y QA.
 

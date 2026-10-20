@@ -3,6 +3,8 @@
 Fecha: 2026-09-13
 Estado: diseño técnico y alcance funcional aprobados por el usuario. No acredita implementación.
 
+> **Deprecado (2026-10-19):** iMin se eliminó. Los comprobantes y la precuenta ahora salen por la impresora de caja del Print Gateway, o como PDF si no hay una configurada (PR #116). Lo que este documento dice de iMin ya no aplica; ver `docs/impresoras.md`.
+
 ## Objetivo
 
 Organizar la preparación de pedidos mediante destinos configurables llamados **Kitchen** y comandas impresas. Cada Kitchen representa un lugar donde se prepara un producto. Sus nombres los define cada negocio; Cocina y Barra dejan de ser destinos fijos del sistema.

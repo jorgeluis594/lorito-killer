@@ -2,6 +2,9 @@
 
 Fecha: 2026-09-15.
 Estado: tareas definidas; implementación y pruebas pendientes.
+
+> **Deprecado (2026-10-19):** iMin se eliminó. Los comprobantes y la precuenta ahora salen por la impresora de caja del Print Gateway, o como PDF si no hay una configurada (PR #116). Lo que este documento dice de iMin ya no aplica; ver `docs/impresoras.md`.
+
 Fuente: [diseño aprobado](../2026-09-13-kitchens-comandas-impresas-design.md), incluida su actualización del 15 de septiembre.
 
 ## Organización
