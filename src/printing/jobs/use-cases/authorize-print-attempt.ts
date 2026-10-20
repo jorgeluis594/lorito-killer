@@ -1,5 +1,10 @@
 import type { response } from "@/lib/types";
-import type { PrintAttempt, PrintJob, PrintRecoveryPolicy } from "../types";
+import type {
+  PrintAttempt,
+  PrintJob,
+  PrintJobSourceType,
+  PrintRecoveryPolicy,
+} from "../types";
 
 type Dependencies = {
   findJob: (jobId: string) => Promise<PrintJob | null>;
@@ -11,21 +16,26 @@ type Dependencies = {
   }) => Promise<PrintJob | null>;
 };
 
-const attempt = (job: PrintJob, timeoutMs: number, serverNow: Date): PrintAttempt => ({
+const attempt = (
+  job: PrintJob,
+  timeoutMs: number,
+  serverNow: Date,
+): PrintAttempt => ({
   jobId: job.id,
   attemptNumber: job.attempts,
   printerId: job.printerId,
   printerLocalName: job.printerLocalName,
-  content: job.content,
   timeoutMs,
-  attemptExpiresAt: new Date((job.processingStartedAt ?? serverNow).getTime() + timeoutMs),
+  attemptExpiresAt: new Date(
+    (job.processingStartedAt ?? serverNow).getTime() + timeoutMs,
+  ),
   serverNow,
 });
 
 export async function authorizePrintAttempt(
   dependencies: Dependencies,
   input: { jobId: string; clientId: string; companyId: string; now: Date },
-  policy: PrintRecoveryPolicy,
+  policyFor: (sourceType: PrintJobSourceType) => PrintRecoveryPolicy,
 ): Promise<response<PrintAttempt>> {
   const job = await dependencies.findJob(input.jobId);
   if (
@@ -34,6 +44,7 @@ export async function authorizePrintAttempt(
     job.printClientId !== input.clientId
   )
     return { success: false, message: "Trabajo no disponible" };
+  const policy = policyFor(job.sourceType);
 
   if (job.status === "PROCESSING" && job.processingStartedAt)
     return job.processingStartedAt.getTime() + policy.timeoutMs >

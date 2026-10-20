@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { useToast } from "@/shared/components/ui/use-toast";
-import { setInvoicePrinterAction } from "../actions";
+import { setCompanyPrinterAction } from "../actions";
 
 type PrinterOption = {
   id: string;
@@ -27,25 +27,25 @@ type PrinterOption = {
   status: "ACTIVE" | "INACTIVE";
 };
 
-export function InvoicePrinterSettings({
-  invoicePrinterId,
+export function CompanyPrinterSettings({
+  currentPrinterId,
   printers,
 }: {
-  invoicePrinterId: string | null;
+  currentPrinterId: string | null;
   printers: PrinterOption[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
-  const [printerId, setPrinterId] = useState(invoicePrinterId ?? "none");
+  const [printerId, setPrinterId] = useState(currentPrinterId ?? "none");
 
   const save = () =>
     startTransition(async () => {
-      const result = await setInvoicePrinterAction({
+      const result = await setCompanyPrinterAction({
         printerId: printerId === "none" ? null : printerId,
       });
       if (!result.success) {
-        setPrinterId(invoicePrinterId ?? "none");
+        setPrinterId(currentPrinterId ?? "none");
         toast({
           title: "No se pudo guardar la impresora",
           description: result.message,
@@ -59,10 +59,8 @@ export function InvoicePrinterSettings({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Impresora de comprobantes</CardTitle>
-        <CardDescription>
-          Impresora donde se imprimirán las boletas y facturas.
-        </CardDescription>
+        <CardTitle className="text-base">Impresora de caja</CardTitle>
+        <CardDescription>Impresora asociada a la caja.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
         <label className="flex flex-col gap-1 text-sm">
@@ -90,7 +88,7 @@ export function InvoicePrinterSettings({
         </label>
         <Button
           onClick={save}
-          disabled={pending || printerId === (invoicePrinterId ?? "none")}
+          disabled={pending || printerId === (currentPrinterId ?? "none")}
         >
           {pending ? "Guardando..." : "Guardar"}
         </Button>

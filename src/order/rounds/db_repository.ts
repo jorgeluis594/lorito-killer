@@ -8,8 +8,9 @@ import {
   ServiceProductType,
   SingleProductType,
 } from "@/product/types";
-import { createKitchenTicketContent } from "@/printing/create-kitchen-ticket-content";
 import { createKitchenTickets } from "@/kitchen/use-cases/create-kitchen-tickets";
+import type { KitchenTicketContentInput } from "@/printing/create-kitchen-ticket-content";
+import { createPrintJob } from "@/printing/jobs/db_repository";
 import { sendRound } from "./use-cases/send-round";
 import type { OrderRoundView, RoundLineInput, SendRoundResult } from "./types";
 import {
@@ -289,14 +290,18 @@ const existingRound = async (
     },
     include: {
       order: { select: { tableSession: { select: { tableId: true } } } },
-      kitchenTickets: {
-        include: {
-          printJobs: { select: { id: true }, orderBy: { createdAt: "asc" } },
-        },
-      },
+      kitchenTickets: { select: { id: true } },
     },
   });
   if (!round) return null;
+  const printJobs = await db.printJob.findMany({
+    where: {
+      sourceType: "KITCHEN_TICKET",
+      sourceId: { in: round.kitchenTickets.map((ticket) => ticket.id) },
+    },
+    select: { id: true, sourceId: true },
+    orderBy: { createdAt: "asc" },
+  });
   return {
     orderId: round.orderId,
     requestHash: round.requestHash,
@@ -306,7 +311,9 @@ const existingRound = async (
       number: round.number,
       tableId: round.order.tableSession?.tableId ?? "",
       printJobIds: round.kitchenTickets.flatMap((ticket) =>
-        ticket.printJobs.map((job) => job.id),
+        printJobs
+          .filter((job) => job.sourceId === ticket.id)
+          .map((job) => job.id),
       ),
     },
   };
@@ -503,35 +510,31 @@ export async function submitOrderRound(
                   });
                   if (!kitchen.printer || kitchen.printer.status !== "ACTIVE")
                     return null;
-                  const content = createKitchenTicketContent(
-                    {
-                      ticketId: ticket.id,
-                      createdAt: round.createdAt,
-                      kitchenName: kitchen.name,
-                      orderType: order.orderType,
-                      orderLabel: session.table
-                        ? session.table.label || String(session.table.number)
-                        : order.id.slice(0, 8).toUpperCase(),
-                      responsibleName: responsible.name || responsible.email,
-                      customerName: order.delivery?.name,
-                      items: lines
-                        .filter((line) => line.kitchenId === kitchen.id)
-                        .map((line) => ({
-                          productName: line.productName,
-                          quantity: line.quantity,
-                          notes: line.notes,
-                        })),
-                    },
-                    kitchen.printer,
-                  );
-                  const job = await db.kitchetTicketPrintJob.create({
-                    data: {
-                      companyId: input.companyId,
-                      kitchenTicketId: ticket.id,
-                      printerId: kitchen.printer.id,
-                      requestedById: input.userId,
-                      content: Buffer.from(content),
-                    },
+                  const snapshot: KitchenTicketContentInput = {
+                    ticketId: ticket.id,
+                    createdAt: round.createdAt,
+                    kitchenName: kitchen.name,
+                    orderType: order.orderType,
+                    orderLabel: session.table
+                      ? session.table.label || String(session.table.number)
+                      : order.id.slice(0, 8).toUpperCase(),
+                    responsibleName: responsible.name || responsible.email,
+                    customerName: order.delivery?.name,
+                    items: lines
+                      .filter((line) => line.kitchenId === kitchen.id)
+                      .map((line) => ({
+                        productName: line.productName,
+                        quantity: line.quantity,
+                        notes: line.notes,
+                      })),
+                  };
+                  const job = await createPrintJob(db, {
+                    companyId: input.companyId,
+                    sourceType: "KITCHEN_TICKET",
+                    sourceId: ticket.id,
+                    printerId: kitchen.printer.id,
+                    requestedById: input.userId,
+                    snapshot,
                   });
                   return job.id;
                 },

@@ -13,11 +13,11 @@ const policy: PrintRecoveryPolicy = {
 const job = (overrides: Partial<PrintJob> = {}): PrintJob => ({
   id: "job-1",
   companyId: "company-1",
-  kitchenTicketId: "ticket-1",
+  sourceType: "KITCHEN_TICKET",
+  sourceId: "ticket-1",
   printerId: "printer-1",
   printClientId: "client-1",
   printerLocalName: "COCINA",
-  content: Uint8Array.from([0, 1, 255]),
   status: "PENDING",
   attempts: 0,
   nextAttemptAt: null,
@@ -39,7 +39,7 @@ describe("authorizePrintAttempt", () => {
     const first = await authorizePrintAttempt(
       { findJob: async () => job(), authorize },
       { jobId: "job-1", clientId: "client-1", companyId: "company-1", now },
-      policy,
+      () => policy,
     );
     expect(first.success && first.data).toMatchObject({
       jobId: "job-1",
@@ -59,7 +59,7 @@ describe("authorizePrintAttempt", () => {
         authorize,
       },
       { jobId: "job-1", clientId: "client-1", companyId: "company-1", now },
-      policy,
+      () => policy,
     );
     expect(repeated.success && repeated.data.attemptNumber).toBe(1);
     expect(authorize).toHaveBeenCalledTimes(1);
@@ -71,7 +71,7 @@ describe("authorizePrintAttempt", () => {
       await authorizePrintAttempt(
         { findJob: async () => job(), authorize },
         { jobId: "job-1", clientId: "other", companyId: "company-1", now },
-        policy,
+        () => policy,
       ),
     ).toEqual({ success: false, message: "Trabajo no disponible" });
     expect(
@@ -82,7 +82,7 @@ describe("authorizePrintAttempt", () => {
           authorize,
         },
         { jobId: "job-1", clientId: "client-1", companyId: "company-1", now },
-        policy,
+        () => policy,
       ),
     ).toEqual({ success: false, message: "Trabajo no disponible" });
     expect(authorize).not.toHaveBeenCalled();
@@ -103,7 +103,7 @@ describe("authorizePrintAttempt", () => {
           authorize,
         },
         { jobId: "job-1", clientId: "client-1", companyId: "company-1", now },
-        policy,
+        () => policy,
       ),
     ).toEqual({ success: false, message: "Trabajo no disponible" });
   });
@@ -136,7 +136,7 @@ describe("recordPrintResult", () => {
         result: "RETRYABLE_FAILURE",
         now,
       },
-      policy,
+      () => policy,
     );
     expect(result.success && result.data.nextAttemptAt).toEqual(
       new Date(now.getTime() + 5000),
@@ -164,7 +164,7 @@ describe("recordPrintResult", () => {
           result: outcome,
           now,
         },
-        policy,
+        () => policy,
       );
       expect(result.success && result.data.status).toBe(outcome);
       expect(record).toHaveBeenCalledWith(
@@ -188,7 +188,7 @@ describe("recordPrintResult", () => {
         result: "DELIVERED",
         now,
       },
-      policy,
+      () => policy,
     );
     expect(repeated.success && repeated.data.applied).toBe(false);
     expect(record).not.toHaveBeenCalled();
@@ -207,7 +207,7 @@ describe("recordPrintResult", () => {
           result: "DELIVERED",
           now,
         },
-        policy,
+        () => policy,
       ),
     ).toEqual({ success: false, message: "Intento desactualizado" });
   });
@@ -232,7 +232,7 @@ describe("recordPrintResult", () => {
         result: "RETRYABLE_FAILURE",
         now,
       },
-      policy,
+      () => policy,
     );
     expect(exhausted.success && exhausted.data.status).toBe("FAILED");
 
@@ -255,7 +255,7 @@ describe("recordPrintResult", () => {
           result: "DELIVERED",
           now,
         },
-        policy,
+        () => policy,
       ),
     ).toEqual({ success: false, message: "Intento no disponible" });
   });

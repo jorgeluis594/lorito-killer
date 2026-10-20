@@ -13,7 +13,7 @@ import { RealtimeProvider } from "@/shared/components/layout/realtime-provider";
 import { getLastOpenCashShift, userExists } from "@/cash-shift/db_repository";
 import { getCompanyFeatures } from "@/feature-flags";
 import { FeatureFlagsProvider } from "@/feature-flags/client";
-import { PrintingProvider } from "@/printing/printing-provider";
+import { PrintJobFailureListener } from "@/printing/components/print-job-failure-listener";
 
 export default async function DashboardLayout({
   children,
@@ -46,27 +46,26 @@ export default async function DashboardLayout({
     <CompanyProvider company={companyResponse.data}>
       <FeatureFlagsProvider features={featureFlags}>
         <RealtimeProvider>
-          <PrintingProvider>
-            <OrderFormProvider>
-              <ProductFormProvider>
-                <CategoryStoreProvider>
-                  <CashShiftProvider
-                    cashShiftResponse={
-                      userPresent
-                        ? cashShiftResponse
-                        : {
-                            success: false,
-                            message: "Usuario no autenticado",
-                            type: "AuthError",
-                          }
-                    }
-                  >
-                    <CategoriesLoader>{children}</CategoriesLoader>
-                  </CashShiftProvider>
-                </CategoryStoreProvider>
-              </ProductFormProvider>
-            </OrderFormProvider>
-          </PrintingProvider>
+          <PrintJobFailureListener userId={session.user.id} />
+          <OrderFormProvider>
+            <ProductFormProvider>
+              <CategoryStoreProvider>
+                <CashShiftProvider
+                  cashShiftResponse={
+                    userPresent
+                      ? cashShiftResponse
+                      : {
+                          success: false,
+                          message: "Usuario no autenticado",
+                          type: "AuthError",
+                        }
+                  }
+                >
+                  <CategoriesLoader>{children}</CategoriesLoader>
+                </CashShiftProvider>
+              </CategoryStoreProvider>
+            </ProductFormProvider>
+          </OrderFormProvider>
         </RealtimeProvider>
       </FeatureFlagsProvider>
     </CompanyProvider>

@@ -3,7 +3,11 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { mocked } from "storybook/test";
 import { ChevronRight } from "lucide-react";
 import { TableConfigForm } from "./table-config-form";
-import { createTablesAction, deleteTableAction } from "../actions";
+import {
+  createTablesAction,
+  deleteTableAction,
+  updateTableAction,
+} from "../actions";
 import type { TableConfiguration } from "../types";
 
 const configured: TableConfiguration = {
@@ -55,6 +59,17 @@ function Example({
         };
       },
     );
+    mocked(updateTableAction).mockImplementation(async (id, { number }) => {
+      if (fail)
+        return { success: false, message: "Ya existe una mesa con ese numero" };
+      setConfiguration((current) => ({
+        ...current,
+        tables: current.tables.map((table) =>
+          table.id === id ? { ...table, number: number! } : table,
+        ),
+      }));
+      return { success: true, data: {} as never };
+    });
     mocked(deleteTableAction).mockImplementation(async (id) => {
       if (fail)
         return {

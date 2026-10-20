@@ -279,7 +279,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const db = prisma();
-  await db.kitchetTicketPrintJob.deleteMany({
+  await db.printJob.deleteMany({
     where: { companyId: ids.company },
   });
   await db.kitchenTicket.deleteMany({

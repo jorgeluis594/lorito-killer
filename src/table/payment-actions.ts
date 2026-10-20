@@ -5,8 +5,10 @@ import { requireFeature } from "@/feature-flags/server";
 import { revalidatePath } from "next/cache";
 import { broadcast } from "@/lib/realtime/broadcast";
 import { enqueueDocumentTaxDispatch } from "@/document/tax-dispatch-outbox";
+import { log } from "@/lib/log";
 import { TablePaymentSchema, type TablePaymentInput } from "./payment-schema";
 import { getTablePaymentData, payTable } from "./payment-repository";
+import { printPreBill } from "./use-cases/print-pre-bill";
 import { z } from "zod";
 
 const roles = ["ADMIN", "WAITER", "CASHIER"] as const;
@@ -46,6 +48,15 @@ export const confirmTablePayment = protectedAction(
       await broadcast(user.companyId, "tables", "table-session-changed", {
         sessionId: input.sessionId,
       }).catch(() => console.warn("Payment notification failed"));
+      // Enviar a caja imprime la precuenta si hay impresora; nunca hace fallar el envío.
+      if (result.data.state === "register" && !result.data.alreadyRequested)
+        await printPreBill(user.companyId, user.id, input.sessionId).catch(
+          (error) =>
+            log.warn("pre_bill_print_failed", {
+              sessionId: input.sessionId,
+              error,
+            }),
+        );
       if (
         result.data.documentId &&
         result.data.documentType &&

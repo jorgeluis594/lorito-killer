@@ -1,18 +1,18 @@
 using System.Text;
-using Lorito.PrintGateway;
+using Kogoz.PrintGateway;
 using Xunit;
 
-namespace Lorito.PrintGateway.Tests;
+namespace Kogoz.PrintGateway.Tests;
 
 public sealed class PrinterPermissionScriptTests
 {
     [Fact]
     public void Escapes_single_quotes_in_printer_names()
     {
-        var script = PrinterPermissionScript.Build("LoritoPrintGateway", ["Cocina", "Bar 'Norte'"]);
+        var script = PrinterPermissionScript.Build("KogozPrintGateway", ["Cocina", "Bar 'Norte'"]);
 
         Assert.Contains("@('Cocina','Bar ''Norte''')", script);
-        Assert.Contains(@"NT SERVICE\LoritoPrintGateway", script);
+        Assert.Contains(@"NT SERVICE\KogozPrintGateway", script);
         Assert.Contains("Get-Printer -Name $name -Full", script);
     }
 

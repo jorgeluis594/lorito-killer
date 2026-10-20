@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { requirePermission } from "@/authorization/server";
 import { findTable } from "@/table/db_repository";
 import { hasPermission } from "@/authorization/helpers";
-import Link from "next/link";
+import type { TableSession } from "@/table/types";
 import { TableOrderView } from "@/table/components/table-order-view";
 import { getKitchenTickets } from "@/kitchen/use-cases/get-kitchen-tickets";
 import { findKitchenTickets } from "@/kitchen/db_repository";
@@ -24,26 +24,31 @@ async function TableOrderContent({ tableId }: { tableId: string }) {
 
   const table = tableRes.data;
 
-  if (!table.activeSession) {
-    return (
-      <div className="p-4">
-        <p className="text-muted-foreground">
-          Esta mesa no tiene una sesion activa.
-        </p>
-        <Link href="/dashboard/tables" className="mt-4 inline-block underline">
-          Volver a mesas
-        </Link>
-      </div>
-    );
-  }
+  // A free table shows an unsaved session; the first added product opens it.
+  const now = new Date();
+  const session: TableSession = table.activeSession ?? {
+    id: "",
+    companyId: auth.data.companyId,
+    tableId: table.id,
+    waiterId: auth.data.id,
+    status: "OPEN",
+    current: true,
+    currentRound: 0,
+    draft: [],
+    draftRevision: 0,
+    order: null,
+    openedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  };
 
-  const tickets = table.activeSession.order
+  const tickets = session.order
     ? await getKitchenTickets(
         {
           companyId: auth.data.companyId,
           userId: auth.data.id,
           role: auth.data.role,
-          orderId: table.activeSession.order.id,
+          orderId: session.order.id,
         },
         findKitchenTickets,
       )
@@ -51,10 +56,10 @@ async function TableOrderContent({ tableId }: { tableId: string }) {
 
   return (
     <TableOrderView
-      key={table.activeSession.id}
-      session={table.activeSession}
+      key={table.id}
+      session={session}
       title={`Mesa ${table.label || table.number}`}
-      paymentHref={`/dashboard/tables/${table.id}/payment?session=${table.activeSession.id}`}
+      paymentHref={`/dashboard/tables/${table.id}/payment?session=${session.id}`}
       canEdit={hasPermission(auth.data.role, "tables", "update")}
       kitchenTickets={tickets.success ? tickets.data : []}
     />

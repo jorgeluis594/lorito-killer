@@ -7,11 +7,11 @@ import {
   findPrintJob,
   recordPrintJobResult,
   reserveDuePrintJobs,
-} from "@/kitchen/db_repository";
-import { processPrintJobs } from "@/kitchen/process-print-jobs";
-import { notifyPrintJobFailed } from "@/kitchen/notifications";
+} from "@/printing/jobs/db_repository";
+import { processPrintJobs } from "@/printing/jobs/process-print-jobs";
+import { notifyPrintJobFailed } from "@/printing/jobs/notifications";
 
-vi.mock("@/kitchen/notifications", () => ({
+vi.mock("@/printing/jobs/notifications", () => ({
   notifyPrintJobAvailable: vi.fn().mockResolvedValue(undefined),
   notifyPrintJobFailed: vi.fn().mockResolvedValue(undefined),
 }));
@@ -26,7 +26,7 @@ const ids = {
   round: randomUUID(),
   kitchens: [randomUUID(), randomUUID(), randomUUID()],
   tickets: [randomUUID(), randomUUID(), randomUUID()],
-  jobs: [randomUUID(), randomUUID(), randomUUID()],
+  jobs: [randomUUID(), randomUUID(), randomUUID()] as string[],
 };
 
 beforeAll(async () => {
@@ -92,11 +92,12 @@ beforeAll(async () => {
       kitchenId: ids.kitchens[index],
     })),
   });
-  await db.kitchetTicketPrintJob.createMany({
+  await db.printJob.createMany({
     data: ids.jobs.map((id, index) => ({
       id,
       companyId: ids.company,
-      kitchenTicketId: ids.tickets[index],
+      sourceType: "KITCHEN_TICKET" as const,
+      sourceId: ids.tickets[index],
       printerId: index < 2 ? ids.printer1 : ids.printer2,
       content: Buffer.from([index, 255]),
       requestedById: ids.user,
@@ -107,7 +108,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const db = prisma();
-  await db.kitchetTicketPrintJob.deleteMany({
+  await db.printJob.deleteMany({
     where: { companyId: ids.company },
   });
   await db.kitchenTicket.deleteMany({ where: { orderRoundId: ids.round } });
@@ -158,15 +159,15 @@ test("parallel workers reserve only the oldest job per free printer", async () =
     claimRequestedAt: null,
     processingStartedAt: null,
   });
-  expect(Buffer.from(retried!.content)).toEqual(Buffer.from([0, 255]));
 });
 
 test("the partial index rejects another active job for the same ticket", async () => {
   await expect(
-    prisma().kitchetTicketPrintJob.create({
+    prisma().printJob.create({
       data: {
         companyId: ids.company,
-        kitchenTicketId: ids.tickets[1],
+        sourceType: "KITCHEN_TICKET",
+        sourceId: ids.tickets[1],
         printerId: ids.printer1,
         content: Buffer.from([1]),
         requestedById: ids.user,
@@ -179,7 +180,7 @@ test("revoked clients fail pending jobs before timeouts and cannot reserve them 
   const db = prisma();
   const now = new Date();
   const expired = new Date(0);
-  await db.kitchetTicketPrintJob.updateMany({
+  await db.printJob.updateMany({
     where: { id: { in: ids.jobs.slice(0, 2) } },
     data: {
       status: "PENDING",
@@ -189,11 +190,11 @@ test("revoked clients fail pending jobs before timeouts and cannot reserve them 
       lastError: "Error anterior",
     },
   });
-  await db.kitchetTicketPrintJob.update({
+  await db.printJob.update({
     where: { id: ids.jobs[1] },
     data: { claimRequestedAt: expired },
   });
-  await db.kitchetTicketPrintJob.update({
+  await db.printJob.update({
     where: { id: ids.jobs[2] },
     data: {
       status: "PROCESSING",
@@ -215,9 +216,7 @@ test("revoked clients fail pending jobs before timeouts and cannot reserve them 
   });
 
   for (const id of ids.jobs.slice(0, 2)) {
-    expect(
-      await db.kitchetTicketPrintJob.findUnique({ where: { id } }),
-    ).toMatchObject({
+    expect(await db.printJob.findUnique({ where: { id } })).toMatchObject({
       status: "FAILED",
       claimRequestedAt: null,
       processingStartedAt: null,

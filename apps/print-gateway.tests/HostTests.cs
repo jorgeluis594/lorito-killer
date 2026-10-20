@@ -1,4 +1,4 @@
-using Lorito.PrintGateway;
+using Kogoz.PrintGateway;
 using System.IO.Pipes;
 using System.Runtime.Versioning;
 using System.Security.Principal;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Lorito.PrintGateway.Tests;
+namespace Kogoz.PrintGateway.Tests;
 
 public sealed class HostTests
 {
@@ -24,7 +24,7 @@ public sealed class HostTests
     [Fact]
     public async Task Pipe_handles_camel_case_status_request_and_response()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         var request = PipeProtocol.Frame("{\"version\":1,\"operation\":\"GET_STATUS\"}");
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var stream = new MemoryStream();
@@ -45,7 +45,7 @@ public sealed class HostTests
     [Fact]
     public async Task Pipe_unlink_deletes_binding_and_notifies_worker()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         File.WriteAllText(Path.Combine(root, "binding.dat"), "x");
         var request = PipeProtocol.Frame("{\"version\":1,\"operation\":\"UNLINK\"}");
@@ -69,7 +69,7 @@ public sealed class HostTests
     public async Task Pipe_exchange_rejects_a_decoy_without_sending_payload()
     {
         if (!OperatingSystem.IsWindows()) return;
-        var pipeName = $"LoritoPrintGateway.Tests.{Guid.NewGuid():N}";
+        var pipeName = $"KogozPrintGateway.Tests.{Guid.NewGuid():N}";
         await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         await using (var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
         {
@@ -107,7 +107,7 @@ public sealed class HostTests
     [Fact]
     public void Host_uses_configured_data_path_for_binding_and_journal_stores()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         var previous = Environment.GetEnvironmentVariable("PRINT_GATEWAY_DATA_PATH");
         try
         {
@@ -125,7 +125,7 @@ public sealed class HostTests
     [Fact]
     public async Task Host_isolates_pipe_failures_and_preserves_cancellation()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         var configuration = new GatewayConfiguration("https://backend.test", "https://supabase.test", "key");
         var store = new BindingStore(root);
         var backend = new BackendClient(new HttpClient(), configuration);
@@ -159,7 +159,7 @@ public sealed class HostTests
     [Fact]
     public void Journal_is_atomic_and_does_not_store_printable_bytes_or_external_path_data()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         store.Write(new PrintJournal("job/with\\separators", 1, "printer", "Kitchen", "ABC123", "SENDING", null, null, false));
@@ -175,7 +175,7 @@ public sealed class HostTests
     [Fact]
     public void Journal_requires_existing_writable_storage_and_ignores_incomplete_temp_files()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         var store = new JournalStore(root);
 
         Assert.Throws<IOException>(() => store.EnsureReady());
@@ -188,7 +188,7 @@ public sealed class HostTests
     [Fact]
     public void Journal_cleanup_only_removes_confirmed_terminal_records_after_thirty_days()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new JournalStore(root);
         store.Write(new PrintJournal("old", 1, "p", "P", "hash", "RESULT", "DELIVERED", null, true, DateTimeOffset.UtcNow.AddDays(-31)));
@@ -202,7 +202,7 @@ public sealed class HostTests
     [Fact]
     public void Daily_logs_are_rotated_after_seven_days_and_redact_credentials_and_content()
     {
-        var root = Path.Combine(Path.GetTempPath(), "lorito-print-tests", Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "kogoz-print-tests", Guid.NewGuid().ToString("N"));
         var provider = new DailyFileLoggerProvider(root);
         provider.CreateLogger("test").LogInformation("operation=report credential=secret contentBase64=bytes");
 

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 internal static class PrinterPermissionScript
 {

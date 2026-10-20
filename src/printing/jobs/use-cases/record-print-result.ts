@@ -1,5 +1,10 @@
 import type { response } from "@/lib/types";
-import type { PrintJob, PrintRecoveryPolicy, PrintResult } from "../types";
+import type {
+  PrintJob,
+  PrintJobSourceType,
+  PrintRecoveryPolicy,
+  PrintResult,
+} from "../types";
 
 type Dependencies = {
   findJob: (jobId: string) => Promise<PrintJob | null>;
@@ -24,7 +29,7 @@ export async function recordPrintResult(
     error?: string;
     now: Date;
   },
-  policy: PrintRecoveryPolicy,
+  policyFor: (sourceType: PrintJobSourceType) => PrintRecoveryPolicy,
 ): Promise<response<PrintJob & { applied: boolean }>> {
   const job = await dependencies.findJob(input.jobId);
   if (
@@ -33,6 +38,7 @@ export async function recordPrintResult(
     job.printClientId !== input.clientId
   )
     return { success: false, message: "Trabajo no disponible" };
+  const policy = policyFor(job.sourceType);
 
   if (job.attempts !== input.attemptNumber)
     return { success: false, message: "Intento desactualizado" };

@@ -40,7 +40,7 @@ import { TableRealtimeListener } from "./table-realtime-listener";
 const labels: Record<string, string> = {
   debit_card: "Tarjeta de débito",
   credit_card: "Tarjeta de crédito",
-  wallet: "Billetera",
+  wallet: "Yape / Plin",
   cash: "Efectivo",
   combine: "Combinado",
   register: "Cobro en caja",
@@ -85,7 +85,10 @@ export function TablePaymentView({
     credit_card: "",
     wallet: "",
   });
-  const [wallet, setWallet] = useState({ name: "", operationCode: "" });
+  const [wallet, setWallet] = useState({
+    name: "Yape / Plin",
+    operationCode: "",
+  });
   const [result, setResult] = useState<TablePaymentResult | null>(
     initialData.result,
   );
@@ -707,7 +710,7 @@ export function TablePaymentView({
               >
                 {[
                   { value: "debit_card", label: "Tarjeta", icon: CreditCard },
-                  { value: "wallet", label: "Billetera", icon: Smartphone },
+                  { value: "wallet", label: "Yape / Plin", icon: Smartphone },
                   ...(canCollectCash
                     ? [
                         { value: "cash", label: "Efectivo", icon: Banknote },
@@ -824,25 +827,22 @@ export function TablePaymentView({
               ) : null}
               {needsWallet ? (
                 <div className="mt-4 flex flex-col gap-4">
-                  {(
-                    [
-                      ["name", "Billetera"],
-                      ["operationCode", "Código de operación (opcional)"],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <div key={key} className="flex flex-col gap-2">
-                      <Label htmlFor={`wallet-${key}`}>{label}</Label>
-                      <Input
-                        id={`wallet-${key}`}
-                        required={key === "name"}
-                        value={wallet[key]}
-                        maxLength={key === "name" ? 80 : 100}
-                        onChange={(event) =>
-                          setWallet({ ...wallet, [key]: event.target.value })
-                        }
-                      />
-                    </div>
-                  ))}
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="wallet-operationCode">
+                      Código de operación (opcional)
+                    </Label>
+                    <Input
+                      id="wallet-operationCode"
+                      value={wallet.operationCode}
+                      maxLength={100}
+                      onChange={(event) =>
+                        setWallet({
+                          ...wallet,
+                          operationCode: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
               ) : null}
             </fieldset>

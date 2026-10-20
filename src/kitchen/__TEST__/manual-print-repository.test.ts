@@ -9,12 +9,14 @@ const mocks = vi.hoisted(() => ({
   ticketFindFirst: vi.fn(),
   ticketFind: vi.fn(),
   ticketList: vi.fn(),
+  jobList: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   default: () => ({
     $transaction: mocks.transaction,
     kitchenTicket: { findMany: mocks.ticketList },
+    printJob: { findMany: mocks.jobList },
   }),
 }));
 
@@ -41,7 +43,7 @@ const item = (quantity: number, cancelled = 0) => ({
   cancellations: cancelled ? [{ quantity: new Prisma.Decimal(cancelled) }] : [],
 });
 
-const ticket = (printJobs: Array<{ id: string; status: string }> = []) => ({
+const ticket = () => ({
   id: "ticket-1",
   kitchenId: "kitchen-1",
   createdAt: new Date("2026-09-15T12:00:00Z"),
@@ -60,7 +62,6 @@ const ticket = (printJobs: Array<{ id: string; status: string }> = []) => ({
       feedBeforeCut: 3,
     },
   },
-  printJobs,
   orderRound: {
     responsibleUser: { name: "Ana", email: "ana@example.com" },
     order: {
@@ -75,8 +76,9 @@ beforeEach(() => {
   vi.resetAllMocks();
   const tx = {
     $queryRaw: mocks.queryRaw,
-    kitchetTicketPrintJob: {
+    printJob: {
       findUnique: mocks.jobFind,
+      findMany: mocks.jobList,
       create: mocks.jobCreate,
     },
     kitchenTicket: {
@@ -86,13 +88,14 @@ beforeEach(() => {
   };
   mocks.transaction.mockImplementation((callback) => callback(tx));
   mocks.jobFind.mockResolvedValue(null);
+  mocks.jobList.mockResolvedValue([]);
   mocks.ticketFindFirst.mockResolvedValue({
     orderRound: { orderId: "order-1", responsibleUserId: "waiter-1" },
   });
   mocks.ticketFind.mockResolvedValue(ticket());
   mocks.jobCreate.mockResolvedValue({
     id: "job-1",
-    kitchenTicketId: "ticket-1",
+    sourceId: "ticket-1",
     status: "PENDING",
     isReprint: false,
   });
@@ -100,28 +103,25 @@ beforeEach(() => {
 
 describe("createManualKitchenTicketPrintJob", () => {
   test("persists one first-print snapshot with only current quantities", async () => {
-    const generate = vi.fn().mockReturnValue(Uint8Array.from([1, 2, 3]));
-    const result = await createManualKitchenTicketPrintJob(input, generate);
+    const result = await createManualKitchenTicketPrintJob(input);
 
     expect(result.success).toBe(true);
-    expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isReprint: false,
-        items: [
-          expect.objectContaining({
-            productName: "Lomo",
-            quantity: 2,
-            cancelledQuantity: undefined,
-          }),
-        ],
-      }),
-      expect.objectContaining({ id: "printer-1" }),
-    );
     expect(mocks.jobCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         id: "job-1",
+        sourceType: "KITCHEN_TICKET",
+        sourceId: "ticket-1",
         isReprint: false,
-        content: Buffer.from([1, 2, 3]),
+        snapshot: expect.objectContaining({
+          isReprint: false,
+          items: [
+            expect.objectContaining({
+              productName: "Lomo",
+              quantity: 2,
+              cancelledQuantity: undefined,
+            }),
+          ],
+        }),
       }),
     });
     expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
@@ -130,53 +130,50 @@ describe("createManualKitchenTicketPrintJob", () => {
   });
 
   test("reprints failed or delivered jobs with this Kitchen's cancellations", async () => {
-    mocks.ticketFind.mockResolvedValue(
-      ticket([{ id: "old", status: "DELIVERED" }]),
-    );
+    mocks.jobList.mockResolvedValue([{ id: "old", status: "DELIVERED" }]);
     mocks.jobCreate.mockResolvedValue({
       id: "job-2",
-      kitchenTicketId: "ticket-1",
+      sourceId: "ticket-1",
       status: "PENDING",
       isReprint: true,
     });
-    const generate = vi.fn().mockReturnValue(Uint8Array.from([4]));
-    const result = await createManualKitchenTicketPrintJob(
-      { ...input, jobId: "job-2", isReprint: true },
-      generate,
-    );
+    const result = await createManualKitchenTicketPrintJob({
+      ...input,
+      jobId: "job-2",
+      isReprint: true,
+    });
 
     expect(result.success).toBe(true);
-    expect(generate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        isReprint: true,
-        items: [
-          expect.objectContaining({ quantity: 2, cancelledQuantity: 1 }),
-          expect.objectContaining({ quantity: 0, cancelledQuantity: 2 }),
-        ],
+    expect(mocks.jobCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        snapshot: expect.objectContaining({
+          isReprint: true,
+          items: [
+            expect.objectContaining({ quantity: 2, cancelledQuantity: 1 }),
+            expect.objectContaining({ quantity: 0, cancelledQuantity: 2 }),
+          ],
+        }),
       }),
-      expect.anything(),
-    );
+    });
   });
 
   test("rejects another waiter and an active reprint before writing", async () => {
     mocks.ticketFindFirst.mockResolvedValue({
       orderRound: { orderId: "order-1", responsibleUserId: "other" },
     });
-    expect(
-      (await createManualKitchenTicketPrintJob(input, vi.fn())).success,
-    ).toBe(false);
+    expect((await createManualKitchenTicketPrintJob(input)).success).toBe(
+      false,
+    );
     expect(mocks.jobCreate).not.toHaveBeenCalled();
 
     mocks.ticketFindFirst.mockResolvedValue({
       orderRound: { orderId: "order-1", responsibleUserId: "waiter-1" },
     });
-    mocks.ticketFind.mockResolvedValue(
-      ticket([{ id: "active", status: "PROCESSING" }]),
-    );
-    const result = await createManualKitchenTicketPrintJob(
-      { ...input, isReprint: true },
-      vi.fn(),
-    );
+    mocks.jobList.mockResolvedValue([{ id: "active", status: "PROCESSING" }]);
+    const result = await createManualKitchenTicketPrintJob({
+      ...input,
+      isReprint: true,
+    });
     expect(result).toEqual({
       success: false,
       message: "La comanda ya tiene una impresión en curso.",
@@ -188,7 +185,7 @@ describe("createManualKitchenTicketPrintJob", () => {
       ...ticket(),
       orderRound: { ...ticket().orderRound, items: [item(0, 3)] },
     });
-    const result = await createManualKitchenTicketPrintJob(input, vi.fn());
+    const result = await createManualKitchenTicketPrintJob(input);
     expect(result).toEqual({
       success: false,
       message: "La comanda no tiene platos vigentes para imprimir.",
@@ -200,16 +197,15 @@ describe("createManualKitchenTicketPrintJob", () => {
     mocks.jobFind.mockResolvedValue({
       id: "job-1",
       companyId: "company-1",
-      kitchenTicketId: "ticket-1",
+      sourceType: "KITCHEN_TICKET",
+      sourceId: "ticket-1",
       requestedById: "waiter-1",
       isReprint: false,
       status: "DELIVERED",
       printer: { printClientId: "client-1" },
     });
-    const generate = vi.fn();
-    const result = await createManualKitchenTicketPrintJob(input, generate);
+    const result = await createManualKitchenTicketPrintJob(input);
     expect(result.success && result.data.status).toBe("DELIVERED");
-    expect(generate).not.toHaveBeenCalled();
     expect(mocks.jobCreate).not.toHaveBeenCalled();
   });
 
@@ -217,7 +213,8 @@ describe("createManualKitchenTicketPrintJob", () => {
     const recovered = {
       id: "job-1",
       companyId: "company-1",
-      kitchenTicketId: "ticket-1",
+      sourceType: "KITCHEN_TICKET",
+      sourceId: "ticket-1",
       requestedById: "waiter-1",
       isReprint: false,
       status: "PENDING",
@@ -229,8 +226,9 @@ describe("createManualKitchenTicketPrintJob", () => {
         mocks.jobFind.mockResolvedValue(recovered);
         return callback({
           $queryRaw: mocks.queryRaw,
-          kitchetTicketPrintJob: {
+          printJob: {
             findUnique: mocks.jobFind,
+            findMany: mocks.jobList,
             create: mocks.jobCreate,
           },
           kitchenTicket: {
@@ -240,7 +238,7 @@ describe("createManualKitchenTicketPrintJob", () => {
         });
       });
 
-    const result = await createManualKitchenTicketPrintJob(input, vi.fn());
+    const result = await createManualKitchenTicketPrintJob(input);
     expect(result.success && result.data.id).toBe("job-1");
     expect(mocks.transaction).toHaveBeenCalledTimes(2);
   });
@@ -272,7 +270,6 @@ describe("findKitchenTickets", () => {
           },
         ],
       },
-      printJobs: [],
     };
     mocks.ticketList.mockResolvedValueOnce([base]);
     const missing = await findKitchenTickets({

@@ -2,8 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TableDraftItem, TableSession } from "../types";
-import { saveTableDraft } from "../actions";
+import { openTable, saveTableDraft } from "../actions";
 
+/** A free-table placeholder rendered before this client opened the table is stale, not a close. */
+export const isStaleFreeTable = (
+  session: Pick<TableSession, "id" | "createdAt">,
+  openedAt: Date | null,
+) =>
+  session.id === "" &&
+  openedAt !== null &&
+  new Date(session.createdAt) < new Date(openedAt);
+
+/** A table without a session (`id` "") is opened by its first save, never by just viewing it. */
 export function useTableDraft(session: TableSession) {
   const [items, setItems] = useState<TableDraftItem[]>(session.draft ?? []);
   const [status, setStatus] = useState<
@@ -13,6 +23,8 @@ export function useTableDraft(session: TableSession) {
   const current = useRef(items);
   const saved = useRef(items);
   const revision = useRef(session.draftRevision ?? 0);
+  const sessionId = useRef(session.id);
+  const openedAt = useRef<Date | null>(null);
   const inFlight = useRef<Promise<boolean> | null>(null);
 
   const edit = (next: TableDraftItem[]) => {
@@ -29,8 +41,19 @@ export function useTableDraft(session: TableSession) {
         const snapshot = current.current;
         setStatus("saving");
         try {
+          if (!sessionId.current && session.tableId) {
+            const opened = await openTable(session.tableId);
+            if (!opened.success) {
+              setError(opened.message);
+              setStatus("error");
+              return false;
+            }
+            sessionId.current = opened.data.id;
+            openedAt.current = opened.data.openedAt;
+            revision.current = opened.data.draftRevision ?? 0;
+          }
           const result = await saveTableDraft({
-            sessionId: session.id,
+            sessionId: sessionId.current,
             revision: revision.current,
             items: snapshot,
           });
@@ -59,7 +82,30 @@ export function useTableDraft(session: TableSession) {
     } finally {
       inFlight.current = null;
     }
-  }, [session.id]);
+  }, [session.tableId]);
+
+  useEffect(() => {
+    // Follows the table's session as it opens, changes or closes on the server.
+    if (session.id === sessionId.current) return;
+    if (
+      isStaleFreeTable(
+        { id: session.id, createdAt: session.createdAt },
+        openedAt.current,
+      )
+    )
+      return;
+    const replaced = sessionId.current !== "";
+    sessionId.current = session.id;
+    revision.current = session.draftRevision ?? 0;
+    // The session these items belonged to closed or changed: they must not be saved into the next one.
+    if (replaced) {
+      current.current = session.draft ?? [];
+      saved.current = current.current;
+      setItems(current.current);
+      setStatus("saved");
+      setError("");
+    }
+  }, [session.id, session.createdAt, session.draftRevision, session.draft]);
 
   useEffect(() => {
     if (current.current === saved.current) return;
@@ -93,5 +139,14 @@ export function useTableDraft(session: TableSession) {
     current.current = saved.current;
     window.location.reload();
   };
-  return { items, edit, flush, revision, status, error, reloadSaved };
+  return {
+    items,
+    edit,
+    flush,
+    revision,
+    sessionId,
+    status,
+    error,
+    reloadSaved,
+  };
 }

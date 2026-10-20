@@ -7,7 +7,7 @@ import {
   reserveDuePrintJobs,
 } from "./db_repository";
 import { notifyPrintJobAvailable, notifyPrintJobFailed } from "./notifications";
-import { getPrintRecoveryPolicy } from "./print-policy";
+import { getPrintRecoveryPolicy } from "./policy";
 import { recordPrintTimeout } from "./use-cases/record-print-timeout";
 
 export async function processPrintJobs(now = new Date()) {

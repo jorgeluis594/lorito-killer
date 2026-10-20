@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
 
-namespace Lorito.PrintGateway;
+namespace Kogoz.PrintGateway;
 
 public sealed class DailyFileLoggerProvider(string directory) : ILoggerProvider
 {
@@ -42,7 +42,7 @@ public sealed class DailyFileLoggerProvider(string directory) : ILoggerProvider
             catch
             {
                 if (OperatingSystem.IsWindows())
-                    try { System.Diagnostics.EventLog.WriteEntry("LoritoPrintGateway", line, level >= LogLevel.Error ? System.Diagnostics.EventLogEntryType.Error : System.Diagnostics.EventLogEntryType.Information); } catch { }
+                    try { System.Diagnostics.EventLog.WriteEntry("KogozPrintGateway", line, level >= LogLevel.Error ? System.Diagnostics.EventLogEntryType.Error : System.Diagnostics.EventLogEntryType.Information); } catch { }
             }
         }
     }

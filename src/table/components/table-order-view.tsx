@@ -29,7 +29,11 @@ import { useCategoryStore } from "@/category/components/category-store-provider"
 import { getMany } from "@/product/api_repository";
 import { isDishProduct, type Product } from "@/product/types";
 import type { TableSession } from "../types";
-import { leaveEmptyTable, sendTableDraft } from "../actions";
+import {
+  leaveEmptyTable,
+  printPreBillAction,
+  sendTableDraft,
+} from "../actions";
 import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
@@ -82,6 +86,7 @@ export function TableOrderView({
   const roundIdRef = useRef<string | null>(null);
   const [error, setError] = useState("");
   const [printingTicketId, setPrintingTicketId] = useState<string | null>(null);
+  const [printingPreBill, setPrintingPreBill] = useState(false);
   const printRequestIds = useRef(new Map<string, string>());
   const deliveryFee = session.delivery?.fee ?? 0;
   // Un delivery despachado ya salió del local: no admite más productos.
@@ -182,14 +187,19 @@ export function TableOrderView({
     setError("");
     try {
       if (editable && !(await draft.flush())) return;
-      if (editable) {
+      // Without a session nothing was added, so leaving records nothing.
+      if (editable && draft.sessionId.current) {
         const result = send
           ? await sendTableDraft(
-              session.id,
+              draft.sessionId.current,
               draft.revision.current,
               (roundIdRef.current ??= crypto.randomUUID()),
             )
-          : await leaveEmptyTable(session.id, draft.revision.current, release);
+          : await leaveEmptyTable(
+              draft.sessionId.current,
+              draft.revision.current,
+              release,
+            );
         if (!result.success) {
           setError(result.message);
           return;
@@ -218,12 +228,43 @@ export function TableOrderView({
     setBusy(true);
     try {
       if (editable && !(await draft.flush())) return;
-      router.push(paymentHref);
+      if (!draft.sessionId.current) {
+        setError("Agrega un producto antes de cobrar.");
+        return;
+      }
+      // A free table gets its session on the first save, after the page built paymentHref.
+      router.push(
+        paymentHref.replace(
+          /session=[^&]*/,
+          `session=${draft.sessionId.current}`,
+        ),
+      );
     } catch {
       setError("No se pudo abrir la cuenta. Vuelve a intentarlo.");
     } finally {
       busyRef.current = false;
       setBusy(false);
+    }
+  }
+
+  async function printPreBill() {
+    setPrintingPreBill(true);
+    try {
+      const result = await printPreBillAction(session.id);
+      if (!result.success)
+        toast({
+          title: "No se pudo imprimir la precuenta",
+          description: result.message,
+          variant: "destructive",
+        });
+    } catch {
+      toast({
+        title: "No se pudo imprimir la precuenta",
+        description: "Vuelve a intentarlo.",
+        variant: "destructive",
+      });
+    } finally {
+      setPrintingPreBill(false);
     }
   }
 
@@ -283,6 +324,20 @@ export function TableOrderView({
             )}
           </div>
           {headerAction}
+          {canEdit && session.tableId && sentItems.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={printPreBill}
+              disabled={printingPreBill}
+            >
+              {printingPreBill ? (
+                <Loader2 className="animate-spin" aria-hidden />
+              ) : (
+                <ReceiptText aria-hidden />
+              )}
+              <span className="sr-only sm:not-sr-only">Imprimir precuenta</span>
+            </Button>
+          )}
         </div>
         <span
           className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
@@ -797,7 +852,7 @@ export function TableOrderView({
               )}
               Enviar pedido
             </Button>
-            {editable && !count && !sentItems.length ? (
+            {editable && session.id && !count && !sentItems.length ? (
               <Button
                 variant="outline"
                 className="min-h-12 w-full"

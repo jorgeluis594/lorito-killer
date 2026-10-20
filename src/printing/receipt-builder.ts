@@ -129,9 +129,4 @@ export const buildReceiptPrintData = ({
     discount: order.discountAmount,
     total: order.total,
   },
-  paper: {
-    widthMm: 80,
-    columns: 48,
-  },
-  fallbackPdfUrl: `/api/orders/${order.id}/documents`,
 });

@@ -24,6 +24,7 @@ import {
 } from "./db_repository";
 import { closeTableSession } from "./use-cases/close-table-session";
 import { requestBill } from "./use-cases/request-bill";
+import { printPreBill } from "./use-cases/print-pre-bill";
 import type { RoundItem } from "./types";
 import { transferTable } from "./use-cases/transfer-table";
 import {
@@ -286,7 +287,8 @@ export const createTablesAction = protectedAction(
 );
 
 export const updateTableAction = protectedAction(
-  { resource: "tables", action: "update" },
+  // Configuring tables is admin-only; tables:update is granted to staff for service.
+  { resource: "tables", action: "create" },
   async (
     user,
     id: string,
@@ -297,6 +299,8 @@ export const updateTableAction = protectedAction(
       zoneId?: string;
     },
   ): Promise<response<Table>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
     const parsed = UpdateTableSchema.safeParse({ id, data });
     if (!parsed.success) {
       return {
@@ -311,6 +315,7 @@ export const updateTableAction = protectedAction(
       parsed.data.data,
     );
     if (result.success) {
+      revalidatePath("/[subdomain]/dashboard/tables", "layout");
       revalidatePath("/dashboard/tables");
       revalidatePath("/dashboard/settings/tables");
     }
@@ -463,6 +468,18 @@ export const requestBillAction = protectedAction(
       });
     }
     return result;
+  },
+);
+
+/** Reimprime la precuenta con el estado actual de la mesa. */
+export const printPreBillAction = protectedAction(
+  { resource: "tables", action: "update" },
+  async (user, sessionId: string): Promise<response<{ jobId: string }>> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    if (!z.string().uuid().safeParse(sessionId).success)
+      return { success: false, message: "La mesa no es válida." };
+    return printPreBill(user.companyId, user.id, sessionId);
   },
 );
 

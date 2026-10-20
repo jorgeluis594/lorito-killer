@@ -2,14 +2,10 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { response } from "@/lib/types";
 import type { Kitchen, KitchenOption } from "./types";
-import type { PrintJob, PrintJobStatus } from "./types";
 import type { KitchenTicketView, ManualPrintJob } from "./types";
 import type { KitchenPrinterActivity } from "./use-cases/check-kitchen-printers";
 import type { ManualPrintInput } from "./use-cases/print-kitchen-ticket";
-import type {
-  KitchenTicketContentInput,
-  KitchenTicketPrinterProfile,
-} from "@/printing/create-kitchen-ticket-content";
+import { createPrintJob } from "@/printing/jobs/db_repository";
 import type { KitchenInput } from "./use-cases/configure-kitchens";
 
 const configurationError = (error: unknown) => {
@@ -19,229 +15,6 @@ const configurationError = (error: unknown) => {
   }
   return error instanceof Error ? error.message : "Error interno del servidor";
 };
-
-const toPrintJob = (job: {
-  id: string;
-  companyId: string;
-  kitchenTicketId: string;
-  printerId: string;
-  content: Uint8Array;
-  status: PrintJobStatus;
-  attempts: number;
-  nextAttemptAt: Date | null;
-  claimRequestedAt: Date | null;
-  processingStartedAt: Date | null;
-  printer: { printClientId: string; localName: string };
-}): PrintJob => ({
-  id: job.id,
-  companyId: job.companyId,
-  kitchenTicketId: job.kitchenTicketId,
-  printerId: job.printerId,
-  printClientId: job.printer.printClientId,
-  printerLocalName: job.printer.localName,
-  content: job.content,
-  status: job.status,
-  attempts: job.attempts,
-  nextAttemptAt: job.nextAttemptAt,
-  claimRequestedAt: job.claimRequestedAt,
-  processingStartedAt: job.processingStartedAt,
-});
-
-const printJobInclude = {
-  printer: { select: { printClientId: true, localName: true } },
-} satisfies Prisma.KitchetTicketPrintJobInclude;
-
-export const findPrintJob = async (jobId: string): Promise<PrintJob | null> => {
-  const job = await prisma().kitchetTicketPrintJob.findUnique({
-    where: { id: jobId },
-    include: printJobInclude,
-  });
-  return job ? toPrintJob(job) : null;
-};
-
-export const authorizePrintJob = async (input: {
-  jobId: string;
-  clientId: string;
-  expectedClaimRequestedAt: Date;
-  now: Date;
-}): Promise<PrintJob | null> => {
-  const changed = await prisma().kitchetTicketPrintJob.updateMany({
-    where: {
-      id: input.jobId,
-      status: "PENDING",
-      claimRequestedAt: input.expectedClaimRequestedAt,
-      printer: {
-        printClientId: input.clientId,
-        printClient: { revokedAt: null },
-      },
-    },
-    data: {
-      status: "PROCESSING",
-      attempts: { increment: 1 },
-      nextAttemptAt: null,
-      claimRequestedAt: null,
-      processingStartedAt: input.now,
-      lastError: null,
-    },
-  });
-  return changed.count === 1 ? findPrintJob(input.jobId) : null;
-};
-
-export const recordPrintJobResult = async (input: {
-  jobId: string;
-  clientId: string;
-  attemptNumber: number;
-  status: "PENDING" | "DELIVERED" | "FAILED";
-  nextAttemptAt: Date | null;
-  error: string | null;
-}): Promise<PrintJob | null> => {
-  const changed = await prisma().kitchetTicketPrintJob.updateMany({
-    where: {
-      id: input.jobId,
-      status: "PROCESSING",
-      attempts: input.attemptNumber,
-      printer: {
-        printClientId: input.clientId,
-        printClient: { revokedAt: null },
-      },
-    },
-    data: {
-      status: input.status,
-      nextAttemptAt: input.nextAttemptAt,
-      claimRequestedAt: null,
-      processingStartedAt: null,
-      lastError: input.error,
-    },
-  });
-  return changed.count === 1 ? findPrintJob(input.jobId) : null;
-};
-
-export const failTimedOutPrintJob = async (input: {
-  jobId: string;
-  status: PrintJobStatus;
-  observedAt: Date;
-  error: string;
-}): Promise<PrintJob | null> => {
-  const dateField =
-    input.status === "PENDING"
-      ? { claimRequestedAt: input.observedAt }
-      : { processingStartedAt: input.observedAt };
-  const changed = await prisma().kitchetTicketPrintJob.updateMany({
-    where: { id: input.jobId, status: input.status, ...dateField },
-    data: {
-      status: "FAILED",
-      nextAttemptAt: null,
-      claimRequestedAt: null,
-      processingStartedAt: null,
-      lastError: input.error,
-    },
-  });
-  return changed.count === 1 ? findPrintJob(input.jobId) : null;
-};
-
-export const failRevokedPrintJobs = async (now: Date): Promise<string[]> => {
-  const jobs = await prisma().$queryRaw<{ id: string }[]>(Prisma.sql`
-    UPDATE "KitchetTicketPrintJob" job
-    SET status = 'FAILED', "claimRequestedAt" = NULL,
-        "processingStartedAt" = NULL, "nextAttemptAt" = NULL,
-        "lastError" = 'El cliente de impresión fue revocado', "updatedAt" = ${now}
-    FROM "Printer" printer
-    JOIN "PrintClient" client ON client.id = printer."printClientId"
-    WHERE job."printerId" = printer.id
-      AND job.status = 'PENDING' AND client."revokedAt" IS NOT NULL
-    RETURNING job.id
-  `);
-  return jobs.map((job) => job.id);
-};
-
-type ReservedJob = {
-  id: string;
-  companyId: string;
-  printClientId: string;
-};
-
-export const reserveDuePrintJobs = (now: Date): Promise<ReservedJob[]> =>
-  prisma().$queryRaw<ReservedJob[]>(Prisma.sql`
-    WITH candidates AS (
-      SELECT job.id
-      FROM "KitchetTicketPrintJob" job
-      WHERE job.status = 'PENDING'
-        AND job."claimRequestedAt" IS NULL
-        AND (job."nextAttemptAt" IS NULL OR job."nextAttemptAt" <= ${now})
-        AND EXISTS (
-          SELECT 1 FROM "Printer" printer
-          JOIN "PrintClient" client ON client.id = printer."printClientId"
-          WHERE printer.id = job."printerId" AND client."revokedAt" IS NULL
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM "KitchetTicketPrintJob" active
-          WHERE active."printerId" = job."printerId"
-            AND (active.status = 'PROCESSING'
-              OR (active.status = 'PENDING' AND active."claimRequestedAt" IS NOT NULL))
-        )
-        AND NOT EXISTS (
-          SELECT 1 FROM "KitchetTicketPrintJob" older
-          WHERE older."printerId" = job."printerId"
-            AND older.status = 'PENDING'
-            AND older."claimRequestedAt" IS NULL
-            AND (older."nextAttemptAt" IS NULL OR older."nextAttemptAt" <= ${now})
-            AND (older."createdAt", older.id) < (job."createdAt", job.id)
-        )
-      ORDER BY job."createdAt", job.id
-      FOR UPDATE OF job SKIP LOCKED
-    ), reserved AS (
-      UPDATE "KitchetTicketPrintJob" job
-      SET "claimRequestedAt" = ${now}, "updatedAt" = ${now}
-      FROM candidates
-      WHERE job.id = candidates.id AND job."claimRequestedAt" IS NULL
-      RETURNING job.id, job."companyId", job."printerId"
-    )
-    SELECT reserved.id, reserved."companyId", printer."printClientId"
-    FROM reserved
-    JOIN "Printer" printer ON printer.id = reserved."printerId"
-    JOIN "PrintClient" client ON client.id = printer."printClientId"
-    WHERE client."revokedAt" IS NULL
-  `);
-
-export const findPrintJobTimeouts = (cutoff: Date) =>
-  prisma().kitchetTicketPrintJob.findMany({
-    where: {
-      OR: [
-        { status: "PENDING", claimRequestedAt: { lte: cutoff } },
-        { status: "PROCESSING", processingStartedAt: { lte: cutoff } },
-      ],
-    },
-    select: {
-      id: true,
-      status: true,
-      claimRequestedAt: true,
-      processingStartedAt: true,
-    },
-  });
-
-export const findAnnouncedPrintJobs = (cutoff: Date) =>
-  prisma().kitchetTicketPrintJob.findMany({
-    where: {
-      status: "PENDING",
-      claimRequestedAt: { gt: cutoff },
-      printer: { printClient: { revokedAt: null } },
-    },
-    select: {
-      id: true,
-      printer: { select: { printClientId: true } },
-    },
-  });
-
-export const findPrintJobFailureAudience = (jobId: string) =>
-  prisma().kitchetTicketPrintJob.findUnique({
-    where: { id: jobId },
-    select: {
-      companyId: true,
-      kitchenTicket: {
-        select: { orderRound: { select: { responsibleUserId: true } } },
-      },
-    },
-  });
 
 export async function findKitchenTickets(input: {
   companyId: string;
@@ -286,17 +59,30 @@ export async function findKitchenTickets(input: {
           },
         },
       },
-      printJobs: {
-        select: { id: true, status: true, isReprint: true, createdAt: true },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      },
     },
     orderBy: { createdAt: "asc" },
   });
+  const jobs = await prisma().printJob.findMany({
+    where: {
+      sourceType: "KITCHEN_TICKET",
+      sourceId: { in: tickets.map((ticket) => ticket.id) },
+    },
+    select: {
+      id: true,
+      sourceId: true,
+      status: true,
+      isReprint: true,
+      createdAt: true,
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  });
   const views: KitchenTicketView[] = tickets.map((ticket) => {
-    const lastJob = ticket.printJobs[0] ?? null;
+    const printJobs = jobs
+      .filter((job) => job.sourceId === ticket.id)
+      .map(({ sourceId: _sourceId, ...job }) => job);
+    const lastJob = printJobs[0] ?? null;
     const activeJob =
-      ticket.printJobs.find(
+      printJobs.find(
         (job) => job.status === "PENDING" || job.status === "PROCESSING",
       ) ?? null;
     const hasCurrentItems = ticket.orderRound.items.some(
@@ -365,8 +151,8 @@ export const findKitchenPrinterActivity = async (
           printClientId: true,
           lastDetectedAt: true,
           printClient: { select: { lastInventoryAt: true } },
-          kitchenTicketPrintJobs: {
-            where: { status: "DELIVERED" },
+          printJobs: {
+            where: { sourceType: "KITCHEN_TICKET", status: "DELIVERED" },
             orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
             take: 1,
             select: { updatedAt: true },
@@ -384,8 +170,7 @@ export const findKitchenPrinterActivity = async (
             printClientId: printer.printClientId,
             lastDetectedAt: printer.lastDetectedAt,
             lastInventoryAt: printer.printClient.lastInventoryAt,
-            lastDeliveredAt:
-              printer.kitchenTicketPrintJobs[0]?.updatedAt ?? null,
+            lastDeliveredAt: printer.printJobs[0]?.updatedAt ?? null,
           },
         ]
       : [],
@@ -405,23 +190,20 @@ const manualPrintError = (error: unknown) => {
 
 export async function createManualKitchenTicketPrintJob(
   input: ManualPrintInput & { isReprint: boolean },
-  generate: (
-    content: KitchenTicketContentInput,
-    profile: KitchenTicketPrinterProfile,
-  ) => Uint8Array,
   attempt = 0,
 ): Promise<response<ManualPrintJob>> {
   try {
     return await prisma().$transaction(
       async (db) => {
-        const existing = await db.kitchetTicketPrintJob.findUnique({
+        const existing = await db.printJob.findUnique({
           where: { id: input.jobId },
           include: { printer: { select: { printClientId: true } } },
         });
         if (existing) {
           if (
             existing.companyId !== input.companyId ||
-            existing.kitchenTicketId !== input.kitchenTicketId ||
+            existing.sourceType !== "KITCHEN_TICKET" ||
+            existing.sourceId !== input.kitchenTicketId ||
             existing.requestedById !== input.userId ||
             existing.isReprint !== input.isReprint
           )
@@ -433,7 +215,7 @@ export async function createManualKitchenTicketPrintJob(
             success: true,
             data: {
               id: existing.id,
-              kitchenTicketId: existing.kitchenTicketId,
+              kitchenTicketId: existing.sourceId,
               printClientId: existing.printer.printClientId,
               status: existing.status,
               isReprint: existing.isReprint,
@@ -442,14 +224,15 @@ export async function createManualKitchenTicketPrintJob(
         }
 
         await db.$queryRaw`SELECT id FROM "KitchenTicket" WHERE id = ${input.kitchenTicketId} FOR UPDATE`;
-        const recovered = await db.kitchetTicketPrintJob.findUnique({
+        const recovered = await db.printJob.findUnique({
           where: { id: input.jobId },
           include: { printer: { select: { printClientId: true } } },
         });
         if (recovered) {
           if (
             recovered.companyId !== input.companyId ||
-            recovered.kitchenTicketId !== input.kitchenTicketId ||
+            recovered.sourceType !== "KITCHEN_TICKET" ||
+            recovered.sourceId !== input.kitchenTicketId ||
             recovered.requestedById !== input.userId ||
             recovered.isReprint !== input.isReprint
           )
@@ -461,7 +244,7 @@ export async function createManualKitchenTicketPrintJob(
             success: true,
             data: {
               id: recovered.id,
-              kitchenTicketId: recovered.kitchenTicketId,
+              kitchenTicketId: recovered.sourceId,
               printClientId: recovered.printer.printClientId,
               status: recovered.status,
               isReprint: recovered.isReprint,
@@ -493,28 +276,13 @@ export async function createManualKitchenTicketPrintJob(
           where: { id: input.kitchenTicketId },
           include: {
             kitchen: { include: { printer: true } },
-            printJobs: { select: { id: true, status: true } },
             orderRound: {
-              include: {
-                responsibleUser: { select: { name: true, email: true } },
-                order: {
-                  select: {
-                    id: true,
-                    orderType: true,
-                    delivery: { select: { name: true } },
-                    tableSession: {
-                      select: {
-                        table: { select: { label: true, number: true } },
-                      },
-                    },
-                  },
-                },
+              select: {
                 items: {
-                  include: {
+                  select: {
+                    kitchenId: true,
                     orderItem: { select: { quantity: true } },
-                    cancellations: { select: { quantity: true } },
                   },
-                  orderBy: { createdAt: "asc" },
                 },
               },
             },
@@ -536,14 +304,18 @@ export async function createManualKitchenTicketPrintJob(
             success: false,
             message: "La Kitchen no tiene una impresora activa válida.",
           };
+        const printJobs = await db.printJob.findMany({
+          where: { sourceType: "KITCHEN_TICKET", sourceId: ticket.id },
+          select: { id: true, status: true },
+        });
         if (input.isReprint) {
-          if (!ticket.printJobs.length)
+          if (!printJobs.length)
             return {
               success: false,
               message: "La comanda todavía no fue impresa.",
             };
           if (
-            ticket.printJobs.some(
+            printJobs.some(
               (job) => job.status === "PENDING" || job.status === "PROCESSING",
             )
           )
@@ -552,7 +324,7 @@ export async function createManualKitchenTicketPrintJob(
               message: "La comanda ya tiene una impresión en curso.",
             };
         } else {
-          if (ticket.printJobs.length)
+          if (printJobs.length)
             return { success: false, message: "La comanda ya fue impresa." };
           if (!items.some((item) => item.orderItem.quantity.gt(0)))
             return {
@@ -561,58 +333,20 @@ export async function createManualKitchenTicketPrintJob(
             };
         }
 
-        const content = generate(
-          {
-            ticketId: ticket.id,
-            createdAt: ticket.createdAt,
-            kitchenName: ticket.kitchen.name,
-            orderType: ticket.orderRound.order.orderType,
-            orderLabel:
-              ticket.orderRound.order.tableSession?.table?.label ||
-              String(
-                ticket.orderRound.order.tableSession?.table?.number ??
-                  ticket.orderRound.order.id.slice(0, 8).toUpperCase(),
-              ),
-            responsibleName:
-              ticket.orderRound.responsibleUser.name ||
-              ticket.orderRound.responsibleUser.email,
-            customerName: ticket.orderRound.order.delivery?.name,
-            isReprint: input.isReprint,
-            items: items
-              .filter(
-                (item) => input.isReprint || item.orderItem.quantity.gt(0),
-              )
-              .map((item) => ({
-                productName: item.productName,
-                quantity: item.orderItem.quantity.toNumber(),
-                cancelledQuantity: input.isReprint
-                  ? item.cancellations.reduce(
-                      (sum, cancellation) =>
-                        sum + cancellation.quantity.toNumber(),
-                      0,
-                    )
-                  : undefined,
-                notes: item.notes,
-              })),
-          },
-          printer,
-        );
-        const job = await db.kitchetTicketPrintJob.create({
-          data: {
-            id: input.jobId,
-            companyId: input.companyId,
-            kitchenTicketId: ticket.id,
-            printerId: printer.id,
-            requestedById: input.userId,
-            isReprint: input.isReprint,
-            content: Buffer.from(content),
-          },
+        const job = await createPrintJob(db, {
+          id: input.jobId,
+          companyId: input.companyId,
+          sourceType: "KITCHEN_TICKET",
+          sourceId: ticket.id,
+          printerId: printer.id,
+          requestedById: input.userId,
+          isReprint: input.isReprint,
         });
         return {
           success: true,
           data: {
             id: job.id,
-            kitchenTicketId: job.kitchenTicketId,
+            kitchenTicketId: job.sourceId,
             printClientId: printer.printClientId,
             status: job.status,
             isReprint: job.isReprint,
@@ -624,7 +358,7 @@ export async function createManualKitchenTicketPrintJob(
   } catch (error) {
     const code = (error as { code?: string }).code;
     if ((code === "P2034" || code === "P2010") && attempt < 2)
-      return createManualKitchenTicketPrintJob(input, generate, attempt + 1);
+      return createManualKitchenTicketPrintJob(input, attempt + 1);
     return { success: false, message: manualPrintError(error) };
   }
 }

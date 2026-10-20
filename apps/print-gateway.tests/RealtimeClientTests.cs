@@ -4,11 +4,11 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
-using Lorito.PrintGateway;
+using Kogoz.PrintGateway;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace Lorito.PrintGateway.Tests;
+namespace Kogoz.PrintGateway.Tests;
 
 public sealed class RealtimeClientTests
 {
