@@ -34,6 +34,10 @@ import type {
   TablePaymentResult,
 } from "../payment-repository";
 import { confirmTablePayment, loadTablePayment } from "../payment-actions";
+import {
+  sessionFailureMessage,
+  type ServiceChannel,
+} from "../use-cases/describe-session-failure";
 import { closeServiceSessionAction, closeTable } from "../actions";
 import { TableRealtimeListener } from "./table-realtime-listener";
 
@@ -56,6 +60,9 @@ const emptyCustomer = {
   legalName: "",
   address: "",
 };
+const channelOf = (kind: TablePaymentData["kind"]): ServiceChannel =>
+  kind === "table" ? "TABLE" : kind === "delivery" ? "DELIVERY" : "TAKE_AWAY";
+
 export function TablePaymentView({
   initialData,
   canCollectCash,
@@ -93,6 +100,7 @@ export function TablePaymentView({
     initialData.result,
   );
   const [error, setError] = useState("");
+  const channel = channelOf(data.kind);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [uncertain, setUncertain] = useState(false);
   const [changed, setChanged] = useState(false);
@@ -131,7 +139,7 @@ export function TablePaymentView({
         sessionId: current.sessionId,
       });
       if (!response.success) {
-        setError(response.message);
+        setError(sessionFailureMessage(response, channelOf(current.kind)));
         return false;
       }
       const latest = response.data;
@@ -261,7 +269,7 @@ export function TablePaymentView({
       });
       if (response.success) setResult(response.data);
       else {
-        setError(response.message);
+        setError(sessionFailureMessage(response, channel));
         setUncertain(true);
         await refresh();
       }
@@ -307,7 +315,7 @@ export function TablePaymentView({
       : await closeServiceSessionAction(data.sessionId);
     setBusy(false);
     if (response.success) window.location.href = "/dashboard/tables";
-    else setError(response.message);
+    else setError(sessionFailureMessage(response, channel));
   }
 
   const header = (

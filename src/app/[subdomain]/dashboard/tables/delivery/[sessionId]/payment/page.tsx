@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { requireRole } from "@/authorization/server";
 import { loadTablePayment } from "@/table/payment-actions";
+import {
+  noTableFailureMessage,
+  sessionFailureMessage,
+} from "@/table/use-cases/describe-session-failure";
 import { TablePaymentView } from "@/table/components/table-payment-view";
 
 export default async function DeliveryPaymentPage({
@@ -24,10 +28,12 @@ export default async function DeliveryPaymentPage({
       <main className="flex flex-col gap-4 p-6">
         <h1 className="text-xl font-bold">Cobro del pedido</h1>
         <p role="alert">
-          {result.success ? "Este pedido no existe." : result.message}
+          {result.success
+            ? noTableFailureMessage("SessionUnavailable")
+            : sessionFailureMessage(result, "TAKE_AWAY")}
         </p>
         <Link href="/dashboard/tables" className="underline">
-          Volver a mesas
+          Volver a Mesas
         </Link>
       </main>
     );
