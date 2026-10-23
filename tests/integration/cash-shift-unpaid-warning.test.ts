@@ -98,6 +98,7 @@ async function create(
     companyId: ids.company,
     userId: ids.admin,
     delivery: orderType === "DELIVERY" ? deliveryData(name) : null,
+    customerName: orderType === "TAKE_AWAY" ? name : null,
   });
   if (!opened.success) throw new Error(opened.message);
   const { sessionId } = opened.data;
@@ -400,7 +401,7 @@ describe("DEL-05 · caja y reportes", () => {
 
   test("K1 la consulta devuelve los pendientes de la empresa (de cualquier turno) con cliente, total y estado", async () => {
     delivery1 = await create("DELIVERY", "Maria Quispe");
-    takeAway = await create("TAKE_AWAY");
+    takeAway = await create("TAKE_AWAY", "Rosa");
     // Pedido de un turno anterior: creado ayer, sigue sin cobrar.
     await prisma().order.update({
       where: { id: takeAway },
@@ -424,14 +425,14 @@ describe("DEL-05 · caja y reportes", () => {
     expect(result.data[0]).toMatchObject({
       sessionId: sessionIds.get(takeAway),
       orderType: "TAKE_AWAY",
-      customerLabel: "Para llevar",
+      orderLabel: "Para llevar · Rosa",
       statusLabel: "Pendiente",
       total: 20,
     });
     expect(result.data[1]).toMatchObject({
       sessionId: sessionIds.get(delivery1),
       orderType: "DELIVERY",
-      customerLabel: "Maria Quispe",
+      orderLabel: "Delivery · Maria Quispe",
       statusLabel: "Pendiente",
       total: 25,
     });
@@ -443,6 +444,25 @@ describe("DEL-05 · caja y reportes", () => {
     expect(other.success && other.data.map((o) => o.orderId)).toEqual([
       ids.otherOrder,
     ]);
+  });
+
+  test("el aviso lista «Para llevar · Rosa · Pendiente» y «Delivery · 987654321 · Despachado»", async () => {
+    const unnamed = await create("DELIVERY", "");
+    expect((await dispatchDelivery({ orderId: unnamed })).success).toBe(true);
+    const result = await listUnpaidFulfillmentOrders(ids.company);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    const line = (orderId: string) => {
+      const order = result.data.find((o) => o.orderId === orderId)!;
+      return `${order.orderLabel} · ${order.statusLabel}`;
+    };
+    expect(line(takeAway)).toBe("Para llevar · Rosa · Pendiente");
+    expect(line(unnamed)).toBe("Delivery · 987654321 · Despachado");
+    // Fuera del resto de las pruebas: un pedido cancelado no se lista.
+    await prisma().order.update({
+      where: { id: unnamed },
+      data: { status: "CANCELLED" },
+    });
   });
 
   test("K1 la acción usa la empresa de la sesión y exige permiso de caja", async () => {

@@ -1,34 +1,32 @@
 import { describe, expect, test } from "vitest";
 import { describeUnpaidFulfillmentOrder } from "@/delivery/use-cases/describe-unpaid-fulfillment-order";
 
+const openedAt = new Date("2026-10-24T02:40:00Z");
+
 describe("describeUnpaidFulfillmentOrder", () => {
-  test("Delivery muestra el nombre del cliente y su estado", () => {
+  test("un delivery sin nombre despachado aparece como «Delivery · 987 654 321» y «Despachado», nunca como «Para llevar»", () => {
     expect(
       describeUnpaidFulfillmentOrder({
-        orderType: "DELIVERY",
-        customerName: " Maria Quispe ",
+        identity: {
+          channel: "DELIVERY",
+          customerName: null,
+          phone: "987 654 321",
+          openedAt,
+        },
         deliveryStatus: "DISPATCHED",
       }),
-    ).toEqual({ customerLabel: "Maria Quispe", statusLabel: "Despachado" });
+    ).toEqual({
+      orderLabel: "Delivery · 987 654 321",
+      statusLabel: "Despachado",
+    });
   });
 
-  test("Para llevar no tiene cliente y se rotula Para llevar", () => {
+  test("un para llevar de Rosa aparece como «Para llevar · Rosa» y «Pendiente»", () => {
     expect(
       describeUnpaidFulfillmentOrder({
-        orderType: "TAKE_AWAY",
-        customerName: null,
+        identity: { channel: "TAKE_AWAY", customerName: "Rosa", openedAt },
         deliveryStatus: null,
       }),
-    ).toEqual({ customerLabel: "Para llevar", statusLabel: "Pendiente" });
-  });
-
-  test("Para llevar ignora un nombre inesperado", () => {
-    expect(
-      describeUnpaidFulfillmentOrder({
-        orderType: "TAKE_AWAY",
-        customerName: "Otro",
-        deliveryStatus: null,
-      }).customerLabel,
-    ).toBe("Para llevar");
+    ).toEqual({ orderLabel: "Para llevar · Rosa", statusLabel: "Pendiente" });
   });
 });

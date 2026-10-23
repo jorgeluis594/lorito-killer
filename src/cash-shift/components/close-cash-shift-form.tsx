@@ -196,7 +196,7 @@ export default function CloseCashShiftForm({
                   {unpaidOrders.map((order) => (
                     <li
                       key={order.orderId}
-                      className="flex items-center justify-between gap-2"
+                      className="flex items-start justify-between gap-2"
                     >
                       <Link
                         href={
@@ -205,9 +205,9 @@ export default function CloseCashShiftForm({
                             : `/dashboard/orders/${order.orderId}`
                         }
                         target="_blank"
-                        className="min-w-0 truncate underline"
+                        className="min-w-0 break-words underline"
                       >
-                        {order.customerLabel}
+                        {order.orderLabel}
                         <span className="text-amber-800">
                           {" "}
                           · {order.statusLabel}

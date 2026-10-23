@@ -51,6 +51,7 @@ import {
 export function TableOrderView({
   session,
   title,
+  sentTitle,
   details,
   headerAction,
   paymentHref,
@@ -59,6 +60,8 @@ export function TableOrderView({
 }: {
   session: TableSession;
   title: string;
+  /** Título del aviso al enviar; por defecto `Pedido de ${title} enviado`. */
+  sentTitle?: string;
   details?: ReactNode;
   headerAction?: ReactNode;
   paymentHref: string;
@@ -207,7 +210,7 @@ export function TableOrderView({
       }
       if (send)
         toast({
-          title: `Pedido de ${title} enviado`,
+          title: sentTitle ?? `Pedido de ${title} enviado`,
           description: "Cocina y barra ya pueden prepararlo.",
         });
       router.push("/dashboard/tables");

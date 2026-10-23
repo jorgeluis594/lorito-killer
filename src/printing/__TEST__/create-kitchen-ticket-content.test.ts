@@ -40,20 +40,45 @@ describe("kitchenTicketLines", () => {
     expect(lines).toContain("1 cancelado(s)");
   });
 
-  describe("customerName", () => {
-    test("Delivery muestra el nombre del cliente, sin precios", () => {
+  describe("pedidos sin mesa", () => {
+    const line = (input: KitchenTicketContentInput, text: string) =>
+      kitchenTicketLines(input).find(
+        (item) => item !== "rule" && item.text === text,
+      );
+
+    test("imprime «Para llevar: Rosa» en negrita y sin línea «Cliente:»", () => {
+      const input = {
+        ...base,
+        orderType: "TAKE_AWAY" as const,
+        orderLabel: "Rosa",
+      };
+      expect(line(input, "Para llevar: Rosa")).toMatchObject({ bold: true });
+      expect(texts(input).join("\n")).not.toContain("Cliente:");
+    });
+
+    test("imprime «Delivery: Ana» sin teléfono ni dirección", () => {
+      const input = {
+        ...base,
+        orderType: "DELIVERY" as const,
+        orderLabel: "Ana",
+      };
+      expect(line(input, "Delivery: Ana")).toMatchObject({ bold: true });
+      expect(texts(input).join("\n")).not.toMatch(/Cliente:|Tel|987/);
+    });
+
+    test("mantiene «Mesa: 4» sin negrita", () => {
+      const input = { ...base, orderLabel: "4" };
+      expect(line(input, "Mesa: 4")?.bold).toBeFalsy();
+    });
+
+    test("un snapshot anterior con customerName sigue imprimiendo «Cliente: Ana»", () => {
       const lines = texts({
         ...base,
         orderType: "DELIVERY",
-        customerName: "Maria Quispe",
+        orderLabel: "55C3A1D2",
+        customerName: "Ana",
       });
-      expect(lines).toContain("Cliente: Maria Quispe");
-      expect(lines.join("\n")).not.toContain("S/");
-    });
-
-    test("sin nombre la comanda es idéntica a la actual", () => {
-      expect(texts({ ...base, customerName: null })).toEqual(texts(base));
-      expect(texts(base).join("\n")).not.toContain("Cliente:");
+      expect(lines).toContain("Cliente: Ana");
     });
   });
 });

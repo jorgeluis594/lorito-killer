@@ -21,8 +21,13 @@ import { useToast } from "@/shared/components/ui/use-toast";
 import { cn, formatPrice } from "@/lib/utils";
 import type { TableSession } from "@/table/types";
 import { closeServiceSessionAction } from "@/table/actions";
-import { deliverDelivery, dispatchDelivery, openDelivery } from "../actions";
+import { deliverDelivery, dispatchDelivery } from "../actions";
 import { DeliverySheet } from "./delivery-sheet";
+import { TakeAwaySheet } from "./take-away-sheet";
+import {
+  describeServiceOrder,
+  toServiceOrderIdentity,
+} from "../use-cases/describe-service-order";
 import {
   describeServiceSession,
   sortServiceSessions,
@@ -45,13 +50,6 @@ const actions: Record<ServiceAction, { label: string; icon: LucideIcon }> = {
   DELIVER: { label: "Entregado", icon: PackageCheck },
   CHARGE: { label: "Cobrar", icon: ReceiptText },
 };
-
-const timeFormat = new Intl.DateTimeFormat("es-PE", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-  timeZone: "America/Lima",
-});
 
 /** Minutos transcurridos, refrescados cada minuto. */
 function useNow() {
@@ -145,6 +143,12 @@ export function DeliverySection({
         {sortServiceSessions(sessions).map((session) => {
           const { stage, action } = describeServiceSession(session);
           const delivery = session.delivery;
+          const identity = toServiceOrderIdentity({
+            orderType: delivery ? "DELIVERY" : "TAKE_AWAY",
+            sessionCustomerName: session.customerName,
+            delivery,
+            openedAt: new Date(session.openedAt),
+          });
           const paid = session.paymentStatus === "PAID";
           const Stage = stages[stage].icon;
           const Action = actions[action].icon;
@@ -160,14 +164,9 @@ export function DeliverySection({
               { status: delivery.status, dispatchedAt },
               new Date(now),
             );
-          const title = delivery
-            ? delivery.name || delivery.phone
-            : "Para llevar";
-          const subtitle = delivery
-            ? delivery.name
-              ? delivery.phone
-              : null
-            : `Desde las ${timeFormat.format(new Date(session.openedAt))}`;
+          const labels = identity ? describeServiceOrder(identity) : null;
+          const title = labels?.cardTitle ?? "Para llevar";
+          const subtitle = labels?.cardSubtitle ?? null;
           const actionDisabled =
             pending !== null ||
             (!canAttend && action !== "CHARGE" && action !== "TAKE_ORDER");
@@ -256,52 +255,11 @@ export function DeliverySection({
   );
 }
 
-/** "+ Delivery" abre la hoja; "Para llevar" crea el pedido y va a tomarlo. */
+/** "+ Delivery" y "Para llevar" abren su hoja; el pedido se toma después. */
 export function NewServiceButtons({ lastFee }: { lastFee: number | null }) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [busy, setBusy] = useState(false);
-
-  async function openTakeAway() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const result = await openDelivery(null);
-      if (!result.success) {
-        toast({
-          title: "No se pudo crear el pedido",
-          description: result.message,
-          variant: "destructive",
-        });
-        return;
-      }
-      router.push(`/dashboard/tables/delivery/${result.data.sessionId}/order`);
-    } catch {
-      toast({
-        title: "No se recibió la respuesta",
-        description: "Revisa la conexión y vuelve a intentarlo.",
-        variant: "destructive",
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="flex shrink-0 gap-2">
-      <Button
-        variant="outline"
-        className="gap-2"
-        onClick={() => void openTakeAway()}
-        disabled={busy}
-      >
-        {busy ? (
-          <Loader2 className="animate-spin" aria-hidden />
-        ) : (
-          <ShoppingBag aria-hidden />
-        )}
-        Para llevar
-      </Button>
+      <TakeAwaySheet />
       <DeliverySheet defaultFee={lastFee} />
     </div>
   );

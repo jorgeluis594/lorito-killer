@@ -19,6 +19,8 @@ import {
   NO_LAST_PRODUCT_MESSAGE,
   PRODUCTS_LOCKED_MESSAGE,
 } from "@/delivery/use-cases/can-edit-fulfillment-products";
+import { toServiceOrderIdentity } from "@/delivery/use-cases/describe-service-order";
+import { kitchenTicketOrderLabel } from "@/kitchen/use-cases/kitchen-ticket-order-label";
 import { isFulfillmentOrderType } from "@/order/fulfillment-order-types";
 import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
 import type { CancelRoundItemInput } from "./schema";
@@ -515,11 +517,16 @@ export async function submitOrderRound(
                     createdAt: round.createdAt,
                     kitchenName: kitchen.name,
                     orderType: order.orderType,
-                    orderLabel: session.table
-                      ? session.table.label || String(session.table.number)
-                      : order.id.slice(0, 8).toUpperCase(),
+                    orderLabel: kitchenTicketOrderLabel({
+                      table: session.table,
+                      identity: toServiceOrderIdentity({
+                        orderType: order.orderType,
+                        sessionCustomerName: session.customerName,
+                        delivery: order.delivery,
+                        openedAt: session.openedAt,
+                      }),
+                    }),
                     responsibleName: responsible.name || responsible.email,
-                    customerName: order.delivery?.name,
                     items: lines
                       .filter((line) => line.kitchenId === kitchen.id)
                       .map((line) => ({

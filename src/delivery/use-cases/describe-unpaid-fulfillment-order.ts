@@ -1,6 +1,10 @@
+import {
+  describeServiceOrder,
+  type ServiceOrderIdentity,
+} from "./describe-service-order";
+
 export type UnpaidFulfillmentInput = {
-  orderType: "TAKE_AWAY" | "DELIVERY";
-  customerName: string | null;
+  identity: ServiceOrderIdentity;
   deliveryStatus: "PENDING" | "DISPATCHED" | "DELIVERED" | null;
 };
 
@@ -11,10 +15,8 @@ const statusLabels = {
 } as const;
 
 export function describeUnpaidFulfillmentOrder(input: UnpaidFulfillmentInput) {
-  const name = input.customerName?.trim();
   return {
-    customerLabel:
-      input.orderType === "DELIVERY" && name ? name : "Para llevar",
+    orderLabel: describeServiceOrder(input.identity).summaryLabel,
     statusLabel: statusLabels[input.deliveryStatus ?? "PENDING"],
   };
 }

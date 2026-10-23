@@ -1,3 +1,7 @@
+import {
+  describeServiceOrder,
+  toServiceOrderIdentity,
+} from "@/delivery/use-cases/describe-service-order";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { response } from "@/lib/types";
@@ -15,6 +19,28 @@ const configurationError = (error: unknown) => {
   }
   return error instanceof Error ? error.message : "Error interno del servidor";
 };
+
+function ticketOrderLabel(order: {
+  orderType: string;
+  delivery: { name: string | null; phone: string } | null;
+  tableSession: {
+    openedAt: Date;
+    customerName: string | null;
+    table: { label: string | null; number: number } | null;
+  } | null;
+}) {
+  const table = order.tableSession?.table;
+  if (table?.label) return table.label;
+  if (order.orderType === "DINE_IN")
+    return `Mesa ${table?.number ?? ""}`.trim();
+  const identity = toServiceOrderIdentity({
+    orderType: order.orderType,
+    sessionCustomerName: order.tableSession?.customerName,
+    delivery: order.delivery,
+    openedAt: order.tableSession?.openedAt ?? new Date(0),
+  });
+  return identity ? describeServiceOrder(identity).printLabel : "Para llevar";
+}
 
 export async function findKitchenTickets(input: {
   companyId: string;
@@ -45,9 +71,13 @@ export async function findKitchenTickets(input: {
             select: {
               id: true,
               orderType: true,
-              delivery: { select: { name: true } },
+              delivery: { select: { name: true, phone: true } },
               tableSession: {
-                select: { table: { select: { label: true, number: true } } },
+                select: {
+                  openedAt: true,
+                  customerName: true,
+                  table: { select: { label: true, number: true } },
+                },
               },
             },
           },
@@ -99,15 +129,7 @@ export async function findKitchenTickets(input: {
         id: ticket.orderRound.order.id,
         type: ticket.orderRound.order
           .orderType as KitchenTicketView["order"]["type"],
-        label:
-          ticket.orderRound.order.tableSession?.table?.label ||
-          (ticket.orderRound.order.orderType === "DINE_IN"
-            ? `Mesa ${ticket.orderRound.order.tableSession?.table?.number ?? ""}`.trim()
-            : ticket.orderRound.order.orderType === "DELIVERY"
-              ? ["Delivery", ticket.orderRound.order.delivery?.name]
-                  .filter(Boolean)
-                  .join(" · ")
-              : "Para llevar"),
+        label: ticketOrderLabel(ticket.orderRound.order),
       },
       kitchen: { id: ticket.kitchen.id, name: ticket.kitchen.name },
       round: {

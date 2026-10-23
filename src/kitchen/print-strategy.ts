@@ -1,3 +1,5 @@
+import { toServiceOrderIdentity } from "@/delivery/use-cases/describe-service-order";
+import { kitchenTicketOrderLabel } from "./use-cases/kitchen-ticket-order-label";
 import prisma from "@/lib/prisma";
 import {
   createKitchenTicketContent,
@@ -18,11 +20,12 @@ export const kitchenTicketPrintStrategy: PrintJobStrategy<KitchenTicketContentIn
               responsibleUser: { select: { name: true, email: true } },
               order: {
                 select: {
-                  id: true,
                   orderType: true,
-                  delivery: { select: { name: true } },
+                  delivery: { select: { name: true, phone: true } },
                   tableSession: {
                     select: {
+                      openedAt: true,
+                      customerName: true,
                       table: { select: { label: true, number: true } },
                     },
                   },
@@ -46,14 +49,17 @@ export const kitchenTicketPrintStrategy: PrintJobStrategy<KitchenTicketContentIn
         createdAt: ticket.createdAt,
         kitchenName: ticket.kitchen.name,
         orderType: order.orderType,
-        orderLabel:
-          order.tableSession?.table?.label ||
-          String(
-            order.tableSession?.table?.number ??
-              order.id.slice(0, 8).toUpperCase(),
-          ),
+        // Relee el nombre actual: la comanda ya impresa conserva su snapshot.
+        orderLabel: kitchenTicketOrderLabel({
+          table: order.tableSession?.table ?? null,
+          identity: toServiceOrderIdentity({
+            orderType: order.orderType,
+            sessionCustomerName: order.tableSession?.customerName,
+            delivery: order.delivery,
+            openedAt: order.tableSession?.openedAt ?? ticket.createdAt,
+          }),
+        }),
         responsibleName: responsibleUser.name || responsibleUser.email,
-        customerName: order.delivery?.name,
         isReprint,
         items: ticket.orderRound.items
           .filter(

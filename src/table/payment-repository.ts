@@ -13,6 +13,10 @@ import {
 } from "@/document/db_repository";
 import type { BillingCredentials } from "@/document/types";
 import { generateOrderStocksTransfers } from "@/stock-transfer/use-cases/generate-order-stock-transfer";
+import {
+  describeServiceOrder,
+  toServiceOrderIdentity,
+} from "@/delivery/use-cases/describe-service-order";
 import { find as findProduct } from "@/product/db_repository";
 import type { TablePaymentInput, TableReceiptInput } from "./payment-schema";
 
@@ -105,14 +109,22 @@ async function sharedCashShift(
 
 export function sessionTitle(session: {
   table: { label: string | null; number: number } | null;
-  order: { delivery: { name: string | null; phone: string } | null } | null;
+  customerName: string | null;
+  openedAt: Date;
+  order: {
+    orderType: string;
+    delivery: { name: string | null; phone: string } | null;
+  } | null;
 }) {
   if (session.table)
     return `Mesa ${session.table.label || session.table.number}`;
-  const delivery = session.order?.delivery;
-  return delivery
-    ? `Delivery · ${delivery.name || delivery.phone}`
-    : "Para llevar";
+  const identity = toServiceOrderIdentity({
+    orderType: session.order?.orderType ?? "TAKE_AWAY",
+    sessionCustomerName: session.customerName,
+    delivery: session.order?.delivery,
+    openedAt: session.openedAt,
+  });
+  return identity ? describeServiceOrder(identity).heading : "Para llevar";
 }
 
 export async function getTablePaymentData(

@@ -3,14 +3,8 @@ import { ArrowLeft, PackageCheck } from "lucide-react";
 import { requirePermission } from "@/authorization/server";
 import { listDeliveredToday } from "@/delivery/db_repository";
 import { Button } from "@/shared/components/ui/button";
+import { formatLimaTime } from "@/delivery/use-cases/describe-service-order";
 import { formatPrice } from "@/lib/utils";
-
-const time = new Intl.DateTimeFormat("es-PE", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-  timeZone: "America/Lima",
-});
 
 export default async function DeliveredTodayPage() {
   const auth = await requirePermission("tables", "read");
@@ -54,8 +48,8 @@ export default async function DeliveredTodayPage() {
           <ul className="divide-y">
             {result.data.map((item) => (
               <li key={item.sessionId} className="flex items-start gap-4 py-4">
-                <span className="w-12 shrink-0 pt-0.5 text-sm tabular-nums text-muted-foreground">
-                  {time.format(item.closedAt)}
+                <span className="w-20 shrink-0 whitespace-nowrap pt-0.5 text-sm tabular-nums text-muted-foreground">
+                  {formatLimaTime(item.closedAt)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold break-words">{item.title}</p>

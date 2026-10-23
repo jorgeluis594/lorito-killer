@@ -743,6 +743,9 @@ model TableSession {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   cancellationReason String?
+  // Rótulo del pedido Para llevar («Nombre del cliente»). Solo en sesiones sin mesa con orden TAKE_AWAY.
+  // No es el cliente del comprobante; Delivery usa Delivery.name. Mesas y Delivery nunca la escriben.
+  customerName       String?
 
   @@unique([tableId, current])
   @@index([companyId, status])

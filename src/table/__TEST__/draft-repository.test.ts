@@ -140,3 +140,38 @@ test("draft validation rejects malformed quantities and long notes", () => {
     }).success,
   ).toBe(false);
 });
+
+const serializationConflict = () =>
+  Object.assign(new Error("conflict"), { code: "P2034" });
+
+test("reintenta un conflicto de serialización y guarda el borrador si la revisión no cambió", async () => {
+  db.transaction.mockRejectedValueOnce(serializationConflict());
+  db.transaction.mockImplementationOnce(async (callback) =>
+    callback({
+      tableSession: { findFirst: db.session, updateMany: db.updateSession },
+      product: { findMany: db.products },
+      order: { update: db.updateOrder },
+    }),
+  );
+  const result = await updateTableDraft({
+    ...input,
+    operation: "save",
+    items: [],
+  });
+  expect(result.success).toBe(true);
+  expect(db.transaction).toHaveBeenCalledTimes(2);
+});
+
+test("tras tres conflictos de serialización responde que el pedido cambió", async () => {
+  db.transaction.mockRejectedValue(serializationConflict());
+  const result = await updateTableDraft({
+    ...input,
+    operation: "save",
+    items: [],
+  });
+  expect(result).toMatchObject({
+    success: false,
+    message: expect.stringContaining("cambió en otro dispositivo"),
+  });
+  expect(db.transaction).toHaveBeenCalledTimes(3);
+});
