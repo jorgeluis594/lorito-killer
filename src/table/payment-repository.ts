@@ -349,21 +349,19 @@ export async function payTable(
           if (!amount) continue;
           const base = { amount, cashShiftId: shift.id };
           if (method === "cash") {
-            if (
-              !canCollectCash ||
-              input.cashReceived === undefined ||
-              input.cashReceived < amount
-            )
+            const received =
+              input.method === "combine"
+                ? input.cashReceived ?? amount
+                : input.cashReceived;
+            if (!canCollectCash || received === undefined || received < amount)
               return reject(
                 "El efectivo recibido debe cubrir el aporte en efectivo.",
               );
             payments.push({
               ...base,
               method: "cash",
-              received_amount: input.cashReceived,
-              change: new Prisma.Decimal(input.cashReceived)
-                .minus(amount)
-                .toNumber(),
+              received_amount: received,
+              change: new Prisma.Decimal(received).minus(amount).toNumber(),
             });
           } else if (method === "wallet") {
             const details = canCollectCash
