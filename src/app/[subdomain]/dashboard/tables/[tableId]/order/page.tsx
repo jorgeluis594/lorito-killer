@@ -33,6 +33,7 @@ async function TableOrderContent({ tableId }: { tableId: string }) {
     waiterId: auth.data.id,
     status: "OPEN",
     current: true,
+    customerName: null,
     currentRound: 0,
     draft: [],
     draftRevision: 0,
