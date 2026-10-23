@@ -42,6 +42,7 @@ import {
   dispatchDelivery,
   editDeliveryDetails,
   openDelivery,
+  openTakeAway,
 } from "@/delivery/actions";
 import { persistRoundItemCancellation } from "@/order/rounds/db_repository";
 import {
@@ -167,7 +168,10 @@ describe("Delivery en Mesas · creación", () => {
       fee: "5",
     });
     expect(opened, JSON.stringify(opened)).toMatchObject({ success: true });
-    const takeAway = await openDelivery(null);
+    const takeAway = await openTakeAway({
+      sessionId: randomUUID(),
+      customerName: null,
+    });
     expect(takeAway.success).toBe(true);
     for (const result of [opened, takeAway])
       if (result.success) {
@@ -180,7 +184,22 @@ describe("Delivery en Mesas · creación", () => {
     mocks.getSession.mockResolvedValue({
       user: { ...f.user("seller"), role: "KITCHEN" },
     });
-    expect(await openDelivery(null)).toMatchObject({ success: false });
+    expect(
+      await openTakeAway({ sessionId: randomUUID(), customerName: null }),
+    ).toMatchObject({ success: false });
+  });
+
+  test("openDelivery con null ya no abre un para llevar", async () => {
+    const before = await db().tableSession.count({
+      where: { companyId: f.ids.company },
+    });
+    expect(await openDelivery(null)).toMatchObject({
+      success: false,
+      errors: expect.any(Object),
+    });
+    expect(
+      await db().tableSession.count({ where: { companyId: f.ids.company } }),
+    ).toBe(before);
   });
 
   test("la comanda lleva el nombre del cliente, sin teléfono, dirección ni precios", async () => {
@@ -206,7 +225,8 @@ describe("Delivery en Mesas · creación", () => {
     })
       .map((line) => (line === "rule" ? "" : line.text))
       .join("\n");
-    expect(text).toContain("Cliente: Luis Rojas");
+    expect(text).toContain("Delivery: Luis Rojas");
+    expect(text).not.toContain("Cliente:");
     expect(text).toContain("Producto A");
     for (const forbidden of [
       "987654321",
@@ -305,7 +325,7 @@ describe("Delivery en Mesas · entrega y cierre", () => {
         delivered.data.find((item) => item.orderId === orderId),
       ).toMatchObject({
         sessionId: f.sessionOf(orderId),
-        title: "Maria Quispe",
+        title: "Delivery · Maria Quispe",
         address: f.defaultDelivery.address,
         total: 55,
       });
@@ -350,7 +370,7 @@ describe("Delivery en Mesas · entrega y cierre", () => {
     expect(
       delivered.success &&
         delivered.data.find((item) => item.orderId === orderId)?.title,
-    ).toBe("Para llevar");
+    ).toMatch(/^Para llevar · pedido de las \d{1,2}:\d{2}/);
   });
 
   test("la anulación general rechaza un delivery completado", async () => {

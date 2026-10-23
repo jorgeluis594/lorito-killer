@@ -39,7 +39,7 @@ type OpenServiceSessionResult = {
   closed: boolean;
 };
 
-const isSessionPrimaryKeyConflict = (error: unknown) => {
+export const isSessionPrimaryKeyConflict = (error: unknown) => {
   const { code, meta } = error as {
     code?: string;
     meta?: { modelName?: string; target?: unknown };

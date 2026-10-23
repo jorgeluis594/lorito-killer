@@ -26,7 +26,7 @@ type Values = {
   fee: string;
 };
 
-const fields = [
+export const deliveryFields = [
   {
     key: "phone",
     label: "Teléfono",
@@ -198,7 +198,7 @@ export function DeliverySheet({
           className="flex flex-col gap-4 px-5 pb-5 pt-3"
         >
           <fieldset disabled={busy} className="flex min-w-0 flex-col gap-4">
-            {fields.map((field) => {
+            {deliveryFields.map((field) => {
               const id = `delivery-${field.key}`;
               const error = errors[field.key];
               const hintId = "hint" in field ? `${id}-hint` : undefined;
