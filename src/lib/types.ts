@@ -13,8 +13,13 @@ export type ErrorResponse = {
     | "CompanyInactive"
     | "AuthorizationError"
     | "KitchenConfigurationRequired"
+    | "SessionChanged"
     | "SessionClosed"
+    | "OrderLocked"
+    | "SessionHasProducts"
+    | "SessionInvalid"
     | "SessionUnavailable"
+    | "RoundConflict"
     | "CustomerNameConflict";
 };
 
