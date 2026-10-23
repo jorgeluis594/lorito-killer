@@ -54,6 +54,13 @@ test("a mesa waiting at the register can reprint the pre-bill", () => {
   );
 });
 
+test("a mesa sent to the register keeps the pre-bill button", () => {
+  const html = render({
+    result: { state: "register", orderId: "o1", total: 20, method: "register" },
+  });
+  expect(html).toContain("Imprimir precuenta");
+});
+
 test("a paid account does not show the pre-bill button", () => {
   const html = render({
     result: { state: "paid", orderId: "o1", total: 20, method: "cash" },

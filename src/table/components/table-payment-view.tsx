@@ -339,7 +339,8 @@ export function TablePaymentView({
     }
   }
 
-  const showPreBill = !!data.tableId && !result && data.items.length > 0;
+  const showPreBill =
+    !!data.tableId && result?.state !== "paid" && data.items.length > 0;
 
   const header = (
     <header className="border-b bg-card">
