@@ -66,9 +66,9 @@ test("conserva el mensaje del servidor en una mesa", () => {
     message: "La mesa cambió en otro dispositivo.",
   };
   expect(sessionFailureMessage(result, "TABLE")).toBe(result.message);
-  expect(sessionFailureMessage({ ...result, type: undefined }, "TAKE_AWAY")).toBe(
-    result.message,
-  );
+  expect(
+    sessionFailureMessage({ ...result, type: undefined }, "TAKE_AWAY"),
+  ).toBe(result.message);
   expect(sessionFailureMessage(result, "TAKE_AWAY")).toBe(
     "Este pedido ya se cerró.",
   );

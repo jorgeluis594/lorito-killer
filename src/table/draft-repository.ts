@@ -52,6 +52,9 @@ export async function openTableForService(input: {
 const changed =
   "La mesa cambió en otro dispositivo. Tus cambios siguen aquí; revisa el pedido antes de continuar.";
 
+const closed = "Esta mesa ya se cerró.";
+const unavailable = "La mesa ya no está disponible.";
+
 /** Revision checks serialize changes without overwriting another waiter's draft. */
 export async function updateTableDraft(
   input: {
@@ -87,8 +90,22 @@ export async function updateTableDraft(
             },
           },
         });
-        if (!session || session.draftRevision !== input.revision) {
-          return { success: false, message: changed };
+        if (!session) {
+          // Only picks the type; no new lock. A closed session is told apart from a missing one.
+          const reread = await tx.tableSession.findFirst({
+            where: { id: input.sessionId, companyId: input.companyId },
+            select: { current: true },
+          });
+          return reread && !reread.current
+            ? { success: false, type: "SessionClosed", message: closed }
+            : {
+                success: false,
+                type: "SessionUnavailable",
+                message: unavailable,
+              };
+        }
+        if (session.draftRevision !== input.revision) {
+          return { success: false, type: "SessionChanged", message: changed };
         }
         const order = session.order;
         const closing =
@@ -102,6 +119,7 @@ export async function updateTableDraft(
         ) {
           return {
             success: false,
+            type: "OrderLocked",
             message: "Esta mesa ya no admite cambios en el pedido.",
           };
         }
@@ -137,6 +155,7 @@ export async function updateTableDraft(
         ) {
           return {
             success: false,
+            type: "SessionHasProducts",
             message: "La mesa tiene productos y no se puede liberar.",
           };
         }
@@ -190,7 +209,8 @@ export async function updateTableDraft(
               : {}),
           },
         });
-        if (updated.count !== 1) return { success: false, message: changed };
+        if (updated.count !== 1)
+          return { success: false, type: "SessionChanged", message: changed };
         if (closing) {
           await tx.order.update({
             where: { id: order.id },
@@ -217,7 +237,7 @@ export async function updateTableDraft(
         });
         return updateTableDraft(input, attempt + 1);
       }
-      return { success: false, message: changed };
+      return { success: false, type: "SessionChanged", message: changed };
     }
     console.error("updateTableDraft failed", error);
     return {
