@@ -28,7 +28,14 @@ import { cn, formatPrice, shortLocalizeDate } from "@/lib/utils";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { getMany } from "@/product/api_repository";
 import { isDishProduct, type Product } from "@/product/types";
+import type { ErrorResponse } from "@/lib/types";
 import type { TableSession } from "../types";
+import {
+  releaseLabel,
+  serviceChannel,
+  sessionFailureActions,
+  sessionFailureMessage,
+} from "../use-cases/describe-session-failure";
 import {
   leaveEmptyTable,
   printPreBillAction,
@@ -87,13 +94,21 @@ export function TableOrderView({
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const roundIdRef = useRef<string | null>(null);
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState<{
+    message: string;
+    type?: ErrorResponse["type"];
+  } | null>(null);
+  const error = failure?.message ?? "";
+  const setError = (message: string, type?: ErrorResponse["type"]) =>
+    setFailure(message ? { message, type } : null);
+  const channel = serviceChannel(session);
   const [printingTicketId, setPrintingTicketId] = useState<string | null>(null);
   const [printingPreBill, setPrintingPreBill] = useState(false);
   const printRequestIds = useRef(new Map<string, string>());
   const deliveryFee = session.delivery?.fee ?? 0;
   // Un delivery despachado ya salió del local: no admite más productos.
-  const dispatched = !!session.delivery && session.delivery.status !== "PENDING";
+  const dispatched =
+    !!session.delivery && session.delivery.status !== "PENDING";
   const editable = canEdit && session.status === "OPEN" && !dispatched;
   const refresh = useCallback(() => router.refresh(), [router]);
   const sentItems = session.order?.orderItems ?? [];
@@ -183,6 +198,10 @@ export function TableOrderView({
     );
   }
 
+  const failureActions = sessionFailureActions(
+    error ? failure?.type : draft.errorType,
+  );
+
   async function finish(send: boolean, release = false) {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -204,7 +223,7 @@ export function TableOrderView({
               release,
             );
         if (!result.success) {
-          setError(result.message);
+          setError(result.message, result.type);
           return;
         }
       }
@@ -363,8 +382,15 @@ export function TableOrderView({
           role="alert"
           className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-destructive/10 px-4 py-2 text-sm text-destructive"
         >
-          <p className="min-w-0 flex-1">{error || draft.error}</p>
-          {draft.error ? (
+          <p className="min-w-0 flex-1">
+            {sessionFailureMessage(
+              error
+                ? { message: error, type: failure?.type }
+                : { message: draft.error, type: draft.errorType },
+              channel,
+            )}
+          </p>
+          {draft.error && !failureActions.length ? (
             <Button
               variant="outline"
               size="sm"
@@ -374,7 +400,7 @@ export function TableOrderView({
               Reintentar guardado
             </Button>
           ) : null}
-          {draft.error.includes("otro dispositivo") ? (
+          {failureActions.includes("viewSaved") ? (
             <Button
               variant="outline"
               size="sm"
@@ -382,7 +408,7 @@ export function TableOrderView({
               onClick={() => {
                 if (
                   window.confirm(
-                    "Se descartarán tus cambios sin guardar para ver el pedido actualizado de la mesa. ¿Continuar?",
+                    `Se descartarán tus cambios sin guardar para ver el pedido actualizado${channel === "TABLE" ? " de la mesa" : ""}. ¿Continuar?`,
                   )
                 ) {
                   draft.reloadSaved();
@@ -390,6 +416,29 @@ export function TableOrderView({
               }}
             >
               Ver pedido guardado
+            </Button>
+          ) : null}
+          {failureActions.includes("backToTables") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                router.push("/dashboard/tables");
+                router.refresh();
+              }}
+            >
+              Volver a Mesas
+            </Button>
+          ) : null}
+          {failureActions.includes("goToPayment") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={openPayment}
+            >
+              Ir al cobro
             </Button>
           ) : null}
         </div>
@@ -534,7 +583,7 @@ export function TableOrderView({
           </div>
         </section>
         <section
-          aria-label="Pedido de la mesa"
+          aria-label={channel === "TABLE" ? "Pedido de la mesa" : "Pedido"}
           className={cn(
             "min-h-0 flex-col border-border bg-card md:flex md:border-l",
             mobileView === "order" ? "flex" : "hidden",
@@ -862,7 +911,7 @@ export function TableOrderView({
                 disabled={busy}
                 onClick={() => finish(false, true)}
               >
-                Liberar mesa
+                {releaseLabel(channel)}
               </Button>
             ) : null}
           </footer>

@@ -61,7 +61,6 @@ test("ofrece Ver pedido guardado para SessionChanged y RoundConflict, Volver a M
 
 test("conserva el mensaje del servidor en una mesa", () => {
   const result = {
-    success: false as const,
     type: "SessionClosed" as const,
     message: "La mesa cambió en otro dispositivo.",
   };
@@ -80,7 +79,7 @@ test("conserva el mensaje del servidor en una mesa", () => {
 test("ignora un type que no es de sesión y conserva el mensaje", () => {
   expect(
     sessionFailureMessage(
-      { success: false, type: "AuthError", message: "Sin acceso" },
+      { type: "AuthError", message: "Sin acceso" },
       "TAKE_AWAY",
     ),
   ).toBe("Sin acceso");
