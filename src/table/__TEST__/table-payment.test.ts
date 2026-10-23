@@ -307,6 +307,36 @@ test("cashier completes referred account with exact combined total and cash chan
     change: 20,
   });
 });
+test("combined payment with cash share and no cash received is recorded with change 0", async () => {
+  mocks.session.mockResolvedValue({ ...session(), status: "BILL_REQUESTED" });
+  const result = await payTable(
+    { ...user, role: "CASHIER" },
+    {
+      ...input,
+      method: "combine",
+      contributions: { cash: 30, debit_card: 70, credit_card: 0, wallet: 0 },
+    },
+  );
+  expect(result.success).toBe(true);
+  expect(mocks.createPayment).toHaveBeenCalledTimes(2);
+  expect(mocks.createPayment.mock.calls[0][0].data.data).toMatchObject({
+    received_amount: 30,
+    change: 0,
+  });
+});
+test("combined payment without cash share does not need cash received", async () => {
+  const result = await payTable(
+    { ...user, role: "CASHIER" },
+    {
+      ...input,
+      method: "combine",
+      contributions: { cash: 0, debit_card: 70, credit_card: 0, wallet: 30 },
+      wallet: { name: "Yape", operationCode: "OP-1" },
+    },
+  );
+  expect(result.success).toBe(true);
+  expect(mocks.createPayment).toHaveBeenCalledTimes(2);
+});
 test("mismatched combined amounts and insufficient cash are rejected", async () => {
   for (const cashReceived of [20, 40]) {
     const result = await payTable(
