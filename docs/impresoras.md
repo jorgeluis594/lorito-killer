@@ -46,7 +46,7 @@ Cada tipo tiene una estrategia registrada en `printJobStrategies` (`strategies.t
 
 - **Comandas:** al enviar una ronda; reimpresión manual en `kitchen-attention-panel.tsx`.
 - **Comprobantes:** `printTaxDocument(orderId)` desde el modal de pago, el cobro de mesa, el detalle de pedido y el reporte de ventas.
-- **Precuenta** (módulo `restaurants`): automática cuando la mesa se envía a caja (`confirmTablePayment` con método `register`), y con el botón "Imprimir precuenta" de la toma de pedido (`table-order-view.tsx`, permiso `tables:update`). Imprime mesa, mozo, personas, hora, ítems, descuentos, total y "No valido como comprobante de pago". Si falla o no hay impresora, enviar a caja sigue funcionando.
+- **Precuenta** (módulo `restaurants`): automática cuando la mesa se envía a caja (`confirmTablePayment` con método `register`), y con el botón "Imprimir precuenta" de "Cobro de la cuenta" (`table-payment-view.tsx`, permiso `tables:update`). Imprime mesa, mozo, personas, hora, ítems, descuentos, total y "No valido como comprobante de pago". Si falla o no hay impresora, enviar a caja sigue funcionando.
 
 ## Pendiente
 

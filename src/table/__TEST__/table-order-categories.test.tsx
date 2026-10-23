@@ -94,3 +94,31 @@ test("a dispatched delivery adds the fee to the account and locks products", () 
   expect(html).toContain("ya no admite productos");
   expect(html).toMatch(/Cobrar cuenta[^<]*·[^<]*35/);
 });
+
+test("the order-taking screen never offers the pre-bill, even with sent items", () => {
+  vi.stubGlobal("React", React);
+  const session = {
+    id: "session-p",
+    tableId: "table-p",
+    status: "OPEN",
+    order: {
+      id: "order-p",
+      orderItems: [
+        {
+          id: "i",
+          productId: "p",
+          productName: "Lomo",
+          productPrice: 30,
+          quantity: 1,
+          total: 30,
+          round: 1,
+        },
+      ],
+    },
+  } as unknown as TableSession;
+  const html = renderToStaticMarkup(
+    <TableOrderView session={session} title="Mesa 5" paymentHref="/pay" />,
+  );
+  expect(html).toContain("Lomo");
+  expect(html).not.toContain("Imprimir precuenta");
+});
