@@ -404,7 +404,12 @@ export function TablePaymentView({
           )}
           {paid && result ? (
             <div className="flex flex-wrap gap-3">
-              <Button variant="ghost" onClick={print} disabled={busy}>
+              <Button
+                variant="outline"
+                className="min-h-12"
+                onClick={print}
+                disabled={busy}
+              >
                 <Printer aria-hidden />
                 {busy ? "Preparando…" : "Imprimir Comprobante"}
               </Button>
@@ -810,14 +815,14 @@ export function TablePaymentView({
                     value={cashReceived}
                     onChange={(event) => setCashReceived(event.target.value)}
                   />
-                  <p className="text-sm">
-                    Vuelto:{" "}
-                    {formatPrice(
-                      cashReceived === ""
-                        ? 0
-                        : Math.max(0, Number(cashReceived) - cashAmount),
-                    )}
-                  </p>
+                  {method === "cash" || cashReceived !== "" ? (
+                    <p className="text-sm">
+                      Vuelto:{" "}
+                      {formatPrice(
+                        Math.max(0, Number(cashReceived) - cashAmount),
+                      )}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
               {needsWallet ? (
