@@ -87,8 +87,22 @@ export async function updateTableDraft(
             },
           },
         });
-        if (!session || session.draftRevision !== input.revision) {
-          return { success: false, message: changed };
+        if (!session) {
+          // Only picks the type; no new lock. A closed session is told apart from a missing one.
+          const reread = await tx.tableSession.findFirst({
+            where: { id: input.sessionId, companyId: input.companyId },
+            select: { current: true },
+          });
+          return reread && !reread.current
+            ? { success: false, type: "SessionClosed", message: changed }
+            : {
+                success: false,
+                type: "SessionUnavailable",
+                message: changed,
+              };
+        }
+        if (session.draftRevision !== input.revision) {
+          return { success: false, type: "SessionChanged", message: changed };
         }
         const order = session.order;
         const closing =
@@ -102,6 +116,7 @@ export async function updateTableDraft(
         ) {
           return {
             success: false,
+            type: "OrderLocked",
             message: "Esta mesa ya no admite cambios en el pedido.",
           };
         }
@@ -137,6 +152,7 @@ export async function updateTableDraft(
         ) {
           return {
             success: false,
+            type: "SessionHasProducts",
             message: "La mesa tiene productos y no se puede liberar.",
           };
         }
@@ -190,7 +206,8 @@ export async function updateTableDraft(
               : {}),
           },
         });
-        if (updated.count !== 1) return { success: false, message: changed };
+        if (updated.count !== 1)
+          return { success: false, type: "SessionChanged", message: changed };
         if (closing) {
           await tx.order.update({
             where: { id: order.id },
@@ -217,7 +234,7 @@ export async function updateTableDraft(
         });
         return updateTableDraft(input, attempt + 1);
       }
-      return { success: false, message: changed };
+      return { success: false, type: "SessionChanged", message: changed };
     }
     console.error("updateTableDraft failed", error);
     return {

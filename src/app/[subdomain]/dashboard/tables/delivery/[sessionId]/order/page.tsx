@@ -9,6 +9,7 @@ import { findKitchenTickets } from "@/kitchen/db_repository";
 import { DeliverySheet } from "@/delivery/components/delivery-sheet";
 import { TakeAwaySheet } from "@/delivery/components/take-away-sheet";
 import { describeServiceOrder } from "@/delivery/use-cases/describe-service-order";
+import { noTableFailureMessage } from "@/table/use-cases/describe-session-failure";
 import { Button } from "@/shared/components/ui/button";
 
 interface PageProps {
@@ -21,16 +22,18 @@ async function DeliveryOrderContent({ sessionId }: { sessionId: string }) {
     return <p className="p-4 text-destructive">{auth.message}</p>;
   }
   const result = await findSessionById(sessionId, auth.data.companyId);
-  if (!result.success || result.data.tableId || !result.data.current) {
+  // Una sesión de mesa no es un pedido sin mesa: se trata como inexistente.
+  const missing = !result.success || !!result.data.tableId;
+  if (missing || !result.data.current) {
     return (
       <div className="flex flex-col items-start gap-4 p-6">
         <p>
-          {result.success
-            ? "Este pedido ya se cerró."
-            : "No encontramos este pedido."}
+          {missing
+            ? noTableFailureMessage("SessionUnavailable")
+            : noTableFailureMessage("SessionClosed")}
         </p>
         <Button asChild variant="outline">
-          <Link href="/dashboard/tables">Volver a mesas</Link>
+          <Link href="/dashboard/tables">Volver a Mesas</Link>
         </Button>
       </div>
     );

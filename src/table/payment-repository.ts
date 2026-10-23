@@ -151,6 +151,7 @@ export async function getTablePaymentData(
   if (!session?.order)
     return {
       success: false,
+      type: "SessionUnavailable",
       message: "Esta mesa no tiene una cuenta disponible.",
     };
   const order = session.order;
@@ -222,8 +223,18 @@ export async function closeServiceSession(
   });
 }
 
-function reject(message: string): never {
-  throw new Error(message);
+/** Rechazo de negocio del cobro; con `type` el cliente lo traduce por canal. */
+class PaymentRejected extends Error {
+  constructor(
+    message: string,
+    readonly type?: "SessionUnavailable",
+  ) {
+    super(message);
+  }
+}
+
+function reject(message: string, type?: "SessionUnavailable"): never {
+  throw new PaymentRejected(message, type);
 }
 
 export async function payTable(
@@ -241,7 +252,10 @@ export async function payTable(
           include,
         });
         if (!session?.order)
-          return reject("No se encontró la cuenta de esta mesa.");
+          return reject(
+            "No se encontró la cuenta de esta mesa.",
+            "SessionUnavailable",
+          );
         const recovered = paidResult(session);
         if (recovered) return { success: true, data: recovered };
         const order = session.order;
@@ -519,6 +533,12 @@ export async function payTable(
       { isolationLevel: "Serializable", timeout: 15000 },
     );
   } catch (error) {
+    if (error instanceof PaymentRejected)
+      return {
+        success: false,
+        message: error.message,
+        ...(error.type ? { type: error.type } : {}),
+      };
     const code = (error as { code?: string }).code;
     // Cobros simultáneos en la misma caja o serie chocan al serializar. El cobro
     // es idempotente (recupera el comprobante ya emitido), así que se reintenta.
