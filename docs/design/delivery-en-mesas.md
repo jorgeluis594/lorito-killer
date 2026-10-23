@@ -225,6 +225,199 @@ En total, se borra más código del que se agrega.
 4. **Limpieza.** Se elimina el flujo `fulfillment` y la página
    `/dashboard/delivery`, y se actualiza el aviso de cierre de caja.
 
+## Nombre del cliente y etiqueta de los pedidos sin mesa
+
+Cada pedido Para llevar y Delivery se reconoce por el nombre del cliente en
+la tarjeta, la toma de pedido, el cobro y la comanda, y ningún texto de un
+pedido sin mesa habla de «mesa».
+
+### Nombre del cliente
+
+- **Qué es.** A nombre de quién va el pedido (texto visible «Nombre del
+  cliente»). Es un rótulo para encontrar el pedido, no un cliente del
+  catálogo ni del comprobante: no se copia a la boleta o factura ni crea un
+  cliente. Razón: se dice de palabra en el mostrador; el comprobante tiene sus
+  propios datos.
+- **Opcional** en Para llevar y en Delivery; ninguna acción lo exige. Razón:
+  obligarlo hace inventar nombres como «cliente» en hora punta.
+- **Limpieza.** Se quitan los espacios al inicio y al final; un nombre de solo
+  espacios cuenta como sin nombre. Máximo 120 caracteres; el servidor rechaza
+  más con «El nombre puede tener hasta 120 caracteres.» (reglas en
+  `src/delivery/use-cases/normalize-customer-name.ts`).
+- **Dónde se guarda.** Para llevar en `TableSession.customerName`; Delivery
+  sigue en `Delivery.name`. Solo tiene valor en sesiones sin mesa con orden
+  `TAKE_AWAY`, y sus únicos escritores son la apertura y el renombre de Para
+  llevar. Razón: renombrar no cambia `Order.updatedAt` (versión del cobro y de
+  la edición de Delivery) ni `draftRevision`, así que no rechaza un cobro en
+  curso. Descartado: `Order.customerName`, porque cada renombre rechazaría un
+  cobro abierto en otro dispositivo.
+- Solo se guarda el último nombre, sin historial. Los Para llevar abiertos
+  antes de existir el campo quedan sin nombre y lo aceptan desde el lápiz.
+- Dos pedidos pueden llamarse igual; la tarjeta los distingue por la hora de
+  apertura y no se avisa ni se bloquea.
+
+### Abrir un Para llevar
+
+**Para llevar** en Mesas abre la hoja «Nuevo pedido para llevar» (panel
+inferior en celular y tablet, centrada en escritorio, como la de Delivery) con
+un único campo, «Nombre del cliente», con el cursor puesto y sin
+autocompletado del navegador (el dispositivo es compartido y la lista taparía
+el botón). **Continuar al pedido** (o la tecla «Ir» del teclado) crea el
+pedido y abre su toma de pedido, también con el campo vacío. Razón: la comanda
+se imprime al enviar; si el nombre se pide después, sale sin él.
+
+- El campo no acepta más de 120 caracteres; al pegar un texto más largo se
+  conservan los primeros 120 y aparece «Se recortó a 120 caracteres.» como
+  ayuda, no como error.
+- Mientras se crea, el campo y la hoja quedan bloqueados. Cerrar la hoja sin
+  confirmar no crea nada.
+- **Apertura sin duplicar.** Cada apertura de la hoja es un intento con su
+  propia clave, que se usa como `id` de la `TableSession`. Repetir **Continuar
+  al pedido** en la misma hoja tras un error o una respuesta perdida abre el
+  pedido que ese intento ya creó, nunca otro; si otro dispositivo ya lo cerró,
+  se abre su página con «Este pedido ya se cerró.». Cerrar la hoja y volver a
+  tocar **Para llevar** es un pedido nuevo. Razón: evita pedidos duplicados sin
+  agregar tablas ni columnas.
+- Si el reintento trae otro nombre, se abre el pedido con el nombre del primer
+  intento; se corrige con el lápiz.
+- Sin respuesta, la hoja muestra «No se recibió la respuesta. Vuelve a tocar
+  Continuar al pedido: si el pedido ya se creó, se abre ese mismo.» con el
+  nombre intacto. Si la cierra, Mesas se actualiza y un pedido vacío que haya
+  quedado se quita con **Liberar pedido** (no tiene productos, dinero ni
+  comanda).
+- `openDelivery` solo abre deliveries; Para llevar se abre con
+  `openTakeAway`. La apertura de Delivery no es idempotente: un delivery vacío
+  se quita con **Liberar delivery**.
+
+### Corregir el nombre
+
+En la toma de pedido de un Para llevar, el lápiz del encabezado («Editar
+nombre del cliente», mismo lugar y tamaño que el de Delivery) abre la hoja
+«Nombre del cliente» con el nombre actual y **Guardar nombre**. Vaciar el campo
+deja el pedido sin nombre.
+
+- Se edita mientras el pedido esté abierto, también después de enviar a
+  cocina o de cobrar.
+- **Conflicto solo por nombre.** La hoja envía el nombre que vio; bajo un
+  bloqueo de la fila de la sesión, guardar el mismo nombre ya guardado es
+  éxito, y si otro dispositivo cambió o quitó el nombre se rechaza con «Otro
+  dispositivo cambió el nombre a {actual}. Revisa y vuelve a guardar.» u «Otro
+  dispositivo quitó el nombre. Revisa y vuelve a guardar.», con lo escrito
+  intacto. **Guardar nombre** de nuevo guarda lo escrito. Enviar rondas,
+  cobrar o entregar no cuentan como conflicto. Razón: el nombre es
+  independiente del contenido del pedido.
+- Pedido cerrado ⇒ «Este pedido ya se cerró.»; inexistente, de otra empresa,
+  de mesa o delivery ⇒ «Este pedido ya no está disponible.», igual en todos los
+  casos para no revelar nada. Ambos ofrecen **Volver a Mesas**.
+- La transacción espera hasta 20 s el bloqueo, por encima de los 15 s de un
+  cobro; si aun así vence responde «No se pudo guardar el nombre. Vuelve a
+  intentarlo.» y reintentar es seguro.
+- Al guardar, la hoja se cierra con «Nombre guardado» y Mesas se actualiza.
+  Las comandas ya impresas no cambian; **Reimprimir** saca el nombre nuevo.
+- Los flujos `Serializable` que escriben la misma sesión (guardado del
+  borrador, envío, cobro, entrega) reintentan hasta 2 veces ante un conflicto
+  de serialización, así que un renombre nunca provoca «El pedido cambió en
+  otro dispositivo».
+
+En Delivery el campo de la hoja se llama también «Nombre del cliente», sin
+autocompletado, con la ayuda «Si lo dejas vacío, la tarjeta muestra el
+teléfono y la comanda la hora del pedido.». Su conflicto de edición sigue
+siendo el de todo el pedido.
+
+### Etiqueta del pedido
+
+`describeServiceOrder` (`src/delivery/use-cases/describe-service-order.ts`) es
+la única fuente de los textos que nombran un pedido sin mesa; ninguna
+superficie arma su etiqueta por su cuenta. Usa el nombre o, sin él, la hora de
+apertura (`TableSession.openedAt`) en 12 horas de America/Lima, el formato del
+encabezado de la comanda («9:40 p. m.»). Delivery sin nombre usa el teléfono
+donde se puede mostrar.
+
+| Superficie | Para llevar con nombre | Para llevar sin nombre | Delivery con nombre | Delivery sin nombre |
+| --- | --- | --- | --- | --- |
+| Tarjeta: título / subtítulo | «Rosa» / «Para llevar · desde las 9:40 p. m.» | «Para llevar» / «Desde las 9:40 p. m.» | «Ana» / «987 654 321» | «987 654 321» / sin subtítulo |
+| Toma de pedido y cobro: título | «Para llevar · Rosa» | «Para llevar» | «Delivery · Ana» | «Delivery · 987 654 321» |
+| Confirmación al enviar | «Pedido de Rosa enviado» | «Pedido para llevar enviado» | «Pedido de Ana enviado» | «Pedido de delivery enviado» |
+| Comanda: línea del pedido | «Para llevar: Rosa» | «Para llevar: pedido de las 9:40 p. m.» | «Delivery: Ana» | «Delivery: pedido de las 8:15 p. m.» |
+| «Impresiones pendientes» | «Para llevar · Rosa · Cocina» | «Para llevar · pedido de las 9:40 p. m. · Cocina» | «Delivery · Ana · Cocina» | «Delivery · pedido de las 8:15 p. m. · Cocina» |
+| Aviso de pedidos sin cobrar | «Para llevar · Rosa · Pendiente» | «Para llevar · pedido de las 9:40 p. m. · Pendiente» | «Delivery · Ana · Despachado» | «Delivery · 987 654 321 · Pendiente» |
+| «Entregados hoy» | «Para llevar · Rosa» | «Para llevar · pedido de las 9:40 p. m.» | «Delivery · Ana» | «Delivery · 987 654 321» |
+
+- La comanda y «Impresiones pendientes» nunca muestran teléfono ni dirección;
+  el diálogo repite lo que dice el papel para reconocer la misma comanda.
+- Sin nombre, la comanda imprime la hora de apertura y nunca el código interno
+  del pedido. Razón: el código no lo dice nadie en voz alta; la hora coincide
+  con la tarjeta. Descartado: un número corto de pedido, que exige una
+  numeración correlativa que no existe.
+- Las horas de pedidos sin mesa van en 12 horas en la comanda, la tarjeta,
+  «Impresiones pendientes», el aviso de cierre de turno y la hora de cierre de
+  «Entregados hoy».
+- Un nombre largo se parte en varias líneas, nunca se recorta con puntos
+  suspensivos; en el aviso de cierre de turno el monto queda en la primera
+  línea.
+- La confirmación de envío de una mesa no cambia («Pedido de Mesa 4
+  enviado»).
+
+### Comanda
+
+- La línea del pedido sin mesa («Para llevar: Rosa») va en negrita, como los
+  productos: es lo que se busca con la bolsa en la mano. «Mesa: 4» no cambia.
+- No hay línea aparte «Cliente: …»; el nombre está en la línea del pedido. La
+  comanda sigue sin teléfono, dirección ni precios.
+- El encabezado lleva la fecha y hora de envío de la ronda; la línea del
+  pedido sin nombre conserva la hora de apertura en todas las rondas, para
+  seguir reconociendo el mismo pedido.
+- Cada comanda guarda en su snapshot la etiqueta vigente al enviarse la ronda
+  (`kitchenTicketOrderLabel`); la reimpresión arma la etiqueta con el nombre
+  actual. Un snapshot que trae `customerName` se sigue imprimiendo con
+  «Cliente: …» para no romper trabajos ya encolados.
+- Cocina solo ve el nombre en el papel: no hay pantalla de cocina.
+
+### Liberar y rechazos sin «mesa»
+
+- El botón para descartar un pedido sin productos se nombra por lo que libera:
+  **Liberar mesa**, **Liberar pedido** (Para llevar) o **Liberar delivery**.
+  Su efecto es el mismo en los tres. Razón: el problema era el texto, no la
+  acción. La acción final de Para llevar cobrado sigue siendo **Entregado ·
+  cerrar pedido**.
+- En la toma de pedido sin mesa el botón de volver dice «Mesas» (nombre de la
+  pantalla) y la sección se anuncia como «Pedido».
+- Los rechazos de liberar, guardar el borrador, enviar y cobrar llevan un
+  `type` estable. Las mesas muestran el texto del servidor; los pedidos sin
+  mesa lo traducen por `type` (`src/table/use-cases/describe-session-failure.ts`).
+  Los botones de recuperación se eligen por `type`, también en mesas:
+
+| `type` | Texto en pedido sin mesa | Recuperación |
+| --- | --- | --- |
+| `SessionChanged` | «El pedido cambió en otro dispositivo. Tus cambios siguen aquí; revisa el pedido antes de continuar.» | **Ver pedido guardado** |
+| `RoundConflict` | «Otro envío cambió el pedido. Actualiza el pedido y vuelve a intentarlo.» | **Ver pedido guardado** |
+| `SessionClosed` | «Este pedido ya se cerró.» | **Volver a Mesas** |
+| `SessionUnavailable` | «Este pedido ya no está disponible.» | **Volver a Mesas** |
+| `SessionInvalid` | «El pedido no es válido. Vuelve a Mesas y ábrelo de nuevo.» | **Volver a Mesas** |
+| `OrderLocked` | «Este pedido ya no admite cambios.» | **Volver a Mesas** e **Ir al cobro** |
+| `SessionHasProducts` | «El pedido tiene productos y no se puede liberar.» | Ninguna: revisar el pedido |
+
+- Guardar el borrador y enviar distinguen pedido cerrado (`SessionClosed`) de
+  inexistente (`SessionUnavailable`). Al guardar, una revisión vieja gana
+  sobre el estado de la orden (`SessionChanged` antes que `OrderLocked`),
+  porque lo que el usuario ve no es el pedido real; al enviar se verifica
+  primero el estado.
+- El cobro sin cuenta responde `SessionUnavailable`. Las páginas de pedido y
+  cobro sin mesa usan los mismos textos con **Volver a Mesas**.
+- Los rechazos que ya no dicen «mesa» (productos bloqueados tras despachar,
+  cocina o responsable inactivos, guardado sin respuesta) no llevan `type` y
+  conservan su texto.
+
+### Quién ve y hace qué
+
+| Rol | Puede |
+| --- | --- |
+| ADMIN, CASHIER, WAITER, SELLER (`tables:update`) | Abrir Para llevar con nombre, editarlo y liberar pedidos vacíos. SELLER no entra al cobro de pedidos sin mesa |
+| KITCHEN, BARTENDER | Ver el nombre en la comanda impresa |
+
+El nombre no es un dato sensible (circula impreso por cocina), pero los
+registros nunca incluyen nombre, teléfono ni dirección.
+
 ## Decisiones tomadas (15 de octubre de 2026)
 
 1. **Para llevar** entra en Mesas como sesión sin mesa y sin `Delivery`
@@ -238,5 +431,4 @@ En total, se borra más código del que se agrega.
 6. El aviso de cierre de caja no incluye mesas abiertas.
 7. Basta "Entregados hoy" (`/dashboard/tables/delivery`) más los reportes.
 8. Crear, despachar y entregar usan el mismo permiso que atender una mesa
-   (`tables:update`). Hoy caja (CASHIER) solo tiene `tables:read`: cobra, pero
-   no crea ni despacha deliveries.
+   (`tables:update`), que tienen ADMIN, CASHIER, WAITER y SELLER.
