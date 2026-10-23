@@ -52,9 +52,9 @@ const fields = [
   },
   {
     key: "name",
-    label: "Nombre",
-    hint: "Si lo dejas vacío, se muestra el teléfono.",
-    props: { autoComplete: "name", maxLength: 120 },
+    label: "Nombre del cliente",
+    hint: "Si lo dejas vacío, la tarjeta muestra el teléfono y la comanda la hora del pedido.",
+    props: { autoComplete: "off", maxLength: 120 },
   },
 ] as const;
 

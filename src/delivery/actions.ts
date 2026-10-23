@@ -9,8 +9,16 @@ import {
   openServiceSession,
   transitionDelivery,
   updateDeliveryDetails,
+  updateTakeAwayCustomerName,
 } from "./db_repository";
-import { OrderIdSchema, UpdateDeliveryDetailsSchema } from "./schemas";
+import {
+  OpenTakeAwaySchema,
+  OrderIdSchema,
+  SaveTakeAwayCustomerNameSchema,
+  UpdateDeliveryDetailsSchema,
+} from "./schemas";
+import type { SaveCustomerNameResult } from "./types";
+import { normalizeCustomerName } from "./use-cases/normalize-customer-name";
 import {
   validateDeliveryDetails,
   type DeliveryDetailsErrors,
@@ -27,7 +35,7 @@ async function notify(companyId: string) {
   );
 }
 
-/** Con `null` abre un pedido para llevar; cualquier otra entrada es un delivery. */
+/** Abre un delivery. El pedido para llevar se abre con `openTakeAway`. */
 export const openDelivery = protectedAction(
   permission,
   async (
@@ -39,22 +47,118 @@ export const openDelivery = protectedAction(
   > => {
     const feature = await requireFeature(user.companyId, "restaurants");
     if (!feature.success) return feature;
-    let delivery = null;
-    // `undefined` no es para llevar: solo un `null` explícito omite la entrega.
-    if (input !== null) {
-      // El validador revisa el tipo de cada campo, así que recibe la entrada tal cual.
-      const details = validateDeliveryDetails(
-        typeof input === "object" ? (input as DeliveryDetailsInput) : {},
-      );
-      if (!details.success) return details;
-      delivery = details.data;
-    }
+    // El validador revisa el tipo de cada campo, así que recibe la entrada tal cual.
+    const details = validateDeliveryDetails(
+      input !== null && typeof input === "object"
+        ? (input as DeliveryDetailsInput)
+        : {},
+    );
+    if (!details.success) return details;
     const result = await openServiceSession({
       companyId: user.companyId,
       userId: user.id,
-      delivery,
+      delivery: details.data,
     });
-    if (result.success) await notify(user.companyId);
+    if (!result.success) return result;
+    await notify(user.companyId);
+    return { success: true, data: { sessionId: result.data.sessionId } };
+  },
+);
+
+/** Abre un Para llevar. `sessionId` es la clave del intento: repetirla no crea otro pedido. */
+export const openTakeAway = protectedAction(
+  permission,
+  async (
+    user,
+    input: unknown,
+  ): Promise<
+    | { success: true; data: { sessionId: string } }
+    | { success: false; message: string; errors?: { customerName?: string } }
+  > => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    const parsed = OpenTakeAwaySchema.safeParse(input);
+    if (!parsed.success)
+      return {
+        success: false,
+        message: "Los datos del pedido no son válidos.",
+      };
+    const name = normalizeCustomerName(parsed.data.customerName);
+    if (!name.success)
+      return {
+        success: false,
+        message: name.message,
+        errors: { customerName: name.message },
+      };
+    const result = await openServiceSession({
+      companyId: user.companyId,
+      userId: user.id,
+      sessionId: parsed.data.sessionId,
+      customerName: name.data,
+      delivery: null,
+    });
+    if (!result.success) return result;
+    log.info("take_away_opened", {
+      companyId: user.companyId,
+      userId: user.id,
+      sessionId: result.data.sessionId,
+      hasCustomerName: name.data !== null,
+      replayed: result.data.replayed,
+      closed: result.data.closed,
+    });
+    if (!result.data.replayed) await notify(user.companyId);
+    return { success: true, data: { sessionId: result.data.sessionId } };
+  },
+);
+
+export const saveTakeAwayCustomerName = protectedAction(
+  permission,
+  async (user, input: unknown): Promise<SaveCustomerNameResult> => {
+    const feature = await requireFeature(user.companyId, "restaurants");
+    if (!feature.success) return feature;
+    const parsed = SaveTakeAwayCustomerNameSchema.safeParse(input);
+    if (!parsed.success)
+      return {
+        success: false,
+        message: "Los datos del pedido no son válidos.",
+      };
+    const next = normalizeCustomerName(parsed.data.customerName);
+    if (!next.success)
+      return {
+        success: false,
+        message: next.message,
+        errors: { customerName: next.message },
+      };
+    const expected = normalizeCustomerName(parsed.data.expectedName);
+    if (!expected.success)
+      return {
+        success: false,
+        message: "Los datos del pedido no son válidos.",
+      };
+    const result = await updateTakeAwayCustomerName(user.companyId, {
+      sessionId: parsed.data.sessionId,
+      customerName: next.data,
+      expectedName: expected.data,
+    });
+    if (result.success) {
+      log.info("take_away_customer_name_saved", {
+        companyId: user.companyId,
+        userId: user.id,
+        sessionId: parsed.data.sessionId,
+        outcome: result.data.changed ? "saved" : "unchanged",
+      });
+      if (result.data.changed) await notify(user.companyId);
+    } else if (
+      result.type === "CustomerNameConflict" &&
+      "currentName" in result
+    ) {
+      log.warn("take_away_customer_name_conflict", {
+        companyId: user.companyId,
+        userId: user.id,
+        sessionId: parsed.data.sessionId,
+        kind: result.currentName === null ? "removed" : "changed",
+      });
+    }
     return result;
   },
 );

@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import type { response } from "@/lib/types";
 import { recalculateOrderTotals } from "@/order/recalculate-order-totals";
+import { log } from "@/lib/log";
 import { closeServiceSession } from "@/table/payment-repository";
 import { getDeliveryTransition } from "./use-cases/delivery-transition";
 import { describeUnpaidFulfillmentOrder } from "./use-cases/describe-unpaid-fulfillment-order";
@@ -12,6 +13,12 @@ import {
   type DeliveryDetails,
 } from "./use-cases/validate-delivery-details";
 import type { UpdateDeliveryDetailsInput } from "./schemas";
+import type { SaveCustomerNameResult } from "./types";
+import { decideCustomerNameSave } from "./use-cases/decide-customer-name-save";
+import {
+  describeServiceOrder,
+  toServiceOrderIdentity,
+} from "./use-cases/describe-service-order";
 
 const isSerializationConflict = (error: unknown) => {
   const code = (error as { code?: string }).code;
@@ -24,21 +31,50 @@ const isSerializationConflict = (error: unknown) => {
 
 class EditRejected extends Error {}
 
+type OpenServiceSessionResult = {
+  sessionId: string;
+  /** La clave del intento ya había creado el pedido. */
+  replayed: boolean;
+  /** El pedido del intento ya se cerró (liberado o entregado). */
+  closed: boolean;
+};
+
+const isSessionPrimaryKeyConflict = (error: unknown) => {
+  const { code, meta } = error as {
+    code?: string;
+    meta?: { modelName?: string; target?: unknown };
+  };
+  if (code !== "P2002" || meta?.modelName !== "TableSession") return false;
+  const target = meta.target;
+  return Array.isArray(target)
+    ? target.length === 1 && target[0] === "id"
+    : target === "TableSession_pkey";
+};
+
 /**
  * Abre una sesión sin mesa: delivery si trae datos de entrega, para llevar si
- * no. Se pueden abrir todas las que haga falta a la vez.
+ * no. Se pueden abrir todas las que haga falta a la vez. Con `sessionId` (la
+ * clave del intento) repetir la apertura devuelve la sesión ya creada.
  */
 export async function openServiceSession(input: {
   companyId: string;
   userId: string;
+  sessionId?: string;
+  customerName?: string | null;
   delivery: DeliveryDetails | null;
-}): Promise<response<{ sessionId: string }>> {
+}): Promise<response<OpenServiceSessionResult>> {
+  let stage: "create" | "replay" = "create";
   try {
     const sessionId = await prisma().$transaction(async (db) => {
       const session = await db.tableSession.create({
         data: {
+          ...(input.sessionId ? { id: input.sessionId } : {}),
           companyId: input.companyId,
           waiterId: input.userId,
+          // Solo Para llevar: Delivery guarda su nombre en Delivery.name.
+          ...(input.delivery
+            ? {}
+            : { customerName: input.customerName ?? null }),
           order: {
             create: {
               companyId: input.companyId,
@@ -62,12 +98,138 @@ export async function openServiceSession(input: {
       await recalculateOrderTotals(db, session.order!.id);
       return session.id;
     });
-    return { success: true, data: { sessionId } };
+    return {
+      success: true,
+      data: { sessionId, replayed: false, closed: false },
+    };
   } catch (error) {
-    console.error("openServiceSession failed", error);
+    const meta = (error as { meta?: { target?: unknown } }).meta;
+    if (input.sessionId && isSessionPrimaryKeyConflict(error)) {
+      stage = "replay";
+      try {
+        // Fuera de la transacción abortada: la clave de otra empresa no se revela.
+        const existing = await prisma().tableSession.findFirst({
+          where: {
+            id: input.sessionId,
+            companyId: input.companyId,
+            tableId: null,
+          },
+          select: { current: true, order: { select: { orderType: true } } },
+        });
+        if (existing?.order?.orderType === "TAKE_AWAY")
+          return {
+            success: true,
+            data: {
+              sessionId: input.sessionId,
+              replayed: true,
+              closed: existing.current === null,
+            },
+          };
+      } catch (replayError) {
+        error = replayError;
+      }
+    }
+    log.error("service_order_open_failed", {
+      companyId: input.companyId,
+      userId: input.userId,
+      sessionId: input.sessionId,
+      channel: input.delivery ? "DELIVERY" : "TAKE_AWAY",
+      stage,
+      code: (error as { code?: string }).code,
+      target: meta?.target,
+    });
     return {
       success: false,
       message: "No se pudo crear el pedido. Vuelve a intentarlo.",
+    };
+  }
+}
+
+/**
+ * Renombra un Para llevar. Toma la fila de la sesión con `FOR UPDATE` en
+ * `ReadCommitted`: espera a los flujos `Serializable` que la escriben y nunca
+ * recibe 40001. No toca `Order.updatedAt` ni `draftRevision`.
+ */
+export async function updateTakeAwayCustomerName(
+  companyId: string,
+  input: {
+    sessionId: string;
+    customerName: string | null;
+    expectedName: string | null;
+  },
+): Promise<SaveCustomerNameResult> {
+  try {
+    return await prisma().$transaction(
+      async (db) => {
+        await db.$queryRaw`SELECT id FROM "TableSession" WHERE id = ${input.sessionId} AND "companyId" = ${companyId} FOR UPDATE`;
+        const session = await db.tableSession.findFirst({
+          where: { id: input.sessionId, companyId },
+          select: {
+            tableId: true,
+            current: true,
+            customerName: true,
+            order: { select: { orderType: true } },
+          },
+        });
+        if (
+          !session ||
+          session.tableId !== null ||
+          session.order?.orderType !== "TAKE_AWAY"
+        )
+          return {
+            success: false as const,
+            type: "SessionUnavailable" as const,
+            message: "Este pedido ya no está disponible.",
+          };
+        if (session.current === null)
+          return {
+            success: false as const,
+            type: "SessionClosed" as const,
+            message: "Este pedido ya se cerró.",
+          };
+        const decision = decideCustomerNameSave({
+          current: session.customerName,
+          expected: input.expectedName,
+          next: input.customerName,
+        });
+        if (decision.kind === "conflict")
+          return {
+            success: false as const,
+            type: "CustomerNameConflict" as const,
+            message: decision.current
+              ? `Otro dispositivo cambió el nombre a ${decision.current}. Revisa y vuelve a guardar.`
+              : "Otro dispositivo quitó el nombre. Revisa y vuelve a guardar.",
+            currentName: decision.current,
+          };
+        if (decision.kind === "save")
+          await db.tableSession.update({
+            where: { id: input.sessionId },
+            data: { customerName: input.customerName },
+          });
+        return {
+          success: true as const,
+          data: {
+            sessionId: input.sessionId,
+            customerName: input.customerName,
+            changed: decision.kind === "save",
+          },
+        };
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+        // Puede esperar el FOR UPDATE de payTable (hasta 15 s).
+        timeout: 20000,
+      },
+    );
+  } catch (error) {
+    log.error("take_away_customer_name_save_failed", {
+      companyId,
+      sessionId: input.sessionId,
+      code: (error as { code?: string }).code,
+    });
+    return {
+      success: false,
+      message: "No se pudo guardar el nombre. Vuelve a intentarlo.",
     };
   }
 }
@@ -125,7 +287,8 @@ export async function transitionDelivery(
           transition.data === "DELIVERED" &&
           order.paymentStatus === "PAID" &&
           !!order.tableSession?.current;
-        if (closed) await closeServiceSession(db, order.tableSession!.id, orderId);
+        if (closed)
+          await closeServiceSession(db, order.tableSession!.id, orderId);
         return {
           success: true,
           data: { orderId, status: transition.data, closed },
@@ -158,7 +321,7 @@ export type UnpaidFulfillmentOrder = {
   orderId: string;
   sessionId: string | null;
   orderType: "TAKE_AWAY" | "DELIVERY";
-  customerLabel: string;
+  orderLabel: string;
   statusLabel: string;
   total: number;
   createdAt: Date;
@@ -186,6 +349,7 @@ export async function listUnpaidFulfillmentOrders(
         total: true,
         createdAt: true,
         delivery: { select: { name: true, phone: true, status: true } },
+        tableSession: { select: { openedAt: true, customerName: true } },
       },
       orderBy: { createdAt: "asc" },
     });
@@ -196,8 +360,12 @@ export async function listUnpaidFulfillmentOrders(
         sessionId: order.tableSessionId,
         orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
         ...describeUnpaidFulfillmentOrder({
-          orderType: order.orderType as "TAKE_AWAY" | "DELIVERY",
-          customerName: order.delivery?.name || order.delivery?.phone || null,
+          identity: toServiceOrderIdentity({
+            orderType: order.orderType,
+            sessionCustomerName: order.tableSession?.customerName,
+            delivery: order.delivery,
+            openedAt: order.tableSession?.openedAt ?? order.createdAt,
+          })!,
           deliveryStatus: order.delivery?.status ?? null,
         }),
         total: order.total.toNumber(),
@@ -311,6 +479,22 @@ export type DeliveredItem = {
   closedAt: Date;
 };
 
+function deliveredTitle(
+  session: { openedAt: Date; customerName: string | null },
+  order: {
+    orderType: string;
+    delivery: { name: string | null; phone: string } | null;
+  },
+) {
+  const identity = toServiceOrderIdentity({
+    orderType: order.orderType,
+    sessionCustomerName: session.customerName,
+    delivery: order.delivery,
+    openedAt: session.openedAt,
+  });
+  return identity ? describeServiceOrder(identity).summaryLabel : "Para llevar";
+}
+
 /** Deliveries y pedidos para llevar cerrados hoy (hora de Lima). */
 export async function listDeliveredToday(
   companyId: string,
@@ -330,6 +514,7 @@ export async function listDeliveredToday(
           select: {
             id: true,
             total: true,
+            orderType: true,
             delivery: { select: { name: true, phone: true, address: true } },
           },
         },
@@ -344,9 +529,7 @@ export async function listDeliveredToday(
               {
                 sessionId: session.id,
                 orderId: session.order.id,
-                title: session.order.delivery
-                  ? session.order.delivery.name || session.order.delivery.phone
-                  : "Para llevar",
+                title: deliveredTitle(session, session.order),
                 address: session.order.delivery?.address ?? null,
                 total: session.order.total.toNumber(),
                 closedAt: session.closedAt!,

@@ -26,3 +26,18 @@ export type UpdateDeliveryDetailsInput = z.infer<
 >;
 
 export const OrderIdSchema = z.object({ orderId: z.string().uuid() });
+
+export const OpenTakeAwaySchema = z.object({
+  sessionId: z.string().uuid(),
+  customerName: z.string().max(500).nullable(), // regla real en normalizeCustomerName
+});
+
+export const SaveTakeAwayCustomerNameSchema = z.object({
+  sessionId: z.string().uuid(),
+  customerName: z.string().max(500).nullable(),
+  expectedName: z.string().max(500).nullable(),
+});
+
+export type SaveTakeAwayCustomerNameInput = z.infer<
+  typeof SaveTakeAwayCustomerNameSchema
+>;
