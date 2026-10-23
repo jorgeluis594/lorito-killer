@@ -329,6 +329,16 @@ export async function findExistingOrderRound(input: {
   return (await existingRound(prisma() as Db, input))?.result ?? null;
 }
 
+/** Rechazo de negocio dentro de la transacción del envío: lleva el `type` estable. */
+class RoundRejected extends Error {
+  constructor(
+    readonly type: "OrderLocked" | "SessionChanged",
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 export async function submitOrderRound(
   input: {
     companyId: string;
@@ -359,8 +369,23 @@ export async function submitOrderRound(
             },
           },
         });
-        if (!session?.order || session.table?.active === false)
-          return { success: false, message: "La mesa ya no está disponible." };
+        if (!session?.order || session.table?.active === false) {
+          // Only picks the type; no new lock. A closed session is told apart from a missing one.
+          const reread = input.sessionId
+            ? await db.tableSession.findFirst({
+                where: { id: input.sessionId, companyId: input.companyId },
+                select: { current: true },
+              })
+            : null;
+          return {
+            success: false,
+            type:
+              reread && !reread.current
+                ? "SessionClosed"
+                : "SessionUnavailable",
+            message: "La mesa ya no está disponible.",
+          };
+        }
 
         await db.$queryRaw`SELECT id FROM "Order" WHERE id = ${session.order.id} FOR UPDATE`;
         const order = session.order;
@@ -413,7 +438,10 @@ export async function submitOrderRound(
                 order.payments.length ||
                 order.documents.length
               )
-                throw new Error("Esta mesa ya no admite cambios en el pedido.");
+                throw new RoundRejected(
+                  "OrderLocked",
+                  "Esta mesa ya no admite cambios en el pedido.",
+                );
               if (order.delivery && order.delivery.status !== "PENDING")
                 throw new Error(PRODUCTS_LOCKED_MESSAGE);
               if (
@@ -421,7 +449,8 @@ export async function submitOrderRound(
                 (input.draftRevision === undefined ||
                   session.draftRevision !== input.draftRevision)
               )
-                throw new Error(
+                throw new RoundRejected(
+                  "SessionChanged",
                   "La mesa cambió en otro dispositivo. Revisa el pedido antes de continuar.",
                 );
 
@@ -558,7 +587,10 @@ export async function submitOrderRound(
                   data: { draft: [], draftRevision: { increment: 1 } },
                 });
                 if (cleared.count !== 1)
-                  throw new Error("La mesa cambió en otro dispositivo.");
+                  throw new RoundRejected(
+                    "SessionChanged",
+                    "La mesa cambió en otro dispositivo.",
+                  );
               }
 
               return {
@@ -581,9 +613,12 @@ export async function submitOrderRound(
       (code === "P2010" &&
         (error as { meta?: { code?: string } }).meta?.code === "40001");
     if (transient && attempt < 2) return submitOrderRound(input, attempt + 1);
+    if (error instanceof RoundRejected)
+      return { success: false, type: error.type, message: error.message };
     if (code === "P2002" || transient)
       return {
         success: false,
+        type: "RoundConflict",
         message:
           "Otro envío cambió el pedido. Actualiza la mesa y vuelve a intentarlo.",
       };

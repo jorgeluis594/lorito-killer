@@ -52,9 +52,6 @@ export async function openTableForService(input: {
 const changed =
   "La mesa cambió en otro dispositivo. Tus cambios siguen aquí; revisa el pedido antes de continuar.";
 
-const closed = "Esta mesa ya se cerró.";
-const unavailable = "La mesa ya no está disponible.";
-
 /** Revision checks serialize changes without overwriting another waiter's draft. */
 export async function updateTableDraft(
   input: {
@@ -97,11 +94,11 @@ export async function updateTableDraft(
             select: { current: true },
           });
           return reread && !reread.current
-            ? { success: false, type: "SessionClosed", message: closed }
+            ? { success: false, type: "SessionClosed", message: changed }
             : {
                 success: false,
                 type: "SessionUnavailable",
-                message: unavailable,
+                message: changed,
               };
         }
         if (session.draftRevision !== input.revision) {

@@ -138,7 +138,11 @@ export const leaveEmptyTable = protectedAction(
     if (!feature.success) return feature;
     const parsed = TableDraftSchema.safeParse({ sessionId, revision });
     if (!parsed.success)
-      return { success: false, message: "La mesa no es válida." };
+      return {
+        success: false,
+        type: "SessionInvalid",
+        message: "La mesa no es válida.",
+      };
     const result = await updateTableDraft({
       ...parsed.data,
       companyId: user.companyId,
