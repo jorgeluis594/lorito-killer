@@ -326,7 +326,7 @@ export function TablePaymentView({
             href={result || waitingAtRegister ? "/dashboard/tables" : orderHref}
             aria-label={
               result || waitingAtRegister
-                ? "Volver a mesas"
+                ? "Volver a Mesas"
                 : "Volver al pedido"
             }
           >
@@ -405,7 +405,7 @@ export function TablePaymentView({
           ) : (
             <Button asChild className="min-h-12">
               <Link href="/dashboard/tables">
-                Volver a mesas
+                Volver a Mesas
                 <ArrowRight aria-hidden />
               </Link>
             </Button>

@@ -41,6 +41,7 @@ import {
   printPreBillAction,
   sendTableDraft,
 } from "../actions";
+import { resolvePaymentRoute } from "../use-cases/resolve-payment-route";
 import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
@@ -244,23 +245,20 @@ export function TableOrderView({
     }
   }
 
-  async function openPayment() {
+  /** `saveFirst` es false al recuperarse de `OrderLocked`: guardar sobre un pedido bloqueado solo vuelve a fallar. */
+  async function openPayment(saveFirst = true) {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
     try {
-      if (editable && !(await draft.flush())) return;
-      if (!draft.sessionId.current) {
+      const route = await resolvePaymentRoute({
+        paymentHref,
+        sessionId: draft.sessionId.current,
+        flush: saveFirst && editable ? draft.flush : undefined,
+      });
+      if (route.ok) router.push(route.href);
+      else if (route.reason === "no-session")
         setError("Agrega un producto antes de cobrar.");
-        return;
-      }
-      // A free table gets its session on the first save, after the page built paymentHref.
-      router.push(
-        paymentHref.replace(
-          /session=[^&]*/,
-          `session=${draft.sessionId.current}`,
-        ),
-      );
     } catch {
       setError("No se pudo abrir la cuenta. Vuelve a intentarlo.");
     } finally {
@@ -330,7 +328,7 @@ export function TableOrderView({
             variant="ghost"
             onClick={() => finish(false)}
             disabled={busy}
-            aria-label="Volver a mesas"
+            aria-label="Volver a Mesas"
           >
             <ArrowLeft aria-hidden />
             <span className="hidden sm:inline">Mesas</span>
@@ -436,7 +434,7 @@ export function TableOrderView({
               variant="outline"
               size="sm"
               disabled={busy}
-              onClick={openPayment}
+              onClick={() => openPayment(false)}
             >
               Ir al cobro
             </Button>
@@ -878,7 +876,7 @@ export function TableOrderView({
               variant="outline"
               className="min-h-12 w-full"
               disabled={busy || accountTotal <= 0}
-              onClick={openPayment}
+              onClick={() => openPayment()}
             >
               <ReceiptText aria-hidden />
               {session.status === "BILL_REQUESTED"
