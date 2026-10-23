@@ -288,7 +288,7 @@ export function TablePaymentView({
       setPrintStatus(
         response.success
           ? response.message ?? "Comprobante enviado a impresión."
-          : "El pago está confirmado. No se pudo imprimir; puedes reintentar o abrir el comprobante.",
+          : "El pago está confirmado. No se pudo imprimir; puedes reintentar con «Imprimir Comprobante».",
       );
     } catch {
       setPrintStatus(
@@ -404,19 +404,14 @@ export function TablePaymentView({
           )}
           {paid && result ? (
             <div className="flex flex-wrap gap-3">
-              <Button asChild variant="outline">
-                <a
-                  href={`/api/orders/${result.orderId}/documents`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ReceiptText aria-hidden />
-                  Ver comprobante
-                </a>
-              </Button>
-              <Button variant="ghost" onClick={print} disabled={busy}>
+              <Button
+                variant="outline"
+                className="min-h-12"
+                onClick={print}
+                disabled={busy}
+              >
                 <Printer aria-hidden />
-                {busy ? "Preparando…" : "Imprimir de nuevo"}
+                {busy ? "Preparando…" : "Imprimir Comprobante"}
               </Button>
             </div>
           ) : null}
@@ -806,10 +801,13 @@ export function TablePaymentView({
               ) : null}
               {needsCash ? (
                 <div className="mt-4 flex flex-col gap-2">
-                  <Label htmlFor="cash-received">Efectivo recibido · S/</Label>
+                  <Label htmlFor="cash-received">
+                    Efectivo recibido · S/
+                    {method === "combine" ? " (opcional)" : ""}
+                  </Label>
                   <Input
                     id="cash-received"
-                    required
+                    required={method === "cash"}
                     type="number"
                     inputMode="decimal"
                     min={cashAmount}
@@ -817,12 +815,14 @@ export function TablePaymentView({
                     value={cashReceived}
                     onChange={(event) => setCashReceived(event.target.value)}
                   />
-                  <p className="text-sm">
-                    Vuelto:{" "}
-                    {formatPrice(
-                      Math.max(0, Number(cashReceived) - cashAmount),
-                    )}
-                  </p>
+                  {method === "cash" || cashReceived !== "" ? (
+                    <p className="text-sm">
+                      Vuelto:{" "}
+                      {formatPrice(
+                        Math.max(0, Number(cashReceived) - cashAmount),
+                      )}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
               {needsWallet ? (

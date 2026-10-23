@@ -347,6 +347,20 @@ describe("DEL-03 · envío en el cobro y el comprobante", () => {
     );
   });
 
+  test("C5b el pago combinado sin efectivo recibido se registra con vuelto 0", async () => {
+    const orderId = await f.createOrder({});
+    const accepted = await f.pay(orderId, {
+      method: "combine",
+      contributions: { cash: 30, wallet: 25, debit_card: 0, credit_card: 0 },
+      wallet: { name: "Yape", operationCode: "OP-2" },
+    });
+    expect(accepted, JSON.stringify(accepted)).toMatchObject({ success: true });
+    const cash = await db().payment.findFirst({
+      where: { orderId, method: "CASH" },
+    });
+    expect(cash?.data).toMatchObject({ received_amount: 30, change: 0 });
+  });
+
   test("C6 un total desactualizado se rechaza sin pagos ni documento", async () => {
     const orderId = await f.createOrder({});
     const stale = await f.paymentInput(orderId, { method: "debit_card" });
