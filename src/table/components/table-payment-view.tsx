@@ -22,6 +22,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/shared/components/ui/toggle-group";
+import { useToast } from "@/shared/components/ui/use-toast";
 import { cn, formatPrice } from "@/lib/utils";
 import {
   tableReceiptsEqual,
@@ -38,7 +39,11 @@ import {
   sessionFailureMessage,
   type ServiceChannel,
 } from "../use-cases/describe-session-failure";
-import { closeServiceSessionAction, closeTable } from "../actions";
+import {
+  closeServiceSessionAction,
+  closeTable,
+  printPreBillAction,
+} from "../actions";
 import { TableRealtimeListener } from "./table-realtime-listener";
 
 const labels: Record<string, string> = {
@@ -296,7 +301,7 @@ export function TablePaymentView({
       setPrintStatus(
         response.success
           ? response.message ?? "Comprobante enviado a impresión."
-          : "El pago está confirmado. No se pudo imprimir; puedes reintentar o abrir el comprobante.",
+          : "El pago está confirmado. No se pudo imprimir; puedes reintentar con «Imprimir Comprobante».",
       );
     } catch {
       setPrintStatus(
@@ -318,6 +323,33 @@ export function TablePaymentView({
     else setError(sessionFailureMessage(response, channel));
   }
 
+  const { toast } = useToast();
+  const [printingPreBill, setPrintingPreBill] = useState(false);
+
+  async function printPreBill() {
+    setPrintingPreBill(true);
+    try {
+      const response = await printPreBillAction(data.sessionId);
+      if (!response.success)
+        toast({
+          title: "No se pudo imprimir la precuenta",
+          description: response.message,
+          variant: "destructive",
+        });
+    } catch {
+      toast({
+        title: "No se pudo imprimir la precuenta",
+        description: "Vuelve a intentarlo.",
+        variant: "destructive",
+      });
+    } finally {
+      setPrintingPreBill(false);
+    }
+  }
+
+  const showPreBill =
+    !!data.tableId && result?.state !== "paid" && data.items.length > 0;
+
   const header = (
     <header className="border-b bg-card">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
@@ -333,12 +365,26 @@ export function TablePaymentView({
             <ArrowLeft aria-hidden />
           </Link>
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold">{data.title}</h1>
           <p className="text-sm text-muted-foreground">
             {result?.state === "paid" ? "Cuenta pagada" : "Cobro de la cuenta"}
           </p>
         </div>
+        {showPreBill && (
+          <Button
+            variant="outline"
+            onClick={printPreBill}
+            disabled={printingPreBill}
+          >
+            {printingPreBill ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <ReceiptText aria-hidden />
+            )}
+            <span className="sr-only sm:not-sr-only">Imprimir precuenta</span>
+          </Button>
+        )}
       </div>
     </header>
   );
@@ -412,19 +458,14 @@ export function TablePaymentView({
           )}
           {paid && result ? (
             <div className="flex flex-wrap gap-3">
-              <Button asChild variant="outline">
-                <a
-                  href={`/api/orders/${result.orderId}/documents`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ReceiptText aria-hidden />
-                  Ver comprobante
-                </a>
-              </Button>
-              <Button variant="ghost" onClick={print} disabled={busy}>
+              <Button
+                variant="outline"
+                className="min-h-12"
+                onClick={print}
+                disabled={busy}
+              >
                 <Printer aria-hidden />
-                {busy ? "Preparando…" : "Imprimir de nuevo"}
+                {busy ? "Preparando…" : "Imprimir Comprobante"}
               </Button>
             </div>
           ) : null}
@@ -814,10 +855,13 @@ export function TablePaymentView({
               ) : null}
               {needsCash ? (
                 <div className="mt-4 flex flex-col gap-2">
-                  <Label htmlFor="cash-received">Efectivo recibido · S/</Label>
+                  <Label htmlFor="cash-received">
+                    Efectivo recibido · S/
+                    {method === "combine" ? " (opcional)" : ""}
+                  </Label>
                   <Input
                     id="cash-received"
-                    required
+                    required={method === "cash"}
                     type="number"
                     inputMode="decimal"
                     min={cashAmount}
@@ -825,12 +869,14 @@ export function TablePaymentView({
                     value={cashReceived}
                     onChange={(event) => setCashReceived(event.target.value)}
                   />
-                  <p className="text-sm">
-                    Vuelto:{" "}
-                    {formatPrice(
-                      Math.max(0, Number(cashReceived) - cashAmount),
-                    )}
-                  </p>
+                  {method === "cash" || cashReceived !== "" ? (
+                    <p className="text-sm">
+                      Vuelto:{" "}
+                      {formatPrice(
+                        Math.max(0, Number(cashReceived) - cashAmount),
+                      )}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
               {needsWallet ? (
