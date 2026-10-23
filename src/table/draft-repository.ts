@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { log } from "@/lib/log";
 import type { response } from "@/lib/types";
 import type { RoundItem } from "./types";
 import { findActiveSession } from "./db_repository";
@@ -52,14 +53,17 @@ const changed =
   "La mesa cambió en otro dispositivo. Tus cambios siguen aquí; revisa el pedido antes de continuar.";
 
 /** Revision checks serialize changes without overwriting another waiter's draft. */
-export async function updateTableDraft(input: {
-  companyId: string;
-  userId: string;
-  sessionId: string;
-  revision: number;
-  operation: "save" | "read" | "leave" | "release";
-  items?: RoundItem[];
-}): Promise<
+export async function updateTableDraft(
+  input: {
+    companyId: string;
+    userId: string;
+    sessionId: string;
+    revision: number;
+    operation: "save" | "read" | "leave" | "release";
+    items?: RoundItem[];
+  },
+  attempt = 0,
+): Promise<
   response<{ revision: number; tableId: string | null; items?: RoundItem[] }>
 > {
   try {
@@ -201,8 +205,20 @@ export async function updateTableDraft(input: {
       { isolationLevel: "Serializable" },
     );
   } catch (error) {
-    if ((error as { code?: string }).code === "P2034")
+    if ((error as { code?: string }).code === "P2034") {
+      // Otro flujo escribió la sesión (p. ej. un renombre): la nueva
+      // transacción relee y decide con el estado real.
+      if (attempt < 2) {
+        log.debug("table_draft_serialization_retried", {
+          companyId: input.companyId,
+          sessionId: input.sessionId,
+          operation: input.operation,
+          attempt: attempt + 1,
+        });
+        return updateTableDraft(input, attempt + 1);
+      }
       return { success: false, message: changed };
+    }
     console.error("updateTableDraft failed", error);
     return {
       success: false,
