@@ -12,7 +12,15 @@ export type ErrorResponse = {
     | "AuthError"
     | "CompanyInactive"
     | "AuthorizationError"
-    | "KitchenConfigurationRequired";
+    | "KitchenConfigurationRequired"
+    | "SessionChanged"
+    | "SessionClosed"
+    | "OrderLocked"
+    | "SessionHasProducts"
+    | "SessionInvalid"
+    | "SessionUnavailable"
+    | "RoundConflict"
+    | "CustomerNameConflict";
 };
 
 export type response<DataType = any> =

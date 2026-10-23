@@ -24,6 +24,7 @@ type PrismaSessionResult = {
   guestCount: number | null;
   notes: string | null;
   cancellationReason: string | null;
+  customerName: string | null;
   openedAt: Date;
   closedAt: Date | null;
   createdAt: Date;
@@ -131,6 +132,7 @@ function mapPrismaSession(s: PrismaSessionResult): TableSession {
     guestCount: s.guestCount,
     notes: s.notes,
     cancellationReason: s.cancellationReason,
+    customerName: s.customerName,
     order: s.order
       ? {
           id: s.order.id,

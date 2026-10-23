@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { log } from "@/lib/log";
 import type { response } from "@/lib/types";
 import type { RoundItem } from "./types";
 import { findActiveSession } from "./db_repository";
@@ -52,14 +53,17 @@ const changed =
   "La mesa cambió en otro dispositivo. Tus cambios siguen aquí; revisa el pedido antes de continuar.";
 
 /** Revision checks serialize changes without overwriting another waiter's draft. */
-export async function updateTableDraft(input: {
-  companyId: string;
-  userId: string;
-  sessionId: string;
-  revision: number;
-  operation: "save" | "read" | "leave" | "release";
-  items?: RoundItem[];
-}): Promise<
+export async function updateTableDraft(
+  input: {
+    companyId: string;
+    userId: string;
+    sessionId: string;
+    revision: number;
+    operation: "save" | "read" | "leave" | "release";
+    items?: RoundItem[];
+  },
+  attempt = 0,
+): Promise<
   response<{ revision: number; tableId: string | null; items?: RoundItem[] }>
 > {
   try {
@@ -83,8 +87,22 @@ export async function updateTableDraft(input: {
             },
           },
         });
-        if (!session || session.draftRevision !== input.revision) {
-          return { success: false, message: changed };
+        if (!session) {
+          // Only picks the type; no new lock. A closed session is told apart from a missing one.
+          const reread = await tx.tableSession.findFirst({
+            where: { id: input.sessionId, companyId: input.companyId },
+            select: { current: true },
+          });
+          return reread && !reread.current
+            ? { success: false, type: "SessionClosed", message: changed }
+            : {
+                success: false,
+                type: "SessionUnavailable",
+                message: changed,
+              };
+        }
+        if (session.draftRevision !== input.revision) {
+          return { success: false, type: "SessionChanged", message: changed };
         }
         const order = session.order;
         const closing =
@@ -98,6 +116,7 @@ export async function updateTableDraft(input: {
         ) {
           return {
             success: false,
+            type: "OrderLocked",
             message: "Esta mesa ya no admite cambios en el pedido.",
           };
         }
@@ -133,6 +152,7 @@ export async function updateTableDraft(input: {
         ) {
           return {
             success: false,
+            type: "SessionHasProducts",
             message: "La mesa tiene productos y no se puede liberar.",
           };
         }
@@ -186,7 +206,8 @@ export async function updateTableDraft(input: {
               : {}),
           },
         });
-        if (updated.count !== 1) return { success: false, message: changed };
+        if (updated.count !== 1)
+          return { success: false, type: "SessionChanged", message: changed };
         if (closing) {
           await tx.order.update({
             where: { id: order.id },
@@ -201,8 +222,20 @@ export async function updateTableDraft(input: {
       { isolationLevel: "Serializable" },
     );
   } catch (error) {
-    if ((error as { code?: string }).code === "P2034")
-      return { success: false, message: changed };
+    if ((error as { code?: string }).code === "P2034") {
+      // Otro flujo escribió la sesión (p. ej. un renombre): la nueva
+      // transacción relee y decide con el estado real.
+      if (attempt < 2) {
+        log.debug("table_draft_serialization_retried", {
+          companyId: input.companyId,
+          sessionId: input.sessionId,
+          operation: input.operation,
+          attempt: attempt + 1,
+        });
+        return updateTableDraft(input, attempt + 1);
+      }
+      return { success: false, type: "SessionChanged", message: changed };
+    }
     console.error("updateTableDraft failed", error);
     return {
       success: false,

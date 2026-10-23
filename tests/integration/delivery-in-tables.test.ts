@@ -42,13 +42,25 @@ import {
   dispatchDelivery,
   editDeliveryDetails,
   openDelivery,
+  openTakeAway,
 } from "@/delivery/actions";
 import { persistRoundItemCancellation } from "@/order/rounds/db_repository";
 import {
   findServiceSessions,
   updateSessionStatus,
 } from "@/table/db_repository";
-import { closeServiceSessionAction } from "@/table/actions";
+import {
+  closeServiceSessionAction,
+  leaveEmptyTable,
+  sendTableDraft,
+} from "@/table/actions";
+import {
+  openTableForService,
+  updateTableDraft,
+} from "@/table/draft-repository";
+import { loadTablePayment } from "@/table/payment-actions";
+import { payTable } from "@/table/payment-repository";
+import { submitOrderRound } from "@/order/rounds/db_repository";
 import { cancelOrder } from "@/order/actions";
 import {
   createFixture,
@@ -167,7 +179,10 @@ describe("Delivery en Mesas · creación", () => {
       fee: "5",
     });
     expect(opened, JSON.stringify(opened)).toMatchObject({ success: true });
-    const takeAway = await openDelivery(null);
+    const takeAway = await openTakeAway({
+      sessionId: randomUUID(),
+      customerName: null,
+    });
     expect(takeAway.success).toBe(true);
     for (const result of [opened, takeAway])
       if (result.success) {
@@ -180,7 +195,22 @@ describe("Delivery en Mesas · creación", () => {
     mocks.getSession.mockResolvedValue({
       user: { ...f.user("seller"), role: "KITCHEN" },
     });
-    expect(await openDelivery(null)).toMatchObject({ success: false });
+    expect(
+      await openTakeAway({ sessionId: randomUUID(), customerName: null }),
+    ).toMatchObject({ success: false });
+  });
+
+  test("openDelivery con null ya no abre un para llevar", async () => {
+    const before = await db().tableSession.count({
+      where: { companyId: f.ids.company },
+    });
+    expect(await openDelivery(null)).toMatchObject({
+      success: false,
+      errors: expect.any(Object),
+    });
+    expect(
+      await db().tableSession.count({ where: { companyId: f.ids.company } }),
+    ).toBe(before);
   });
 
   test("la comanda lleva el nombre del cliente, sin teléfono, dirección ni precios", async () => {
@@ -206,7 +236,8 @@ describe("Delivery en Mesas · creación", () => {
     })
       .map((line) => (line === "rule" ? "" : line.text))
       .join("\n");
-    expect(text).toContain("Cliente: Luis Rojas");
+    expect(text).toContain("Delivery: Luis Rojas");
+    expect(text).not.toContain("Cliente:");
     expect(text).toContain("Producto A");
     for (const forbidden of [
       "987654321",
@@ -305,7 +336,7 @@ describe("Delivery en Mesas · entrega y cierre", () => {
         delivered.data.find((item) => item.orderId === orderId),
       ).toMatchObject({
         sessionId: f.sessionOf(orderId),
-        title: "Maria Quispe",
+        title: "Delivery · Maria Quispe",
         address: f.defaultDelivery.address,
         total: 55,
       });
@@ -350,7 +381,7 @@ describe("Delivery en Mesas · entrega y cierre", () => {
     expect(
       delivered.success &&
         delivered.data.find((item) => item.orderId === orderId)?.title,
-    ).toBe("Para llevar");
+    ).toMatch(/^Para llevar · pedido de las \d{1,2}:\d{2}/);
   });
 
   test("la anulación general rechaza un delivery completado", async () => {
@@ -505,5 +536,179 @@ describe("Delivery en Mesas · concurrencia", () => {
       expect(row.total.toNumber()).toBe(55);
     }
     expect(row.delivery?.status).toBe("DISPATCHED");
+  });
+});
+
+describe("Pedidos sin mesa · rechazos con type", () => {
+  const revision = async (orderId: string) =>
+    (await session(orderId)).draftRevision;
+  const gaseosa = () => [{ productId: f.ids.productA, quantity: 1 }];
+
+  test("liberar un para llevar con la gaseosa guardada por otro dispositivo responde SessionChanged y el pedido sigue en Mesas", async () => {
+    const orderId = await f.openOrder({ orderType: "TAKE_AWAY" });
+    const stale = await revision(orderId);
+    const saved = await updateTableDraft({
+      companyId: f.ids.company,
+      userId: f.ids.waiter,
+      sessionId: f.sessionOf(orderId),
+      revision: stale,
+      operation: "save",
+      items: gaseosa(),
+    });
+    expect(saved.success).toBe(true);
+
+    expect(
+      await leaveEmptyTable(f.sessionOf(orderId), stale, true),
+    ).toMatchObject({ success: false, type: "SessionChanged" });
+    expect(await session(orderId)).toMatchObject({
+      current: true,
+      status: "OPEN",
+    });
+  });
+
+  test("liberar un para llevar que otro dispositivo liberó responde SessionClosed", async () => {
+    const orderId = await f.openOrder({ orderType: "TAKE_AWAY" });
+    const stale = await revision(orderId);
+    expect(
+      (await leaveEmptyTable(f.sessionOf(orderId), stale, true)).success,
+    ).toBe(true);
+    expect(
+      await leaveEmptyTable(f.sessionOf(orderId), stale, true),
+    ).toMatchObject({ success: false, type: "SessionClosed" });
+  });
+
+  test("enviar a un pedido sin mesa ya cerrado responde SessionClosed", async () => {
+    const orderId = await f.openOrder({ orderType: "TAKE_AWAY" });
+    const stale = await revision(orderId);
+    await leaveEmptyTable(f.sessionOf(orderId), stale, true);
+    expect(
+      await sendTableDraft(f.sessionOf(orderId), stale, randomUUID()),
+    ).toMatchObject({ success: false, type: "SessionClosed" });
+    expect(
+      await submitOrderRound({
+        companyId: f.ids.company,
+        userId: f.ids.waiter,
+        sessionId: f.sessionOf(orderId),
+        draftRevision: stale,
+        roundId: randomUUID(),
+        items: gaseosa(),
+      }),
+    ).toMatchObject({ success: false, type: "SessionClosed" });
+  });
+
+  test("enviar a un pedido sin mesa inexistente responde SessionUnavailable", async () => {
+    expect(await sendTableDraft(randomUUID(), 0, randomUUID())).toMatchObject({
+      success: false,
+      type: "SessionUnavailable",
+    });
+    expect(
+      await submitOrderRound({
+        companyId: f.ids.company,
+        userId: f.ids.waiter,
+        sessionId: randomUUID(),
+        draftRevision: 0,
+        roundId: randomUUID(),
+        items: gaseosa(),
+      }),
+    ).toMatchObject({ success: false, type: "SessionUnavailable" });
+  });
+
+  test("enviar a un pedido sin mesa ya cobrado responde OrderLocked", async () => {
+    const orderId = await f.createOrder({ orderType: "TAKE_AWAY" });
+    expect((await f.pay(orderId)).success).toBe(true);
+    const current = await revision(orderId);
+    expect(
+      await sendTableDraft(f.sessionOf(orderId), current, randomUUID()),
+    ).toMatchObject({ success: false, type: "OrderLocked" });
+    expect(
+      await submitOrderRound({
+        companyId: f.ids.company,
+        userId: f.ids.waiter,
+        sessionId: f.sessionOf(orderId),
+        draftRevision: current,
+        roundId: randomUUID(),
+        items: gaseosa(),
+      }),
+    ).toMatchObject({ success: false, type: "OrderLocked" });
+  });
+
+  test("cobrar un pedido sin mesa sin cuenta responde SessionUnavailable", async () => {
+    expect(await loadTablePayment({ sessionId: randomUUID() })).toMatchObject({
+      success: false,
+      type: "SessionUnavailable",
+    });
+  });
+
+  test("payTable sobre una sesión inexistente devuelve type SessionUnavailable y no reintenta", async () => {
+    const orderId = await f.createOrder({ orderType: "TAKE_AWAY" });
+    const input = await f.paymentInput(orderId, { sessionId: randomUUID() });
+    const transaction = vi.spyOn(db(), "$transaction");
+    try {
+      expect(await payTable(f.user("cashier"), input)).toMatchObject({
+        success: false,
+        type: "SessionUnavailable",
+      });
+      expect(transaction).toHaveBeenCalledTimes(1);
+    } finally {
+      transaction.mockRestore();
+    }
+  });
+
+  test("guardar el borrador con revisión vieja en un pedido ya cobrado responde SessionChanged y, con la revisión al día, OrderLocked", async () => {
+    const orderId = await f.openOrder({ orderType: "TAKE_AWAY" });
+    const stale = await revision(orderId);
+    expect((await f.addRound(orderId, gaseosa())).success).toBe(true);
+    expect((await f.pay(orderId)).success).toBe(true);
+    const input = {
+      companyId: f.ids.company,
+      userId: f.ids.waiter,
+      sessionId: f.sessionOf(orderId),
+      operation: "save" as const,
+      items: gaseosa(),
+    };
+    expect(await updateTableDraft({ ...input, revision: stale })).toMatchObject(
+      { success: false, type: "SessionChanged" },
+    );
+    expect(
+      await updateTableDraft({ ...input, revision: await revision(orderId) }),
+    ).toMatchObject({ success: false, type: "OrderLocked" });
+  });
+
+  test("liberar una mesa cambiada conserva el texto «La mesa cambió en otro dispositivo…»", async () => {
+    const zone = await db().zone.create({
+      data: { companyId: f.ids.company, name: "Salón T2" },
+    });
+    const table = await db().table.create({
+      data: { companyId: f.ids.company, zoneId: zone.id, number: 42 },
+    });
+    try {
+      const opened = await openTableForService({
+        companyId: f.ids.company,
+        tableId: table.id,
+        waiterId: f.ids.waiter,
+      });
+      if (!opened.success) throw new Error(opened.message);
+      const stale = opened.data.draftRevision ?? 0;
+      await updateTableDraft({
+        companyId: f.ids.company,
+        userId: f.ids.waiter,
+        sessionId: opened.data.id,
+        revision: stale,
+        operation: "save",
+        items: gaseosa(),
+      });
+      expect(await leaveEmptyTable(opened.data.id, stale, true)).toMatchObject({
+        success: false,
+        type: "SessionChanged",
+        message: expect.stringContaining("La mesa cambió en otro dispositivo"),
+      });
+    } finally {
+      await db().order.deleteMany({
+        where: { tableSession: { tableId: table.id } },
+      });
+      await db().tableSession.deleteMany({ where: { tableId: table.id } });
+      await db().table.delete({ where: { id: table.id } });
+      await db().zone.delete({ where: { id: zone.id } });
+    }
   });
 });

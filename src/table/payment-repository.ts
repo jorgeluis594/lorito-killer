@@ -13,6 +13,10 @@ import {
 } from "@/document/db_repository";
 import type { BillingCredentials } from "@/document/types";
 import { generateOrderStocksTransfers } from "@/stock-transfer/use-cases/generate-order-stock-transfer";
+import {
+  describeServiceOrder,
+  toServiceOrderIdentity,
+} from "@/delivery/use-cases/describe-service-order";
 import { find as findProduct } from "@/product/db_repository";
 import type { TablePaymentInput, TableReceiptInput } from "./payment-schema";
 
@@ -105,14 +109,22 @@ async function sharedCashShift(
 
 export function sessionTitle(session: {
   table: { label: string | null; number: number } | null;
-  order: { delivery: { name: string | null; phone: string } | null } | null;
+  customerName: string | null;
+  openedAt: Date;
+  order: {
+    orderType: string;
+    delivery: { name: string | null; phone: string } | null;
+  } | null;
 }) {
   if (session.table)
     return `Mesa ${session.table.label || session.table.number}`;
-  const delivery = session.order?.delivery;
-  return delivery
-    ? `Delivery · ${delivery.name || delivery.phone}`
-    : "Para llevar";
+  const identity = toServiceOrderIdentity({
+    orderType: session.order?.orderType ?? "TAKE_AWAY",
+    sessionCustomerName: session.customerName,
+    delivery: session.order?.delivery,
+    openedAt: session.openedAt,
+  });
+  return identity ? describeServiceOrder(identity).heading : "Para llevar";
 }
 
 export async function getTablePaymentData(
@@ -139,6 +151,7 @@ export async function getTablePaymentData(
   if (!session?.order)
     return {
       success: false,
+      type: "SessionUnavailable",
       message: "Esta mesa no tiene una cuenta disponible.",
     };
   const order = session.order;
@@ -210,8 +223,18 @@ export async function closeServiceSession(
   });
 }
 
-function reject(message: string): never {
-  throw new Error(message);
+/** Rechazo de negocio del cobro; con `type` el cliente lo traduce por canal. */
+class PaymentRejected extends Error {
+  constructor(
+    message: string,
+    readonly type?: "SessionUnavailable",
+  ) {
+    super(message);
+  }
+}
+
+function reject(message: string, type?: "SessionUnavailable"): never {
+  throw new PaymentRejected(message, type);
 }
 
 export async function payTable(
@@ -229,7 +252,10 @@ export async function payTable(
           include,
         });
         if (!session?.order)
-          return reject("No se encontró la cuenta de esta mesa.");
+          return reject(
+            "No se encontró la cuenta de esta mesa.",
+            "SessionUnavailable",
+          );
         const recovered = paidResult(session);
         if (recovered) return { success: true, data: recovered };
         const order = session.order;
@@ -505,6 +531,12 @@ export async function payTable(
       { isolationLevel: "Serializable", timeout: 15000 },
     );
   } catch (error) {
+    if (error instanceof PaymentRejected)
+      return {
+        success: false,
+        message: error.message,
+        ...(error.type ? { type: error.type } : {}),
+      };
     const code = (error as { code?: string }).code;
     // Cobros simultáneos en la misma caja o serie chocan al serializar. El cobro
     // es idempotente (recupera el comprobante ya emitido), así que se reintenta.

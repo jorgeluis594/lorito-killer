@@ -11,7 +11,7 @@ export type KitchenTicketContentInput = {
   orderType: "DINE_IN" | "TAKE_AWAY" | "DELIVERY" | "RETAIL";
   orderLabel: string;
   responsibleName: string;
-  /** Solo Delivery: identifica la bolsa; nunca teléfono, dirección ni precios. */
+  /** Solo snapshots anteriores: los nuevos llevan el nombre en `orderLabel`. */
   customerName?: string | null;
   isReprint?: boolean;
   items: Array<{
@@ -66,7 +66,11 @@ export function kitchenTicketLines(
       center: true,
     },
     "rule",
-    { text: `${orderTypeLabels[input.orderType]}: ${input.orderLabel}` },
+    {
+      text: `${orderTypeLabels[input.orderType]}: ${input.orderLabel}`,
+      // Es lo que se busca de un vistazo con la bolsa en la mano.
+      bold: input.orderType === "TAKE_AWAY" || input.orderType === "DELIVERY",
+    },
     { text: `Responsable: ${input.responsibleName}` },
   );
   if (input.customerName)

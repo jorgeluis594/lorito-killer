@@ -26,7 +26,7 @@ type Values = {
   fee: string;
 };
 
-const fields = [
+export const deliveryFields = [
   {
     key: "phone",
     label: "Teléfono",
@@ -52,9 +52,9 @@ const fields = [
   },
   {
     key: "name",
-    label: "Nombre",
-    hint: "Si lo dejas vacío, se muestra el teléfono.",
-    props: { autoComplete: "name", maxLength: 120 },
+    label: "Nombre del cliente",
+    hint: "Si lo dejas vacío, la tarjeta muestra el teléfono y la comanda la hora del pedido.",
+    props: { autoComplete: "off", maxLength: 120 },
   },
 ] as const;
 
@@ -198,7 +198,7 @@ export function DeliverySheet({
           className="flex flex-col gap-4 px-5 pb-5 pt-3"
         >
           <fieldset disabled={busy} className="flex min-w-0 flex-col gap-4">
-            {fields.map((field) => {
+            {deliveryFields.map((field) => {
               const id = `delivery-${field.key}`;
               const error = errors[field.key];
               const hintId = "hint" in field ? `${id}-hint` : undefined;

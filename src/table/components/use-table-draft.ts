@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ErrorResponse } from "@/lib/types";
 import type { TableDraftItem, TableSession } from "../types";
 import { openTable, saveTableDraft } from "../actions";
 
@@ -19,7 +20,10 @@ export function useTableDraft(session: TableSession) {
   const [status, setStatus] = useState<
     "saved" | "pending" | "saving" | "error"
   >("saved");
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState<{
+    message: string;
+    type?: ErrorResponse["type"];
+  } | null>(null);
   const current = useRef(items);
   const saved = useRef(items);
   const revision = useRef(session.draftRevision ?? 0);
@@ -31,7 +35,7 @@ export function useTableDraft(session: TableSession) {
     current.current = next;
     setItems(next);
     setStatus("pending");
-    setError("");
+    setFailure(null);
   };
 
   const flush = useCallback(async (): Promise<boolean> => {
@@ -44,7 +48,7 @@ export function useTableDraft(session: TableSession) {
           if (!sessionId.current && session.tableId) {
             const opened = await openTable(session.tableId);
             if (!opened.success) {
-              setError(opened.message);
+              setFailure({ message: opened.message, type: opened.type });
               setStatus("error");
               return false;
             }
@@ -58,22 +62,23 @@ export function useTableDraft(session: TableSession) {
             items: snapshot,
           });
           if (!result.success) {
-            setError(result.message);
+            setFailure({ message: result.message, type: result.type });
             setStatus("error");
             return false;
           }
           revision.current = result.data.revision;
           saved.current = snapshot;
         } catch {
-          setError(
-            "No pudimos guardar los cambios. Revisa tu conexión y vuelve a intentar.",
-          );
+          setFailure({
+            message:
+              "No pudimos guardar los cambios. Revisa tu conexión y vuelve a intentar.",
+          });
           setStatus("error");
           return false;
         }
       }
       setStatus("saved");
-      setError("");
+      setFailure(null);
       return true;
     };
     inFlight.current = save();
@@ -103,7 +108,7 @@ export function useTableDraft(session: TableSession) {
       saved.current = current.current;
       setItems(current.current);
       setStatus("saved");
-      setError("");
+      setFailure(null);
     }
   }, [session.id, session.createdAt, session.draftRevision, session.draft]);
 
@@ -146,7 +151,9 @@ export function useTableDraft(session: TableSession) {
     revision,
     sessionId,
     status,
-    error,
+    /** Mensaje del servidor; el que se muestra pasa por `sessionFailureMessage`. */
+    error: failure?.message ?? "",
+    errorType: failure?.type,
     reloadSaved,
   };
 }

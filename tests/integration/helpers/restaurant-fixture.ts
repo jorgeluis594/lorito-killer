@@ -205,6 +205,8 @@ export async function createFixture(label: string) {
     options: {
       orderType?: "DELIVERY" | "TAKE_AWAY";
       delivery?: Record<string, unknown>;
+      /** Solo Para llevar. */
+      customerName?: string | null;
       by?: "admin" | "seller" | "waiter";
     } = {},
   ) {
@@ -219,6 +221,7 @@ export async function createFixture(label: string) {
     const opened = await openServiceSession({
       companyId: ids.company,
       userId: ids[options.by ?? "seller"],
+      customerName: options.customerName,
       delivery,
     });
     if (!opened.success) throw new Error(opened.message);
@@ -234,6 +237,7 @@ export async function createFixture(label: string) {
     items?: Line[];
     orderType?: "DELIVERY" | "TAKE_AWAY";
     delivery?: Record<string, unknown>;
+    customerName?: string | null;
     by?: "admin" | "seller" | "waiter";
   }) {
     const orderId = await openOrder(options);

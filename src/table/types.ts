@@ -79,6 +79,8 @@ export type TableSession = {
   guestCount?: number | null;
   notes?: string | null;
   cancellationReason?: string | null;
+  /** Solo Para llevar: a nombre de quién va. Delivery usa `delivery.name`. */
+  customerName: string | null;
   order?: TableOrder | null;
   orderId?: string | null;
   orderType?: OrderType;

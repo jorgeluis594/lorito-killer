@@ -28,8 +28,16 @@ import { cn, formatPrice, shortLocalizeDate } from "@/lib/utils";
 import { useCategoryStore } from "@/category/components/category-store-provider";
 import { getMany } from "@/product/api_repository";
 import { isDishProduct, type Product } from "@/product/types";
+import type { ErrorResponse } from "@/lib/types";
 import type { TableSession } from "../types";
+import {
+  releaseLabel,
+  serviceChannel,
+  sessionFailureActions,
+  sessionFailureMessage,
+} from "../use-cases/describe-session-failure";
 import { leaveEmptyTable, sendTableDraft } from "../actions";
+import { resolvePaymentRoute } from "../use-cases/resolve-payment-route";
 import { useTableDraft } from "./use-table-draft";
 import { TableRealtimeListener } from "./table-realtime-listener";
 import { CancelOrderItemDialog } from "./cancel-order-item-dialog";
@@ -47,6 +55,7 @@ import {
 export function TableOrderView({
   session,
   title,
+  sentTitle,
   details,
   headerAction,
   paymentHref,
@@ -55,6 +64,8 @@ export function TableOrderView({
 }: {
   session: TableSession;
   title: string;
+  /** Título del aviso al enviar; por defecto `Pedido de ${title} enviado`. */
+  sentTitle?: string;
   details?: ReactNode;
   headerAction?: ReactNode;
   paymentHref: string;
@@ -80,12 +91,20 @@ export function TableOrderView({
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const roundIdRef = useRef<string | null>(null);
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState<{
+    message: string;
+    type?: ErrorResponse["type"];
+  } | null>(null);
+  const error = failure?.message ?? "";
+  const setError = (message: string, type?: ErrorResponse["type"]) =>
+    setFailure(message ? { message, type } : null);
+  const channel = serviceChannel(session);
   const [printingTicketId, setPrintingTicketId] = useState<string | null>(null);
   const printRequestIds = useRef(new Map<string, string>());
   const deliveryFee = session.delivery?.fee ?? 0;
   // Un delivery despachado ya salió del local: no admite más productos.
-  const dispatched = !!session.delivery && session.delivery.status !== "PENDING";
+  const dispatched =
+    !!session.delivery && session.delivery.status !== "PENDING";
   const editable = canEdit && session.status === "OPEN" && !dispatched;
   const refresh = useCallback(() => router.refresh(), [router]);
   const sentItems = session.order?.orderItems ?? [];
@@ -175,6 +194,10 @@ export function TableOrderView({
     );
   }
 
+  const failureActions = sessionFailureActions(
+    error ? failure?.type : draft.errorType,
+  );
+
   async function finish(send: boolean, release = false) {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -196,13 +219,13 @@ export function TableOrderView({
               release,
             );
         if (!result.success) {
-          setError(result.message);
+          setError(result.message, result.type);
           return;
         }
       }
       if (send)
         toast({
-          title: `Pedido de ${title} enviado`,
+          title: sentTitle ?? `Pedido de ${title} enviado`,
           description: "Cocina y barra ya pueden prepararlo.",
         });
       router.push("/dashboard/tables");
@@ -217,23 +240,20 @@ export function TableOrderView({
     }
   }
 
-  async function openPayment() {
+  /** `saveFirst` es false al recuperarse de `OrderLocked`: guardar sobre un pedido bloqueado solo vuelve a fallar. */
+  async function openPayment(saveFirst = true) {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
     try {
-      if (editable && !(await draft.flush())) return;
-      if (!draft.sessionId.current) {
+      const route = await resolvePaymentRoute({
+        paymentHref,
+        sessionId: draft.sessionId.current,
+        flush: saveFirst && editable ? draft.flush : undefined,
+      });
+      if (route.ok) router.push(route.href);
+      else if (route.reason === "no-session")
         setError("Agrega un producto antes de cobrar.");
-        return;
-      }
-      // A free table gets its session on the first save, after the page built paymentHref.
-      router.push(
-        paymentHref.replace(
-          /session=[^&]*/,
-          `session=${draft.sessionId.current}`,
-        ),
-      );
     } catch {
       setError("No se pudo abrir la cuenta. Vuelve a intentarlo.");
     } finally {
@@ -282,7 +302,7 @@ export function TableOrderView({
             variant="ghost"
             onClick={() => finish(false)}
             disabled={busy}
-            aria-label="Volver a mesas"
+            aria-label="Volver a Mesas"
           >
             <ArrowLeft aria-hidden />
             <span className="hidden sm:inline">Mesas</span>
@@ -320,8 +340,15 @@ export function TableOrderView({
           role="alert"
           className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-destructive/10 px-4 py-2 text-sm text-destructive"
         >
-          <p className="min-w-0 flex-1">{error || draft.error}</p>
-          {draft.error ? (
+          <p className="min-w-0 flex-1">
+            {sessionFailureMessage(
+              error
+                ? { message: error, type: failure?.type }
+                : { message: draft.error, type: draft.errorType },
+              channel,
+            )}
+          </p>
+          {draft.error && !failureActions.length ? (
             <Button
               variant="outline"
               size="sm"
@@ -331,7 +358,7 @@ export function TableOrderView({
               Reintentar guardado
             </Button>
           ) : null}
-          {draft.error.includes("otro dispositivo") ? (
+          {failureActions.includes("viewSaved") ? (
             <Button
               variant="outline"
               size="sm"
@@ -339,7 +366,7 @@ export function TableOrderView({
               onClick={() => {
                 if (
                   window.confirm(
-                    "Se descartarán tus cambios sin guardar para ver el pedido actualizado de la mesa. ¿Continuar?",
+                    `Se descartarán tus cambios sin guardar para ver el pedido actualizado${channel === "TABLE" ? " de la mesa" : ""}. ¿Continuar?`,
                   )
                 ) {
                   draft.reloadSaved();
@@ -347,6 +374,29 @@ export function TableOrderView({
               }}
             >
               Ver pedido guardado
+            </Button>
+          ) : null}
+          {failureActions.includes("backToTables") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                router.push("/dashboard/tables");
+                router.refresh();
+              }}
+            >
+              Volver a Mesas
+            </Button>
+          ) : null}
+          {failureActions.includes("goToPayment") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => openPayment(false)}
+            >
+              Ir al cobro
             </Button>
           ) : null}
         </div>
@@ -491,7 +541,7 @@ export function TableOrderView({
           </div>
         </section>
         <section
-          aria-label="Pedido de la mesa"
+          aria-label={channel === "TABLE" ? "Pedido de la mesa" : "Pedido"}
           className={cn(
             "min-h-0 flex-col border-border bg-card md:flex md:border-l",
             mobileView === "order" ? "flex" : "hidden",
@@ -786,7 +836,7 @@ export function TableOrderView({
               variant="outline"
               className="min-h-12 w-full"
               disabled={busy || accountTotal <= 0}
-              onClick={openPayment}
+              onClick={() => openPayment()}
             >
               <ReceiptText aria-hidden />
               {session.status === "BILL_REQUESTED"
@@ -819,7 +869,7 @@ export function TableOrderView({
                 disabled={busy}
                 onClick={() => finish(false, true)}
               >
-                Liberar mesa
+                {releaseLabel(channel)}
               </Button>
             ) : null}
           </footer>

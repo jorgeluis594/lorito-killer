@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import prisma from "@/lib/prisma";
 import { submitOrderRound } from "@/order/rounds/db_repository";
 import { persistRoundItemCancellation } from "@/order/rounds/db_repository";
@@ -268,5 +268,43 @@ describe("submitOrderRound PostgreSQL integration", () => {
         })
       ).quantity.toNumber(),
     ).toBe(0);
+  });
+
+  test("un envío concurrente responde RoundConflict", async () => {
+    const transaction = vi
+      .spyOn(prisma(), "$transaction")
+      .mockRejectedValue(
+        Object.assign(new Error("conflict"), { code: "P2034" }),
+      );
+    try {
+      expect(
+        await submitOrderRound({
+          companyId: ids.company,
+          userId: ids.user,
+          tableId: ids.table,
+          roundId: randomUUID(),
+          items: [{ productId: ids.service, quantity: 1 }],
+        }),
+      ).toMatchObject({ success: false, type: "RoundConflict" });
+      expect(transaction).toHaveBeenCalledTimes(3);
+    } finally {
+      transaction.mockRestore();
+    }
+  });
+
+  test("un envío con revisión de borrador vieja responde SessionChanged", async () => {
+    const current = await prisma().tableSession.findUniqueOrThrow({
+      where: { id: ids.session },
+    });
+    expect(
+      await submitOrderRound({
+        companyId: ids.company,
+        userId: ids.user,
+        sessionId: ids.session,
+        draftRevision: current.draftRevision + 1,
+        roundId: randomUUID(),
+        items: [{ productId: ids.service, quantity: 1 }],
+      }),
+    ).toMatchObject({ success: false, type: "SessionChanged" });
   });
 });

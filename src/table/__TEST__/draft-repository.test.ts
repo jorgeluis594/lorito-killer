@@ -140,3 +140,111 @@ test("draft validation rejects malformed quantities and long notes", () => {
     }).success,
   ).toBe(false);
 });
+
+const serializationConflict = () =>
+  Object.assign(new Error("conflict"), { code: "P2034" });
+
+test("reintenta un conflicto de serialización y guarda el borrador si la revisión no cambió", async () => {
+  db.transaction.mockRejectedValueOnce(serializationConflict());
+  db.transaction.mockImplementationOnce(async (callback) =>
+    callback({
+      tableSession: { findFirst: db.session, updateMany: db.updateSession },
+      product: { findMany: db.products },
+      order: { update: db.updateOrder },
+    }),
+  );
+  const result = await updateTableDraft({
+    ...input,
+    operation: "save",
+    items: [],
+  });
+  expect(result.success).toBe(true);
+  expect(db.transaction).toHaveBeenCalledTimes(2);
+});
+
+test("tras tres conflictos de serialización responde que el pedido cambió", async () => {
+  db.transaction.mockRejectedValue(serializationConflict());
+  const result = await updateTableDraft({
+    ...input,
+    operation: "save",
+    items: [],
+  });
+  expect(result).toMatchObject({
+    success: false,
+    message: expect.stringContaining("cambió en otro dispositivo"),
+  });
+  expect(db.transaction).toHaveBeenCalledTimes(3);
+});
+
+test("responde SessionClosed al liberar una sesión que otro dispositivo cerró", async () => {
+  db.session
+    .mockResolvedValueOnce(null)
+    .mockResolvedValueOnce({ ...session(), tableId: null, current: null });
+  expect(
+    await updateTableDraft({ ...input, operation: "release" }),
+  ).toMatchObject({ success: false, type: "SessionClosed" });
+  expect(db.updateSession).not.toHaveBeenCalled();
+});
+
+test("responde SessionUnavailable cuando la sesión no existe o es de otra empresa", async () => {
+  db.session.mockResolvedValue(null);
+  expect(
+    await updateTableDraft({ ...input, operation: "release" }),
+  ).toMatchObject({ success: false, type: "SessionUnavailable" });
+  // La relectura filtra por empresa: otra empresa no devuelve nada.
+  expect(db.session.mock.calls[1][0].where).toMatchObject({
+    id: "session-a",
+    companyId: "company-a",
+  });
+});
+
+test("responde SessionChanged al liberar con una revisión vieja", async () => {
+  db.session.mockResolvedValue({ ...session(), draftRevision: 3, draft: [] });
+  expect(
+    await updateTableDraft({ ...input, operation: "release" }),
+  ).toMatchObject({ success: false, type: "SessionChanged" });
+});
+
+test("responde SessionChanged cuando otro dispositivo ganó la escritura o los reintentos se agotan", async () => {
+  db.updateSession.mockResolvedValue({ count: 0 });
+  expect(
+    await updateTableDraft({ ...input, operation: "save", items: [] }),
+  ).toMatchObject({ success: false, type: "SessionChanged" });
+  db.transaction.mockRejectedValue(serializationConflict());
+  expect(
+    await updateTableDraft({ ...input, operation: "save", items: [] }),
+  ).toMatchObject({ success: false, type: "SessionChanged" });
+});
+
+test("responde OrderLocked en una orden cobrada con la revisión al día", async () => {
+  db.session.mockResolvedValue({
+    ...session(),
+    order: { ...session().order, payments: [{ id: "payment" }] },
+  });
+  expect(
+    await updateTableDraft({ ...input, operation: "save", items: [] }),
+  ).toMatchObject({
+    success: false,
+    type: "OrderLocked",
+    message: "Esta mesa ya no admite cambios en el pedido.",
+  });
+});
+
+test("responde SessionHasProducts y conserva el texto de mesa al liberar con productos", async () => {
+  expect(
+    await updateTableDraft({ ...input, operation: "release" }),
+  ).toMatchObject({
+    success: false,
+    type: "SessionHasProducts",
+    message: "La mesa tiene productos y no se puede liberar.",
+  });
+});
+
+test("una mesa cambiada conserva el texto «La mesa cambió en otro dispositivo…»", async () => {
+  db.session.mockResolvedValue({ ...session(), draftRevision: 3 });
+  expect(
+    await updateTableDraft({ ...input, operation: "release" }),
+  ).toMatchObject({
+    message: expect.stringContaining("La mesa cambió en otro dispositivo"),
+  });
+});
