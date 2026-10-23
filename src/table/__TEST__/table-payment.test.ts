@@ -337,19 +337,46 @@ test("combined payment without cash share does not need cash received", async ()
   expect(result.success).toBe(true);
   expect(mocks.createPayment).toHaveBeenCalledTimes(2);
 });
-test("mismatched combined amounts and insufficient cash are rejected", async () => {
-  for (const cashReceived of [20, 40]) {
-    const result = await payTable(
-      { ...user, role: "CASHIER" },
-      {
-        ...input,
-        method: "combine",
-        contributions: { cash: 30, debit_card: 60, credit_card: 0, wallet: 0 },
-        cashReceived,
-      },
-    );
-    expect(result.success).toBe(false);
-  }
+test("single cash payment without cash received is rejected", async () => {
+  const result = await payTable(
+    { ...user, role: "CASHIER" },
+    { ...input, method: "cash" },
+  );
+  expect(result).toMatchObject({
+    success: false,
+    message: "El efectivo recibido debe cubrir el aporte en efectivo.",
+  });
+  expect(mocks.createPayment).not.toHaveBeenCalled();
+});
+test("combined cash received below the cash share is rejected", async () => {
+  const result = await payTable(
+    { ...user, role: "CASHIER" },
+    {
+      ...input,
+      method: "combine",
+      contributions: { cash: 30, debit_card: 70, credit_card: 0, wallet: 0 },
+      cashReceived: 20,
+    },
+  );
+  expect(result).toMatchObject({
+    success: false,
+    message: "El efectivo recibido debe cubrir el aporte en efectivo.",
+  });
+  expect(mocks.createPayment).not.toHaveBeenCalled();
+});
+test("combined amounts that do not add up to the total are rejected", async () => {
+  const result = await payTable(
+    { ...user, role: "CASHIER" },
+    {
+      ...input,
+      method: "combine",
+      contributions: { cash: 30, debit_card: 60, credit_card: 0, wallet: 0 },
+    },
+  );
+  expect(result.success).toBe(false);
+  expect(result.success === false && result.message).not.toBe(
+    "El efectivo recibido debe cubrir el aporte en efectivo.",
+  );
   expect(mocks.createPayment).not.toHaveBeenCalled();
 });
 test("missing or changed shared register cannot accept a payment", async () => {
