@@ -85,8 +85,7 @@ export function TableOrderView({
   const printRequestIds = useRef(new Map<string, string>());
   const deliveryFee = session.delivery?.fee ?? 0;
   // Un delivery despachado ya salió del local: no admite más productos.
-  const dispatched =
-    !!session.delivery && session.delivery.status !== "PENDING";
+  const dispatched = !!session.delivery && session.delivery.status !== "PENDING";
   const editable = canEdit && session.status === "OPEN" && !dispatched;
   const refresh = useCallback(() => router.refresh(), [router]);
   const sentItems = session.order?.orderItems ?? [];

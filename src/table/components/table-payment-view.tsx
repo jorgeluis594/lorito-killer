@@ -286,12 +286,13 @@ export function TablePaymentView({
     setBusy(true);
     setPrintStatus("");
     try {
-      const { printOrderReceipt } =
-        await import("@/printing/print-order-receipt");
+      const { printOrderReceipt } = await import(
+        "@/printing/print-order-receipt"
+      );
       const response = await printOrderReceipt(result.orderId);
       setPrintStatus(
         response.success
-          ? (response.message ?? "Comprobante enviado a impresión.")
+          ? response.message ?? "Comprobante enviado a impresión."
           : "El pago está confirmado. No se pudo imprimir; puedes reintentar o abrir el comprobante.",
       );
     } catch {
